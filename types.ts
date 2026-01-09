@@ -176,6 +176,22 @@ export interface ITAsset {
   image_url?: string;
 }
 
+export interface ITAssetLoan {
+  id: number;
+  loanId: string;
+  assetId: number | string;
+  assetName?: string;
+  assetTag?: string;
+  borrowerName: string;
+  borrowerDept: string;
+  borrowerPhone?: string;
+  loanDate: string;
+  expectedReturnDate: string;
+  status: 'Active' | 'Returned' | 'Overdue';
+  remarks?: string;
+  itPersonnel?: string;
+}
+
 export interface ActivityLog {
   id: number;
   activityName: string;
@@ -240,4 +256,14 @@ export interface NotificationItem {
   isRead: boolean;
   createdAt: string;
   link?: string;
+}
+
+export interface PhoneExtension {
+  id: number;
+  name: string;
+  dept: string;
+  ext: string;
+  floor: number;
+  role?: string;
+  pin?: string;
 }

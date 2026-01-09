@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gesit ERP - Enterprise Management</title>
+
+    <!-- ✅ FAVICON -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png"
+    />
+
+    <!-- ✅ TAILWIND -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      window.process = {
+        env: {
+          NEXT_PUBLIC_SUPABASE_URL: 'https://yihjfrxdrhkqfnjofvua.supabase.co',
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
+        }
+      };
+
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+              display: ['Poppins', 'system-ui', 'sans-serif'],
+            },
+            boxShadow: {
+              subtle:
+                '0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+              premium:
+                '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)',
+              glass: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+            },
+            colors: {
+              brand: {
+                50: '#f0f4ff',
+                100: '#e0e9fe',
+                500: '#1152d4',
+                600: '#0f48bc',
+                700: '#0d3ca1',
+                900: '#0a2a75',
+              },
+              primary: '#1152d4',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- ✅ GOOGLE FONT: POPPINS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary: #1152d4;
+      }
+
+      body {
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      html.dark body {
+        background-color: #020617;
+        color: #f1f5f9;
+      }
+
+      html.dark table {
+        border-color: #1e293b;
+        background-color: transparent;
+      }
+
+      html.dark thead {
+        background-color: #0f172a;
+      }
+
+      html.dark tr {
+        border-color: #1e293b;
+      }
+
+      html.dark input,
+      html.dark select,
+      html.dark textarea {
+        background-color: #0f172a !important;
+        border-color: #1e293b !important;
+        color: #f1f5f9 !important;
+      }
+
+      html.dark .bg-white {
+        background-color: #0f172a !important;
+      }
+
+      html:not(.dark) body {
+        background-color: #fcfcfd;
+        color: #1a1c21;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e5e7eb;
+        border-radius: 20px;
+      }
+
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #1e293b;
+      }
+
+      .glass-header {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+      }
+
+      .dark .glass-header {
+        background: rgba(15, 23, 42, 0.8);
+        border-bottom-color: rgba(30, 41, 59, 0.8);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      .font-display {
+        font-family: 'Poppins', system-ui, sans-serif;
+        letter-spacing: -0.015em;
+      }
+    </style>
+
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+    "react/": "https://esm.sh/react@19.0.0/",
+    "lucide-react": "https://esm.sh/lucide-react@0.474.0",
+    "recharts": "https://esm.sh/recharts@3.5.1",
+    "qrcode": "https://esm.sh/qrcode@1.5.3",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.48.1",
+    "html-to-image": "https://esm.sh/html-to-image@1.11.11",
+    "@/": "./"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
