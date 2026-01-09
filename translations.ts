@@ -1,0 +1,359 @@
+
+import { createContext, useContext } from 'react';
+
+export type Language = 'en' | 'id';
+
+export const translations = {
+  en: {
+    // General
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    loading: 'Loading...',
+    search: 'Search...',
+    actions: 'Actions',
+    status: 'Status',
+    welcome: 'Welcome',
+    logout: 'Sign Out',
+    profile: 'Profile',
+    settings: 'Settings',
+    saveChanges: 'Save Changes',
+    updateProfile: 'Update Profile',
+    close: 'Close',
+    pilih: 'Select',
+    exportData: 'Export Excel',
+
+    // Sidebar Groups
+    platform: 'Platform',
+    system: 'System',
+
+    // Menus
+    dashboard: 'Home',
+    activity: 'Activities',
+    weekly: 'Planner',
+    purchase: 'Procurement',
+    purchaseRecord: 'Purchase Record',
+    assets: 'Assets',
+    network: 'Infrastructure',
+    files: 'Library',
+    admin: 'Administration',
+    users: 'Accounts',
+    masterCompany: 'Companies',
+    masterDepartment: 'Departments',
+    masterCategory: 'Asset Categories',
+    masterGroup: 'Permissions',
+    maintenance: 'Nucleus Wipe',
+
+    // Network Dashboard Specific
+    switchStatus: 'Nodes',
+    patchPanel: 'Patch',
+    wiring: 'Circuits',
+    networkDevices: 'Hardware',
+    infrastructureVitals: 'Vitals',
+    activePorts: 'Active',
+    errorPorts: 'Alerts',
+    stable: 'Stable',
+    provisionNode: 'Provision',
+    topologyMap: 'Map',
+
+    // Profile & Security
+    personalDetails: 'Identity',
+    reachOut: 'Contact',
+    securityAccount: 'Security',
+    changePassword: 'Change Key',
+    accessGroups: 'Groups',
+    notificationPrefs: 'Alerts',
+    signOutTitle: 'Confirm Logout',
+    signOutMsg: 'Are you sure you want to sign out?',
+    profileUpdated: 'Updated!',
+    profileUpdateFailed: 'Failed.',
+
+    // Login & Forgot Password
+    loginTitle: 'Sign In',
+    loginSubtitle: 'Credentials required',
+    identifierLabel: 'Email/User',
+    passwordLabel: 'Key',
+    rememberMe: 'Remember',
+    forgotPassword: 'Forgot Key?',
+    signInBtn: 'Enter',
+    resetTitle: 'Reset Key',
+    resetSubtitle: 'Enter email',
+    resetBtn: 'Reset',
+    backToLogin: 'Back',
+    resetSuccess: 'Sent.',
+
+    // Modals & Confirmation
+    confirmDestruction: 'Confirm',
+    cancelClose: 'Cancel',
+    warningReverse: 'System Protocol',
+    destroyNodeTitle: 'Purge Node',
+    destroyNodeMsg: 'Purge device configuration?',
+    destroyAssetTitle: 'Purge Asset',
+    destroyAssetMsg: 'Purge asset registry?',
+    destroyActivityTitle: 'Purge Log',
+    destroyActivityMsg: 'Purge log entry?',
+    destroyPurchaseTitle: 'Purge Request',
+    destroyPurchaseMsg: 'Purge purchase entry?',
+    destroyUserTitle: 'Purge Account',
+    destroyUserMsg: 'Revoke account access?',
+    deleteCompanyTitle: 'Delete Company',
+    deleteCompanyMsg: 'Delete company record?',
+    deleteDeptTitle: 'Delete Department',
+    deleteDeptMsg: 'Delete department entry?',
+
+    // Maintenance
+    maintenanceTitle: 'Nucleus Maintenance',
+    maintenanceDesc: 'Purge old data or factory reset.',
+    maintenanceWarning: 'Data loss is permanent.',
+    totalReset: 'Full Reset',
+    totalResetDesc: 'Purge all application data.',
+    executePurge: 'Execute Purge',
+
+    // Network & Infrastructure
+    infraInventory: 'Registry',
+    verifiedHardware: 'Inventory',
+    provisionDevice: 'Provision',
+    topologyView: 'Topology',
+    physicalLocation: 'Site',
+    circuitUpdateSuccess: 'Updated',
+
+    // Assets
+    assetRegistry: 'Registry',
+    addAsset: 'Add',
+    editAsset: 'Edit',
+    issue: 'Issue',
+    active: 'Active',
+    stock: 'Stock',
+    failedDeleteAsset: 'Failed',
+
+    // Purchase
+    purchaseDesc: 'Procurement cycle.',
+    failedFetchData: 'Error',
+    noPurchaseRequests: 'Queue empty.',
+    failedProcess: 'Error',
+    failedDelete: 'Error',
+    failedCreateRequest: 'Error',
+
+    // Users
+    userManagementDesc: 'Account policies.',
+    searchUserPlaceholder: 'Search...',
+    allRoles: 'All',
+    loadingData: 'Syncing...',
+    userNotFound: 'Not found.',
+    failedSaveUser: 'Error.',
+    groupMembership: 'Groups',
+    groupHelpText: 'Policy mapping.',
+
+    // Personnel / Department
+    assignMember: 'Assign',
+    removeMember: 'Remove',
+    confirmRemoveMember: 'Remove person?',
+    memberAddSuccess: 'Success',
+    memberRemoveSuccess: 'Removed',
+    personnelTitle: 'Personnel',
+    mgmtEngine: 'Mgmt Engine',
+    assignMemberHere: 'Assign',
+    selectUserAccount: 'Select User',
+    confirmAssignment: 'Confirm',
+    activeStaff: 'Staff',
+    assignPerson: 'Assign',
+    noDeptMembers: 'Empty.',
+    syncPersonnel: 'Syncing...',
+    changesSynced: 'Synced',
+    failedSave: 'Error',
+
+    // Footer
+    allRightsReserved: 'All Rights Reserved',
+    systemOnline: 'Online',
+    serverTime: 'Time',
+    version: 'V',
+    managedBy: 'IT Ops',
+    helpdesk: 'Support',
+    privacy: 'Policy'
+  },
+  id: {
+    // General
+    cancel: 'Batal',
+    confirm: 'Konfirmasi',
+    save: 'Simpan',
+    delete: 'Hapus',
+    edit: 'Ubah',
+    loading: 'Memuat...',
+    search: 'Cari...',
+    actions: 'Aksi',
+    status: 'Status',
+    welcome: 'Halo',
+    logout: 'Keluar',
+    profile: 'Profil',
+    settings: 'Pengaturan',
+    saveChanges: 'Simpan',
+    updateProfile: 'Perbarui',
+    close: 'Tutup',
+    pilih: 'Pilih',
+    exportData: 'Ekspor Excel',
+
+    // Sidebar Groups
+    platform: 'Platform',
+    system: 'Sistem',
+
+    // Menus
+    dashboard: 'Dasbor',
+    activity: 'Aktivitas',
+    weekly: 'Rencana',
+    purchase: 'Pengadaan',
+    purchaseRecord: 'Rekam Pembelian',
+    assets: 'Aset',
+    network: 'Infrastruktur',
+    files: 'Dokumen',
+    admin: 'Admin',
+    users: 'Akun',
+    masterCompany: 'Perusahaan',
+    masterDepartment: 'Departemen',
+    masterCategory: 'Kategori Aset',
+    masterGroup: 'Hak Akses',
+    maintenance: 'Reset Nuklir',
+
+    // Network Dashboard Specific
+    switchStatus: 'Node',
+    patchPanel: 'Patch',
+    wiring: 'Sirkuit',
+    networkDevices: 'Hardware',
+    infrastructureVitals: 'Vital',
+    activePorts: 'Aktif',
+    errorPorts: 'Peringatan',
+    stable: 'Stabil',
+    provisionNode: 'Tambah',
+    topologyMap: 'Peta',
+
+    // Profile & Security
+    personalDetails: 'Identitas',
+    reachOut: 'Kontak',
+    securityAccount: 'Keamanan',
+    changePassword: 'Ganti Sandi',
+    accessGroups: 'Grup',
+    notificationPrefs: 'Notifikasi',
+    signOutTitle: 'Konfirmasi Keluar',
+    signOutMsg: 'Apakah Anda yakin ingin keluar dari sesi ini?',
+    profileUpdated: 'Berhasil!',
+    profileUpdateFailed: 'Gagal.',
+
+    // Login & Forgot Password
+    loginTitle: 'Masuk',
+    loginSubtitle: 'Butuh akses',
+    identifierLabel: 'Email/User',
+    passwordLabel: 'Sandi',
+    rememberMe: 'Ingat',
+    forgotPassword: 'Lupa Sandi?',
+    signInBtn: 'Masuk',
+    resetTitle: 'Reset Sandi',
+    resetSubtitle: 'Masukkan email',
+    resetBtn: 'Kirim',
+    backToLogin: 'Kembali',
+    resetSuccess: 'Terkirim.',
+
+    // Modals & Confirmation
+    confirmDestruction: 'Konfirmasi',
+    cancelClose: 'Batal',
+    warningReverse: 'Protokol Sistem',
+    destroyNodeTitle: 'Hapus Node',
+    destroyNodeMsg: 'Hapus konfigurasi?',
+    destroyAssetTitle: 'Hapus Aset',
+    destroyAssetMsg: 'Hapus dari database?',
+    destroyActivityTitle: 'Hapus Log',
+    destroyActivityMsg: 'Hapus entri log?',
+    destroyPurchaseTitle: 'Hapus Request',
+    destroyPurchaseMsg: 'Hapus data pengadaan?',
+    destroyUserTitle: 'Hapus Akun',
+    destroyUserMsg: 'Cabut akses akun?',
+    deleteCompanyTitle: 'Hapus Perusahaan',
+    deleteCompanyMsg: 'Hapus data?',
+    deleteDeptTitle: 'Hapus Departemen',
+    deleteDeptMsg: 'Hapus entri?',
+
+    // Maintenance
+    maintenanceTitle: 'Reset Nuklir',
+    maintenanceDesc: 'Hapus data atau reset pabrik.',
+    maintenanceWarning: 'Data hilang permanen.',
+    totalReset: 'Reset Total',
+    totalResetDesc: 'Hapus semua data aplikasi.',
+    executePurge: 'Eksekusi',
+
+    // Network
+    infraInventory: 'Registri',
+    verifiedHardware: 'Inventaris',
+    provisionDevice: 'Tambah',
+    topologyView: 'Topologi',
+    physicalLocation: 'Situs',
+    circuitUpdateSuccess: 'Berhasil',
+
+    // Assets
+    assetRegistry: 'Registri',
+    addAsset: 'Tambah',
+    editAsset: 'Ubah',
+    issue: 'Masalah',
+    active: 'Aktif',
+    stock: 'Stok',
+    failedDeleteAsset: 'Gagal',
+
+    // Purchase
+    purchaseDesc: 'Siklus pengadaan.',
+    failedFetchData: 'Error',
+    noPurchaseRequests: 'Kosong.',
+    failedProcess: 'Error',
+    failedDelete: 'Error',
+    failedCreateRequest: 'Error',
+
+    // Users
+    userManagementDesc: 'Kebijakan akun.',
+    searchUserPlaceholder: 'Cari...',
+    allRoles: 'Semua',
+    loadingData: 'Sinkronisasi...',
+    userNotFound: 'Tidak ditemukan.',
+    failedSaveUser: 'Error.',
+    groupMembership: 'Grup',
+    groupHelpText: 'Pemetaan akses.',
+
+    // Personnel
+    assignMember: 'Tugaskan',
+    removeMember: 'Hapus',
+    confirmRemoveMember: 'Hapus orang?',
+    memberAddSuccess: 'Berhasil',
+    memberRemoveSuccess: 'Dihapus',
+    personnelTitle: 'Personil',
+    mgmtEngine: 'Mesin Mgmt',
+    assignMemberHere: 'Tugaskan',
+    selectUserAccount: 'Pilih Akun',
+    confirmAssignment: 'Konfirmasi',
+    activeStaff: 'Staf',
+    assignPerson: 'Tugaskan',
+    noDeptMembers: 'Kosong.',
+    syncPersonnel: 'Memproses...',
+    changesSynced: 'Sinkron',
+    failedSave: 'Error',
+
+    // Footer
+    allRightsReserved: 'Hak Cipta Dilindungi',
+    systemOnline: 'Online',
+    serverTime: 'Waktu',
+    version: 'V',
+    managedBy: 'IT Ops',
+    helpdesk: 'Bantuan',
+    privacy: 'Kebijakan'
+  }
+};
+
+export interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: keyof typeof translations.en) => string;
+}
+
+export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage error');
+  return context;
+};

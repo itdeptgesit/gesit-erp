@@ -1,0 +1,234 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Plus, Trash2, Pencil, RefreshCcw, ShieldCheck, Target, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserAccount, UserGroup } from '../types';
+import { UserFormModal } from './UserFormModal';
+import { DangerConfirmModal } from './DangerConfirmModal';
+import { supabase } from '../lib/supabaseClient';
+
+interface UserManagementProps {
+  onUpdateSuccess?: () => void;
+}
+
+export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess }) => {
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [groups, setGroups] = useState<UserGroup[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [deleteUser, setDeleteUser] = useState<UserAccount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const { data: userData, error: userError } = await supabase.from('user_accounts').select('*').order('full_name');
+      if (userError) throw userError;
+      const { data: groupData, error: groupError } = await supabase.from('user_groups').select('*').order('name');
+      if (groupError) throw groupError;
+      if (userData) {
+        setUsers(userData.map((u: any) => ({
+          id: u.id,
+          authId: u.auth_id,
+          username: u.username,
+          fullName: u.full_name,
+          email: u.email,
+          role: u.role,
+          groups: u.groups || [],
+          status: u.status,
+          company: u.company || '',
+          department: u.department || '',
+          phone: u.phone,
+          address: u.address,
+          jobTitle: u.job_title,
+          supervisorId: u.supervisor_id?.toString(),
+          managerId: u.manager_id?.toString(),
+          lastLogin: u.last_login ? new Date(u.last_login).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Never',
+          avatarUrl: u.avatar_url
+        })));
+      }
+      if (groupData) {
+        setGroups(groupData.map((g: any) => ({ id: g.id, name: g.name, description: g.description, allowedMenus: g.allowed_menus || [] })));
+      }
+    } catch (err: any) { console.warn("Fetch data error", err); } finally { setIsLoading(false); }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = (user.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.company || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter ? user.role === roleFilter : true;
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchTerm, roleFilter]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(start, start + itemsPerPage);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, roleFilter]);
+
+  const handleAddUser = () => { setEditingUser(null); setIsModalOpen(true); };
+  const handleEditUser = (user: UserAccount) => { setEditingUser(user); setIsModalOpen(true); };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">User Management</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage your company's users</p></div>
+        <div className="flex gap-2">
+          <button onClick={fetchData} className="p-2 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-600 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all">
+            <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={handleAddUser} className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-black dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg">
+            <Plus size={14} /> Register Node
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <input type="text" placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold placeholder:text-slate-400 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-500/5 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
+        </div>
+        <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-xl">
+          {['', 'Admin', 'Staff', 'User'].map(r => (
+            <button key={r} onClick={() => setRoleFilter(r)} className={`px-5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${roleFilter === r ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{r || 'All'}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.15em] text-[9px] border-b border-slate-100 dark:border-slate-800">
+                <th className="px-6 py-4 w-12 text-center">Status</th>
+                <th className="px-6 py-4">Full Identity</th>
+                <th className="px-6 py-4">Organization</th>
+                <th className="px-6 py-4">Auth</th>
+                <th className="px-6 py-4">Hierarchy</th>
+                <th className="px-6 py-4">Last Activity</th>
+                <th className="px-6 py-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+              {isLoading ? (
+                <tr><td colSpan={7} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+              ) : paginatedUsers.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-20 text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] text-[10px]">Registry Empty.</td></tr>
+              ) : paginatedUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800 transition-all group">
+                  <td className="px-6 py-4 text-center"><div className={`w-2 h-2 rounded-full mx-auto shadow-sm ${user.status === 'Active' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-300 dark:bg-slate-700'}`}></div></td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-blue-900/20 border border-slate-200 dark:border-blue-500/20 flex items-center justify-center text-slate-500 dark:text-blue-400 font-bold text-xs overflow-hidden">
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          (user.fullName || '').substring(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm tracking-tight group-hover:text-blue-600 transition-colors">{user.fullName}</p>
+                        <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 tracking-tight">{user.company || 'Unknown Entity'}</span>
+                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{user.department || 'Global'}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></td>
+                  <td className="px-6 py-4"><div className="space-y-1">{user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[9px] font-bold"><ShieldCheck size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}{user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold"><Target size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}</div></td>
+                  <td className="px-6 py-4"><div className="flex items-center gap-2 text-slate-400 dark:text-slate-500"><Clock size={12} className="shrink-0 opacity-60" /><span className="text-[10px] font-medium font-mono">{user.lastLogin}</span></div></td>
+                  <td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all"><button onClick={() => handleEditUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all"><Pencil size={16} /></button><button onClick={() => setDeleteUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all"><Trash2 size={16} /></button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page {currentPage} of {totalPages || 1}</p>
+          <div className="flex items-center gap-2">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+          </div>
+        </div>
+      </div>
+
+      <UserFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={async (userData) => {
+          const payload = {
+            username: userData.username,
+            full_name: userData.fullName,
+            email: userData.email,
+            role: userData.role,
+            groups: userData.groups,
+            status: userData.status,
+            company: userData.company,
+            department: userData.department,
+            phone: userData.phone,
+            address: userData.address,
+            job_title: userData.jobTitle,
+            supervisor_id: userData.supervisorId || null,
+            manager_id: userData.managerId || null,
+            avatar_url: userData.avatarUrl
+          };
+          try {
+            if (editingUser) {
+              await supabase.from('user_accounts').update(payload).eq('id', editingUser.id);
+            } else {
+              await supabase.from('user_accounts').insert([payload]);
+            }
+            if (onUpdateSuccess) onUpdateSuccess();
+            fetchData();
+          } catch (err: any) {
+            alert("Failed to save user: " + err.message);
+          }
+        }}
+        initialData={editingUser}
+        availableGroups={groups}
+      />
+
+      <DangerConfirmModal
+        isOpen={!!deleteUser}
+        onClose={() => setDeleteUser(null)}
+        onConfirm={async () => {
+          if (!deleteUser) return;
+          setIsProcessing(true);
+          try {
+            await supabase.from('user_accounts').delete().eq('id', deleteUser.id);
+            await fetchData();
+            setDeleteUser(null);
+          } catch (err: any) {
+            alert("Failed to delete user: " + err.message);
+          } finally {
+            setIsProcessing(false);
+          }
+        }}
+        title="Revoke Node Identity"
+        message={`Permanently erase protocol access for "${deleteUser?.fullName}"?`}
+        isLoading={isProcessing}
+      />
+    </div>
+  );
+};
