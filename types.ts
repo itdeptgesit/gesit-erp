@@ -63,6 +63,16 @@ export interface PurchaseRecord {
   vendor: string;
   platform: string;
   remarks: string;
+  items?: {
+    description: string;
+    qty: number;
+    price: number;
+    vendor?: string;
+    deliveryFee?: number;
+    insuranceFee?: number;
+    itemDiscount?: number;
+    shippingDiscount?: number;
+  }[];
   docs: {
     prForm: boolean;
     cashAdvance: boolean;

@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { NetworkDashboard } from './components/NetworkDashboard';
 import { AssetManager } from './components/AssetManager';
+import { AssetLoanManager } from './components/AssetLoanManager';
 import { ActivityLogManager } from './components/ActivityLogManager';
 import { WeeklyPlanManager } from './components/WeeklyPlanManager';
 import { PurchasePlanManager } from './components/PurchasePlanManager';
@@ -199,6 +200,8 @@ const App: React.FC = () => {
         return <NetworkDashboard onBack={() => handleNavigate('dashboard')} currentUser={currentUser} />;
       case 'assets':
         return <AssetManager currentUser={currentUser} />;
+      case 'asset-loan':
+        return <AssetLoanManager currentUser={currentUser} />;
       case 'files':
         return <FileManager currentUser={currentUser} />;
       case 'users':
