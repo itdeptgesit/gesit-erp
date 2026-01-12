@@ -39,7 +39,8 @@ export const PurchaseRecordManager: React.FC = () => {
                     subtotal: r.subtotal, totalVa: r.total_va, projectName: r.project_name,
                     user: r.user_name, department: r.department, company: r.company,
                     status: r.status, purchaseDate: r.purchase_date, paymentDate: r.payment_date,
-                    vendor: r.vendor, platform: r.platform, remarks: r.remarks, docs: r.docs || {}
+                    vendor: r.vendor, platform: r.platform, remarks: r.remarks, docs: r.docs || {},
+                    items: r.items || []
                 })));
             }
         } catch (err) { console.error(err); } finally { setIsLoading(false); }
@@ -57,7 +58,8 @@ export const PurchaseRecordManager: React.FC = () => {
                 subtotal: formData.subtotal, total_va: formData.totalVa, project_name: formData.projectName,
                 user_name: formData.user, department: formData.department, company: formData.company,
                 status: formData.status, purchase_date: formData.purchaseDate, payment_date: formData.paymentDate,
-                vendor: formData.vendor, platform: formData.platform, remarks: formData.remarks, docs: formData.docs
+                vendor: formData.vendor, platform: formData.platform, remarks: formData.remarks, docs: formData.docs,
+                items: formData.items
             };
 
             if (editingRecord) {
@@ -137,7 +139,6 @@ export const PurchaseRecordManager: React.FC = () => {
     };
 
     const formatIDR = (num: number) => {
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
     };
 
@@ -160,7 +161,7 @@ export const PurchaseRecordManager: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard label="TOTAL DISBURSED" value={formatIDR(stats.paid)} subValue="Completed payments" icon={CheckCircle2} color="emerald" />
-                <StatCard label="LIABILITY" value={formatIDR(stats.pending)} subValue="Unpaid or Pending" icon={Clock} color="amber" />
+                <StatCard label="LIABILITY" value={formatIDR(stats.pending)} subValue="Pending" icon={Clock} color="amber" />
                 <StatCard label="FISCAL VOLUME" value={formatIDR(stats.total)} subValue="Total record value" icon={Wallet} color="blue" />
             </div>
 
@@ -180,7 +181,7 @@ export const PurchaseRecordManager: React.FC = () => {
                             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => `Rp ${val >= 1000000 ? (val / 1000000).toFixed(0) + 'M' : (val / 1000).toFixed(0) + 'K'}`} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'standard', maximumFractionDigits: 0 }).format(val)} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', padding: '12px' }}
                                     itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
@@ -214,7 +215,7 @@ export const PurchaseRecordManager: React.FC = () => {
                             <div key={dept.name} className="space-y-1.5">
                                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                     <span className="text-slate-500 truncate max-w-[120px]">{dept.name}</span>
-                                    <span className="text-slate-900 dark:text-slate-300">Rp {formatIDR(dept.total)}</span>
+                                    <span className="text-slate-900 dark:text-slate-300">{formatIDR(dept.total)}</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
                                     <div
@@ -238,7 +239,6 @@ export const PurchaseRecordManager: React.FC = () => {
                         <select className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                             <option value="All">All Status</option>
                             <option value="Paid">Paid</option>
-                            <option value="Unpaid">Unpaid</option>
                             <option value="Pending">Pending</option>
                         </select>
                         <button onClick={fetchRecords} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-blue-600 transition-all shadow-sm"><RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} /></button>
