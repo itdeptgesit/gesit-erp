@@ -46,6 +46,8 @@ export const translations = {
     masterCategory: 'Asset Categories',
     masterGroup: 'Permissions',
     extensionDirectory: 'TGC Directory',
+    helpdesk: 'Helpdesk',
+    announcements: 'News & Feed',
     maintenance: 'Nucleus Wipe',
 
     // Network Dashboard Specific
@@ -172,7 +174,6 @@ export const translations = {
     serverTime: 'Time',
     version: 'V',
     managedBy: 'IT Ops',
-    helpdesk: 'Support',
     privacy: 'Policy'
   },
   id: {
@@ -217,6 +218,8 @@ export const translations = {
     masterCategory: 'Kategori Aset',
     masterGroup: 'Hak Akses',
     extensionDirectory: 'Direktori TGC',
+    helpdesk: 'Bantuan',
+    announcements: 'Berita & Feed',
     maintenance: 'Reset Nuklir',
 
     // Network Dashboard Specific
@@ -343,7 +346,6 @@ export const translations = {
     serverTime: 'Waktu',
     version: 'V',
     managedBy: 'IT Ops',
-    helpdesk: 'Bantuan',
     privacy: 'Kebijakan'
   }
 };
