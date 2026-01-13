@@ -45,6 +45,7 @@ export const translations = {
     masterDepartment: 'Departments',
     masterCategory: 'Asset Categories',
     masterGroup: 'Permissions',
+    extensionDirectory: 'TGC Directory',
     maintenance: 'Nucleus Wipe',
 
     // Network Dashboard Specific
@@ -215,6 +216,7 @@ export const translations = {
     masterDepartment: 'Departemen',
     masterCategory: 'Kategori Aset',
     masterGroup: 'Hak Akses',
+    extensionDirectory: 'Direktori TGC',
     maintenance: 'Reset Nuklir',
 
     // Network Dashboard Specific

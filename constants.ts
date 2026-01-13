@@ -5,8 +5,8 @@ export const APP_NAME = 'Gesit ERP';
 export const CURRENT_USER_GROUPS = ['admin'];
 
 export const MOCK_GROUPS = [
-    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'network', 'files', 'admin', 'users', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance'] },
-    { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'assets', 'asset-loan', 'network', 'files', 'purchase-record'] },
+    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'admin', 'users', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance'] },
+    { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'purchase-record'] },
     { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'purchase', 'purchase-record'] }
 ];
 
@@ -21,6 +21,7 @@ export const APP_MENU_STRUCTURE = [
     { id: 'asset-loan', label: 'Asset Loan', iconName: 'Briefcase' },
     { id: 'network', label: 'Network & Wiring', iconName: 'Network' },
     { id: 'files', label: 'Documents', iconName: 'FolderOpen' },
+    { id: 'extension-directory', label: 'Ext. Directory', iconName: 'Phone' },
     { id: 'admin', label: 'Administration', iconName: 'Shield' },
     { id: 'users', label: 'User Accounts', parentId: 'admin', iconName: 'Users' },
     { id: 'system-settings', label: 'System Settings', parentId: 'admin', iconName: 'Settings' },

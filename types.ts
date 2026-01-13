@@ -57,7 +57,7 @@ export interface PurchaseRecord {
   user: string;
   department: string;
   company: string;
-  status: 'Paid' | 'Unpaid' | 'Pending';
+  status: 'Paid' | 'Pending';
   purchaseDate: string;
   paymentDate?: string;
   vendor: string;

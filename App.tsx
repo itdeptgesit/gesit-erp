@@ -21,6 +21,7 @@ import { FileManager } from './components/FileManager';
 import { SystemMaintenance } from './components/SystemMaintenance';
 import { SystemSettings } from './components/SystemSettings';
 import { AnnouncementManager } from './components/AnnouncementManager';
+import { ExtensionDirectory } from './components/ExtensionDirectory';
 import { LoginPage } from './components/LoginPage';
 import { AssetPublicDetail } from './components/AssetPublicDetail';
 import { HelpdeskPublic } from './components/HelpdeskPublic';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
   const [isPublicAssetView, setIsPublicAssetView] = useState(false);
   const [publicAssetId, setPublicAssetId] = useState('');
   const [isPublicHelpdesk, setIsPublicHelpdesk] = useState(false);
+  const [isPublicDirectory, setIsPublicDirectory] = useState(false);
   const [language, setLanguageState] = useState<Language>('en');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -62,6 +64,11 @@ const App: React.FC = () => {
 
     if (path.includes('/helpdesk')) {
       setIsPublicHelpdesk(true);
+      return;
+    }
+
+    if (path.includes('/directory')) {
+      setIsPublicDirectory(true);
       return;
     }
 
@@ -204,6 +211,8 @@ const App: React.FC = () => {
         return <AssetLoanManager currentUser={currentUser} />;
       case 'files':
         return <FileManager currentUser={currentUser} />;
+      case 'extension-directory':
+        return <ExtensionDirectory currentUser={currentUser} />;
       case 'users':
         return <UserManagement onUpdateSuccess={refreshUserProfile} />;
       case 'master-company':
@@ -231,6 +240,18 @@ const App: React.FC = () => {
     return (
       <LanguageContext.Provider value={{ language, setLanguage, t }}>
         <HelpdeskPublic />
+      </LanguageContext.Provider>
+    );
+  }
+
+  if (isPublicDirectory) {
+    return (
+      <LanguageContext.Provider value={{ language, setLanguage, t }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-[#020617] p-4 md:p-10">
+          <div className="max-w-7xl mx-auto">
+            <ExtensionDirectory />
+          </div>
+        </div>
       </LanguageContext.Provider>
     );
   }
