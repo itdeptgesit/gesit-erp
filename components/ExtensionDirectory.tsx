@@ -393,7 +393,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
     };
 
     const handleShare = () => {
-        const url = window.location.origin + window.location.pathname + 'directory';
+        const url = window.location.origin + '/directory';
         navigator.clipboard.writeText(url);
         setIsSharing(true);
         setTimeout(() => setIsSharing(false), 2000);

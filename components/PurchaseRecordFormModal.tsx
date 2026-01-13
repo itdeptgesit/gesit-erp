@@ -70,7 +70,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
             const today = new Date().toISOString().split('T')[0];
             setFormData({
                 transactionId: 'Generating...',
-                status: 'Unpaid',
+                status: 'Pending',
                 qty: 1,
                 price: 0,
                 vat: 0,
