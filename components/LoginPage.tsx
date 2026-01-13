@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         setError('');
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(identifier, {
-                redirectTo: 'https://gesitcloud.web.id',
+                redirectTo: 'https://it.gesit.co.id',
             });
             if (error) throw error;
             setResetSent(true);
