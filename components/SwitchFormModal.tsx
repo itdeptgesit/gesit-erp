@@ -86,6 +86,26 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
         if (isNaN(targetPorts) || targetPorts <= 0) targetPorts = 1;
 
         if (initialData) {
+            let currentPorts = [...(initialData.ports || [])];
+            if (targetPorts > currentPorts.length) {
+                // Add more ports
+                const newPorts: SwitchPort[] = Array.from({ length: targetPorts - currentPorts.length }, (_, i) => {
+                    const portNum = currentPorts.length + i + 1;
+                    return {
+                        id: `temp-port-${Date.now()}-${portNum}`,
+                        portNumber: portNum,
+                        status: PortStatus.IDLE,
+                        deviceType: DeviceType.UNKNOWN,
+                        patchPanelPort: `PP-${portNum}`,
+                        cableType: formData.cableType
+                    };
+                });
+                currentPorts = [...currentPorts, ...newPorts];
+            } else if (targetPorts < currentPorts.length) {
+                // Prune ports
+                currentPorts = currentPorts.slice(0, targetPorts);
+            }
+
             const updatedDevice: NetworkSwitch = {
                 ...initialData,
                 name: formData.name,
@@ -96,7 +116,8 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                 serialNumber: formData.serialNumber,
                 displayOrder: Number(formData.displayOrder),
                 totalPorts: targetPorts,
-                uplinkId: formData.uplinkId
+                uplinkId: formData.uplinkId,
+                ports: currentPorts
             };
             onSubmit(updatedDevice);
         } else {

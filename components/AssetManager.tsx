@@ -45,7 +45,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const fetchAssets = async () => {
     setIsLoading(true);
     try {
-      const { data: assetData } = await supabase.from('it_assets').select('*').order('id', { ascending: false });
+      const { data: assetData } = await supabase.from('it_assets').select('*').order('id', { ascending: true });
       if (assetData) {
         setAssets(assetData.map((item: any) => ({
           id: item.id, assetId: item.asset_id, item: item.item_name, category: item.category, brand: item.brand,
@@ -55,6 +55,56 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         })));
       }
     } catch (error) { console.error('Error fetching assets:', error); } finally { setIsLoading(false); }
+  };
+
+  const reIndexAllAssets = async () => {
+    if (!isAdmin) return;
+    setIsLoading(true);
+    try {
+      // 1. Fetch all needed data
+      const { data: allAssets } = await supabase.from('it_assets').select('*').order('id', { ascending: true });
+      const { data: companies } = await supabase.from('companies').select('name, code');
+      const { data: categories } = await supabase.from('asset_categories').select('name, code');
+
+      if (!allAssets) return;
+
+      const companyMap = new Map(companies?.map(c => [c.name, c.code]));
+      const categoryMap = new Map(categories?.map(c => [c.name, c.code]));
+
+      // 2. Group assets
+      const groups: Record<string, any[]> = {};
+      allAssets.forEach(a => {
+        const key = `${a.company}|${a.category}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(a);
+      });
+
+      // 3. Process each group
+      for (const key in groups) {
+        const [compName, catName] = key.split('|');
+        const compCode = companyMap.get(compName) || compName.substring(0, 3).toUpperCase();
+        const catCode = categoryMap.get(catName) || catName.substring(0, 3).toUpperCase();
+
+        const assetsInGroup = groups[key];
+        for (let i = 0; i < assetsInGroup.length; i++) {
+          const suffix = (i + 1).toString().padStart(3, '0');
+          const newAssetId = `${compCode}-${catCode}-${suffix}`;
+
+          await supabase
+            .from('it_assets')
+            .update({ asset_id: newAssetId })
+            .eq('id', assetsInGroup[i].id);
+        }
+      }
+
+      setNotification({ text: 'All assets have been re-indexed sequentially.', type: 'success' });
+      await fetchAssets();
+    } catch (error: any) {
+      console.error('Re-indexing failed:', error);
+      setNotification({ text: `Failed to re-index: ${error.message}`, type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { fetchAssets(); }, []);
@@ -157,9 +207,21 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           </button>
 
           {canManage && (
-            <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
-              <Plus size={14} /> Add Asset
-            </button>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <button
+                  onClick={() => { if (confirm('Re-index ALL existing asset codes sequentially? This will change existing IDs.')) reIndexAllAssets(); }}
+                  disabled={isLoading}
+                  className="p-2.5 rounded-xl border border-blue-200 text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center"
+                  title="Re-index Sequential IDs"
+                >
+                  <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+                </button>
+              )}
+              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
+                <Plus size={14} /> Add Asset
+              </button>
+            </div>
           )}
         </div>
       </div>

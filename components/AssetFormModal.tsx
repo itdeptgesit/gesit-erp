@@ -47,9 +47,9 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                 vga: initialData.specs?.vga || '',
                 processor: initialData.specs?.processor || ''
             });
-            // Ambil suffix dari ID lama jika ada (misal: GST-LPT-1234 -> 1234)
+            // Keep existing ID for edits
             const parts = initialData.assetId?.split('-');
-            idSuffixRef.current = parts && parts.length > 1 ? parts[parts.length - 1] : Math.floor(1000 + Math.random() * 9000).toString();
+            idSuffixRef.current = parts && parts.length > 1 ? parts[parts.length - 1] : '???';
         } else {
             setFormData({
                 status: 'Active',
@@ -59,26 +59,55 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                 purchaseDate: new Date().toISOString().split('T')[0]
             });
             setSpecs({ storage: '', ram: '', vga: '', processor: '' });
-            idSuffixRef.current = Math.floor(1000 + Math.random() * 9000).toString();
+            idSuffixRef.current = ''; // Will be populated by effect
         }
     }, [initialData, isOpen]);
 
     // Logic Otomatis Update Asset ID
     useEffect(() => {
-        if (!isOpen || !formData.company || !formData.category) return;
+        if (!isOpen || !formData.company || !formData.category || initialData) return;
 
-        const companyObj = companyList.find(c => c.name === formData.company);
-        const categoryObj = categoryList.find(c => c.name === formData.category);
+        const generateSequentialId = async () => {
+            const companyObj = companyList.find(c => c.name === formData.company);
+            const categoryObj = categoryList.find(c => c.name === formData.category);
 
-        const compCode = companyObj?.code || formData.company.substring(0, 3).toUpperCase();
-        const catCode = categoryObj?.code || formData.category.substring(0, 3).toUpperCase();
+            const compCode = companyObj?.code || formData.company.substring(0, 3).toUpperCase();
+            const catCode = categoryObj?.code || formData.category.substring(0, 3).toUpperCase();
+            const prefix = `${compCode}-${catCode}-`;
 
-        const newAssetId = `${compCode}-${catCode}-${idSuffixRef.current}`;
+            // Query existing to find next number
+            const { data: existing } = await supabase
+                .from('it_assets')
+                .select('asset_id')
+                .eq('company', formData.company)
+                .eq('category', formData.category);
 
-        if (formData.assetId !== newAssetId) {
-            setFormData(prev => ({ ...prev, assetId: newAssetId }));
-        }
-    }, [formData.company, formData.category, companyList, categoryList, isOpen]);
+            let nextNum = 1;
+            if (existing && existing.length > 0) {
+                const numbers = existing
+                    .map(a => {
+                        const parts = (a.asset_id || '').split('-');
+                        const last = parts[parts.length - 1];
+                        return parseInt(last, 10);
+                    })
+                    .filter(n => !isNaN(n));
+
+                if (numbers.length > 0) {
+                    nextNum = Math.max(...numbers) + 1;
+                }
+            }
+
+            const suffix = nextNum.toString().padStart(3, '0');
+            idSuffixRef.current = suffix;
+            const newAssetId = `${prefix}${suffix}`;
+
+            if (formData.assetId !== newAssetId) {
+                setFormData(prev => ({ ...prev, assetId: newAssetId }));
+            }
+        };
+
+        generateSequentialId();
+    }, [formData.company, formData.category, companyList, categoryList, isOpen, initialData]);
 
     if (!isOpen) return null;
 

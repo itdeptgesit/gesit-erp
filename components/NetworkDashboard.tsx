@@ -91,50 +91,53 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 // 2. Scan Ports for ALL connected leaf devices (CCTV, PC, Server, AP, etc.)
                 const subNodes: NetworkSwitch[] = [];
                 mappedSwitches.forEach(sw => {
-                    sw.ports.forEach(port => {
-                        // Only show active devices that aren't unknown or uplink
-                        const isValidLeaf = port.status === PortStatus.ACTIVE &&
-                            port.deviceType !== DeviceType.UNKNOWN &&
-                            port.deviceType !== DeviceType.UPLINK &&
-                            !port.uplinkDeviceId; // Ensure it's not a switch-to-switch link (already handled by uplinks)
+                    const activeLeafPorts = sw.ports.filter(port =>
+                        port.status === PortStatus.ACTIVE &&
+                        port.deviceType !== DeviceType.UNKNOWN &&
+                        port.deviceType !== DeviceType.UPLINK &&
+                        !port.uplinkDeviceId
+                    );
 
-                        if (isValidLeaf) {
-                            const leafId = `port-device-${port.id}`;
+                    const leafCount = activeLeafPorts.length;
 
-                            // Advanced staggering: Use a combination of port number and a prime-ish factor
-                            // to ensure nodes don't overlap even when wrapping around the circle.
-                            const spacingIncrement = 45; // Fixed degrees to spread out icons significantly
-                            const angle = (port.portNumber * spacingIncrement) * (Math.PI / 180);
+                    activeLeafPorts.forEach((port, index) => {
+                        const leafId = `port-device-${port.id}`;
 
-                            // 3-layer staggering for maximum density handling
-                            const staggerLayer = port.portNumber % 3;
-                            const staggerRadius = 240 + (staggerLayer * 140);
+                        // Dynamic Spreading: Calculate angle based on actual leaf count per switch
+                        // We use a base angle and spread them 360 degrees or a wide arc
+                        const baseAngle = -Math.PI / 2; // Start from top
+                        const spreadAngle = (Math.PI * 2) / Math.max(1, leafCount);
+                        const angle = baseAngle + (index * spreadAngle);
 
-                            subNodes.push({
-                                id: leafId,
-                                name: port.deviceConnected || `${port.deviceType}-${port.portNumber}`,
-                                model: port.deviceType, // Pass device type as model for icon selection
-                                location: sw.location,
-                                rack: sw.rack,
-                                ip: port.ipAddress || 'Active',
-                                totalPorts: 1,
-                                uptime: 'Online',
-                                uplinkId: sw.id,
-                                uplinkPort: port.portNumber, // Track which port this comes from
-                                vlan: port.vlan,
-                                posX: sw.posX ? sw.posX + Math.cos(angle) * staggerRadius : 1500,
-                                posY: sw.posY ? sw.posY + Math.sin(angle) * staggerRadius : 400,
-                                ports: [{
-                                    id: `port-${port.id}`,
-                                    portNumber: 1,
-                                    status: PortStatus.ACTIVE,
-                                    deviceType: port.deviceType,
-                                    ipAddress: port.ipAddress,
-                                    macAddress: port.macAddress,
-                                    linkSpeed: port.linkSpeed
-                                }] // Make it active
-                            });
-                        }
+                        // Multi-layered staggering to handle dense clusters
+                        // Every 8 nodes we move to the next "ring"
+                        const ring = Math.floor(index / 8);
+                        const radius = 250 + (ring * 120);
+
+                        subNodes.push({
+                            id: leafId,
+                            name: port.deviceConnected || `${port.deviceType}-${port.portNumber}`,
+                            model: port.deviceType,
+                            location: sw.location,
+                            rack: sw.rack,
+                            ip: port.ipAddress || 'Active',
+                            totalPorts: 1,
+                            uptime: 'Online',
+                            uplinkId: sw.id,
+                            uplinkPort: port.portNumber,
+                            vlan: port.vlan,
+                            posX: sw.posX ? sw.posX + Math.cos(angle) * radius : 1500,
+                            posY: sw.posY ? sw.posY + Math.sin(angle) * radius : 400,
+                            ports: [{
+                                id: `port-${port.id}`,
+                                portNumber: 1,
+                                status: PortStatus.ACTIVE,
+                                deviceType: port.deviceType,
+                                ipAddress: port.ipAddress,
+                                macAddress: port.macAddress,
+                                linkSpeed: port.linkSpeed
+                            }]
+                        });
                     });
                 });
 
@@ -223,6 +226,36 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             if (editingDevice) {
                 const { error } = await supabase.from('network_switches').update(payload).eq('id', editingDevice.id);
                 if (error) throw error;
+
+                // Sync Ports
+                const oldPortCount = Number(editingDevice.totalPorts);
+                const newPortCount = Number(deviceData.totalPorts);
+
+                if (newPortCount > oldPortCount) {
+                    // Add new ports
+                    const portsToAdd = (deviceData.ports || [])
+                        .filter(p => p.portNumber > oldPortCount)
+                        .map(p => ({
+                            switch_id: editingDevice.id,
+                            port_number: p.portNumber,
+                            status: PortStatus.IDLE,
+                            device_type: DeviceType.UNKNOWN,
+                            patch_panel_port: p.patchPanelPort || `PP-${p.portNumber}`,
+                            cable_type: p.cableType || 'Cat6'
+                        }));
+                    if (portsToAdd.length > 0) {
+                        const { error: portAddErr } = await supabase.from('switch_ports').insert(portsToAdd);
+                        if (portAddErr) throw portAddErr;
+                    }
+                } else if (newPortCount < oldPortCount) {
+                    // Remove extra ports
+                    const { error: portRemErr } = await supabase
+                        .from('switch_ports')
+                        .delete()
+                        .eq('switch_id', editingDevice.id)
+                        .gt('port_number', newPortCount);
+                    if (portRemErr) throw portRemErr;
+                }
             } else {
                 const { data: newSwitch, error: switchError } = await supabase
                     .from('network_switches')
@@ -278,7 +311,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div><h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none">Infrastructure Engine</h1><p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-1 uppercase tracking-widest leading-none">Topology mapping and device configuration</p></div>
+                <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Infrastructure Engine</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Topology mapping and device configuration</p></div>
                 <div className="flex items-center gap-3">
                     {hasUnsavedChanges && activeTab === 'topology' && canManage && (
                         <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce">

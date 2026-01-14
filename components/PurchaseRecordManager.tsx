@@ -146,8 +146,7 @@ export const PurchaseRecordManager: React.FC = () => {
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">Purchase Record</h1>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">Transaction history & Document audit</p>
+                    <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Purchase Record</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Transaction history & Document audit</p></div>
                 </div>
                 <div className="flex gap-2">
                     <button onClick={handleExport} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
