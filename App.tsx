@@ -38,11 +38,12 @@ import {
   Settings, Megaphone
 } from 'lucide-react';
 
+import { Navbar } from './components/Navbar';
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [groupDefinitions, setGroupDefinitions] = useState<UserGroup[]>(MOCK_GROUPS);
   const [appSettings, setAppSettings] = useState({
@@ -55,7 +56,6 @@ const App: React.FC = () => {
   const [isPublicHelpdesk, setIsPublicHelpdesk] = useState(false);
   const [isPublicDirectory, setIsPublicDirectory] = useState(false);
   const [language, setLanguageState] = useState<Language>('en');
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -180,7 +180,6 @@ const App: React.FC = () => {
 
   const handleNavigate = (view: string) => {
     setCurrentView(view);
-    setIsMobileMenuOpen(false);
   };
 
   const refreshUserProfile = async () => {
@@ -274,38 +273,35 @@ const App: React.FC = () => {
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      <div className="flex h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
-        <Sidebar
-          currentView={currentView}
+      <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+        <Header
+          onMenuClick={() => { }}
+          onLogout={() => setIsLogoutModalOpen(true)}
           onNavigate={handleNavigate}
-          isMobileOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          userGroups={currentUser?.groups || []}
-          userName={currentUser?.fullName || 'User'}
-          userRole={currentUser?.role}
-          groupDefinitions={groupDefinitions}
-          isCollapsed={isCollapsed}
-          setIsCollapsed={setIsCollapsed}
           appName={appSettings.name}
           logoUrl={appSettings.logo}
+          user={currentUser ? {
+            name: currentUser.fullName,
+            role: currentUser.role,
+            email: currentUser.email,
+            jobTitle: currentUser.jobTitle,
+            avatarUrl: currentUser.avatarUrl
+          } : undefined}
         />
-        <div className={`flex-1 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} flex flex-col h-screen overflow-hidden transition-all duration-300`}>
-          <Header
-            onMenuClick={() => setIsMobileMenuOpen(true)}
-            onLogout={() => setIsLogoutModalOpen(true)}
-            onNavigate={handleNavigate}
-            user={currentUser ? {
-              name: currentUser.fullName,
-              role: currentUser.role,
-              email: currentUser.email,
-              jobTitle: currentUser.jobTitle,
-              avatarUrl: currentUser.avatarUrl
-            } : undefined}
-          />
+
+        <Navbar
+          currentView={currentView}
+          onNavigate={handleNavigate}
+          userGroups={currentUser?.groups || []}
+          userRole={currentUser?.role}
+          groupDefinitions={groupDefinitions}
+        />
+
+        <div className="flex-1 flex overflow-hidden relative">
           <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
             <AnnouncementBanner />
-            <div className="flex-1 p-4 md:p-10">
-              <div className="max-w-7xl mx-auto h-full">
+            <div className="flex-1 p-4 md:p-8">
+              <div className="max-w-[1800px] mx-auto h-full">
                 {renderContent()}
               </div>
             </div>
