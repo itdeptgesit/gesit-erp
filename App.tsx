@@ -57,6 +57,10 @@ const App: React.FC = () => {
   const [isPublicDirectory, setIsPublicDirectory] = useState(false);
   const [language, setLanguageState] = useState<Language>('en');
 
+  // Sidebar State
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const assetId = params.get('id');
@@ -274,8 +278,23 @@ const App: React.FC = () => {
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+        <Sidebar
+          currentView={currentView}
+          onNavigate={(view) => { handleNavigate(view); setIsMobileSidebarOpen(false); }}
+          isMobileOpen={isMobileSidebarOpen}
+          onClose={() => setIsMobileSidebarOpen(false)}
+          userGroups={currentUser?.groups || []}
+          userName={currentUser?.fullName || 'User'}
+          userRole={currentUser?.role}
+          groupDefinitions={groupDefinitions}
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
+          appName={appSettings.name}
+          logoUrl={appSettings.logo}
+        />
+
         <Header
-          onMenuClick={() => { }}
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
           onLogout={() => setIsLogoutModalOpen(true)}
           onNavigate={handleNavigate}
           appName={appSettings.name}
@@ -298,7 +317,7 @@ const App: React.FC = () => {
         />
 
         <div className="flex-1 flex overflow-hidden relative">
-          <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
+          <main className={`flex-1 overflow-y-auto flex flex-col custom-scrollbar`}>
             <AnnouncementBanner />
             <div className="flex-1 p-4 md:p-8">
               <div className="max-w-[1800px] mx-auto h-full">
