@@ -178,8 +178,17 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                                                 if (!file) return;
 
                                                 // Simple Cloudinary Upload Logic (Same as Profile)
-                                                const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
-                                                const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+                                                const getEnv = (key: string, fallback: string): string => {
+                                                    try {
+                                                        // @ts-ignore
+                                                        return (window.process?.env?.[key] || process?.env?.[key] || (import.meta as any).env?.[key] || fallback);
+                                                    } catch (e) {
+                                                        return fallback;
+                                                    }
+                                                };
+
+                                                const cloudName = getEnv('VITE_CLOUDINARY_CLOUD_NAME', 'dmr8bxdos');
+                                                const uploadPreset = getEnv('VITE_CLOUDINARY_UPLOAD_PRESET', 'gesit_erp_preset');
                                                 const data = new FormData();
                                                 data.append('file', file);
                                                 data.append('upload_preset', uploadPreset);
@@ -187,10 +196,15 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                                                 try {
                                                     const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: data });
                                                     const json = await res.json();
-                                                    if (json.secure_url) setFormData({ ...formData, image_url: json.secure_url });
+                                                    if (json.secure_url) {
+                                                        setFormData({ ...formData, image_url: json.secure_url });
+                                                    } else if (json.error) {
+                                                        console.error("Cloudinary error:", json.error);
+                                                        alert(`Upload failed: ${json.error.message}`);
+                                                    }
                                                 } catch (err) {
                                                     console.error("Upload failed", err);
-                                                    alert("Failed to upload image.");
+                                                    alert("Failed to upload image. Protocol interrupted.");
                                                 }
                                             }}
                                         />

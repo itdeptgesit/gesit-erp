@@ -249,12 +249,14 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                     <div className="flex items-center gap-3">
                       <div
                         onClick={() => { setDetailAsset(asset); setIsDetailOpen(true); }}
-                        className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 hover:shadow-md transition-all active:scale-95"
+                        className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:shadow-lg transition-all active:scale-95 border-dashed"
                       >
                         {asset.image_url ? (
                           <img src={asset.image_url} alt={asset.item} className="w-full h-full object-cover" />
                         ) : (
-                          <Package size={16} className="text-slate-400" />
+                          <div className="flex flex-col items-center opacity-20 group-hover:opacity-40 transition-opacity">
+                            <Package size={14} className="text-slate-500" />
+                          </div>
                         )}
                       </div>
                       <div className="flex flex-col">

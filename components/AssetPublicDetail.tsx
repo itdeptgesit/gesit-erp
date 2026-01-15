@@ -107,9 +107,12 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                     <div className="flex flex-col items-center text-center mb-10">
                         <div className="w-full max-w-sm h-64 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-slate-200 shadow-inner p-4">
                             {asset.image_url ? (
-                                <img src={asset.image_url} alt={asset.item} className="w-full h-full object-contain mix-blend-multiply" />
+                                <img src={asset.image_url} alt={asset.item} className="w-full h-full object-contain" />
                             ) : (
-                                <Package size={40} className="text-blue-600" />
+                                <div className="flex flex-col items-center gap-2 opacity-20">
+                                    <Package size={64} className="text-slate-400" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">No Image Proxy</span>
+                                </div>
                             )}
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2 uppercase">{asset.item}</h1>

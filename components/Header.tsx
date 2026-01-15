@@ -167,31 +167,40 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="glass-header flex items-center justify-between px-8 h-16 sticky top-0 z-50 transition-all dark:bg-[#020617]/95 dark:border-slate-800/50 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
+    <header className="glass-header flex items-center justify-between px-4 md:px-8 h-16 sticky top-0 z-50 transition-all dark:bg-[#020617]/95 dark:border-slate-800/50 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)]">
       {/* branding */}
-      <div className="flex items-center gap-5 cursor-pointer group" onClick={() => onNavigate?.('dashboard')}>
-        <div className="relative">
-          <img src={logoUrl || LOGO_URL} alt="Logo" className="h-10 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-sm" />
-          <div className="absolute -inset-1 bg-blue-500/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        </div>
+      <div className="flex items-center gap-2 md:gap-4">
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+        >
+          <Menu size={20} />
+        </button>
 
-        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800/80 mx-1"></div>
+        <div className="flex items-center gap-2 md:gap-5 cursor-pointer group" onClick={() => onNavigate?.('dashboard')}>
+          <div className="relative hidden md:block">
+            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-10 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-sm" />
+            <div className="absolute -inset-1 bg-blue-500/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
 
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none flex items-center gap-1.5">
-            <span className="bg-clip-text text-transparent bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
-              {appName.split(' ')[0]}
-            </span>
-            <span className="text-blue-600 relative">
-              {appName.split(' ').slice(1).join(' ')}
-            </span>
-          </h1>
-          <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] mt-0.5">Enterprise Infrastructure</p>
+          <div className="h-8 w-px bg-slate-200 dark:bg-slate-800/80 mx-1 hidden md:block"></div>
+
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none flex items-center gap-1.5">
+              <span className="bg-clip-text text-transparent bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+                {appName.split(' ')[0]}
+              </span>
+              <span className="text-blue-600 relative">
+                {appName.split(' ').slice(1).join(' ')}
+              </span>
+            </h1>
+            <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] mt-0.5 hidden md:block">Enterprise Infrastructure</p>
+          </div>
         </div>
       </div>
 
       {/* header tools */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* mobile menu toggle hidden - sidebar removed */}
 
         <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">

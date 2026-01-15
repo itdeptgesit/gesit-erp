@@ -157,7 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return (
         <>
             {isMobileOpen && <div className="fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-sm transition-all" onClick={onClose} />}
-            <aside className={`fixed top-0 left-0 bottom-0 z-50 bg-white dark:bg-[#0f172a] border-r border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+            <aside className={`fixed top-0 left-0 bottom-0 z-50 bg-white dark:bg-[#0f172a] border-r border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:-translate-x-full ${isCollapsed ? 'w-20' : 'w-64'}`}>
                 <div className={`px-6 py-8 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
                     <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-auto min-w-[32px]" />
                     {!isCollapsed && (
