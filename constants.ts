@@ -5,7 +5,7 @@ export const APP_NAME = 'Gesit ERP';
 export const CURRENT_USER_GROUPS = ['admin'];
 
 export const MOCK_GROUPS = [
-    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'admin', 'users', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance'] },
+    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'admin', 'users', 'system-settings', 'tracking-log', 'announcements', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance'] },
     { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'purchase-record'] },
     { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'purchase', 'purchase-record'] }
 ];
@@ -25,6 +25,7 @@ export const APP_MENU_STRUCTURE = [
     { id: 'admin', label: 'Administration', iconName: 'Shield' },
     { id: 'users', label: 'User Accounts', parentId: 'admin', iconName: 'Users' },
     { id: 'system-settings', label: 'System Settings', parentId: 'admin', iconName: 'Settings' },
+    { id: 'tracking-log', label: 'Tracking Log', parentId: 'admin', iconName: 'Activity' },
     { id: 'announcements', label: 'Broadcasts', parentId: 'admin', iconName: 'Megaphone' },
     { id: 'master-company', label: 'Company Data', parentId: 'admin', iconName: 'Building2' },
     { id: 'master-department', label: 'Departments', parentId: 'admin', iconName: 'Briefcase' },

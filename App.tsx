@@ -22,6 +22,7 @@ import { SystemMaintenance } from './components/SystemMaintenance';
 import { SystemSettings } from './components/SystemSettings';
 import { AnnouncementManager } from './components/AnnouncementManager';
 import { ExtensionDirectory } from './components/ExtensionDirectory';
+import { AuditLogManager } from './components/AuditLogManager';
 import { LoginPage } from './components/LoginPage';
 import { AssetPublicDetail } from './components/AssetPublicDetail';
 import { HelpdeskPublic } from './components/HelpdeskPublic';
@@ -142,6 +143,28 @@ const App: React.FC = () => {
     if (isAuthenticated) fetchGroups();
   }, [isAuthenticated]);
 
+  const updateUserActivity = async () => {
+    if (!currentUser?.email) return;
+    try {
+      await supabase
+        .from('user_accounts')
+        .update({ last_login: new Date().toISOString() })
+        .eq('email', currentUser.email);
+    } catch (err) {
+      console.warn("Heartbeat update failed", err);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      // First heartbeat
+      updateUserActivity();
+
+      const interval = setInterval(updateUserActivity, 300000); // Pulse every 5 minutes
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, currentUser?.email]);
+
   const handleLogin = async (email: string) => {
     const { data } = await supabase
       .from('user_accounts')
@@ -169,6 +192,12 @@ const App: React.FC = () => {
       };
       setCurrentUser(userProfile);
       setIsAuthenticated(true);
+
+      // Update timestamp on login
+      await supabase
+        .from('user_accounts')
+        .update({ last_login: new Date().toISOString() })
+        .eq('email', email);
     } else {
       setIsAuthenticated(true);
     }
@@ -217,17 +246,19 @@ const App: React.FC = () => {
       case 'extension-directory':
         return <ExtensionDirectory currentUser={currentUser} />;
       case 'users':
-        return <UserManagement onUpdateSuccess={refreshUserProfile} />;
+        return <UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />;
       case 'master-company':
-        return <MasterCompany />;
+        return <MasterCompany currentUser={currentUser} />;
       case 'master-department':
-        return <MasterDepartment />;
+        return <MasterDepartment currentUser={currentUser} />;
       case 'master-category':
-        return <MasterCategory />;
+        return <MasterCategory currentUser={currentUser} />;
       case 'master-group':
-        return <MasterGroup />;
+        return <MasterGroup currentUser={currentUser} />;
       case 'system-settings':
-        return <SystemSettings />;
+        return <SystemSettings currentUser={currentUser} />;
+      case 'tracking-log':
+        return <AuditLogManager currentUser={currentUser} />;
       case 'announcements':
         return <AnnouncementManager />;
       case 'maintenance':

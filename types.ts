@@ -277,3 +277,13 @@ export interface PhoneExtension {
   role?: string;
   pin?: string;
 }
+export interface AuditLog {
+  id: number;
+  userName: string;
+  userRole: string;
+  action: string;
+  module: string;
+  details?: string;
+  ipAddress?: string;
+  createdAt: string;
+}
