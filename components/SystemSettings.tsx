@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Settings, Globe, Shield, Image as ImageIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { trackActivity } from '../lib/auditLogger';
+import { UserAccount } from '../types';
+
+interface SystemSettingsProps {
+    currentUser: UserAccount | null;
+}
 
 interface SystemSettings {
     appName: string;
@@ -11,7 +17,7 @@ interface SystemSettings {
     primaryColor: string;
 }
 
-export const SystemSettings: React.FC = () => {
+export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) => {
     const [settings, setSettings] = useState<SystemSettings>({
         appName: 'Gesit ERP',
         logoUrl: 'https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png',
@@ -59,6 +65,14 @@ export const SystemSettings: React.FC = () => {
 
             const { error } = await supabase.from('system_settings').upsert({ id: 1, ...payload });
             if (error) throw error;
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                'Update Settings',
+                'System',
+                `Updated global system configurations (AppName: ${settings.appName})`
+            );
 
             setStatusMsg({ text: 'Settings updated successfully!', type: 'success' });
             // In a real app, you'd trigger a global state refresh here

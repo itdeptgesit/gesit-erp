@@ -31,6 +31,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { trackActivity } from "../lib/auditLogger";
 import { PhoneExtension, UserAccount } from "../types";
 import { useLanguage } from "../translations";
 
@@ -422,11 +423,13 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                     })
                     .eq('id', editingExt.id);
                 if (error) throw error;
+                await trackActivity(currentUser?.fullName || 'User', currentUser?.role || 'User', 'Update Extension', 'Extensions', `Updated extension ${formData.ext} for ${formData.name}`);
             } else {
                 const { error } = await supabase
                     .from('phone_extensions')
                     .insert([formData]);
                 if (error) throw error;
+                await trackActivity(currentUser?.fullName || 'User', currentUser?.role || 'User', 'Create Extension', 'Extensions', `Created new extension ${formData.ext} for ${formData.name}`);
             }
             setIsModalOpen(false);
             fetchExtensions();
@@ -445,6 +448,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                 .delete()
                 .eq('id', id);
             if (error) throw error;
+            await trackActivity(currentUser?.fullName || 'User', currentUser?.role || 'User', 'Delete Extension', 'Extensions', `Deleted extension with ID ${id}`);
             fetchExtensions();
         } catch (error) {
             console.error('Error deleting extension:', error);

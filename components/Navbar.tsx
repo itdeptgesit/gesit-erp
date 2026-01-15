@@ -106,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="w-full bg-white/70 dark:bg-[#020617]/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 sticky top-16 z-40 transition-all hidden md:flex justify-center py-3.5 px-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none"
             ref={navRef}
         >
-            <nav className="flex items-center gap-3 max-w-[1400px] w-full overflow-x-auto no-scrollbar scroll-smooth">
+            <nav className="flex items-center gap-3 max-w-[1400px] w-full">
                 <LayoutGroup>
                     {menuItems.map((item: any) => {
                         const hasSub = !!item.subItems;

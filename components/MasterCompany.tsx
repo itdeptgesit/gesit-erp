@@ -5,10 +5,15 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Building2, MapPin, Phone, Globe, Pencil, Trash2, RefreshCcw, Tag } from 'lucide-react';
 import { CompanyFormModal } from './CompanyFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
-import { Company } from '../types';
+import { Company, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
+import { trackActivity } from '../lib/auditLogger';
 
-export const MasterCompany: React.FC = () => {
+interface MasterCompanyProps {
+    currentUser: UserAccount | null;
+}
+
+export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -52,6 +57,15 @@ export const MasterCompany: React.FC = () => {
         try {
             const { error } = await supabase.from('companies').delete().eq('id', deleteCompany.id);
             if (error) throw error;
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                'Delete Company',
+                'Master',
+                `Deleted company ${deleteCompany.name} (${deleteCompany.code})`
+            );
+
             await fetchCompanies();
             setDeleteCompany(null);
         } catch (err: any) {
@@ -67,6 +81,15 @@ export const MasterCompany: React.FC = () => {
         } else {
             await supabase.from('companies').insert([data]);
         }
+
+        await trackActivity(
+            currentUser?.fullName || 'User',
+            currentUser?.role || 'User',
+            editingCompany ? 'Update Company' : 'Create Company',
+            'Master',
+            `${editingCompany ? 'Updated' : 'Created'} company ${data.name} (${data.code})`
+        );
+
         fetchCompanies();
     };
 

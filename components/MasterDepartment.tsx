@@ -7,6 +7,12 @@ import { DepartmentFormModal } from './DepartmentFormModal';
 import { DepartmentMembersModal } from './DepartmentMembersModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
+import { trackActivity } from '../lib/auditLogger';
+import { UserAccount } from '../types';
+
+interface MasterDepartmentProps {
+    currentUser: UserAccount | null;
+}
 
 interface Department {
     id: number;
@@ -16,7 +22,7 @@ interface Department {
     description: string;
 }
 
-export const MasterDepartment: React.FC = () => {
+export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -92,6 +98,15 @@ export const MasterDepartment: React.FC = () => {
         try {
             const { error: deleteError } = await supabase.from('departments').delete().eq('id', deleteDept.id);
             if (deleteError) throw deleteError;
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                'Delete Department',
+                'Master',
+                `Deleted department ${deleteDept.name}`
+            );
+
             await fetchDepartments();
             setDeleteDept(null);
         } catch (err: any) {
@@ -116,6 +131,15 @@ export const MasterDepartment: React.FC = () => {
                 const { error: insertError } = await supabase.from('departments').insert([payload]);
                 if (insertError) throw insertError;
             }
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                editingDept ? 'Update Department' : 'Create Department',
+                'Master',
+                `${editingDept ? 'Updated' : 'Created'} department ${payload.name}`
+            );
+
             fetchDepartments();
         } catch (err: any) {
             alert("Failed to save department: " + err.message);

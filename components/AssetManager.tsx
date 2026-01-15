@@ -11,6 +11,7 @@ import { AssetQRModal } from './AssetQRModal';
 import { AssetDetailModal } from './AssetDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
+import { trackActivity } from '../lib/auditLogger';
 import { useLanguage } from '../translations';
 import { StatCard } from './MainDashboard';
 
@@ -320,7 +321,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             error = result.error;
           }
 
+
           if (error) throw error;
+
+          await trackActivity(
+            currentUser?.fullName || 'User',
+            currentUser?.role || 'User',
+            editingAsset ? 'Update Asset' : 'Create Asset',
+            'Assets',
+            `${editingAsset ? 'Updated' : 'Created'} asset ${payload.asset_id} (${payload.item_name})`
+          );
 
           setNotification({ text: editingAsset ? 'Asset updated successfully' : 'Asset added successfully', type: 'success' });
           setTimeout(() => setNotification(null), 3000);
@@ -336,7 +346,21 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       }} initialData={editingAsset} />
       <AssetQRModal isOpen={isQROpen} onClose={() => setIsQROpen(false)} asset={qrAsset} />
       <AssetDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} asset={detailAsset} />
-      <DangerConfirmModal isOpen={!!deleteAsset} onClose={() => setDeleteAsset(null)} onConfirm={async () => { if (!deleteAsset) return; await supabase.from('it_assets').delete().eq('id', deleteAsset.id); setDeleteAsset(null); await fetchAssets(); }} title="Purge Record" message={`Irreversibly remove "${deleteAsset?.item}" node?`} />
+      <DangerConfirmModal isOpen={!!deleteAsset} onClose={() => setDeleteAsset(null)} onConfirm={async () => {
+        if (!deleteAsset) return;
+        const { error } = await supabase.from('it_assets').delete().eq('id', deleteAsset.id);
+        if (!error) {
+          await trackActivity(
+            currentUser?.fullName || 'User',
+            currentUser?.role || 'User',
+            'Delete Asset',
+            'Assets',
+            `Deleted asset ${deleteAsset.assetId} (${deleteAsset.item})`
+          );
+        }
+        setDeleteAsset(null);
+        await fetchAssets();
+      }} title="Purge Record" message={`Irreversibly remove "${deleteAsset?.item}" node?`} />
     </div>
   );
 };

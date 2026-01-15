@@ -6,12 +6,14 @@ import { UserAccount, UserGroup } from '../types';
 import { UserFormModal } from './UserFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
+import { trackActivity } from '../lib/auditLogger';
 
 interface UserManagementProps {
   onUpdateSuccess?: () => void;
+  currentUser: UserAccount | null;
 }
 
-export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess }) => {
+export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess, currentUser }) => {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,9 +24,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess 
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const formatRelativeTime = (dateStr: string | null) => {
+    if (!dateStr || dateStr === 'Never') return 'Never active';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInSecs = Math.floor(diffInMs / 1000);
+    const diffInMins = Math.floor(diffInSecs / 60);
+    const diffInHours = Math.floor(diffInMins / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInSecs < 60) return 'Just now';
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -50,7 +68,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess 
           jobTitle: u.job_title,
           supervisorId: u.supervisor_id?.toString(),
           managerId: u.manager_id?.toString(),
-          lastLogin: u.last_login ? new Date(u.last_login).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Never',
+          lastLogin: u.last_login ? u.last_login : 'Never',
           avatarUrl: u.avatar_url
         })));
       }
@@ -156,7 +174,21 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess 
                   </td>
                   <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></td>
                   <td className="px-6 py-4"><div className="space-y-1">{user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[9px] font-bold"><ShieldCheck size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}{user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold"><Target size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}</div></td>
-                  <td className="px-6 py-4"><div className="flex items-center gap-2 text-slate-400 dark:text-slate-500"><Clock size={12} className="shrink-0 opacity-60" /><span className="text-[10px] font-medium font-mono">{user.lastLogin}</span></div></td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <Clock size={12} className={`shrink-0 ${user.lastLogin !== 'Never' && (new Date().getTime() - new Date(user.lastLogin).getTime() < 300000) ? 'text-emerald-500 animate-pulse' : 'opacity-60 text-slate-400'}`} />
+                        <span className={`text-[10px] font-bold tracking-tighter uppercase ${user.lastLogin !== 'Never' && (new Date().getTime() - new Date(user.lastLogin).getTime() < 300000) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                          {formatRelativeTime(user.lastLogin)}
+                        </span>
+                      </div>
+                      {user.lastLogin !== 'Never' && (
+                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-600 ml-5">
+                          {new Date(user.lastLogin).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(user.lastLogin).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all"><button onClick={() => handleEditUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all"><Pencil size={16} /></button><button onClick={() => setDeleteUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all"><Trash2 size={16} /></button></div></td>
                 </tr>
               ))}
@@ -200,6 +232,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess 
               await supabase.from('user_accounts').insert([payload]);
             }
             if (onUpdateSuccess) onUpdateSuccess();
+
+            await trackActivity(
+              currentUser?.fullName || 'User',
+              currentUser?.role || 'User',
+              editingUser ? 'Update User' : 'Create User',
+              'UserManagement',
+              `${editingUser ? 'Updated' : 'Created'} user ${payload.email} (${payload.full_name})`
+            );
+
             fetchData();
           } catch (err: any) {
             alert("Failed to save user: " + err.message);
@@ -217,6 +258,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess 
           setIsProcessing(true);
           try {
             await supabase.from('user_accounts').delete().eq('id', deleteUser.id);
+
+            await trackActivity(
+              currentUser?.fullName || 'User',
+              currentUser?.role || 'User',
+              'Delete User',
+              'UserManagement',
+              `Deleted user ${deleteUser.email} (${deleteUser.fullName})`
+            );
+
             await fetchData();
             setDeleteUser(null);
           } catch (err: any) {
