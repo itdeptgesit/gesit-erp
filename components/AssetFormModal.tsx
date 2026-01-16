@@ -65,7 +65,13 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
 
     // Logic Otomatis Update Asset ID
     useEffect(() => {
-        if (!isOpen || !formData.company || !formData.category || initialData) return;
+        if (!isOpen || !formData.company || !formData.category) return;
+
+        // Only auto-generate if it's a new asset OR if the current ID starts with GEN
+        const currentId = formData.assetId || '';
+        const isBadId = currentId.startsWith('GEN-') || !currentId;
+
+        if (initialData && !isBadId) return;
 
         const generateSequentialId = async () => {
             const companyObj = companyList.find(c => c.name === formData.company);
@@ -143,16 +149,25 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                     <form onSubmit={handleSubmit} id="assetForm" className="space-y-8">
 
                         {/* Asset ID Preview Banner */}
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-inner">
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8 flex items-center justify-between group">
                             <div>
-                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Generated Asset Identity</p>
-                                <h3 className="text-2xl font-mono font-black text-blue-700 dark:text-blue-400 tracking-tighter">
-                                    {formData.assetId || '---'}
-                                </h3>
+                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">Generated Asset Identity</p>
+                                <div className="flex items-center gap-3">
+                                    <h2 className={`text-2xl font-black ${formData.assetId?.startsWith('GEN-') ? 'text-amber-500' : 'text-blue-100'} tracking-tight`}>{formData.assetId || 'Wait...'}</h2>
+                                    {formData.assetId?.startsWith('GEN-') && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, assetId: '' }))}
+                                            className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-500 text-[9px] font-bold uppercase rounded-lg hover:bg-amber-500 hover:text-white transition-all"
+                                        >
+                                            Fix ID Format
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Info size={14} className="text-blue-400" />
-                                <p className="text-[10px] text-blue-600 dark:text-blue-300 font-medium max-w-[200px]">ID updates automatically based on company and category selection.</p>
+                            <div className="flex items-center gap-3 text-right max-w-[200px]">
+                                <Info size={16} className="text-blue-400/50 shrink-0" />
+                                <p className="text-[10px] font-medium text-blue-300/60 leading-relaxed">ID updates automatically based on company and category selection.</p>
                             </div>
                         </div>
 

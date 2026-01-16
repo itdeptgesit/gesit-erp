@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, Plus, Pencil, QrCode, RefreshCcw, Trash2, Package, CheckCircle2, History,
   Download, FileSpreadsheet, ChevronLeft, ChevronRight, Clock, AlertCircle, XCircle, RotateCcw
 } from 'lucide-react';
-import { ITAsset, UserAccount } from '../types';
 import { AssetFormModal } from './AssetFormModal';
 import { AssetQRModal } from './AssetQRModal';
 import { AssetDetailModal } from './AssetDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
+import { ITAsset, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
-import { trackActivity } from '../lib/auditLogger';
 import { useLanguage } from '../translations';
+import { trackActivity } from '../lib/auditLogger';
+import * as XLSX from 'xlsx';
 import { StatCard } from './MainDashboard';
 
 interface AssetManagerProps {
@@ -33,6 +34,8 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const [detailAsset, setDetailAsset] = useState<ITAsset | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [notification, setNotification] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   // RBAC Logic
   const isAdmin = currentUser?.role === 'Admin';
@@ -56,56 +59,6 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         })));
       }
     } catch (error) { console.error('Error fetching assets:', error); } finally { setIsLoading(false); }
-  };
-
-  const reIndexAllAssets = async () => {
-    if (!isAdmin) return;
-    setIsLoading(true);
-    try {
-      // 1. Fetch all needed data
-      const { data: allAssets } = await supabase.from('it_assets').select('*').order('id', { ascending: true });
-      const { data: companies } = await supabase.from('companies').select('name, code');
-      const { data: categories } = await supabase.from('asset_categories').select('name, code');
-
-      if (!allAssets) return;
-
-      const companyMap = new Map(companies?.map(c => [c.name, c.code]));
-      const categoryMap = new Map(categories?.map(c => [c.name, c.code]));
-
-      // 2. Group assets
-      const groups: Record<string, any[]> = {};
-      allAssets.forEach(a => {
-        const key = `${a.company}|${a.category}`;
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(a);
-      });
-
-      // 3. Process each group
-      for (const key in groups) {
-        const [compName, catName] = key.split('|');
-        const compCode = companyMap.get(compName) || compName.substring(0, 3).toUpperCase();
-        const catCode = categoryMap.get(catName) || catName.substring(0, 3).toUpperCase();
-
-        const assetsInGroup = groups[key];
-        for (let i = 0; i < assetsInGroup.length; i++) {
-          const suffix = (i + 1).toString().padStart(3, '0');
-          const newAssetId = `${compCode}-${catCode}-${suffix}`;
-
-          await supabase
-            .from('it_assets')
-            .update({ asset_id: newAssetId })
-            .eq('id', assetsInGroup[i].id);
-        }
-      }
-
-      setNotification({ text: 'All assets have been re-indexed sequentially.', type: 'success' });
-      await fetchAssets();
-    } catch (error: any) {
-      console.error('Re-indexing failed:', error);
-      setNotification({ text: `Failed to re-index: ${error.message}`, type: 'error' });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   useEffect(() => { fetchAssets(); }, []);
@@ -164,11 +117,188 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
     document.body.removeChild(link);
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        "Item": "Contoh: Laptop Thinkpad X1",
+        "Category": "Laptop",
+        "Company": "Gesit Alumas",
+        "Brand": "Lenovo",
+        "Serial Number": "SN123456",
+        "Status": "Active",
+        "Custodian": "Rudi",
+        "Location": "Office A",
+        "Department": "IT",
+        "Purchase Date": "2024-01-20",
+        "Remarks": "Catatan tambahan",
+        "Asset ID": ""
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Assets");
+
+    // Auto-size columns
+    const wscols = [
+      { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 },
+      { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+      { wch: 30 }, { wch: 20 }
+    ];
+    ws['!cols'] = wscols;
+
+    XLSX.writeFile(wb, "GESIT_ASSET_TEMPLATE.xlsx");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setNotification({ text: 'Starting bulk import...', type: 'success' });
+
+    try {
+      const reader = new FileReader();
+      const loadFile = () => new Promise<ArrayBuffer>((resolve) => {
+        reader.onload = (evt) => resolve(evt.target?.result as ArrayBuffer);
+        reader.readAsArrayBuffer(file);
+      });
+
+      const buffer = await loadFile();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (rawData.length === 0) throw new Error('Excel file is empty');
+
+      // 1. Fetch metadata for ID generation
+      const { data: companies } = await supabase.from('companies').select('name, code');
+      const { data: categories } = await supabase.from('asset_categories').select('name, code');
+      const { data: existingAssets } = await supabase.from('it_assets').select('asset_id, company, category');
+
+      const companyMap = new Map(companies?.map(c => [c.name.toLowerCase().trim(), c.code]));
+      const categoryMap = new Map(categories?.map(c => [c.name.toLowerCase().trim(), c.code]));
+
+      // 2. Build current counters for sequential IDs
+      const counters: Record<string, number> = {};
+      existingAssets?.forEach(a => {
+        const parts = (a.asset_id || '').split('-');
+        if (parts.length >= 3) {
+          const prefix = `${parts[0]}-${parts[1]}`;
+          const num = parseInt(parts[2], 10);
+          if (!isNaN(num)) {
+            counters[prefix] = Math.max(counters[prefix] || 0, num);
+          }
+        }
+      });
+
+      const validRecords = rawData.map((rawRow: any) => {
+        // Normalize keys
+        const row: any = {};
+        Object.keys(rawRow).forEach(key => {
+          if (rawRow[key] !== null && rawRow[key] !== undefined) {
+            row[key.toLowerCase().trim()] = rawRow[key];
+          }
+        });
+
+        if (Object.keys(row).length === 0) return null;
+
+        const itemName = (row.item || row.itemname || row['item name'] || row.name || row.produk || row.barang || row.item_name || '').toString().trim();
+        const category = (row.category || row.kategori || '').toString().trim();
+        const company = (row.company || row.perusahaan || row.pt || '').toString().trim();
+
+        if (!itemName || !category || !company) return null;
+
+        // Generate Professional ID: COMP-CAT-001
+        let finalAssetId = (row.assetid || row.asset_id || row['asset id'] || '').toString().trim();
+
+        if (!finalAssetId) {
+          const compCode = companyMap.get(company.toLowerCase()) || company.substring(0, 3).toUpperCase();
+          const catCode = categoryMap.get(category.toLowerCase()) || category.substring(0, 3).toUpperCase();
+          const prefix = `${compCode}-${catCode}`;
+
+          counters[prefix] = (counters[prefix] || 0) + 1;
+          const suffix = counters[prefix].toString().padStart(3, '0');
+          finalAssetId = `${prefix}-${suffix}`;
+        }
+
+        return {
+          item_name: itemName,
+          category: category,
+          brand: (row.brand || row.merk || '').toString().trim(),
+          serial_number: (row.serialnumber || row.serial_number || row['serial number'] || row.sn || '').toString().trim(),
+          status: (row.status || 'Active').toString().trim(),
+          location: (row.location || row.lokasi || '').toString().trim(),
+          user_assigned: (row.user || row.custodian || row.pemakai || '').toString().trim(),
+          remarks: (row.remarks || row.notes || row.keterangan || '').toString().trim(),
+          company: company,
+          department: (row.department || row.departemen || row.dept || '').toString().trim(),
+          purchase_date: row.purchasedate || row.purchase_date || row['purchase date'] || row.tanggal || null,
+          asset_id: finalAssetId,
+          image_url: row.image_url || row.image || null
+        };
+      }).filter((r): r is any => r !== null);
+
+      if (validRecords.length === 0) {
+        const foundHeaders = rawData.length > 0 ? Object.keys(rawData[0]).join(', ') : 'None';
+        throw new Error(`Data tidak terbaca atau kolom utama (Item, Category, Company) tidak ditemukan. Judul kolom yang terbaca: [${foundHeaders}]`);
+      }
+
+      const { error } = await supabase.from('it_assets').insert(validRecords);
+      if (error) throw error;
+
+      await trackActivity(
+        currentUser?.fullName || 'User',
+        currentUser?.role || 'User',
+        'Bulk Import',
+        'Assets',
+        `Imported ${validRecords.length} assets from Excel`
+      );
+
+      setNotification({ text: `Successfully imported ${validRecords.length} assets`, type: 'success' });
+      fetchAssets();
+    } catch (err: any) {
+      console.error('Import error:', err);
+      setNotification({ text: `Import failed: ${err.message}`, type: 'error' });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Asset Manager</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Managed Asset Company</p></div>
-        <button onClick={handleExportCSV} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"><FileSpreadsheet size={16} /> {t('exportData')}</button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".xlsx, .xls, .csv"
+            onChange={handleImportExcel}
+          />
+          {isAdmin && (
+            <div className="flex gap-2">
+              <button
+                onClick={handleDownloadTemplate}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
+                title="Download Blank Template"
+              >
+                <Download size={14} /> Template
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95"
+              >
+                <FileSpreadsheet size={16} className={isImporting ? 'animate-bounce' : ''} /> {isImporting ? 'Processing...' : 'Import Data'}
+              </button>
+            </div>
+          )}
+          <button onClick={handleExportCSV} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"><Download size={16} /> {t('exportData')}</button>
+        </div>
       </div>
 
       {notification && (
@@ -209,16 +339,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
 
           {canManage && (
             <div className="flex gap-2">
-              {isAdmin && (
-                <button
-                  onClick={() => { if (confirm('Re-index ALL existing asset codes sequentially? This will change existing IDs.')) reIndexAllAssets(); }}
-                  disabled={isLoading}
-                  className="p-2.5 rounded-xl border border-blue-200 text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center"
-                  title="Re-index Sequential IDs"
-                >
-                  <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
-                </button>
-              )}
+
               <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
                 <Plus size={14} /> Add Asset
               </button>
@@ -310,7 +431,24 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
 
       <AssetFormModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingAsset(null); }} onSubmit={async (formData) => {
         try {
-          const payload = { item_name: formData.item, category: formData.category, brand: formData.brand, serial_number: formData.serialNumber, status: formData.status, location: formData.location, user_assigned: formData.user, remarks: formData.remarks, company: formData.company, department: formData.department, purchase_date: formData.purchaseDate, specs: formData.specs, asset_id: formData.assetId || `GEN-${Date.now().toString().substring(7)}`, image_url: formData.image_url };
+          if (!formData.assetId) throw new Error("Asset ID could not be generated. Please select Company and Category.");
+
+          const payload = {
+            item_name: formData.item,
+            category: formData.category,
+            brand: formData.brand,
+            serial_number: formData.serialNumber,
+            status: formData.status,
+            location: formData.location,
+            user_assigned: formData.user,
+            remarks: formData.remarks,
+            company: formData.company,
+            department: formData.department,
+            purchase_date: formData.purchaseDate,
+            specs: formData.specs,
+            asset_id: formData.assetId,
+            image_url: formData.image_url
+          };
 
           let error;
           if (editingAsset) {
