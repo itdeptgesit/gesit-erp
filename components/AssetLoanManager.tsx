@@ -161,7 +161,11 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
             const { error: assetError } = await supabase
                 .from('it_assets')
-                .update({ status: 'Idle', user_assigned: null })
+                .update({ 
+                    status: 'Idle', 
+                    user_assigned: null,
+                    department: 'IT' // Or keep current, but usually returns to IT
+                })
                 .eq('id', loan.assetId);
 
             if (assetError) throw assetError;
@@ -320,9 +324,19 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
                         if (editingLoan) {
                             await supabase.from('it_asset_loans').update(payload).eq('id', editingLoan.id);
+                            // Update asset as well even if editing
+                            await supabase.from('it_assets').update({ 
+                                status: formData.status === 'Active' ? 'Used' : 'Idle', 
+                                user_assigned: formData.status === 'Active' ? formData.borrowerName : null,
+                                department: formData.borrowerDept
+                            }).eq('id', formData.assetId);
                         } else {
                             // Mark asset as 'Used' when loaned
-                            await supabase.from('it_assets').update({ status: 'Used', user_assigned: formData.borrowerName }).eq('id', formData.assetId);
+                            await supabase.from('it_assets').update({ 
+                                status: 'Used', 
+                                user_assigned: formData.borrowerName,
+                                department: formData.borrowerDept
+                            }).eq('id', formData.assetId);
                             await supabase.from('it_asset_loans').insert([payload]);
                         }
 

@@ -182,6 +182,7 @@ export interface ITAsset {
     ram?: string;
     vga?: string;
     processor?: string;
+    os?: string;
   };
   image_url?: string;
 }
