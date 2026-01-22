@@ -30,10 +30,10 @@ const DataRow = ({ label, value, mono = false, copyable = false }: { label: stri
     return (
         <div className="grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 last:border-0 py-3 items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors px-4 group">
             <div className="col-span-5 md:col-span-4">
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{label}</span>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
             </div>
             <div className="col-span-7 md:col-span-8 flex items-center justify-between">
-                <span className={`text-sm ${mono ? 'font-mono' : 'font-semibold'} text-slate-900 dark:text-slate-100 uppercase truncate`}>
+                <span className={`text-sm ${mono ? 'font-mono' : 'font-medium'} text-slate-900 dark:text-slate-100 truncate`}>
                     {value || '-'}
                 </span>
                 {copyable && value && (
@@ -51,9 +51,9 @@ const DataRow = ({ label, value, mono = false, copyable = false }: { label: stri
 };
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
-    <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-slate-900 dark:border-slate-100 mt-8">
-        <Icon size={16} className="text-slate-900 dark:text-slate-100" />
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 dark:text-slate-100">{title}</h3>
+    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 mt-8">
+        <Icon size={18} className="text-slate-900 dark:text-slate-100" />
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h3>
     </div>
 );
 
@@ -137,9 +137,9 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
         return (
             <div className={`min-h-screen flex flex-col items-center justify-center p-6 text-center ${theme === 'dark' ? 'bg-[#0B1120] text-white' : 'bg-slate-50 text-slate-900'}`}>
                 <AlertTriangle size={32} className="mb-4 text-red-600" />
-                <h1 className="text-xl font-bold uppercase tracking-wide">Record Not Found</h1>
-                <p className="text-sm font-mono mt-2 opacity-60">{error}</p>
-                <button onClick={toggleTheme} className="mt-8 text-[10px] uppercase font-bold tracking-widest opacity-50 hover:opacity-100">
+                <h1 className="text-xl font-bold tracking-tight">Record Not Found</h1>
+                <p className="text-sm text-slate-500 mt-2">{error}</p>
+                <button onClick={toggleTheme} className="mt-8 text-xs font-medium opacity-50 hover:opacity-100">
                     Switch Theme
                 </button>
             </div>
@@ -162,7 +162,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
             <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#050911] text-slate-900 dark:text-slate-100 font-sans md:py-12">
 
                 {/* Document Container */}
-                <div className="w-full max-w-3xl bg-white dark:bg-[#0B1120] md:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-none min-h-[calc(100vh-6rem)] md:min-h-auto relative animate-in slide-in-from-bottom-8 duration-1000 ease-out fade-in fill-mode-backwards">
+                <div className="w-full max-w-3xl mx-auto bg-white dark:bg-[#0B1120] md:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-none min-h-[calc(100vh-6rem)] md:min-h-auto relative animate-in slide-in-from-bottom-8 duration-1000 ease-out fade-in fill-mode-backwards">
 
                     {/* Watermark Background */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-[0.05] select-none">
@@ -179,10 +179,10 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                     {/* Header Section */}
                     <header className="px-6 py-6 md:px-10 md:py-8 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start">
                         <div className="flex flex-col">
-                            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-none mb-1">
+                            <h1 className="text-lg md:text-xl font-bold tracking-tight leading-none mb-1">
                                 Gesit<span className="text-blue-600">Assets</span>
                             </h1>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                            <p className="text-xs font-medium text-slate-500">
                                 Digital Verification System
                             </p>
                         </div>
@@ -202,14 +202,14 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         {/* Identity Block */}
                         <div className="flex flex-col items-center text-center gap-6 mb-10">
                             <div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-[10px] font-mono font-bold text-slate-500 mb-4 border border-slate-200 dark:border-white/10 mx-auto">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-xs font-medium text-slate-500 mb-4 border border-slate-200 dark:border-white/10 mx-auto">
                                     <Hash size={12} />
                                     {asset.assetId}
                                 </div>
-                                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-[0.9] mb-2">
+                                <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1] mb-2">
                                     {asset.item}
                                 </h2>
-                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                <p className="text-sm font-medium text-slate-500">
                                     {asset.category} • {asset.brand}
                                 </p>
                             </div>
@@ -244,10 +244,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 </div>
                             )}
 
-                            {/* Watermark-style brand */}
-                            <div className="absolute bottom-4 right-4 z-10 opacity-10 font-black text-6xl uppercase tracking-tighter pointer-events-none select-none">
-                                Gesit
-                            </div>
+
                         </div>
 
                         {/* Specifications Grid */}
@@ -282,9 +279,9 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         <div className="mt-12 pt-8 border-t border-dashed border-slate-300 dark:border-slate-700 flex justify-center">
                             <a
                                 href={`mailto:it@gesit.co.id?subject=Report: ${asset.assetId}`}
-                                className="group flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold uppercase tracking-widest hover:bg-blue-600 dark:hover:bg-blue-400 hover:text-white transition-colors"
+                                className="group flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-md hover:bg-blue-600 dark:hover:bg-blue-400 hover:text-white transition-all shadow-sm"
                             >
-                                <ExternalLink size={14} />
+                                <ExternalLink size={16} />
                                 Report an Issue
                             </a>
                         </div>
@@ -292,7 +289,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                     </main>
 
                     {/* Document Footer */}
-                    <footer className="bg-slate-50 dark:bg-slate-800/30 px-6 py-4 md:px-10 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[9px] uppercase tracking-widest text-slate-400">
+                    <footer className="bg-slate-50 dark:bg-slate-800/30 px-6 py-4 md:px-10 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[10px] font-medium text-slate-400">
                         <span>System Gen. v2.4</span>
                         <span>{new Date().toLocaleDateString()}</span>
                     </footer>
