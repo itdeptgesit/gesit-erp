@@ -147,11 +147,11 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
     }
 
     const statusColors: Record<string, string> = {
-        'Active': 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
-        'Used': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
-        'Idle': 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
-        'Broken': 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
-        'Disposed': 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+        'Active': 'text-emerald-600 border-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400',
+        'Used': 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-400',
+        'Idle': 'text-amber-600 border-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400',
+        'Broken': 'text-rose-600 border-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400',
+        'Disposed': 'text-slate-600 border-slate-600 bg-slate-50 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-400'
     };
 
     const statusStyle = statusColors[asset.status] || statusColors['Disposed'];
@@ -165,10 +165,12 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                 <div className="w-full max-w-3xl bg-white dark:bg-[#0B1120] md:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-none min-h-[calc(100vh-6rem)] md:min-h-auto relative animate-in slide-in-from-bottom-8 duration-1000 ease-out fade-in fill-mode-backwards">
 
                     {/* Watermark Background */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-[0.05]">
-                        <svg width="600" height="600" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                            <path fill="currentColor" d="M100,20 C50,20 20,60 20,100 C20,150 60,180 100,180 C150,180 180,140 180,100 C180,50 140,20 100,20 Z M100,160 C70,160 40,130 40,100 C40,70 70,40 100,40 C130,40 160,70 160,100 C160,130 130,160 100,160 Z" />
-                        </svg>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-[0.05] select-none">
+                        <div className="transform -rotate-45 border-8 border-current p-8 rounded-3xl">
+                            <span className="text-5xl md:text-7xl font-black uppercase text-slate-900 dark:text-white whitespace-nowrap tracking-widest">
+                                Property of Gesit
+                            </span>
+                        </div>
                     </div>
 
                     {/* Top Accent Line */}
@@ -198,25 +200,31 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                     <main className="px-6 py-8 md:px-10">
 
                         {/* Identity Block */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
+                        <div className="flex flex-col items-center text-center gap-6 mb-10">
                             <div>
-                                <div className="inline-flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-white/5 rounded text-[10px] font-mono font-bold text-slate-500 mb-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-[10px] font-mono font-bold text-slate-500 mb-4 border border-slate-200 dark:border-white/10 mx-auto">
                                     <Hash size={12} />
                                     {asset.assetId}
                                 </div>
-                                <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-[0.9]">
+                                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-[0.9] mb-2">
                                     {asset.item}
                                 </h2>
-                                <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-wide">
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
                                     {asset.category} • {asset.brand}
                                 </p>
                             </div>
 
-                            {/* Status "Stamp" */}
-                            <div className={`relative px-6 py-2 border-4 border-double rounded-sm text-center -rotate-3 transform hover:rotate-0 transition-transform duration-300 cursor-default group ${statusStyle}`}>
+                            {/* Status "Stamp" - Centered */}
+                            <div className={`relative px-10 py-3 border-4 border-double rounded-lg text-center transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-default group shadow-sm ${statusStyle}`}>
                                 <div className="absolute inset-0 opacity-10 bg-current"></div>
-                                <span className="text-[9px] uppercase font-black tracking-widest opacity-80 block">Status Verified</span>
-                                <span className="text-2xl font-black uppercase tracking-tighter" style={{ fontFamily: 'Courier New, monospace' }}>{asset.status}</span>
+                                <span className="text-[10px] uppercase font-black tracking-[0.3em] opacity-80 block mb-1">Status Verified</span>
+                                <span className="text-3xl font-black uppercase tracking-tighter" style={{ fontFamily: 'Courier New, monospace' }}>{asset.status}</span>
+
+                                {/* Decorative stars in corners */}
+                                <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
+                                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
+                                <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
+                                <div className="absolute bottom-1 right-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
                             </div>
                         </div>
 
