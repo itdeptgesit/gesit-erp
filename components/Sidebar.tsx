@@ -118,6 +118,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div key={item.id} className="px-3 mb-1">
                 <button
                     onClick={() => hasSub ? toggleMenu(item.id) : onNavigate(item.id)}
+                    aria-label={item.label}
+                    aria-expanded={hasSub ? isExpanded : undefined}
+                    aria-current={isActive && !hasSub ? 'page' : undefined}
                     className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isActive && !hasSub
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -139,6 +142,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <button
                                     key={sub.id}
                                     onClick={() => onNavigate(sub.id)}
+                                    aria-label={sub.label}
+                                    aria-current={isSubItemActive ? 'page' : undefined}
                                     className={`w-full text-left pl-6 pr-4 py-2 rounded-lg text-xs font-semibold transition-all ${isSubItemActive
                                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50'
                                         : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50/50'
@@ -159,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isMobileOpen && <div className="fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-sm transition-all" onClick={onClose} />}
             <aside className={`fixed top-0 left-0 bottom-0 z-50 bg-white dark:bg-[#0f172a] border-r border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:-translate-x-full ${isCollapsed ? 'w-20' : 'w-64'}`}>
                 <div className={`px-6 py-8 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                    <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-auto min-w-[32px]" />
+                    <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-8 min-w-[32px] object-contain" />
                     {!isCollapsed && (
                         <div className="flex flex-col animate-in fade-in duration-300">
                             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
@@ -168,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <p className="text-[10px] font-semibold text-slate-300 mt-1 tracking-widest uppercase">System</p>
                         </div>
                     )}
-                    <button onClick={onClose} className="md:hidden ml-auto p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"><X size={18} /></button>
+                    <button onClick={onClose} aria-label="Close sidebar" className="md:hidden ml-auto p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"><X size={18} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar pt-2 no-scrollbar">
@@ -185,6 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="p-4 mt-auto border-t border-slate-50 dark:border-slate-800/50">
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
+                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-xl transition-all group`}
                         title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                     >

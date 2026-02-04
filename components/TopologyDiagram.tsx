@@ -26,15 +26,18 @@ const NODE_WIDTH = 80;
 const NODE_HEIGHT = 80;
 const GRID_SIZE = 20;
 
-const DiagramNode: React.FC<NodeProps> = ({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '' }) => {
+const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '' }) => {
     const [dragging, setDragging] = useState(false);
     const [localPos, setLocalPos] = useState({ x, y });
     const startMousePos = useRef({ x: 0, y: 0 });
     const startNodePos = useRef({ x: 0, y: 0 });
+    const currentPos = useRef({ x, y });
+    const rafId = useRef<number | null>(null);
 
     useEffect(() => {
         if (!dragging) {
             setLocalPos({ x, y });
+            currentPos.current = { x, y };
         }
     }, [x, y, dragging]);
 
@@ -85,24 +88,32 @@ const DiagramNode: React.FC<NodeProps> = ({ switchData, x, y, scale, isSelected,
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!dragging) return;
-            let dx = (e.clientX - startMousePos.current.x) / scale;
-            let dy = (e.clientY - startMousePos.current.y) / scale;
+            if (rafId.current) return;
 
-            let nx = startNodePos.current.x + dx;
-            let ny = startNodePos.current.y + dy;
+            rafId.current = requestAnimationFrame(() => {
+                let dx = (e.clientX - startMousePos.current.x) / scale;
+                let dy = (e.clientY - startMousePos.current.y) / scale;
 
-            if (snapToGrid) {
-                nx = Math.round(nx / GRID_SIZE) * GRID_SIZE;
-                ny = Math.round(ny / GRID_SIZE) * GRID_SIZE;
-            }
+                let nx = startNodePos.current.x + dx;
+                let ny = startNodePos.current.y + dy;
 
-            setLocalPos({ x: nx, y: ny });
+                if (snapToGrid) {
+                    nx = Math.round(nx / GRID_SIZE) * GRID_SIZE;
+                    ny = Math.round(ny / GRID_SIZE) * GRID_SIZE;
+                }
+
+                currentPos.current = { x: nx, y: ny };
+                setLocalPos({ x: nx, y: ny });
+                rafId.current = null;
+            });
         };
 
         const handleMouseUp = () => {
             if (dragging) {
+                if (rafId.current) cancelAnimationFrame(rafId.current);
+                rafId.current = null;
                 setDragging(false);
-                onDragEnd(switchData.id, localPos.x, localPos.y);
+                onDragEnd(switchData.id, currentPos.current.x, currentPos.current.y);
             }
         };
 
@@ -113,8 +124,9 @@ const DiagramNode: React.FC<NodeProps> = ({ switchData, x, y, scale, isSelected,
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
+            if (rafId.current) cancelAnimationFrame(rafId.current);
         };
-    }, [dragging, scale, snapToGrid, onDragEnd, switchData.id, localPos]);
+    }, [dragging, scale, snapToGrid, onDragEnd, switchData.id]);
 
     const radius = 34;
     const circumference = 2 * Math.PI * radius;
@@ -192,7 +204,62 @@ const DiagramNode: React.FC<NodeProps> = ({ switchData, x, y, scale, isSelected,
             </div>
         </div>
     );
-};
+});
+
+DiagramNode.displayName = 'DiagramNode';
+
+const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds, searchTerm, matchesSearch }: any) => {
+    let startX, startY;
+    const isInternetLink = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root';
+    if (isInternetLink) {
+        startX = internetPos.x + NODE_WIDTH / 2;
+        startY = internetPos.y + NODE_HEIGHT / 2;
+    } else {
+        const parent = switches.find((p: any) => p.id === sw.uplinkId);
+        if (!parent || parent.posX === undefined || parent.posY === undefined) return null;
+        if (Math.abs(parent.posX - sw.posX) < 5 && Math.abs(parent.posY - sw.posY) < 5) return null;
+        startX = parent.posX + NODE_WIDTH / 2;
+        startY = parent.posY + NODE_HEIGHT / 2;
+    }
+    const endX = sw.posX + NODE_WIDTH / 2;
+    const endY = sw.posY + NODE_HEIGHT / 2;
+
+    if (Math.abs(startX - endX) < 1 && Math.abs(startY - endY) < 1) return null;
+
+    const pathData = `M ${startX} ${startY} C ${startX} ${startY + (endY - startY) * 0.5}, ${endX} ${endY - (endY - startY) * 0.5}, ${endX} ${endY}`;
+
+    let color = isInternetLink ? '#10b981' : '#3b82f6';
+    if (sw.vlan) {
+        if (sw.vlan === 10) color = '#22d3ee';
+        else if (sw.vlan === 20) color = '#fbbf24';
+        else if (sw.vlan === 30) color = '#f472b6';
+        else if (sw.vlan > 50) color = '#a78bfa';
+    }
+    const isPathActive = activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId));
+
+    const strokeWidth = isInternetLink ? 1.5 : (isPathActive ? 2.5 : 1);
+    const opacity = isInternetLink ? 'opacity-60' : (isPathActive ? 'opacity-40' : 'opacity-10');
+    const dashedOpacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-40');
+
+    return (
+        <g className={searchTerm && !matchesSearch(sw) ? 'opacity-10' : 'opacity-100'}>
+            <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className={opacity} />
+            <path d={pathData} stroke={color} strokeWidth={strokeWidth} strokeDasharray={isPathActive ? '10,10' : '4,12'} fill="none" className={dashedOpacity} filter="url(#link-glow-fx)">
+                <animate attributeName="stroke-dashoffset" from="100" to="0" dur={isPathActive ? '3s' : '6s'} repeatCount="indefinite" />
+            </path>
+            {sw.uplinkPort && (
+                <g transform={`translate(${(startX + endX) / 2}, ${(startY + endY) / 2})`}>
+                    <rect x="-15" y="-8" width="30" height="16" rx="4" className="fill-slate-900/90 stroke-white/10" />
+                    <text y="3" textAnchor="middle" className="text-[8px] font-bold fill-slate-300 pointer-events-none uppercase tracking-tighter">
+                        P{sw.uplinkPort}
+                    </text>
+                </g>
+            )}
+        </g>
+    );
+});
+
+TopologyLink.displayName = 'TopologyLink';
 
 interface TopologyDiagramProps {
     switches: NetworkSwitch[];
@@ -421,59 +488,19 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
                             </filter>
                         </defs>
                         {switches.map(sw => {
-                            if (sw.id === 'internet') return null; // Avoid self-link for internet node
+                            if (sw.id === 'internet') return null;
                             if (!sw.uplinkId || sw.posX === undefined || sw.posY === undefined) return null;
-                            let startX, startY;
-                            const isInternetLink = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root';
-                            if (isInternetLink) {
-                                startX = internetPos.x + NODE_WIDTH / 2; startY = internetPos.y + NODE_HEIGHT / 2;
-                            } else {
-                                const parent = switches.find(p => p.id === sw.uplinkId);
-                                if (!parent || parent.posX === undefined || parent.posY === undefined) return null;
-                                // Avoid zero-length lines
-                                if (Math.abs(parent.posX - sw.posX) < 5 && Math.abs(parent.posY - sw.posY) < 5) return null;
-                                startX = parent.posX + NODE_WIDTH / 2; startY = parent.posY + NODE_HEIGHT / 2;
-                            }
-                            const endX = sw.posX + NODE_WIDTH / 2; const endY = sw.posY + NODE_HEIGHT / 2;
 
-                            // Prevent zero-length path
-                            if (Math.abs(startX - endX) < 1 && Math.abs(startY - endY) < 1) return null;
-
-                            const pathData = `M ${startX} ${startY} C ${startX} ${startY + (endY - startY) * 0.5}, ${endX} ${endY - (endY - startY) * 0.5}, ${endX} ${endY}`;
-
-                            // VLAN-based Color Mapping
-                            let color = isInternetLink ? '#10b981' : '#3b82f6';
-                            if (sw.vlan) {
-                                if (sw.vlan === 10) color = '#22d3ee'; // Cyan
-                                else if (sw.vlan === 20) color = '#fbbf24'; // Amber
-                                else if (sw.vlan === 30) color = '#f472b6'; // Pink
-                                else if (sw.vlan > 50) color = '#a78bfa'; // Violet
-                            }
-                            const isPathActive = activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId));
-
-                            // High Visibility for Internet Links
-                            const strokeWidth = isInternetLink ? 1.5 : (isPathActive ? 2.5 : 1);
-                            const opacity = isInternetLink ? 'opacity-60' : (isPathActive ? 'opacity-40' : 'opacity-10');
-                            const dashedOpacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-40');
-
-                            return (
-                                <g key={`link-${sw.id}`} className={searchTerm && !matchesSearch(sw) ? 'opacity-10' : 'opacity-100'}>
-                                    <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className={opacity} />
-                                    <path d={pathData} stroke={color} strokeWidth={strokeWidth} strokeDasharray={isPathActive ? '10,10' : '4,12'} fill="none" className={dashedOpacity} filter="url(#link-glow-fx)">
-                                        <animate attributeName="stroke-dashoffset" from="100" to="0" dur={isPathActive ? '3s' : '6s'} repeatCount="indefinite" />
-                                    </path>
-
-                                    {/* Connection Label (Port Info) */}
-                                    {sw.uplinkPort && (
-                                        <g transform={`translate(${(startX + endX) / 2}, ${(startY + endY) / 2})`}>
-                                            <rect x="-15" y="-8" width="30" height="16" rx="4" className="fill-slate-900/90 stroke-white/10" />
-                                            <text y="3" textAnchor="middle" className="text-[8px] font-bold fill-slate-300 pointer-events-none uppercase tracking-tighter">
-                                                P{sw.uplinkPort}
-                                            </text>
-                                        </g>
-                                    )}
-                                </g>
-                            );
+                            // Memoize individual link components inside the map to prevent full SVG re-render
+                            return <TopologyLink
+                                key={`link-${sw.id}`}
+                                sw={sw}
+                                internetPos={internetPos}
+                                switches={switches}
+                                activePathNodeIds={activePathNodeIds}
+                                searchTerm={searchTerm}
+                                matchesSearch={matchesSearch}
+                            />;
                         })}
                     </svg>
 

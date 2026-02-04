@@ -120,6 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                                         if (hasSub) setActiveSubMenu(activeSubMenu === item.id ? null : item.id);
                                         else { onNavigate?.(item.id); setActiveSubMenu(null); }
                                     }}
+                                    aria-label={item.label}
+                                    aria-current={isActive && !hasSub ? 'page' : undefined}
+                                    aria-haspopup={hasSub ? 'true' : undefined}
+                                    aria-expanded={hasSub ? activeSubMenu === item.id : undefined}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     className={`relative flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-bold transition-colors duration-300 tracking-tight whitespace-nowrap z-10
@@ -184,6 +188,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: idx * 0.05 }}
                                                         onClick={() => { onNavigate?.(sub.id); setActiveSubMenu(null); }}
+                                                        aria-label={sub.label}
+                                                        aria-current={currentView === sub.id ? 'page' : undefined}
                                                         className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[11px] font-bold transition-all duration-200 tracking-tight
                                                             ${currentView === sub.id
                                                                 ? 'text-blue-600 bg-blue-50/50 dark:bg-blue-900/30'

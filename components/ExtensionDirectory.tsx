@@ -53,6 +53,8 @@ const InstructionPanel = () => {
             >
                 <button
                     onClick={() => setIsOpen(!isOpen)}
+                    aria-expanded={isOpen}
+                    aria-label={isOpen ? "Close dial instructions" : "View dial instructions"}
                     className="w-full flex items-center justify-between px-6 py-4 bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors duration-300 rounded-2xl"
                 >
                     <div className="flex items-center gap-4">
@@ -60,13 +62,13 @@ const InstructionPanel = () => {
               p-2 rounded-xl transition-all duration-500
               ${isOpen ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}
             `}>
-                            <Info className="w-4 h-4" />
+                            <Info className="w-4 h-4" aria-hidden="true" />
                         </div>
                         <h3 className={`text-sm font-bold transition-colors duration-300 tracking-tight ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-slate-100'}`}>
                             How to Dial
                         </h3>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                         {isOpen ? 'Close' : 'View'}
                         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </div>
@@ -83,15 +85,15 @@ const InstructionPanel = () => {
                                 <h4 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Floor 27 - The City Tower (TGC)</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Pickup Incoming</span>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
                                         <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#70</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Call to 26th Floor</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">## + Ext lt. 26</kbd>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Call to 26th Floor</span>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px) font-mono font-bold">## + Ext lt. 26</kbd>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
-                                        <span className="text-xs text-slate-500">Outgoing Call</span>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
                                         <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">* + PIN + 9 + Ph#</kbd>
                                     </div>
                                 </div>
@@ -101,15 +103,15 @@ const InstructionPanel = () => {
                                 <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Floor 26 - Gesit Resources</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Pickup Incoming</span>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
                                         <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#41 + Ext</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-500">Call to 27th Floor</span>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Call to 27th Floor</span>
                                         <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">88** + PIN + Ext lt.27</kbd>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
-                                        <span className="text-xs text-slate-500">Outgoing Call</span>
+                                        <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
                                         <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">81** + PIN + Ph#</kbd>
                                     </div>
                                 </div>
@@ -171,35 +173,36 @@ const ExtensionCard: React.FC<{
                         {ext.name}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate">{ext.dept}</span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">{ext.dept}</span>
                     </div>
                 </div>
 
                 <div className="flex gap-2">
                     <button
                         onClick={handleCopy}
+                        aria-label={`Copy extension ${ext.ext}`}
                         className={`px-3 py-1.5 rounded-xl text-2xl font-mono font-black transition-all ${theme.badge} border border-transparent hover:border-current/20 active:scale-95 flex items-center gap-2`}
                     >
                         <span>{ext.ext}</span>
-                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5 opacity-30" />}
+                        {copied ? <Check className="w-5 h-5" aria-hidden="true" /> : <Copy className="w-5 h-5 opacity-30" aria-hidden="true" />}
                     </button>
                     {canEdit && (
                         <div className="flex gap-1">
-                            <button onClick={() => onEdit?.(ext)} className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"><Pencil size={12} /></button>
-                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
+                            <button onClick={() => onEdit?.(ext)} aria-label="Edit extension" className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"><Pencil size={12} /></button>
+                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} aria-label="Delete extension" className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
                         </div>
                     )}
                 </div>
             </div>
 
             {ext.role && (
-                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 italic mb-4 line-clamp-1">{ext.role}</p>
+                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 italic mb-4 line-clamp-1">{ext.role}</p>
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800/50">
                 <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
-                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{ext.floor} Floor</span>
+                    <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">{ext.floor} Floor</span>
                 </div>
                 <div className="text-slate-200 dark:text-slate-700 group-hover:text-indigo-500/10 transition-colors">
                     <Phone size={12} />
@@ -231,13 +234,13 @@ const ExtensionTable: React.FC<{
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center w-20">Initial</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Identify Name</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Extension</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Department Cluster</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Floor Level</th>
-                            {isAdmin && <th className="px-6 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">PIN</th>}
-                            {isAdmin && <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Actions</th>}
+                            <th className="px-8 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center w-20">Initial</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identify Name</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Extension</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Department Cluster</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Floor Level</th>
+                            {isAdmin && <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">PIN</th>}
+                            {isAdmin && <th className="px-8 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -254,21 +257,22 @@ const ExtensionTable: React.FC<{
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-slate-900 dark:text-white">{ext.name}</span>
-                                        {ext.role && <span className="text-[10px] font-medium text-slate-400 italic dark:text-slate-500">{ext.role}</span>}
+                                        {ext.role && <span className="text-[10px] font-medium text-slate-500 italic dark:text-slate-400">{ext.role}</span>}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <button
                                         onClick={() => handleCopy(ext.id, ext.ext)}
+                                        aria-label={`Copy extension ${ext.ext}`}
                                         className="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl border border-slate-200 dark:border-slate-700 font-mono font-black text-2xl hover:shadow-md transition-all active:scale-95"
                                     >
                                         {ext.ext}
-                                        {copiedId === ext.id ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} className="opacity-40" />}
+                                        {copiedId === ext.id ? <Check size={16} className="text-emerald-500" aria-hidden="true" /> : <Copy size={16} className="opacity-40" aria-hidden="true" />}
                                     </button>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        <Building2 size={14} className="text-slate-400" />
+                                        <Building2 size={14} className="text-slate-500" />
                                         <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">{ext.dept}</span>
                                     </div>
                                 </td>
@@ -295,6 +299,7 @@ const ExtensionTable: React.FC<{
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => onEdit?.(ext)}
+                                                aria-label="Edit extension"
                                                 className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
                                             >
                                                 <Pencil size={14} />
@@ -302,6 +307,7 @@ const ExtensionTable: React.FC<{
                                             {isAdmin && (
                                                 <button
                                                     onClick={() => onDelete?.(ext.id)}
+                                                    aria-label="Delete extension"
                                                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
                                                 >
                                                     <Trash2 size={14} />
@@ -375,8 +381,6 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                 .from('phone_extensions')
                 .select('*')
                 .order('name');
-
-
 
             if (error) throw error;
             setExtensions(data || []);
@@ -611,10 +615,10 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                             <Building2 className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+                            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
                                 TGC Directory
                             </h1>
-                            <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Internal Grid</p>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Internal Grid</p>
                         </div>
                     </div>
 
@@ -622,10 +626,11 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                     <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-2xl">
                         {/* Search Bar */}
                         <div className="relative flex-1 w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
                             <input
                                 type="text"
                                 placeholder="Search extensions..."
+                                aria-label="Search phone extensions"
                                 className="w-full pl-11 pr-4 py-2.5 bg-white/50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 outline-none transition-all shadow-sm"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -639,11 +644,13 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                     <button
                                         key={floor}
                                         onClick={() => setFloorFilter(floor)}
+                                        aria-pressed={floorFilter === floor}
+                                        aria-label={`Filter by ${floor === 'All' ? 'all' : floor + 'th'} floor`}
                                         className={`
-                                            px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all
+                                            px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-md transition-all
                                             ${floorFilter === floor
                                                 ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm'
-                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}
                                         `}
                                     >
                                         {floor === 'All' ? 'All' : `${floor}F`}
@@ -654,6 +661,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                             {!isPublic && canEdit && (
                                 <button
                                     onClick={() => openModal()}
+                                    aria-label="Add new extension"
                                     className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95"
                                 >
                                     <Plus size={18} />
@@ -664,23 +672,26 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={handleShare}
+                                        aria-label="Share directory link"
                                         className="p-2.5 bg-white/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-indigo-500 transition-all shadow-sm group/share"
                                         title="Share"
                                     >
-                                        {isSharing ? <Check size={18} className="text-emerald-500" /> : <Share2 size={18} />}
+                                        {isSharing ? <Check size={18} className="text-emerald-500" aria-hidden="true" /> : <Share2 size={18} aria-hidden="true" />}
                                     </button>
                                     <button
                                         onClick={toggleTheme}
+                                        aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
                                         className="p-2.5 bg-white/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-indigo-500 transition-all shadow-sm group/theme"
                                         title="Toggle Mode"
                                     >
-                                        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                                        {theme === 'light' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
                                     </button>
                                 </div>
                             ) : isAdmin && (
                                 <div className="flex p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200/50 dark:border-slate-700/50 shadow-inner ml-2">
                                     <button
                                         onClick={() => setViewMode('grid')}
+                                        aria-pressed={viewMode === 'grid'}
                                         className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400'}`}
                                         title="Grid View"
                                     >
@@ -688,6 +699,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                     </button>
                                     <button
                                         onClick={() => setViewMode('table')}
+                                        aria-pressed={viewMode === 'table'}
                                         className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400'}`}
                                         title="Table View"
                                     >
@@ -706,7 +718,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 px-4">
                 <div className="flex items-center gap-2">
                     <div className="w-1 h-3 bg-indigo-500 rounded-full" />
-                    <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <h2 className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         Directory Registry
                     </h2>
                 </div>
@@ -718,9 +730,10 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                                aria-label="Previous page"
+                                className="p-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"
                             >
-                                <ChevronLeft size={16} />
+                                <ChevronLeft size={16} aria-hidden="true" />
                             </button>
                             <div className="flex items-center gap-1.5 px-2">
                                 <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">{currentPage}</span>
@@ -730,9 +743,10 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+                                aria-label="Next page"
+                                className="p-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"
                             >
-                                <ChevronRight size={16} />
+                                <ChevronRight size={16} aria-hidden="true" />
                             </button>
                         </div>
                     )}
@@ -777,10 +791,10 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
             ) : (
                 <div className="text-center py-24 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
                     <div className="bg-slate-100 dark:bg-slate-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                        <Search className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                        <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" aria-hidden="true" />
                     </div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">No Results</h3>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-2 font-medium opacity-60">Adjust your search or filter to find nodes.</p>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs mt-2 font-medium opacity-60">Adjust your search or filter to find nodes.</p>
                 </div>
             )}
 
@@ -789,7 +803,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                 <div className="mt-12 p-8 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-slate-900/40 border-2 border-amber-100/50 dark:border-amber-500/20 rounded-[2.5rem] text-center animate-in fade-in zoom-in duration-700 shadow-xl">
                     <div className="flex flex-col items-center gap-4">
                         <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/30 animate-bounce">
-                            <Zap size={24} />
+                            <Zap size={24} aria-hidden="true" />
                         </div>
                         <div>
                             <h4 className="text-lg font-black text-amber-900 dark:text-amber-100 uppercase tracking-tight">System Initialization Required</h4>
@@ -818,14 +832,14 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                     {editingExt ? 'Edit Record' : 'Create Record'}
                                 </h3>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                            <button onClick={() => setIsModalOpen(false)} aria-label="Close modal" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
 
                         <form onSubmit={handleSave} className="p-8 space-y-5">
                             <div>
-                                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Identity Name</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Identity Name</label>
                                 <input
                                     required
                                     className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-700/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
@@ -836,7 +850,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Extension Code</label>
+                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Extension Code</label>
                                     <input
                                         required
                                         className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
@@ -846,7 +860,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Floor Level</label>
+                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Floor Level</label>
                                     <select
                                         className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
                                         value={formData.floor}
@@ -858,7 +872,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Departmental Cluster</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Departmental Cluster</label>
                                 <input
                                     required
                                     className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
@@ -868,14 +882,15 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Role Designation</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Role Designation</label>
                                 <input
                                     className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                    value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Pin Code</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Pin Code</label>
                                 <input
                                     className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner font-mono"
                                     value={formData.pin}
@@ -888,7 +903,7 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 px-6 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                                    className="flex-1 px-6 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                 >
                                     Cancel
                                 </button>
@@ -911,12 +926,14 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                 <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
                     <button
                         onClick={toggleTheme}
+                        aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
                         className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
                     >
                         {theme === 'light' ? <Moon size={24} className="group-hover:rotate-12 transition-transform" /> : <Sun size={24} className="group-hover:rotate-90 transition-transform" />}
                     </button>
                     <button
                         onClick={() => window.location.href = '/'}
+                        aria-label="Back to Portal"
                         className="w-14 h-14 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
                         title="Back to Portal"
                     >

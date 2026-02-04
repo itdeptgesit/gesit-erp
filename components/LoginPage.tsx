@@ -138,7 +138,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     {/* Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        className="absolute top-8 right-8 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all shadow-sm hover:shadow-md z-50"
+                        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                        className="absolute top-8 right-8 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all shadow-sm hover:shadow-md z-50"
                     >
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
@@ -246,7 +247,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                             />
                                             <button
                                                 type="button"
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 transition-colors"
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                                                 onClick={() => setShowPassword(!showPassword)}
                                             >
                                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -257,7 +259,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                     <div className="flex items-center justify-between px-1">
                                         <label className="flex items-center gap-3 cursor-pointer group">
                                             <input type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/20 transition-all cursor-pointer" />
-                                            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white">Stay connected</span>
+                                            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white">Stay connected</span>
                                         </label>
                                     </div>
 
@@ -278,7 +280,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsResetMode(true)}
-                                                className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors py-1"
+                                                className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors py-1"
                                             >
                                                 Forgot your password?
                                             </button>
@@ -286,7 +288,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                     </div>
 
                                     <div className="pt-10 mt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                                        <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                             Access issues? <br />
                                             <button type="button" className="text-blue-600 font-bold hover:underline">Contact System Administrator</button>
                                         </p>
@@ -307,9 +309,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                 Portal IT Helpdesk
                             </button>
 
-                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest uppercase">
+                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-widest uppercase">
                                 <p>© 2025 Gesit ERP Enterprise</p>
-                                <div className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+                                <div className="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
                                 <p>v4.1.2 Stable</p>
                             </div>
                         </div>

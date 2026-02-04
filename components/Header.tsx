@@ -172,14 +172,15 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={onMenuClick}
+          aria-label="Open menu"
           className="md:hidden p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
         >
           <Menu size={20} />
         </button>
 
         <div className="flex items-center gap-2 md:gap-5 cursor-pointer group" onClick={() => onNavigate?.('dashboard')}>
-          <div className="relative hidden md:block">
-            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-10 w-auto transition-transform duration-300 group-hover:scale-110 drop-shadow-sm" />
+          <div className="relative hidden md:block w-10 h-10">
+            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm object-contain" />
             <div className="absolute -inset-1 bg-blue-500/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
 
@@ -203,17 +204,17 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 md:gap-4">
         {/* mobile menu toggle hidden - sidebar removed */}
 
-        <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-          <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>EN</button>
-          <button onClick={() => setLanguage('id')} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>ID</button>
+        <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50" role="group" aria-label="Language selection">
+          <button onClick={() => setLanguage('en')} aria-label="Switch to English" aria-pressed={language === 'en'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>EN</button>
+          <button onClick={() => setLanguage('id')} aria-label="Switch to Indonesian" aria-pressed={language === 'id'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>ID</button>
         </div>
 
-        <button onClick={toggleTheme} className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+        <button onClick={toggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
           {isDark ? <Sun size={14} /> : <Moon size={14} />}
         </button>
 
         <div className="relative" ref={notificationRef}>
-          <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-1.5 rounded-lg transition-all ${isNotificationOpen ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}>
+          <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" aria-haspopup="true" aria-expanded={isNotificationOpen} className={`p-1.5 rounded-lg transition-all ${isNotificationOpen ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}>
             <Bell size={16} />
             {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>}
           </button>
@@ -248,6 +249,9 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-label="User account menu"
+            aria-haspopup="true"
+            aria-expanded={isDropdownOpen}
             className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-700 group transition-all py-1"
           >
             <div className="hidden md:flex flex-col items-end">

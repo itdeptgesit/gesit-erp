@@ -3,31 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { NetworkDashboard } from './components/NetworkDashboard';
-import { AssetManager } from './components/AssetManager';
-import { AssetLoanManager } from './components/AssetLoanManager';
-import { ActivityLogManager } from './components/ActivityLogManager';
-import { WeeklyPlanManager } from './components/WeeklyPlanManager';
-import { PurchasePlanManager } from './components/PurchasePlanManager';
-import { PurchaseRecordManager } from './components/PurchaseRecordManager';
-import { UserManagement } from './components/UserManagement';
-import { ProfileView } from './components/ProfileView';
 import { MainDashboard } from './components/MainDashboard';
-import { MasterCompany } from './components/MasterCompany';
-import { MasterDepartment } from './components/MasterDepartment';
-import { MasterCategory } from './components/MasterCategory';
-import { MasterGroup } from './components/MasterGroup';
-import { FileManager } from './components/FileManager';
-import { SystemMaintenance } from './components/SystemMaintenance';
-import { SystemSettings } from './components/SystemSettings';
-import { AnnouncementManager } from './components/AnnouncementManager';
-import { ExtensionDirectory } from './components/ExtensionDirectory';
-import { AuditLogManager } from './components/AuditLogManager';
-import { LoginPage } from './components/LoginPage';
-import { AssetPublicDetail } from './components/AssetPublicDetail';
-import { HelpdeskPublic } from './components/HelpdeskPublic';
-import { HelpdeskManager } from './components/HelpdeskManager';
-import { DangerConfirmModal } from './components/DangerConfirmModal';
+import { Navbar } from './components/Navbar';
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
 import { MOCK_GROUPS } from './constants';
@@ -36,10 +13,34 @@ import {
   LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
   Network, Folder, Shield, ChevronDown, ChevronRight, X, Users, Building2,
   Briefcase, Layers, Zap, ChevronLeft, PanelLeftClose, PanelLeft, Phone,
-  Settings, Megaphone
+  Settings, Megaphone, Loader2
 } from 'lucide-react';
 
-import { Navbar } from './components/Navbar';
+// Lazy Load Managers for Better INP (Interaction responsiveness)
+const NetworkDashboard = React.lazy(() => import('./components/NetworkDashboard').then(m => ({ default: m.NetworkDashboard })));
+const AssetManager = React.lazy(() => import('./components/AssetManager').then(m => ({ default: m.AssetManager })));
+const AssetLoanManager = React.lazy(() => import('./components/AssetLoanManager').then(m => ({ default: m.AssetLoanManager })));
+const ActivityLogManager = React.lazy(() => import('./components/ActivityLogManager').then(m => ({ default: m.ActivityLogManager })));
+const WeeklyPlanManager = React.lazy(() => import('./components/WeeklyPlanManager').then(m => ({ default: m.WeeklyPlanManager })));
+const PurchasePlanManager = React.lazy(() => import('./components/PurchasePlanManager').then(m => ({ default: m.PurchasePlanManager })));
+const PurchaseRecordManager = React.lazy(() => import('./components/PurchaseRecordManager').then(m => ({ default: m.PurchaseRecordManager })));
+const UserManagement = React.lazy(() => import('./components/UserManagement').then(m => ({ default: m.UserManagement })));
+const ProfileView = React.lazy(() => import('./components/ProfileView').then(m => ({ default: m.ProfileView })));
+const MasterCompany = React.lazy(() => import('./components/MasterCompany').then(m => ({ default: m.MasterCompany })));
+const MasterDepartment = React.lazy(() => import('./components/MasterDepartment').then(m => ({ default: m.MasterDepartment })));
+const MasterCategory = React.lazy(() => import('./components/MasterCategory').then(m => ({ default: m.MasterCategory })));
+const MasterGroup = React.lazy(() => import('./components/MasterGroup').then(m => ({ default: m.MasterGroup })));
+const FileManager = React.lazy(() => import('./components/FileManager').then(m => ({ default: m.FileManager })));
+const SystemMaintenance = React.lazy(() => import('./components/SystemMaintenance').then(m => ({ default: m.SystemMaintenance })));
+const SystemSettings = React.lazy(() => import('./components/SystemSettings').then(m => ({ default: m.SystemSettings })));
+const AnnouncementManager = React.lazy(() => import('./components/AnnouncementManager').then(m => ({ default: m.AnnouncementManager })));
+const ExtensionDirectory = React.lazy(() => import('./components/ExtensionDirectory').then(m => ({ default: m.ExtensionDirectory })));
+const AuditLogManager = React.lazy(() => import('./components/AuditLogManager').then(m => ({ default: m.AuditLogManager })));
+const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
+const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
+const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
+const HelpdeskPublic = React.lazy(() => import('./components/HelpdeskPublic').then(m => ({ default: m.HelpdeskPublic })));
+const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,6 +63,8 @@ const App: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const assetId = params.get('id');
@@ -69,17 +72,20 @@ const App: React.FC = () => {
 
     if (path.includes('/helpdesk')) {
       setIsPublicHelpdesk(true);
+      setIsCheckingSession(false);
       return;
     }
 
     if (path.includes('/directory')) {
       setIsPublicDirectory(true);
+      setIsCheckingSession(false);
       return;
     }
 
     if (assetId) {
       setIsPublicAssetView(true);
       setPublicAssetId(assetId);
+      setIsCheckingSession(false);
       return;
     }
 
@@ -95,9 +101,15 @@ const App: React.FC = () => {
     if (savedLang) setLanguageState(savedLang);
 
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        handleLogin(session.user.email);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          await handleLogin(session.user.email);
+        }
+      } catch (err) {
+        console.error("Session check failed", err);
+      } finally {
+        setIsCheckingSession(false);
       }
     };
     checkSession();
@@ -224,7 +236,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-        return <MainDashboard onNavigate={handleNavigate} />;
+        return <MainDashboard onNavigate={handleNavigate} userName={currentUser?.fullName} />;
       case 'helpdesk':
         return <HelpdeskManager currentUser={currentUser} />;
       case 'activity':
@@ -266,14 +278,16 @@ const App: React.FC = () => {
       case 'profile':
         return <ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />;
       default:
-        return <MainDashboard onNavigate={handleNavigate} />;
+        return <MainDashboard onNavigate={handleNavigate} userName={currentUser?.fullName} />;
     }
   };
 
   if (isPublicHelpdesk) {
     return (
       <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <HelpdeskPublic />
+        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+          <HelpdeskPublic />
+        </React.Suspense>
       </LanguageContext.Provider>
     );
   }
@@ -283,7 +297,9 @@ const App: React.FC = () => {
       <LanguageContext.Provider value={{ language, setLanguage, t }}>
         <div className="min-h-screen bg-slate-50 dark:bg-[#020617] p-4 md:p-10">
           <div className="max-w-7xl mx-auto">
-            <ExtensionDirectory />
+            <React.Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+              <ExtensionDirectory />
+            </React.Suspense>
           </div>
         </div>
       </LanguageContext.Provider>
@@ -293,15 +309,32 @@ const App: React.FC = () => {
   if (isPublicAssetView) {
     return (
       <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <AssetPublicDetail assetId={publicAssetId} />
+        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+          <AssetPublicDetail assetId={publicAssetId} />
+        </React.Suspense>
       </LanguageContext.Provider>
+    );
+  }
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center p-10">
+        <div className="flex flex-col items-center gap-4 animate-pulse">
+          <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center">
+            <Zap className="text-blue-600 animate-pulse" size={32} />
+          </div>
+          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+        </div>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
       <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <LoginPage onLogin={handleLogin} />
+        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+          <LoginPage onLogin={handleLogin} />
+        </React.Suspense>
       </LanguageContext.Provider>
     );
   }
@@ -349,23 +382,35 @@ const App: React.FC = () => {
 
         <div className="flex-1 flex overflow-hidden relative">
           <main className={`flex-1 overflow-y-auto flex flex-col custom-scrollbar`}>
-            <AnnouncementBanner />
+            {/* Reserved space container for banner to prevent CLS */}
+            <div className="min-h-[40px] md:min-h-[36px] bg-transparent">
+              <AnnouncementBanner />
+            </div>
             <div className="flex-1 p-4 md:p-8">
               <div className="max-w-[1800px] mx-auto h-full">
-                {renderContent()}
+                <React.Suspense fallback={
+                  <div className="h-full flex flex-col items-center justify-center gap-4 animate-pulse">
+                    <Loader2 className="animate-spin text-blue-600" size={32} />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading Module...</p>
+                  </div>
+                }>
+                  {renderContent()}
+                </React.Suspense>
               </div>
             </div>
             <Footer />
           </main>
         </div>
 
-        <DangerConfirmModal
-          isOpen={isLogoutModalOpen}
-          onClose={() => setIsLogoutModalOpen(false)}
-          onConfirm={executeLogout}
-          title={t('signOutTitle')}
-          message={t('signOutMsg')}
-        />
+        <React.Suspense fallback={null}>
+          <DangerConfirmModal
+            isOpen={isLogoutModalOpen}
+            onClose={() => setIsLogoutModalOpen(false)}
+            onConfirm={executeLogout}
+            title={t('signOutTitle')}
+            message={t('signOutMsg')}
+          />
+        </React.Suspense>
       </div>
     </LanguageContext.Provider>
   );
@@ -404,12 +449,12 @@ const AnnouncementBanner: React.FC = () => {
   };
 
   return (
-    <div className={`${colorMap[activeAnnouncement.type] || 'bg-blue-600'} text-white px-6 py-2.5 flex items-center justify-center gap-3 animate-in slide-in-from-top-full duration-500 shadow-lg relative z-20`}>
+    <div className={`${colorMap[activeAnnouncement.type] || 'bg-blue-600'} text-white px-6 py-2.5 flex items-center justify-center gap-3 animate-in slide-in-from-top-full duration-500 shadow-lg relative z-20 h-full`}>
       <Megaphone size={16} className="shrink-0 animate-bounce" />
       <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] truncate">
         {activeAnnouncement.title}: <span className="font-medium normal-case tracking-normal ml-2">{activeAnnouncement.content}</span>
       </p>
-      <button onClick={() => setActiveAnnouncement(null)} className="ml-4 hover:bg-white/20 p-1 rounded-lg transition-colors">
+      <button onClick={() => setActiveAnnouncement(null)} aria-label="Dismiss announcement" className="ml-4 hover:bg-white/20 p-1 rounded-lg transition-colors">
         <X size={14} />
       </button>
     </div>

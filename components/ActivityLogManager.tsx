@@ -305,12 +305,18 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500">
-                <StatCard label={isPresenting ? "Stabilized nodes" : "Resolved tasks"} value={stats.completed} icon={CheckCircle2} color="emerald" />
-                <StatCard label={isPresenting ? "Logic Repairs" : "Active process"} value={stats.troubleshooting} icon={BarChart3} color="blue" />
-                <StatCard label={isPresenting ? "Infra Registry" : "Total registry"} value={stats.maintenance} icon={RefreshCcw} color="indigo" />
-                <StatCard label={isPresenting ? "Critical Alerts" : "High alerts"} value={stats.critical} icon={Zap} color="rose" />
-            </div>
+            {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <SkeletonStatCard key={i} />)}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500">
+                    <StatCard label={isPresenting ? "Stabilized nodes" : "Resolved tasks"} value={stats.completed} icon={CheckCircle2} color="emerald" />
+                    <StatCard label={isPresenting ? "Logic Repairs" : "Active process"} value={stats.troubleshooting} icon={BarChart3} color="blue" />
+                    <StatCard label={isPresenting ? "Infra Registry" : "Total registry"} value={stats.maintenance} icon={RefreshCcw} color="indigo" />
+                    <StatCard label={isPresenting ? "Critical Alerts" : "High alerts"} value={stats.critical} icon={Zap} color="rose" />
+                </div>
+            )}
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
                 <div className="flex flex-col md:flex-row items-center gap-3">
@@ -349,7 +355,7 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={6} className="px-6 py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={28} /></td></tr>
+                                    Array(7).fill(0).map((_, i) => <SkeletonActivityRow key={i} />)
                                 ) : paginatedActivities.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-24 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No logs found</td></tr>
                                 ) : paginatedActivities.map((act) => (
@@ -445,3 +451,46 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
         </div>
     );
 };
+
+const SkeletonStatCard = () => (
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[130px] animate-pulse">
+        <div className="flex justify-between items-center mb-4">
+            <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded"></div>
+            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+        </div>
+        <div className="h-8 w-12 bg-slate-100 dark:bg-slate-800 rounded mt-2"></div>
+        <div className="h-3 w-24 bg-slate-50 dark:bg-slate-800/50 rounded mt-4"></div>
+    </div>
+);
+
+const SkeletonActivityRow = () => (
+    <tr className="animate-pulse">
+        <td className="px-6 py-6">
+            <div className="space-y-2">
+                <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                <div className="h-3 w-24 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
+            </div>
+        </td>
+        <td className="px-6 py-6">
+            <div className="space-y-2">
+                <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                <div className="h-3 w-16 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
+            </div>
+        </td>
+        <td className="px-6 py-6 border-b-transparent">
+            <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded-md"></div>
+        </td>
+        <td className="px-6 py-6">
+            <div className="h-6 w-24 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+        </td>
+        <td className="px-6 py-6">
+            <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800/50 rounded"></div>
+        </td>
+        <td className="px-6 py-6">
+            <div className="flex justify-center gap-2">
+                <div className="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-lg"></div>
+                <div className="w-8 h-8 bg-slate-50 dark:bg-slate-800 rounded-lg"></div>
+            </div>
+        </td>
+    </tr>
+);

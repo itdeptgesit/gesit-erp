@@ -74,7 +74,35 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const { data: assets } = await supabase.from('it_assets').select('status, category');
+            // Parallel Fetching for better performance (LCP)
+            const [
+                { data: assets },
+                { count: openTickets },
+                { count: resolvedTickets },
+                { data: tasks },
+                { data: ports },
+                { data: purchases },
+                { count: userCount },
+                { count: deptCount },
+                { count: activeLoans },
+                { data: activities },
+                { data: pTasks },
+                { data: loans }
+            ] = await Promise.all([
+                supabase.from('it_assets').select('status, category'),
+                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open'),
+                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']),
+                supabase.from('weekly_plans').select('status'),
+                supabase.from('switch_ports').select('status'),
+                supabase.from('purchase_plans').select('status, total_price'),
+                supabase.from('user_accounts').select('*', { count: 'exact', head: true }),
+                supabase.from('departments').select('*', { count: 'exact', head: true }),
+                supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
+                supabase.from('activity_logs').select('*').order('id', { ascending: false }).limit(5),
+                supabase.from('weekly_plans').select('*').eq('assignee', userName || 'IT Support').neq('status', 'Done').order('due_date', { ascending: true }).limit(3),
+                supabase.from('it_asset_loans').select('*, it_assets(item_name)').eq('status', 'Active').gte('expected_return_date', new Date().toISOString().split('T')[0]).lte('expected_return_date', new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]).order('expected_return_date', { ascending: true }).limit(3)
+            ]);
+
             const totalAssets = assets?.length || 0;
             const activeAssets = assets?.filter((a: any) => a.status === 'Active' || a.status === 'Used').length || 0;
             const categories = (assets || []).reduce((acc: any, curr: any) => {
@@ -87,60 +115,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 retired: assets?.filter((a: any) => ['Broken', 'Disposed', 'Sold', 'Lost'].includes(a.status)).length || 0,
             };
 
-            const { count: openTickets } = await supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open');
-            const { count: resolvedTickets } = await supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']);
-
-            const { data: tasks } = await supabase.from('weekly_plans').select('status');
-            const totalTasks = tasks?.length || 0;
             const completedTasks = tasks?.filter((t: any) => t.status === 'Done').length || 0;
             const inProgressTasks = tasks?.filter((t: any) => t.status === 'In Progress').length || 0;
             const todoTasks = tasks?.filter((t: any) => t.status === 'To Do' || t.status === 'Pending').length || 0;
 
-            const { data: ports } = await supabase.from('switch_ports').select('status');
-            const totalPorts = ports?.length || 0;
-            const activePorts = ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
-            const errorPorts = ports?.filter((p: any) => p.status === PortStatus.ERROR).length || 0;
+            const activePortsCount = ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
+            const errorPortsCount = ports?.filter((p: any) => p.status === PortStatus.ERROR).length || 0;
 
-            const { data: purchases } = await supabase.from('purchase_plans').select('status, total_price');
             const pendingBudget = purchases?.filter(p => p.status.includes('Pending')).reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
             const approvedBudget = purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
 
-            const { count: userCount } = await supabase.from('user_accounts').select('*', { count: 'exact', head: true });
-            const { count: deptCount } = await supabase.from('departments').select('*', { count: 'exact', head: true });
-
-            const { count: activeLoans } = await supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active');
-
-            const { data: activities } = await supabase.from('activity_logs').select('*').order('id', { ascending: false }).limit(5);
-
-            // 1. Fetch Personal Tasks
-            const { data: pTasks } = await supabase
-                .from('weekly_plans')
-                .select('*')
-                .eq('assignee', userName || 'IT Support')
-                .neq('status', 'Done')
-                .order('due_date', { ascending: true })
-                .limit(3);
-
-            // 2. Fetch Upcoming Loan Returns (Due in next 7 days)
-            const todayStr = new Date().toISOString().split('T')[0];
-            const nextWeek = new Date();
-            nextWeek.setDate(nextWeek.getDate() + 7);
-            const nextWeekStr = nextWeek.toISOString().split('T')[0];
-
-            const { data: loans } = await supabase
-                .from('it_asset_loans')
-                .select('*, it_assets(item_name)')
-                .eq('status', 'Active')
-                .gte('expected_return_date', todayStr)
-                .lte('expected_return_date', nextWeekStr)
-                .order('expected_return_date', { ascending: true })
-                .limit(3);
-
             setStats({
                 totalAssets, activeAssets, openTickets: openTickets || 0, resolvedTickets: resolvedTickets || 0,
-                plannedTasks: totalTasks, completedTasks, inProgressTasks, todoTasks,
+                plannedTasks: tasks?.length || 0, completedTasks, inProgressTasks, todoTasks,
                 pendingPurchases: purchases?.filter(p => p.status.includes('Pending')).length || 0,
-                activePorts, totalPorts, errorPorts, totalUsers: userCount || 0, totalDepts: deptCount || 0,
+                activePorts: activePortsCount, totalPorts: ports?.length || 0, errorPorts: errorPortsCount, totalUsers: userCount || 0, totalDepts: deptCount || 0,
                 pendingBudget, approvedBudget, activeLoans: activeLoans || 0,
                 recentActivities: (activities || []).map((a: any) => ({ ...a, activityName: a.activity_name, itPersonnel: a.it_personnel })),
                 assetCategories: categories,
@@ -185,20 +174,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         };
     }, [userName]);
 
-    const formatCurrency = (num: number) => {
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
-                <div className="w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm font-semibold text-slate-400 tracking-tight">Syncing systems...</p>
-            </div>
-        );
-    }
-
     const networkHealth = stats.totalPorts > 0 ? Math.round((stats.activePorts / stats.totalPorts) * 100) : 0;
     const taskProgress = stats.plannedTasks > 0 ? Math.round((stats.completedTasks / stats.plannedTasks) * 100) : 0;
 
@@ -213,12 +188,15 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
     const GreetingIcon = greeting.icon;
 
     return (
-        <div className="space-y-8 pb-10 animate-in fade-in duration-700">
+        <div className="space-y-8 pb-10">
+            {/* LCP Element: Render Greeting Immediately */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3 min-h-[40px]">
                         {greeting.text}, {userName ? userName.split(' ')[0] : 'User'}
-                        <GreetingIcon size={28} className={greeting.color} />
+                        <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                            <GreetingIcon size={28} className={greeting.color} />
+                        </div>
                     </h1>
                     <div className="flex items-center gap-2 mt-1.5">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
@@ -253,24 +231,30 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-                <StatCard label="Service desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
-                <StatCard label="IT assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
-                <StatCard label="Asset loans" value={stats.activeLoans} subValue="Active borrowing" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loans')} />
-                <StatCard label="Network health" value={`${networkHealth}%`} subValue={`${stats.activePorts} active ports`} icon={Network} color="emerald" onClick={() => onNavigate('network')} />
-                <StatCard label="Productivity" value={`${taskProgress}%`} subValue={`${stats.completedTasks} of ${stats.plannedTasks} task(s) done`} icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')}>
-                    <div className="mt-4 space-y-2">
-                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${taskProgress}%` }}></div>
-                        </div>
-                        <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                            <span>{stats.todoTasks} To Do</span>
-                            <span>{stats.inProgressTasks} Active</span>
-                        </div>
-                    </div>
-                </StatCard>
-                <StatCard label="Personnel" value={stats.totalUsers} subValue={`${stats.totalDepts} units`} icon={Users} color="blue" onClick={() => onNavigate('users')} />
-                <StatCard label="Finance" value={stats.pendingPurchases} subValue={formatCurrency(stats.pendingBudget)} icon={ShoppingCart} color="amber" onClick={() => onNavigate('purchase')} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 min-h-[188px]">
+                {isLoading ? (
+                    Array(7).fill(0).map((_, i) => <SkeletonCard key={i} />)
+                ) : (
+                    <>
+                        <StatCard label="Service desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
+                        <StatCard label="IT assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
+                        <StatCard label="Asset loans" value={stats.activeLoans} subValue="Active borrowing" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loans')} />
+                        <StatCard label="Network health" value={`${networkHealth}%`} subValue={`${stats.activePorts} active ports`} icon={Network} color="emerald" onClick={() => onNavigate('network')} />
+                        <StatCard label="Productivity" value={`${taskProgress}%`} subValue={`${stats.completedTasks} of ${stats.plannedTasks} task(s) done`} icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')}>
+                            <div className="mt-4 space-y-2">
+                                <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${taskProgress}%` }}></div>
+                                </div>
+                                <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <span>{stats.todoTasks} To Do</span>
+                                    <span>{stats.inProgressTasks} Active</span>
+                                </div>
+                            </div>
+                        </StatCard>
+                        <StatCard label="Personnel" value={stats.totalUsers} subValue={`${stats.totalDepts} units`} icon={Users} color="blue" onClick={() => onNavigate('users')} />
+                        <StatCard label="Finance" value={stats.pendingPurchases} subValue={formatCurrency(stats.pendingBudget)} icon={ShoppingCart} color="amber" onClick={() => onNavigate('purchase')} />
+                    </>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -285,12 +269,25 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 View History <ChevronRight size={14} />
                             </button>
                         </div>
-                        <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                            {(!stats.recentActivities || stats.recentActivities.length === 0) ? (
+                        <div className="divide-y divide-slate-50 dark:divide-slate-800 min-h-[380px]">
+                            {isLoading ? (
+                                Array(5).fill(0).map((_, i) => (
+                                    <div key={i} className="px-8 py-4 flex items-center justify-between animate-pulse">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700"></div>
+                                            <div className="space-y-2">
+                                                <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                                <div className="h-2 w-24 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
+                                            </div>
+                                        </div>
+                                        <div className="h-6 w-16 bg-slate-50 dark:bg-slate-800 rounded-xl"></div>
+                                    </div>
+                                ))
+                            ) : (!stats.recentActivities || stats.recentActivities.length === 0) ? (
                                 <div className="py-20 text-center text-slate-300 text-sm font-medium italic">No activity logs recorded.</div>
                             ) : (
                                 stats.recentActivities.map((act) => (
-                                    <div key={act.id} className="px-8 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all flex items-center justify-between group">
+                                    <div key={act.id} className="px-8 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all flex items-center justify-between group h-[76px]">
                                         <div className="flex items-center gap-5">
                                             <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-100 dark:border-slate-700 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all">
                                                 {act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}
@@ -315,11 +312,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 My Active Tasks
                                 <button onClick={() => onNavigate('weekly')} className="text-blue-500 hover:text-blue-600"><ChevronRight size={14} /></button>
                             </h3>
-                            <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                {stats.personalTasks.length === 0 ? (
+                            <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[240px]">
+                                {isLoading ? (
+                                    Array(3).fill(0).map((_, i) => (
+                                        <div key={i} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 animate-pulse h-[68px]">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="h-2 w-12 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                                <div className="h-2 w-8 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                            </div>
+                                            <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                        </div>
+                                    ))
+                                ) : stats.personalTasks.length === 0 ? (
                                     <div className="flex h-full items-center justify-center text-[10px] font-bold text-slate-300 uppercase italic">No pending tasks for you.</div>
                                 ) : stats.personalTasks.map(t => (
-                                    <div key={t.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer group" onClick={() => onNavigate('weekly')}>
+                                    <div key={t.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer group h-[68px]" onClick={() => onNavigate('weekly')}>
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-[10px] font-black text-blue-500 uppercase">{t.category}</span>
                                             <span className="text-[9px] font-bold text-slate-400">{t.due_date}</span>
@@ -335,11 +342,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 Loan Alerts
                                 <button onClick={() => onNavigate('asset-loans')} className="text-blue-500 hover:text-blue-600"><ChevronRight size={14} /></button>
                             </h3>
-                            <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                {stats.upcomingLoans.length === 0 ? (
+                            <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[240px]">
+                                {isLoading ? (
+                                    Array(3).fill(0).map((_, i) => (
+                                        <div key={i} className="p-4 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20 animate-pulse h-[84px]">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="h-2 w-12 bg-rose-100/50 dark:bg-rose-900/20 rounded"></div>
+                                                <div className="h-2 w-8 bg-rose-100/50 dark:bg-rose-900/20 rounded"></div>
+                                            </div>
+                                            <div className="h-3 w-3/4 bg-rose-100/50 dark:bg-rose-900/20 rounded"></div>
+                                        </div>
+                                    ))
+                                ) : stats.upcomingLoans.length === 0 ? (
                                     <div className="flex h-full items-center justify-center text-[10px] font-bold text-slate-300 uppercase italic">No upcoming returns.</div>
                                 ) : stats.upcomingLoans.map(l => (
-                                    <div key={l.id} className="p-4 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20 hover:border-rose-400 transition-all cursor-pointer group" onClick={() => onNavigate('asset-loans')}>
+                                    <div key={l.id} className="p-4 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/20 hover:border-rose-400 transition-all cursor-pointer group h-[84px]" onClick={() => onNavigate('asset-loans')}>
                                         <div className="flex justify-between items-center mb-1">
                                             <p className="text-[10px] font-black text-rose-600 uppercase">Return Due</p>
                                             <p className="text-[9px] font-bold text-rose-500">{l.expected_return_date}</p>
@@ -356,7 +373,17 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
                             <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Asset distribution</h3>
                             <div className="space-y-5 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                {Object.entries(stats.assetCategories).map(([cat, count]) => (
+                                {isLoading ? (
+                                    Array(6).fill(0).map((_, i) => (
+                                        <div key={i} className="space-y-2 animate-pulse">
+                                            <div className="flex justify-between">
+                                                <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                                <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
+                                        </div>
+                                    ))
+                                ) : Object.entries(stats.assetCategories).map(([cat, count]) => (
                                     <div key={cat} className="space-y-1.5 cursor-pointer group/bar" onClick={() => onNavigate('assets')}>
                                         <div className="flex justify-between items-center text-[11px] font-bold">
                                             <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors">{cat}</span>
@@ -376,21 +403,36 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
                             <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Infrastructure Status</h3>
                             <div className="flex-1 flex flex-col justify-center items-center">
-                                <div className="relative w-40 h-40 flex items-center justify-center mb-6">
-                                    <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
-                                    <div className="absolute inset-0 rounded-full border-[12px] border-emerald-500 border-l-transparent border-t-transparent -rotate-45" style={{ background: `conic-gradient(from 0deg, #10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-                                    <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-
-                                    <div className="text-center z-10">
-                                        <h4 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{Math.round((stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100)}%</h4>
-                                        <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Healthy</p>
+                                {isLoading ? (
+                                    <div className="w-full space-y-8 animate-pulse">
+                                        <div className="relative w-40 h-40 flex items-center justify-center mx-auto">
+                                            <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="w-full space-y-3">
-                                    <PlanBar label="Operational" count={stats.assetStatuses.operational} total={stats.totalAssets} color="bg-emerald-500" />
-                                    <PlanBar label="Maintenance" count={stats.assetStatuses.maintenance} total={stats.totalAssets} color="bg-amber-500" />
-                                    <PlanBar label="Retired / Broken" count={stats.assetStatuses.retired} total={stats.totalAssets} color="bg-rose-500" />
-                                </div>
+                                ) : (
+                                    <>
+                                        <div className="relative w-40 h-40 flex items-center justify-center mb-6">
+                                            <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
+                                            <div className="absolute inset-0 rounded-full border-[12px] border-emerald-500 border-l-transparent border-t-transparent -rotate-45" style={{ background: `conic-gradient(from 0deg, #10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
+                                            <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
+
+                                            <div className="text-center z-10">
+                                                <h4 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{Math.round((stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100)}%</h4>
+                                                <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Healthy</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full space-y-3">
+                                            <PlanBar label="Operational" count={stats.assetStatuses.operational} total={stats.totalAssets} color="bg-emerald-500" />
+                                            <PlanBar label="Maintenance" count={stats.assetStatuses.maintenance} total={stats.totalAssets} color="bg-amber-500" />
+                                            <PlanBar label="Retired / Broken" count={stats.assetStatuses.retired} total={stats.totalAssets} color="bg-rose-500" />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -400,58 +442,92 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden group">
                         <div className="relative z-10">
                             <span className="text-[10px] font-bold text-blue-400 tracking-widest mb-8 block uppercase">Network health</span>
-                            <div className="flex items-end justify-between mb-6">
-                                <h3 className="text-6xl font-bold tracking-tight">{networkHealth}%</h3>
-                                <div className="text-right">
-                                    <p className="text-xs font-bold text-slate-500 tracking-widest mb-1 uppercase">Load integrity</p>
-                                    <p className="text-sm font-bold text-emerald-400">Stable</p>
+                            {isLoading ? (
+                                <div className="space-y-6 animate-pulse">
+                                    <div className="flex items-end justify-between">
+                                        <div className="h-16 w-32 bg-slate-800 rounded"></div>
+                                        <div className="h-4 w-16 bg-slate-800 rounded"></div>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-800 rounded-full"></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                                        <div className="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden mb-8">
-                                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(37,99,235,0.4)]" style={{ width: `${networkHealth}%` }}></div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                                    <p className="text-xl font-bold text-white leading-none">{stats.activePorts}</p>
-                                    <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Active</p>
-                                </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                                    <p className="text-xl font-bold text-rose-400 leading-none">{stats.errorPorts}</p>
-                                    <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Alerts</p>
-                                </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-end justify-between mb-6">
+                                        <h3 className="text-6xl font-bold tracking-tight">{networkHealth}%</h3>
+                                        <div className="text-right">
+                                            <p className="text-xs font-bold text-slate-500 tracking-widest mb-1 uppercase">Load integrity</p>
+                                            <p className="text-sm font-bold text-emerald-400">Stable</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden mb-8">
+                                        <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(37,99,235,0.4)]" style={{ width: `${networkHealth}%` }}></div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
+                                            <p className="text-xl font-bold text-white leading-none">{stats.activePorts}</p>
+                                            <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Active</p>
+                                        </div>
+                                        <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
+                                            <p className="text-xl font-bold text-rose-400 leading-none">{stats.errorPorts}</p>
+                                            <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Alerts</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
                         <h4 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h4>
                         <div className="space-y-4">
-                            <div className="p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                <p className="text-[10px] font-bold text-emerald-600 tracking-widest mb-2 uppercase">Approved funds</p>
-                                <h5 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.approvedBudget)}</h5>
-                            </div>
-                            <div className="p-5 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-                                <p className="text-[10px] font-bold text-blue-600 tracking-widest mb-2 uppercase">Pending requests</p>
-                                <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.pendingBudget)}</h5>
-                            </div>
+                            {isLoading ? (
+                                <>
+                                    <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+                                    <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                        <p className="text-[10px] font-bold text-emerald-600 tracking-widest mb-2 uppercase">Approved funds</p>
+                                        <h5 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.approvedBudget)}</h5>
+                                    </div>
+                                    <div className="p-5 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+                                        <p className="text-[10px] font-bold text-blue-600 tracking-widest mb-2 uppercase">Pending requests</p>
+                                        <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.pendingBudget)}</h5>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
                         <h4 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">System Health & Personnel</h4>
                         <div className="space-y-5">
-                            <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/20">
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <Users size={16} className="text-emerald-600" />
-                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            {isLoading ? (
+                                <>
+                                    <div className="h-14 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+                                    <div className="h-4 w-full bg-slate-50 dark:bg-slate-800 rounded animate-pulse"></div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <Users size={16} className="text-emerald-600" />
+                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                            </div>
+                                            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Team availability</span>
+                                        </div>
+                                        <span className="text-xs font-black text-emerald-600">{onlineCount} Online</span>
                                     </div>
-                                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Team availability</span>
-                                </div>
-                                <span className="text-xs font-black text-emerald-600">{onlineCount} Online</span>
-                            </div>
-                            {stats.errorPorts > 0 && (
-                                <VitalsRow icon={AlertCircle} label="Active threats" status="Detected" color="text-rose-600" />
+                                    {stats.errorPorts > 0 && (
+                                        <VitalsRow icon={AlertCircle} label="Active threats" status="Detected" color="text-rose-600" />
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -460,6 +536,24 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         </div>
     );
 };
+
+const formatCurrency = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+};
+
+const SkeletonCard = () => (
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[188px] animate-pulse">
+        <div className="flex justify-between items-center mb-4">
+            <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded"></div>
+            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+        </div>
+        <div className="space-y-3">
+            <div className="h-8 w-12 bg-slate-100 dark:bg-slate-800 rounded mt-2"></div>
+            <div className="h-2 w-24 bg-slate-50 dark:bg-slate-800/50 rounded mt-4 leading-none"></div>
+        </div>
+    </div>
+);
 
 const PlanBar = ({ label, count, total, color }: any) => {
     const percent = total > 0 ? (count / total) * 100 : 0;
@@ -498,8 +592,12 @@ export const StatCard = ({ label, value, subValue, icon: Icon, color, onClick, c
     const theme = colorMap[color] || colorMap.blue;
 
     return (
-        <div onClick={onClick} className="cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[130px] transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] group">
-            <div>
+        <button
+            onClick={onClick}
+            aria-label={`${label}: ${value}. ${subValue}`}
+            className="w-full text-left cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[188px] transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] group"
+        >
+            <div className="w-full">
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
                     <div className={`p-2 rounded-xl ${theme.bg} text-white shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
@@ -510,9 +608,9 @@ export const StatCard = ({ label, value, subValue, icon: Icon, color, onClick, c
                 {children}
             </div>
 
-            <div>
+            <div className="mt-auto">
                 <p className="text-[10px] font-bold text-slate-400 tracking-widest leading-none uppercase">{subValue}</p>
             </div>
-        </div>
+        </button>
     );
 };

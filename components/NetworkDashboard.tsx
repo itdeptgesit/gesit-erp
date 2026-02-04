@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useTransition } from 'react';
 import {
     Server, RefreshCcw, Layout, Search, GitBranch, Plus,
     Loader2, Pencil, Trash2, Save, Cable
@@ -35,6 +35,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'topology' | 'status' | 'wiring' | 'devices'>('topology');
+    const [isPending, startTransition] = useTransition();
 
     // RBAC Logic
     const isAdmin = currentUser?.role === 'Admin';
@@ -312,15 +313,15 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Infrastructure Engine</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Topology mapping and device configuration</p></div>
-                <div className="flex items-center gap-3">
-                    {hasUnsavedChanges && activeTab === 'topology' && canManage && (
-                        <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce">
-                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Current Layout
+                <div className="flex items-center gap-3 min-h-[44px] justify-end">
+                    {canManage && (
+                        <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
+                            <Plus size={14} /> Provision Node
                         </button>
                     )}
-                    {canManage && (
-                        <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none">
-                            <Plus size={14} /> Provision Node
+                    {hasUnsavedChanges && activeTab === 'topology' && canManage && (
+                        <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce whitespace-nowrap">
+                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Layout
                         </button>
                     )}
                 </div>
@@ -330,14 +331,14 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 w-full md:w-auto overflow-x-auto">
                         {[{ id: 'topology', label: 'Topology', icon: GitBranch }, { id: 'status', label: 'Nodes', icon: Layout }, { id: 'wiring', label: 'Wiring', icon: Cable }, { id: 'devices', label: 'Hardware', icon: Server }].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}><tab.icon size={12} />{tab.label}</button>
+                            <button key={tab.id} onClick={() => startTransition(() => setActiveTab(tab.id as any))} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'} ${isPending ? 'opacity-50 grayscale' : ''}`}><tab.icon size={12} />{tab.label}</button>
                         ))}
                     </div>
                     <div className="relative flex-1 md:w-64"><input type="text" placeholder="Filter nodes..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-slate-800 dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>
                 </div>
                 <div className="p-0 flex-1 min-h-[550px]">
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center h-[500px] gap-4"><RefreshCcw className="animate-spin text-blue-500" size={24} /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
+                        <div className="flex flex-col items-center justify-center h-[650px] gap-4 transition-all duration-300"><RefreshCcw className="animate-spin text-blue-500" size={24} /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning Infrastructure...</p></div>
                     ) : activeTab === 'topology' ? (
                         <div className="h-[650px]"><TopologyDiagram switches={switches} onUpdateSwitches={handleUpdateSwitches} internetPos={internetPos} canManage={canManage} /></div>
                     ) : (
