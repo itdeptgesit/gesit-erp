@@ -356,11 +356,12 @@ const ProtectedRoute: React.FC<{ isAuthenticated: boolean; children: React.React
   return <>{children}</>;
 };
 
-const DashboardLayout: React.FC<any> = ({
+const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   appSettings, currentUser, groupDefinitions,
   isMobileSidebarOpen, setIsMobileSidebarOpen,
   isSidebarCollapsed, setIsSidebarCollapsed,
-  setIsLogoutModalOpen, refreshUserProfile
+  setIsLogoutModalOpen, refreshUserProfile,
+  children
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -406,30 +407,32 @@ const DashboardLayout: React.FC<any> = ({
           </div>
           <div className="flex-1 p-4 md:p-8">
             <div className="max-w-[1800px] mx-auto h-full">
-              <Routes>
-                <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} />} />
-                <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
-                <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
-                <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
-                <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
-                <Route path="purchase-record" element={<PurchaseRecordManager />} />
-                <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
-                <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
-                <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
-                <Route path="files" element={<FileManager currentUser={currentUser} />} />
-                <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} />} />
-                <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
-                <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
-                <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
-                <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />
-                <Route path="master-group" element={<MasterGroup currentUser={currentUser} />} />
-                <Route path="system-settings" element={<SystemSettings currentUser={currentUser} />} />
-                <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
-                <Route path="announcements" element={<AnnouncementManager />} />
-                <Route path="maintenance" element={<SystemMaintenance />} />
-                <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              {children ? children : (
+                <Routes>
+                  <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} />} />
+                  <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
+                  <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
+                  <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
+                  <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
+                  <Route path="purchase-record" element={<PurchaseRecordManager />} />
+                  <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
+                  <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
+                  <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
+                  <Route path="files" element={<FileManager currentUser={currentUser} />} />
+                  <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} />} />
+                  <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
+                  <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
+                  <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
+                  <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />
+                  <Route path="master-group" element={<MasterGroup currentUser={currentUser} />} />
+                  <Route path="system-settings" element={<SystemSettings currentUser={currentUser} />} />
+                  <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
+                  <Route path="announcements" element={<AnnouncementManager />} />
+                  <Route path="maintenance" element={<SystemMaintenance />} />
+                  <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              )}
             </div>
           </div>
           <Footer />
