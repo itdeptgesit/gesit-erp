@@ -1,0 +1,2 @@
+import{s as i}from"./index-pGj63JaD.js";const n=async(t,e,o,a,s)=>{try{const{error:r}=await i.from("user_activity_logs").insert([{user_name:t,user_role:e,action:o,module:a,details:s,created_at:new Date().toISOString()}]);r&&(r.code==="42P01"?console.warn("Table 'user_activity_logs' does not exist. Tracking skipped."):console.error("Error tracking activity:",r))}catch(r){console.error("Failed to track activity:",r)}};export{n as t};
+//# sourceMappingURL=auditLogger-Bzx2Rh6C.js.map
