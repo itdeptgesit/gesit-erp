@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
+import { TopNavigation } from './components/TopNavigation';
 import { Footer } from './components/Footer';
 import { MainDashboard } from './components/MainDashboard';
-import { Navbar } from './components/Navbar';
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
 import { MOCK_GROUPS } from './constants';
@@ -16,7 +16,7 @@ import {
   Settings, Megaphone, Loader2
 } from 'lucide-react';
 
-// Lazy Load Managers for Better INP (Interaction responsiveness)
+// Lazy Load Managers
 const NetworkDashboard = React.lazy(() => import('./components/NetworkDashboard').then(m => ({ default: m.NetworkDashboard })));
 const AssetManager = React.lazy(() => import('./components/AssetManager').then(m => ({ default: m.AssetManager })));
 const AssetLoanManager = React.lazy(() => import('./components/AssetLoanManager').then(m => ({ default: m.AssetLoanManager })));
@@ -42,10 +42,70 @@ const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetai
 const HelpdeskPublic = React.lazy(() => import('./components/HelpdeskPublic').then(m => ({ default: m.HelpdeskPublic })));
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 
-const App: React.FC = () => {
+const PublicLayout: React.FC<{
+  children: React.ReactNode;
+  appSettings: any;
+  onLogout: () => void;
+  currentUser: UserAccount | null;
+  groupDefinitions: UserGroup[];
+  variant?: 'admin' | 'public';
+  searchProps?: {
+    value: string;
+    onChange: (val: string) => void;
+  };
+}> = ({ children, appSettings, onLogout, currentUser, groupDefinitions, variant = 'admin', searchProps }) => {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#020617] transition-colors duration-300">
+      <TopNavigation
+        onMenuClick={() => setIsMobileSidebarOpen(true)}
+        onLogout={onLogout}
+        userGroups={currentUser?.groups || []}
+        userRole={currentUser?.role}
+        groupDefinitions={groupDefinitions}
+        user={currentUser ? {
+          name: currentUser.fullName,
+          role: currentUser.role,
+          email: currentUser.email,
+          jobTitle: currentUser.jobTitle,
+          avatarUrl: currentUser.avatarUrl
+        } : undefined}
+        appName={appSettings.name}
+        logoUrl={appSettings.logo}
+        variant={variant}
+        searchProps={searchProps}
+      />
+
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto h-full">
+          {children}
+        </div>
+      </main>
+
+      <Footer />
+
+      <Sidebar
+        currentView={location.pathname.substring(1) || 'dashboard'}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        isMobileOpen={isMobileSidebarOpen}
+        userGroups={currentUser?.groups || []}
+        userName={currentUser?.fullName || 'User'}
+        userRole={currentUser?.role}
+        groupDefinitions={groupDefinitions}
+        isCollapsed={false}
+        setIsCollapsed={() => { }}
+        appName={appSettings.name}
+        logoUrl={appSettings.logo}
+      />
+    </div>
+  );
+};
+
+const InternalApp: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [currentView, setCurrentView] = useState('dashboard');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [groupDefinitions, setGroupDefinitions] = useState<UserGroup[]>(MOCK_GROUPS);
   const [appSettings, setAppSettings] = useState({
@@ -53,42 +113,20 @@ const App: React.FC = () => {
     logo: 'https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png'
   });
 
-  const [isPublicAssetView, setIsPublicAssetView] = useState(false);
-  const [publicAssetId, setPublicAssetId] = useState('');
-  const [isPublicHelpdesk, setIsPublicHelpdesk] = useState(false);
-  const [isPublicDirectory, setIsPublicDirectory] = useState(false);
   const [language, setLanguageState] = useState<Language>('en');
-
-  // Sidebar State
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
+  const [globalSearchTerm, setGlobalSearchTerm] = useState("");
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  console.log("App.tsx: Rendering InternalApp, isCheckingSession:", isCheckingSession);
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const assetId = params.get('id');
-    const path = window.location.pathname;
-
-    if (path.includes('/helpdesk')) {
-      setIsPublicHelpdesk(true);
-      setIsCheckingSession(false);
-      return;
-    }
-
-    if (path.includes('/directory')) {
-      setIsPublicDirectory(true);
-      setIsCheckingSession(false);
-      return;
-    }
-
-    if (assetId) {
-      setIsPublicAssetView(true);
-      setPublicAssetId(assetId);
-      setIsCheckingSession(false);
-      return;
-    }
-
+    console.log("App.tsx: Running initial effect...");
     // Initialize Theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -101,18 +139,31 @@ const App: React.FC = () => {
     if (savedLang) setLanguageState(savedLang);
 
     const checkSession = async () => {
+      console.log("App.tsx: Checking session...");
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log("App.tsx: Session check result:", !!session);
         if (session?.user?.email) {
           await handleLogin(session.user.email);
         }
       } catch (err) {
-        console.error("Session check failed", err);
+        console.error("App.tsx: Session check failed", err);
       } finally {
+        console.log("App.tsx: Session check complete, setting loading to false.");
         setIsCheckingSession(false);
       }
     };
+
+    // Safety timeout
+    const timeout = setTimeout(() => {
+      if (isCheckingSession) {
+        console.warn("App.tsx: Session check timing out, forcing UI render.");
+        setIsCheckingSession(false);
+      }
+    }, 5000);
+
     checkSession();
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -127,8 +178,8 @@ const App: React.FC = () => {
         }
       } catch (err) { /* ignore */ }
     };
-    fetchSettings();
-  }, []);
+    if (!isCheckingSession) fetchSettings();
+  }, [isCheckingSession]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -155,63 +206,39 @@ const App: React.FC = () => {
     if (isAuthenticated) fetchGroups();
   }, [isAuthenticated]);
 
-  const updateUserActivity = async () => {
-    if (!currentUser?.email) return;
-    try {
-      await supabase
-        .from('user_accounts')
-        .update({ last_login: new Date().toISOString() })
-        .eq('email', currentUser.email);
-    } catch (err) {
-      console.warn("Heartbeat update failed", err);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      // First heartbeat
-      updateUserActivity();
-
-      const interval = setInterval(updateUserActivity, 300000); // Pulse every 5 minutes
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, currentUser?.email]);
-
   const handleLogin = async (email: string) => {
-    const { data } = await supabase
-      .from('user_accounts')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (data) {
-      const userProfile: UserAccount = {
-        id: data.id,
-        email: data.email,
-        username: data.username,
-        fullName: data.full_name,
-        role: data.role,
-        groups: data.groups || [],
-        status: data.status,
-        department: data.department,
-        phone: data.phone,
-        address: data.address,
-        jobTitle: data.job_title,
-        supervisorId: data.supervisor_id?.toString(),
-        managerId: data.manager_id?.toString(),
-        avatarUrl: data.avatar_url,
-        company: data.company
-      };
-      setCurrentUser(userProfile);
-      setIsAuthenticated(true);
-
-      // Update timestamp on login
-      await supabase
+    console.log("App.tsx: Handling login for", email);
+    try {
+      const { data, error } = await supabase
         .from('user_accounts')
-        .update({ last_login: new Date().toISOString() })
-        .eq('email', email);
-    } else {
-      setIsAuthenticated(true);
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        const userProfile: UserAccount = {
+          id: data.id,
+          email: data.email,
+          username: data.username,
+          fullName: data.full_name,
+          role: data.role,
+          groups: data.groups || [],
+          status: data.status,
+          department: data.department,
+          phone: data.phone,
+          address: data.address,
+          jobTitle: data.job_title,
+          supervisorId: data.supervisor_id?.toString(),
+          managerId: data.manager_id?.toString(),
+          avatarUrl: data.avatar_url,
+          company: data.company
+        };
+        setCurrentUser(userProfile);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
     }
   };
 
@@ -219,12 +246,8 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setCurrentUser(null);
-    setCurrentView('dashboard');
     setIsLogoutModalOpen(false);
-  };
-
-  const handleNavigate = (view: string) => {
-    setCurrentView(view);
+    navigate('/login');
   };
 
   const refreshUserProfile = async () => {
@@ -233,230 +256,185 @@ const App: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return <MainDashboard onNavigate={handleNavigate} userName={currentUser?.fullName} />;
-      case 'helpdesk':
-        return <HelpdeskManager currentUser={currentUser} />;
-      case 'activity':
-        return <ActivityLogManager currentUser={currentUser} />;
-      case 'weekly':
-        return <WeeklyPlanManager currentUser={currentUser} />;
-      case 'purchase':
-        return <PurchasePlanManager currentUser={currentUser} />;
-      case 'purchase-record':
-        return <PurchaseRecordManager />;
-      case 'network':
-        return <NetworkDashboard onBack={() => handleNavigate('dashboard')} currentUser={currentUser} />;
-      case 'assets':
-        return <AssetManager currentUser={currentUser} />;
-      case 'asset-loan':
-        return <AssetLoanManager currentUser={currentUser} />;
-      case 'files':
-        return <FileManager currentUser={currentUser} />;
-      case 'extension-directory':
-        return <ExtensionDirectory currentUser={currentUser} />;
-      case 'users':
-        return <UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />;
-      case 'master-company':
-        return <MasterCompany currentUser={currentUser} />;
-      case 'master-department':
-        return <MasterDepartment currentUser={currentUser} />;
-      case 'master-category':
-        return <MasterCategory currentUser={currentUser} />;
-      case 'master-group':
-        return <MasterGroup currentUser={currentUser} />;
-      case 'system-settings':
-        return <SystemSettings currentUser={currentUser} />;
-      case 'tracking-log':
-        return <AuditLogManager currentUser={currentUser} />;
-      case 'announcements':
-        return <AnnouncementManager />;
-      case 'maintenance':
-        return <SystemMaintenance />;
-      case 'profile':
-        return <ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />;
-      default:
-        return <MainDashboard onNavigate={handleNavigate} userName={currentUser?.fullName} />;
-    }
-  };
-
-  if (isPublicHelpdesk) {
-    return (
-      <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-          <HelpdeskPublic />
-        </React.Suspense>
-      </LanguageContext.Provider>
-    );
-  }
-
-  if (isPublicDirectory) {
-    return (
-      <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <div className="min-h-screen bg-slate-50 dark:bg-[#020617] p-4 md:p-10">
-          <div className="max-w-7xl mx-auto">
-            <React.Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-              <ExtensionDirectory />
-            </React.Suspense>
-          </div>
-        </div>
-      </LanguageContext.Provider>
-    );
-  }
-
-  if (isPublicAssetView) {
-    return (
-      <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-          <AssetPublicDetail assetId={publicAssetId} />
-        </React.Suspense>
-      </LanguageContext.Provider>
-    );
-  }
-
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center p-10">
-        <div className="flex flex-col items-center gap-4 animate-pulse">
-          <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center">
-            <Zap className="text-blue-600 animate-pulse" size={32} />
+      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-10">
+        <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700">
+          <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl shadow-blue-500/10">
+            <Zap className="text-blue-600 animate-pulse" size={40} />
           </div>
-          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-1 w-32 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-600 w-1/2 animate-[loading_1s_infinite_ease-out]"></div>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600/50">Initialising</p>
+          </div>
         </div>
+        <style>{`
+            @keyframes loading {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(200%); }
+            }
+        `}</style>
       </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <LanguageContext.Provider value={{ language, setLanguage, t }}>
-        <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-          <LoginPage onLogin={handleLogin} />
-        </React.Suspense>
-      </LanguageContext.Provider>
     );
   }
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
-        <Sidebar
-          currentView={currentView}
-          onNavigate={(view) => { handleNavigate(view); setIsMobileSidebarOpen(false); }}
-          isMobileOpen={isMobileSidebarOpen}
-          onClose={() => setIsMobileSidebarOpen(false)}
-          userGroups={currentUser?.groups || []}
-          userName={currentUser?.fullName || 'User'}
-          userRole={currentUser?.role}
-          groupDefinitions={groupDefinitions}
-          isCollapsed={isSidebarCollapsed}
-          setIsCollapsed={setIsSidebarCollapsed}
-          appName={appSettings.name}
-          logoUrl={appSettings.logo}
+      <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+        <Routes>
+          <Route path="/helpdesk-public" element={
+            <PublicLayout appSettings={appSettings} onLogout={() => setIsLogoutModalOpen(true)} currentUser={currentUser} groupDefinitions={groupDefinitions}>
+              <HelpdeskPublic />
+            </PublicLayout>
+          } />
+          <Route path="/directory" element={
+            <PublicLayout
+              appSettings={appSettings}
+              onLogout={() => setIsLogoutModalOpen(true)}
+              currentUser={currentUser}
+              groupDefinitions={groupDefinitions}
+              variant="public"
+              searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
+            >
+              <ExtensionDirectory currentUser={currentUser} variant="integrated" externalSearchTerm={globalSearchTerm} />
+            </PublicLayout>
+          } />
+          <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
+          <Route path="/login" element={!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />} />
+
+          <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
+
+          <Route path="/*" element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <DashboardLayout
+                appSettings={appSettings}
+                currentUser={currentUser}
+                groupDefinitions={groupDefinitions}
+                isMobileSidebarOpen={isMobileSidebarOpen}
+                setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                isSidebarCollapsed={isSidebarCollapsed}
+                setIsSidebarCollapsed={setIsSidebarCollapsed}
+                setIsLogoutModalOpen={setIsLogoutModalOpen}
+                refreshUserProfile={refreshUserProfile}
+              />
+            </ProtectedRoute>
+          } />
+        </Routes>
+
+        <DangerConfirmModal
+          isOpen={isLogoutModalOpen}
+          onClose={() => setIsLogoutModalOpen(false)}
+          onConfirm={executeLogout}
+          title={t('signOutTitle')}
+          message={t('signOutMsg')}
         />
-
-        <Header
-          onMenuClick={() => setIsMobileSidebarOpen(true)}
-          onLogout={() => setIsLogoutModalOpen(true)}
-          onNavigate={handleNavigate}
-          appName={appSettings.name}
-          logoUrl={appSettings.logo}
-          user={currentUser ? {
-            name: currentUser.fullName,
-            role: currentUser.role,
-            email: currentUser.email,
-            jobTitle: currentUser.jobTitle,
-            avatarUrl: currentUser.avatarUrl
-          } : undefined}
-        />
-
-        <Navbar
-          currentView={currentView}
-          onNavigate={handleNavigate}
-          userGroups={currentUser?.groups || []}
-          userRole={currentUser?.role}
-          groupDefinitions={groupDefinitions}
-        />
-
-        <div className="flex-1 flex overflow-hidden relative">
-          <main className={`flex-1 overflow-y-auto flex flex-col custom-scrollbar`}>
-            {/* Reserved space container for banner to prevent CLS */}
-            <div className="min-h-[40px] md:min-h-[36px] bg-transparent">
-              <AnnouncementBanner />
-            </div>
-            <div className="flex-1 p-4 md:p-8">
-              <div className="max-w-[1800px] mx-auto h-full">
-                <React.Suspense fallback={
-                  <div className="h-full flex flex-col items-center justify-center gap-4 animate-pulse">
-                    <Loader2 className="animate-spin text-blue-600" size={32} />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loading Module...</p>
-                  </div>
-                }>
-                  {renderContent()}
-                </React.Suspense>
-              </div>
-            </div>
-            <Footer />
-          </main>
-        </div>
-
-        <React.Suspense fallback={null}>
-          <DangerConfirmModal
-            isOpen={isLogoutModalOpen}
-            onClose={() => setIsLogoutModalOpen(false)}
-            onConfirm={executeLogout}
-            title={t('signOutTitle')}
-            message={t('signOutMsg')}
-          />
-        </React.Suspense>
-      </div>
+      </React.Suspense>
     </LanguageContext.Provider>
   );
 };
 
+// Wrapper Component to provide Router Context
+const App: React.FC = () => {
+  return <InternalApp />;
+};
+
 export default App;
 
-const AnnouncementBanner: React.FC = () => {
-  const [activeAnnouncement, setActiveAnnouncement] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchActive = async () => {
-      try {
-        const { data } = await supabase
-          .from('announcements')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        if (data) setActiveAnnouncement(data);
-      } catch (err) {
-        // Silent fail
-      }
-    };
-    fetchActive();
+const AssetRouteWrapper: React.FC = () => {
+  const { id } = React.useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return { id: params.get('id') };
   }, []);
+  const pathId = useLocation().pathname.split('/').pop();
+  return <AssetPublicDetail assetId={id || pathId || ''} />;
+};
 
-  if (!activeAnnouncement) return null;
+const ProtectedRoute: React.FC<{ isAuthenticated: boolean; children: React.ReactNode }> = ({ isAuthenticated, children }) => {
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
-  const colorMap: any = {
-    info: 'bg-blue-600',
-    warning: 'bg-amber-500',
-    error: 'bg-rose-600',
-    success: 'bg-emerald-600'
-  };
+const DashboardLayout: React.FC<any> = ({
+  appSettings, currentUser, groupDefinitions,
+  isMobileSidebarOpen, setIsMobileSidebarOpen,
+  isSidebarCollapsed, setIsSidebarCollapsed,
+  setIsLogoutModalOpen, refreshUserProfile
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentView = location.pathname.substring(1) || 'dashboard';
 
   return (
-    <div className={`${colorMap[activeAnnouncement.type] || 'bg-blue-600'} text-white px-6 py-2.5 flex items-center justify-center gap-3 animate-in slide-in-from-top-full duration-500 shadow-lg relative z-20 h-full`}>
-      <Megaphone size={16} className="shrink-0 animate-bounce" />
-      <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] truncate">
-        {activeAnnouncement.title}: <span className="font-medium normal-case tracking-normal ml-2">{activeAnnouncement.content}</span>
-      </p>
-      <button onClick={() => setActiveAnnouncement(null)} aria-label="Dismiss announcement" className="ml-4 hover:bg-white/20 p-1 rounded-lg transition-colors">
-        <X size={14} />
-      </button>
+    <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+      <Sidebar
+        currentView={currentView}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        isMobileOpen={isMobileSidebarOpen}
+        userGroups={currentUser?.groups || []}
+        userName={currentUser?.fullName || 'User'}
+        userRole={currentUser?.role}
+        groupDefinitions={groupDefinitions}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        appName={appSettings.name}
+        logoUrl={appSettings.logo}
+      />
+
+      <TopNavigation
+        onMenuClick={() => setIsMobileSidebarOpen(true)}
+        onLogout={() => setIsLogoutModalOpen(true)}
+        userGroups={currentUser?.groups || []}
+        userRole={currentUser?.role}
+        groupDefinitions={groupDefinitions}
+        user={currentUser ? {
+          name: currentUser.fullName,
+          role: currentUser.role,
+          email: currentUser.email,
+          jobTitle: currentUser.jobTitle,
+          avatarUrl: currentUser.avatarUrl
+        } : undefined}
+        appName={appSettings.name}
+        logoUrl={appSettings.logo}
+      />
+
+      <div className="flex-1 flex overflow-hidden relative">
+        <main className={`flex-1 overflow-y-auto flex flex-col custom-scrollbar`}>
+          <div className="min-h-[40px] md:min-h-[36px] bg-transparent">
+            {/* Announcement Banner placeholder or similar */}
+          </div>
+          <div className="flex-1 p-4 md:p-8">
+            <div className="max-w-[1800px] mx-auto h-full">
+              <Routes>
+                <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} />} />
+                <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
+                <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
+                <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
+                <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
+                <Route path="purchase-record" element={<PurchaseRecordManager />} />
+                <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
+                <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
+                <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
+                <Route path="files" element={<FileManager currentUser={currentUser} />} />
+                <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} />} />
+                <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
+                <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
+                <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
+                <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />
+                <Route path="master-group" element={<MasterGroup currentUser={currentUser} />} />
+                <Route path="system-settings" element={<SystemSettings currentUser={currentUser} />} />
+                <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
+                <Route path="announcements" element={<AnnouncementManager />} />
+                <Route path="maintenance" element={<SystemMaintenance />} />
+                <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </div>
+          <Footer />
+        </main>
+      </div>
     </div>
   );
 };

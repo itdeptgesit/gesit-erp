@@ -9,7 +9,7 @@ import {
 import { APP_MENU_STRUCTURE } from '../constants';
 import { UserGroup } from '../types';
 import { useLanguage } from '../translations';
-
+import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -34,14 +34,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 interface NavbarProps {
     currentView: string;
-    onNavigate: (view: string) => void;
     userGroups: string[];
     userRole?: string;
     groupDefinitions: UserGroup[];
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-    currentView, onNavigate, userGroups = [], userRole, groupDefinitions = []
+    currentView, userGroups = [], userRole, groupDefinitions = []
 }) => {
     const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
     const { t } = useLanguage();
@@ -59,10 +58,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     const allowedMenuIds = useMemo(() => {
         const allowed = new Set<string>();
-        if (userRole === 'Admin') {
+        const role = userRole?.toLowerCase() || '';
+
+        console.log("Navbar: userRole:", userRole, "role:", role, "groups:", userGroups);
+
+        // Broaden admin check
+        if (role.includes('admin') || role.includes('owner')) {
             APP_MENU_STRUCTURE.forEach(m => allowed.add(m.id));
             return allowed;
         }
+
         if (!userGroups || userGroups.length === 0) {
             allowed.add('dashboard');
             return allowed;
@@ -73,6 +78,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
             }
         });
+
+        // Also ensure that if any child is allowed, the parent is also allowed
+        APP_MENU_STRUCTURE.forEach(menu => {
+            if (menu.parentId && allowed.has(menu.id)) {
+                allowed.add(menu.parentId);
+            }
+        });
+
         return allowed;
     }, [userGroups, groupDefinitions, userRole]);
 
@@ -110,99 +123,86 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <LayoutGroup>
                     {menuItems.map((item: any) => {
                         const hasSub = !!item.subItems;
-                        const isActive = currentView === item.id || (hasSub && item.subItems?.some((s: any) => s.id === currentView));
                         const Icon = item.icon;
+                        const path = item.id === 'dashboard' ? '/' : `/${item.id}`;
+
+                        if (hasSub) {
+                            const isSubActive = item.subItems?.some((s: any) => currentView === s.id);
+                            return (
+                                <div key={item.id} className="relative flex flex-col items-center shrink-0">
+                                    <motion.button
+                                        onClick={() => setActiveSubMenu(activeSubMenu === item.id ? null : item.id)}
+                                        className={`relative flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-bold transition-colors duration-300 tracking-tight whitespace-nowrap z-10
+                                            ${isSubActive
+                                                ? 'text-blue-600 dark:text-blue-400'
+                                                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                                    >
+                                        {isSubActive && (
+                                            <motion.div
+                                                layoutId="nav-pill"
+                                                className="absolute inset-0 bg-blue-50/90 dark:bg-blue-900/40 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.2)] ring-1 ring-blue-500/20 rounded-2xl z-[-1]"
+                                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                            />
+                                        )}
+                                        <Icon size={20} className={`${isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'} transition-colors duration-300`} strokeWidth={isSubActive ? 2.5 : 2} />
+                                        <span>{item.label}</span>
+                                        <ChevronDown size={12} className={`transition-transform duration-300 ${activeSubMenu === item.id ? 'rotate-180' : ''} ${isSubActive ? 'opacity-100' : 'opacity-40'}`} />
+                                    </motion.button>
+
+                                    <AnimatePresence>
+                                        {activeSubMenu === item.id && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                className="absolute top-[calc(100%+8px)] left-0 w-64 bg-white dark:bg-[#0f172a] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-slate-800 py-3 z-50 overflow-hidden ring-1 ring-slate-900/5"
+                                            >
+                                                <div className="flex flex-col gap-0.5 px-1.5">
+                                                    {item.subItems.map((sub: any) => (
+                                                        <NavLink
+                                                            key={sub.id}
+                                                            to={`/${sub.id}`}
+                                                            onClick={() => setActiveSubMenu(null)}
+                                                            className={({ isActive }) => `w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[11px] font-bold transition-all duration-200 tracking-tight
+                                                                ${isActive
+                                                                    ? 'text-blue-600 bg-blue-50/50 dark:bg-blue-900/30'
+                                                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'}`}
+                                                        >
+                                                            {sub.icon && <sub.icon size={16} className={currentView === sub.id ? 'text-blue-600' : 'opacity-40'} />}
+                                                            {sub.label}
+                                                        </NavLink>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        }
 
                         return (
                             <div key={item.id} className="relative flex flex-col items-center shrink-0">
-                                <motion.button
-                                    onClick={() => {
-                                        if (hasSub) setActiveSubMenu(activeSubMenu === item.id ? null : item.id);
-                                        else { onNavigate?.(item.id); setActiveSubMenu(null); }
-                                    }}
-                                    aria-label={item.label}
-                                    aria-current={isActive && !hasSub ? 'page' : undefined}
-                                    aria-haspopup={hasSub ? 'true' : undefined}
-                                    aria-expanded={hasSub ? activeSubMenu === item.id : undefined}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className={`relative flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-bold transition-colors duration-300 tracking-tight whitespace-nowrap z-10
+                                <NavLink
+                                    to={path}
+                                    className={({ isActive }) => `relative flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-bold transition-colors duration-300 tracking-tight whitespace-nowrap z-10
                                         ${isActive
                                             ? 'text-blue-600 dark:text-blue-400'
                                             : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
                                 >
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="nav-pill"
-                                            className="absolute inset-0 bg-blue-50/90 dark:bg-blue-900/40 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.2)] ring-1 ring-blue-500/20 rounded-2xl z-[-1]"
-                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                        />
+                                    {({ isActive }) => (
+                                        <>
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="nav-pill"
+                                                    className="absolute inset-0 bg-blue-50/90 dark:bg-blue-900/40 shadow-[0_10px_20px_-5px_rgba(37,99,235,0.2)] ring-1 ring-blue-500/20 rounded-2xl z-[-1]"
+                                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                                />
+                                            )}
+                                            <Icon size={20} className={`${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'} transition-colors duration-300`} strokeWidth={isActive ? 2.5 : 2} />
+                                            <span>{item.label}</span>
+                                        </>
                                     )}
-
-                                    <Icon size={20} className={`${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'} transition-colors duration-300`} strokeWidth={isActive ? 2.5 : 2} />
-
-                                    {isActive && (
-                                        <motion.span
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ duration: 0.3 }}
-                                        >
-                                            {item.label}
-                                        </motion.span>
-                                    )}
-
-                                    {hasSub && (
-                                        <ChevronDown size={12} className={`transition-transform duration-300 ${activeSubMenu === item.id ? 'rotate-180' : ''} ${isActive ? 'opacity-100' : 'opacity-40'}`} />
-                                    )}
-                                </motion.button>
-
-                                {/* Active Indicator Dot */}
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="nav-dot"
-                                        className="absolute -bottom-1 w-1 h-1 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.8)] z-20"
-                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                    />
-                                )}
-
-                                <AnimatePresence>
-                                    {hasSub && activeSubMenu === item.id && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
-                                            className="absolute top-[calc(100%+8px)] left-0 w-64 bg-white dark:bg-[#0f172a] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-slate-800 py-3 z-50 overflow-hidden ring-1 ring-slate-900/5"
-                                        >
-                                            <div className="px-5 py-2 mb-2 border-b border-slate-50 dark:border-slate-800/50">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{item.label} Services</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col gap-0.5 px-1.5">
-                                                {item.subItems.map((sub: any, idx: number) => (
-                                                    <motion.button
-                                                        key={sub.id}
-                                                        initial={{ opacity: 0, x: -10 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: idx * 0.05 }}
-                                                        onClick={() => { onNavigate?.(sub.id); setActiveSubMenu(null); }}
-                                                        aria-label={sub.label}
-                                                        aria-current={currentView === sub.id ? 'page' : undefined}
-                                                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-[11px] font-bold transition-all duration-200 tracking-tight
-                                                            ${currentView === sub.id
-                                                                ? 'text-blue-600 bg-blue-50/50 dark:bg-blue-900/30'
-                                                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'}`}
-                                                    >
-                                                        {sub.icon && <sub.icon size={16} className={currentView === sub.id ? 'text-blue-600' : 'opacity-40'} />}
-                                                        {sub.label}
-                                                    </motion.button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                </NavLink>
                             </div>
                         );
                     })}

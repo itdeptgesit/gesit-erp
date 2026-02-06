@@ -30,6 +30,7 @@ import {
     Share2,
     ExternalLink
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 import { trackActivity } from "../lib/auditLogger";
 import { PhoneExtension, UserAccount } from "../types";
@@ -47,7 +48,7 @@ const InstructionPanel = () => {
         <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
             <div
                 className={`
-          w-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border transition-all duration-500 ease-in-out
+          w-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border transition-all duration-500 ease-in-out
           ${isOpen ? 'border-indigo-200/50 dark:border-indigo-500/30 shadow-2xl shadow-indigo-500/10' : 'border-slate-200/60 dark:border-slate-800/60 shadow-sm'}
         `}
             >
@@ -55,21 +56,24 @@ const InstructionPanel = () => {
                     onClick={() => setIsOpen(!isOpen)}
                     aria-expanded={isOpen}
                     aria-label={isOpen ? "Close dial instructions" : "View dial instructions"}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors duration-300 rounded-2xl"
+                    className="w-full flex items-center justify-between px-6 py-4 bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all duration-300 rounded-2xl"
                 >
                     <div className="flex items-center gap-4">
                         <div className={`
-              p-2 rounded-xl transition-all duration-500
-              ${isOpen ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}
+              p-2.5 rounded-2xl transition-all duration-500 shadow-sm
+              ${isOpen ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200/50 dark:border-slate-700'}
             `}>
                             <Info className="w-4 h-4" aria-hidden="true" />
                         </div>
-                        <h3 className={`text-sm font-bold transition-colors duration-300 tracking-tight ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-slate-100'}`}>
-                            How to Dial
-                        </h3>
+                        <div className="flex flex-col items-start leading-tight">
+                            <h3 className={`text-[11px] font-black transition-colors duration-300 uppercase tracking-widest ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                                Dialing Protocol
+                            </h3>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">Quick reference guide</p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                        {isOpen ? 'Close' : 'View'}
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800/50 px-3 py-1 rounded-full">
+                        {isOpen ? 'Minimize' : 'Expand'}
                         {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </div>
                 </button>
@@ -80,27 +84,27 @@ const InstructionPanel = () => {
         `}>
                     <div className="overflow-hidden">
                         <div className="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* 27th Floor Guide (TGC) */}
+                            {/* 27th Floor Guide (City Tower) */}
                             <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
-                                <h4 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Floor 27 - The City Tower (TGC)</h4>
+                                <h4 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Floor 27 - City Tower</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#70</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#41 + Ext</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Call to 26th Floor</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px) font-mono font-bold">## + Ext lt. 26</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">88** + PIN + Ext lt.26</kbd>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">* + PIN + 9 + Ph#</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">* + PIN + 9 + PIN</kbd>
                                     </div>
                                 </div>
                             </div>
                             {/* 26th Floor Guide (Gesit Resources) */}
                             <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
-                                <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Floor 26 - Gesit Resources</h4>
+                                <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Floor 26 - Gesit Natural Resources</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
@@ -112,7 +116,7 @@ const InstructionPanel = () => {
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">81** + PIN + Ph#</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">81** + PIN + PIN</kbd>
                                     </div>
                                 </div>
                             </div>
@@ -138,15 +142,17 @@ const ExtensionCard: React.FC<{
     const is27 = ext.floor === 27;
 
     const theme = is27 ? {
-        border: 'border-slate-100 dark:border-slate-800 hover:border-indigo-400/50 dark:hover:border-indigo-500/50',
-        dot: 'bg-indigo-500',
-        badge: 'bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-        focus: 'ring-4 ring-indigo-500/20 scale-[1.03] shadow-2xl shadow-indigo-500/10'
+        border: 'border-slate-100 dark:border-slate-800 hover:border-indigo-500/20',
+        dot: 'bg-indigo-400',
+        text: 'text-indigo-600 dark:text-indigo-400',
+        bg: 'bg-indigo-50/50 dark:bg-indigo-500/5',
+        focus: 'ring-4 ring-indigo-500/5 border-indigo-500/30'
     } : {
-        border: 'border-slate-100 dark:border-slate-800 hover:border-emerald-400/50 dark:hover:border-emerald-500/50',
-        dot: 'bg-emerald-500',
-        badge: 'bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-        focus: 'ring-4 ring-emerald-500/20 scale-[1.03] shadow-2xl shadow-emerald-500/10'
+        border: 'border-slate-100 dark:border-slate-800 hover:border-emerald-500/20',
+        dot: 'bg-emerald-400',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-50/50 dark:bg-emerald-500/5',
+        focus: 'ring-4 ring-emerald-500/5 border-emerald-500/30'
     };
 
     const handleCopy = () => {
@@ -160,53 +166,74 @@ const ExtensionCard: React.FC<{
     return (
         <div
             className={`
-        group relative bg-white dark:bg-slate-900/40 backdrop-blur-sm rounded-2xl p-5 border ${theme.border}
-        transition-all duration-500 ease-out hover:shadow-lg hover:shadow-slate-200/20 dark:hover:shadow-indigo-500/5
-        animate-in fade-in slide-in-from-bottom-2 duration-500
-        ${isFocused ? theme.focus : ''}
-      `}
+                group relative bg-white dark:bg-slate-900/60 rounded-2xl border transition-all duration-300
+                animate-in fade-in slide-in-from-bottom-2 duration-500
+                ${theme.border} ${isFocused ? theme.focus : 'shadow-sm'}
+            `}
             style={{ animationDelay: `${delay}ms` }}
         >
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex flex-col">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate tracking-tight">
-                        {ext.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">{ext.dept}</span>
+            <div className="flex p-6 gap-6">
+                {/* Information Block */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-1 h-1 rounded-full ${theme.dot}`} />
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                Floor {ext.floor}
+                            </span>
+                        </div>
+
+                        <h3 className="text-[14px] font-bold text-slate-800 dark:text-white truncate tracking-tight mb-2">
+                            {ext.name}
+                        </h3>
+
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <span className="truncate">{ext.dept}</span>
+                            </div>
+                            {ext.role && (
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 italic truncate">
+                                    {ext.role}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-5 mt-4 border-t border-slate-50 dark:border-slate-800/30">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Status</span>
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Active</span>
+                        </div>
+
+                        {canEdit && (
+                            <div className="flex items-center gap-0.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => onEdit?.(ext)} className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"><Pencil size={12} /></button>
+                                {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={12} /></button>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleCopy}
-                        aria-label={`Copy extension ${ext.ext}`}
-                        className={`px-3 py-1.5 rounded-xl text-2xl font-mono font-black transition-all ${theme.badge} border border-transparent hover:border-current/20 active:scale-95 flex items-center gap-2`}
-                    >
-                        <span>{ext.ext}</span>
-                        {copied ? <Check className="w-5 h-5" aria-hidden="true" /> : <Copy className="w-5 h-5 opacity-30" aria-hidden="true" />}
-                    </button>
-                    {canEdit && (
-                        <div className="flex gap-1">
-                            <button onClick={() => onEdit?.(ext)} aria-label="Edit extension" className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"><Pencil size={12} /></button>
-                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} aria-label="Delete extension" className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {ext.role && (
-                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 italic mb-4 line-clamp-1">{ext.role}</p>
-            )}
-
-            <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800/50">
-                <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
-                    <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest">{ext.floor} Floor</span>
-                </div>
-                <div className="text-slate-200 dark:text-slate-700 group-hover:text-indigo-500/10 transition-colors">
-                    <Phone size={12} />
-                </div>
+                {/* Extension Display Wrapper */}
+                <button
+                    onClick={handleCopy}
+                    className={`
+                        min-w-[80px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300
+                        ${theme.bg} ${theme.text} hover:scale-105 active:scale-95 border border-transparent hover:border-current/10
+                    `}
+                >
+                    <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest mb-1">Ext</span>
+                    <span className="text-3xl font-black tracking-tighter">
+                        {ext.ext}
+                    </span>
+                    <div className="mt-2 h-3 flex items-center justify-center">
+                        {copied ? (
+                            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">Copied</span>
+                        ) : (
+                            <Copy size={10} className="opacity-0 group-hover/card:opacity-40 transition-opacity" />
+                        )}
+                    </div>
+                </button>
             </div>
         </div>
     );
@@ -229,90 +256,78 @@ const ExtensionTable: React.FC<{
     };
 
     return (
-        <div className="w-full overflow-hidden bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl lg:col-span-3 xl:col-span-4 animate-in fade-in duration-500">
+        <div className="w-full overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <th className="px-8 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center w-20">Initial</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identify Name</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Extension</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Department Cluster</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Floor Level</th>
-                            {isAdmin && <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">PIN</th>}
-                            {isAdmin && <th className="px-8 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>}
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center w-20">Initial</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Contact Identity</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Extension</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Cluster</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Floor</th>
+                            {isAdmin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Security PIN</th>}
+                            {(canEdit || isAdmin) && <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Control</th>}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {extensions.map((ext) => (
-                            <tr key={ext.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                <td className="px-8 py-4">
+                            <tr key={ext.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                <td className="px-6 py-5 text-center">
                                     <div className={`
-                                        w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-sm
-                                        bg-gradient-to-br ${ext.floor === 27 ? 'from-indigo-500 to-indigo-700' : 'from-emerald-500 to-emerald-700'}
+                                        w-10 h-10 rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-sm mx-auto
+                                        bg-gradient-to-br transition-transform duration-300 group-hover:scale-110
+                                        ${ext.floor === 27 ? 'from-indigo-500 to-indigo-700' : 'from-emerald-500 to-emerald-700'}
                                     `}>
                                         {ext.name.charAt(0).toUpperCase()}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-slate-900 dark:text-white">{ext.name}</span>
-                                        {ext.role && <span className="text-[10px] font-medium text-slate-500 italic dark:text-slate-400">{ext.role}</span>}
+                                <td className="px-6 py-5">
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{ext.name}</span>
+                                        {ext.role && <span className="text-[10px] font-medium text-slate-400 italic dark:text-slate-500">{ext.role}</span>}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-5 text-center">
                                     <button
                                         onClick={() => handleCopy(ext.id, ext.ext)}
-                                        aria-label={`Copy extension ${ext.ext}`}
-                                        className="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl border border-slate-200 dark:border-slate-700 font-mono font-black text-2xl hover:shadow-md transition-all active:scale-95"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 font-mono font-black text-xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all active:scale-95 group/btn"
                                     >
-                                        {ext.ext}
-                                        {copiedId === ext.id ? <Check size={16} className="text-emerald-500" aria-hidden="true" /> : <Copy size={16} className="opacity-40" aria-hidden="true" />}
+                                        <span className="group-hover/btn:text-indigo-600 dark:group-hover/btn:text-indigo-400 transition-colors">{ext.ext}</span>
+                                        {copiedId === ext.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} className="opacity-20 group-hover/btn:opacity-60 transition-opacity" />}
                                     </button>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-5">
                                     <div className="flex items-center gap-2">
-                                        <Building2 size={14} className="text-slate-500" />
-                                        <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">{ext.dept}</span>
+                                        <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                            <Building2 size={12} className="text-slate-400" />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">{ext.dept}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-tight
+                                <td className="px-6 py-5 text-center">
+                                    <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest
                                         ${ext.floor === 27
-                                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20'
-                                            : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'}
+                                            ? 'bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20'
+                                            : 'bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'}
                                     `}>
-                                        {ext.floor}th Floor
+                                        {ext.floor}F LEVEL
                                     </span>
                                 </td>
                                 {isAdmin && (
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit border border-slate-200 dark:border-slate-700">
-                                            <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-400">
-                                                {ext.pin || '-'}
+                                    <td className="px-6 py-5 text-center">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <span className="text-[10px] font-mono font-black text-slate-400 dark:text-slate-500">
+                                                {ext.pin || '---'}
                                             </span>
                                         </div>
                                     </td>
                                 )}
                                 {canEdit && (
-                                    <td className="px-8 py-4">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => onEdit?.(ext)}
-                                                aria-label="Edit extension"
-                                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => onDelete?.(ext.id)}
-                                                    aria-label="Delete extension"
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
+                                    <td className="px-6 py-5 text-center">
+                                        <div className="inline-flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                                            <button onClick={() => onEdit?.(ext)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm"><Pencil size={14} /></button>
+                                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm"><Trash2 size={14} /></button>}
                                         </div>
                                     </td>
                                 )}
@@ -325,8 +340,37 @@ const ExtensionTable: React.FC<{
     );
 };
 
-// 4. Main Component
-export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount | null }) => {
+// 4. Stat Card
+const StatCard = ({ label, value, icon: Icon, colorClass, subtext }: { label: string; value: string | number; icon: any; colorClass: string; subtext?: string }) => (
+    <motion.div
+        whileHover={{ y: -2 }}
+        className="flex flex-col p-6 bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 group"
+    >
+        <div className="flex justify-between items-start mb-4">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{label}</span>
+            <div className={`p-2 rounded-xl border transition-all duration-500 ${colorClass}`}>
+                <Icon size={16} strokeWidth={2.5} />
+            </div>
+        </div>
+        <div className="flex flex-col">
+            <span className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white mb-1">
+                {value}
+            </span>
+            {subtext && <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{subtext}</span>}
+        </div>
+    </motion.div>
+);
+
+// 5. Main Component
+export const ExtensionDirectory = ({
+    currentUser,
+    variant = 'standalone',
+    externalSearchTerm
+}: {
+    currentUser?: UserAccount | null;
+    variant?: 'standalone' | 'integrated';
+    externalSearchTerm?: string;
+}) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [floorFilter, setFloorFilter] = useState<'All' | 26 | 27>('All');
     const [extensions, setExtensions] = useState<PhoneExtension[]>([]);
@@ -336,7 +380,8 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
     const [isSaving, setIsSaving] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-        // Default to table for admin, grid for public
+        // Integrated variant (public) always uses grid, standalone uses table for admin
+        if (variant === 'integrated') return 'grid';
         return currentUser?.role === 'Admin' ? 'table' : 'grid';
     });
 
@@ -364,6 +409,9 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
     const isStaff = currentUser?.role === 'Staff';
     const canEdit = isAdmin || isStaff;
     const isPublic = !currentUser;
+
+    // Use external search term if provided, otherwise use local state
+    const activeSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchTerm;
 
     useEffect(() => {
         fetchExtensions();
@@ -588,15 +636,18 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
     const filteredExtensions = useMemo(() => {
         return extensions.filter((item) => {
             if (floorFilter !== 'All' && item.floor !== floorFilter) return false;
-            const searchLower = searchTerm.toLowerCase();
-            return (
-                item.name.toLowerCase().includes(searchLower) ||
-                item.dept.toLowerCase().includes(searchLower) ||
-                item.ext.includes(searchLower) ||
-                (item.role && item.role.toLowerCase().includes(searchLower))
-            );
-        }).sort((a, b) => a.name.localeCompare(b.name));
-    }, [extensions, searchTerm, floorFilter]);
+
+            const searchLower = activeSearchTerm.toLowerCase().trim();
+            if (!searchLower) return true;
+
+            const nameMatch = (item.name || "").toLowerCase().includes(searchLower);
+            const deptMatch = (item.dept || "").toLowerCase().includes(searchLower);
+            const extMatch = (item.ext || "").toLowerCase().includes(searchLower);
+            const roleMatch = item.role ? item.role.toLowerCase().includes(searchLower) : false;
+
+            return nameMatch || deptMatch || extMatch || roleMatch;
+        }).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }, [extensions, activeSearchTerm, floorFilter]);
 
     const totalPages = Math.ceil(filteredExtensions.length / itemsPerPage);
     const paginatedExtensions = useMemo(() => {
@@ -604,113 +655,74 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
         return filteredExtensions.slice(start, start + itemsPerPage);
     }, [filteredExtensions, currentPage, itemsPerPage]);
 
+    const stats = useMemo(() => {
+        return {
+            total: extensions.length,
+            floor27: extensions.filter(e => e.floor === 27).length,
+            floor26: extensions.filter(e => e.floor === 26).length
+        };
+    }, [extensions]);
+
     return (
         <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
-            {/* Minimalist Dashboard Header */}
-            <div className="relative mb-8 p-4 md:p-6 lg:p-8 rounded-3xl overflow-hidden bg-white/50 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50">
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                    {/* Brand Info */}
-                    <div className="flex items-center gap-4">
-                        <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
-                            <Building2 className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                                TGC Directory
+            {/* Dashboard Header (Admin/Standalone) */}
+            {variant === 'standalone' && (
+                <div className="mb-10 pt-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 px-2">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">
+                                Directory <span className="text-indigo-600">Extensions</span>
                             </h1>
-                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Internal Grid</p>
-                        </div>
-                    </div>
-
-                    {/* Controls Row */}
-                    <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-2xl">
-                        {/* Search Bar */}
-                        <div className="relative flex-1 w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
-                            <input
-                                type="text"
-                                placeholder="Search extensions..."
-                                aria-label="Search phone extensions"
-                                className="w-full pl-11 pr-4 py-2.5 bg-white/50 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-700/60 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 outline-none transition-all shadow-sm"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">The City Tower & Infrastructure Registry</p>
                         </div>
 
-                        {/* Filter & Actions */}
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="flex p-1 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl border border-slate-200/50 dark:border-slate-700/50 shadow-inner">
-                                {(['All', 27, 26] as const).map((floor) => (
-                                    <button
-                                        key={floor}
-                                        onClick={() => setFloorFilter(floor)}
-                                        aria-pressed={floorFilter === floor}
-                                        aria-label={`Filter by ${floor === 'All' ? 'all' : floor + 'th'} floor`}
-                                        className={`
-                                            px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-md transition-all
-                                            ${floorFilter === floor
-                                                ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}
-                                        `}
-                                    >
-                                        {floor === 'All' ? 'All' : `${floor}F`}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {!isPublic && canEdit && (
+                        <div className="flex items-center gap-3">
+                            <button
+                                className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-500/20 active:scale-95 group"
+                                onClick={() => {/* Future Export Logic */ }}
+                            >
+                                <Share2 size={14} className="group-hover:rotate-12" />
+                                Export CSV
+                            </button>
+                            {canEdit && (
                                 <button
                                     onClick={() => openModal()}
-                                    aria-label="Add new extension"
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 group"
                                 >
-                                    <Plus size={18} />
+                                    <Plus size={14} className="group-hover:rotate-90 transition-transform" />
+                                    Add Extension
                                 </button>
-                            )}
-
-                            {isPublic ? (
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleShare}
-                                        aria-label="Share directory link"
-                                        className="p-2.5 bg-white/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-indigo-500 transition-all shadow-sm group/share"
-                                        title="Share"
-                                    >
-                                        {isSharing ? <Check size={18} className="text-emerald-500" aria-hidden="true" /> : <Share2 size={18} aria-hidden="true" />}
-                                    </button>
-                                    <button
-                                        onClick={toggleTheme}
-                                        aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
-                                        className="p-2.5 bg-white/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 rounded-xl text-slate-500 hover:text-indigo-500 transition-all shadow-sm group/theme"
-                                        title="Toggle Mode"
-                                    >
-                                        {theme === 'light' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
-                                    </button>
-                                </div>
-                            ) : isAdmin && (
-                                <div className="flex p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg border border-slate-200/50 dark:border-slate-700/50 shadow-inner ml-2">
-                                    <button
-                                        onClick={() => setViewMode('grid')}
-                                        aria-pressed={viewMode === 'grid'}
-                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-                                        title="Grid View"
-                                    >
-                                        <LayoutGrid size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('table')}
-                                        aria-pressed={viewMode === 'table'}
-                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-                                        title="Table View"
-                                    >
-                                        <LayoutList size={16} />
-                                    </button>
-                                </div>
                             )}
                         </div>
                     </div>
+
+                    {/* Metrics Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <StatCard
+                            label="Total Extensions"
+                            value={stats.total}
+                            icon={Users}
+                            colorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20"
+                            subtext="Active Infrastructure Nodes"
+                        />
+                        <StatCard
+                            label="27th Floor"
+                            value={stats.floor27}
+                            icon={Building2}
+                            colorClass="bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20"
+                            subtext="City Tower Upper Deck"
+                        />
+                        <StatCard
+                            label="26th Floor"
+                            value={stats.floor26}
+                            icon={MapPin}
+                            colorClass="bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20"
+                            subtext="Infrastructure Base"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
+
 
             <InstructionPanel />
 
@@ -723,79 +735,137 @@ export const ExtensionDirectory = ({ currentUser }: { currentUser?: UserAccount 
                     </h2>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-sm">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                aria-label="Previous page"
-                                className="p-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"
-                            >
-                                <ChevronLeft size={16} aria-hidden="true" />
-                            </button>
-                            <div className="flex items-center gap-1.5 px-2">
-                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">{currentPage}</span>
-                                <span className="text-[10px] font-black text-slate-300">/</span>
-                                <span className="text-[10px] font-black text-slate-500">{totalPages}</span>
-                            </div>
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                aria-label="Next page"
-                                className="p-1.5 text-slate-500 hover:text-indigo-600 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"
-                            >
-                                <ChevronRight size={16} aria-hidden="true" />
-                            </button>
+                <div className="flex items-center gap-4 flex-1 md:flex-initial">
+                    {/* Search Bar */}
+                    {variant === 'standalone' && (
+                        <div className="relative flex-1 md:max-w-md">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search extensions..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-indigo-500/20 rounded-2xl text-xs font-semibold text-slate-900 dark:text-slate-200 transition-all outline-none"
+                            />
                         </div>
                     )}
 
-                    <span className="text-[9px] font-black bg-white dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-indigo-500/20 uppercase tracking-widest shadow-sm">
-                        {filteredExtensions.length} NODES
-                    </span>
+                    {/* View Mode Toggle */}
+                    <div className="flex p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-xl transition-all ${viewMode === 'grid'
+                                ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm scale-105'
+                                : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                                }`}
+                            title="Grid View"
+                        >
+                            <LayoutGrid size={16} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`p-2 rounded-xl transition-all ${viewMode === 'table'
+                                ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm scale-105'
+                                : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                                }`}
+                            title="Table View"
+                        >
+                            <LayoutList size={16} />
+                        </button>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 px-3 py-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-md shadow-sm">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                {filteredExtensions.length} Active
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all active:scale-90"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 min-w-[60px] text-center">
+                                {currentPage} / {totalPages || 1}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="p-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all active:scale-90"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                        <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800/30 rounded-[2rem] animate-pulse border border-slate-200/50 dark:border-slate-800"></div>
+                        <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800/30 rounded-2xl animate-pulse border border-slate-200/50 dark:border-slate-800"></div>
                     ))}
                 </div>
             ) : filteredExtensions.length > 0 ? (
-                viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {paginatedExtensions.map((ext, index) => (
-                            <ExtensionCard
-                                key={`${ext.id}-${ext.ext}`}
-                                ext={ext}
-                                index={index}
+                <AnimatePresence mode="wait">
+                    {viewMode === 'grid' ? (
+                        <motion.div
+                            key="grid"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                        >
+                            {paginatedExtensions.map((ext, index) => (
+                                <ExtensionCard
+                                    key={`${ext.id}-${ext.ext}`}
+                                    ext={ext}
+                                    index={index}
+                                    isAdmin={isAdmin}
+                                    canEdit={canEdit}
+                                    isFocused={searchTerm.length > 0}
+                                    onEdit={openModal}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="table"
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                        >
+                            <ExtensionTable
+                                extensions={paginatedExtensions}
                                 isAdmin={isAdmin}
                                 canEdit={canEdit}
-                                isFocused={searchTerm.length > 0}
                                 onEdit={openModal}
                                 onDelete={handleDelete}
                             />
-                        ))}
-                    </div>
-                ) : (
-                    <ExtensionTable
-                        extensions={paginatedExtensions}
-                        isAdmin={isAdmin}
-                        canEdit={canEdit}
-                        onEdit={openModal}
-                        onDelete={handleDelete}
-                    />
-                )
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             ) : (
-                <div className="text-center py-24 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-                    <div className="bg-slate-100 dark:bg-slate-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                        <Search className="w-8 h-8 text-slate-400 dark:text-slate-600" aria-hidden="true" />
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="py-20 flex flex-col items-center justify-center text-center space-y-4 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800"
+                >
+                    <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800">
+                        <Search size={40} className="text-slate-300 dark:text-slate-700 mx-auto" />
                     </div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">No Results</h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-xs mt-2 font-medium opacity-60">Adjust your search or filter to find nodes.</p>
-                </div>
+                    <div className="space-y-1">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">No Extension Found</h3>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verify the search name or extension number</p>
+                    </div>
+                </motion.div>
             )}
 
             {/* Admin Migration Hint */}

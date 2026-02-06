@@ -341,6 +341,7 @@ export const HelpdeskPublic: React.FC = () => {
 
                     <button
                         onClick={toggleTheme}
+                        aria-label="Toggle Theme"
                         className="absolute top-8 right-8 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-all shadow-sm z-50"
                     >
                         {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -387,14 +388,16 @@ export const HelpdeskPublic: React.FC = () => {
                                     </div>
                                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                         <button
-                                            onClick={() => { setActiveTab('report'); setSearchResult(null); setError(null); }}
-                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'report' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400'}`}
+                                            onClick={setActiveTab.bind(null, 'report')}
+                                            aria-pressed={activeTab === 'report'}
+                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'report' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             Report
                                         </button>
                                         <button
-                                            onClick={() => { setActiveTab('check'); setSearchResult(null); setError(null); }}
-                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'check' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400'}`}
+                                            onClick={setActiveTab.bind(null, 'check')}
+                                            aria-pressed={activeTab === 'check'}
+                                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'check' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                                         >
                                             Track
                                         </button>
@@ -405,14 +408,14 @@ export const HelpdeskPublic: React.FC = () => {
                                     <form onSubmit={handleSubmit} className="space-y-6">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label className={labelClass}>Requester Identity</label>
-                                                <input className={inputClass} required placeholder="Full Name"
+                                                <label htmlFor="requester-name" className={labelClass}>Requester Identity</label>
+                                                <input id="requester-name" className={inputClass} required placeholder="Full Name"
                                                     value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
                                                 />
                                             </div>
                                             <div>
-                                                <label className={labelClass}>Department Cluster</label>
-                                                <select className={inputClass} required
+                                                <label htmlFor="dept-select" className={labelClass}>Department Cluster</label>
+                                                <select id="dept-select" className={inputClass} required
                                                     value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })}
                                                 >
                                                     <option value="" disabled>Select Unit</option>
@@ -421,14 +424,14 @@ export const HelpdeskPublic: React.FC = () => {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Incident Summary</label>
-                                            <input className={inputClass} required placeholder="Subject of issue"
+                                            <label htmlFor="incident-summary" className={labelClass}>Incident Summary</label>
+                                            <input id="incident-summary" className={inputClass} required placeholder="Subject of issue"
                                                 value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })}
                                             />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Technical Context</label>
-                                            <textarea className={`${inputClass} min-h-[120px] resize-none leading-relaxed`} required placeholder="Describe the error or request..."
+                                            <label htmlFor="technical-context" className={labelClass}>Technical Context</label>
+                                            <textarea id="technical-context" className={`${inputClass} min-h-[120px] resize-none leading-relaxed`} required placeholder="Describe the error or request..."
                                                 value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
                                             />
                                         </div>
@@ -552,7 +555,7 @@ export const HelpdeskPublic: React.FC = () => {
                         )}
 
                         <div className="mt-8 text-center">
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em]">Gesit ERP Cloud Technology • v4.1.2</p>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-[0.3em]">The Gesit Companies • v4.1.2</p>
                         </div>
                     </div>
                 </div>

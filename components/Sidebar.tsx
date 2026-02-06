@@ -3,13 +3,14 @@
 import React, { useState, useMemo } from 'react';
 import {
     LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
-    Network, Folder, Shield, ChevronDown, ChevronRight, X, Users, Building2,
-    Briefcase, Layers, Zap, ChevronLeft, PanelLeftClose, PanelLeft, Phone,
+    Network, Folder, Shield, ChevronDown, X, Users, Building2,
+    Briefcase, Layers, Zap, PanelLeftClose, PanelLeft, Phone,
     Settings, Megaphone
 } from 'lucide-react';
 import { APP_MENU_STRUCTURE } from '../constants';
 import { UserGroup } from '../types';
 import { useLanguage } from '../translations';
+import { NavLink } from 'react-router-dom';
 
 const ICON_MAP: Record<string, React.ElementType> = {
     LayoutDashboard: LayoutGrid,
@@ -33,9 +34,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 interface SidebarProps {
     currentView: string;
-    onNavigate: (view: string) => void;
-    isMobileOpen: boolean;
     onClose: () => void;
+    isMobileOpen: boolean;
     userGroups: string[];
     userName: string;
     userRole?: string;
@@ -47,7 +47,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-    currentView, onNavigate, isMobileOpen, onClose,
+    currentView, onClose, isMobileOpen,
     userGroups = [], userName, userRole, groupDefinitions = [],
     isCollapsed, setIsCollapsed, appName, logoUrl
 }) => {
@@ -58,10 +58,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     const allowedMenuIds = useMemo(() => {
         const allowed = new Set<string>();
-        if (userRole === 'Admin') {
+        const role = userRole?.toLowerCase() || '';
+
+        console.log("Sidebar: userRole:", userRole, "role:", role, "groups:", userGroups);
+
+        // Broaden admin check
+        if (role.includes('admin') || role.includes('owner')) {
             APP_MENU_STRUCTURE.forEach(m => allowed.add(m.id));
             return allowed;
         }
+
         if (!userGroups || !Array.isArray(userGroups) || userGroups.length === 0) {
             allowed.add('dashboard');
             return allowed;
@@ -72,6 +78,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
             }
         });
+
+        // Also ensure that if any child is allowed, the parent is also allowed
+        APP_MENU_STRUCTURE.forEach(menu => {
+            if (menu.parentId && allowed.has(menu.id)) {
+                allowed.add(menu.parentId);
+            }
+        });
+
         return allowed;
     }, [userGroups, groupDefinitions, userRole]);
 
@@ -111,50 +125,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const renderLink = (item: any) => {
         const hasSub = !!item.subItems;
         const isExpanded = expandedMenus.includes(item.id);
-        const isActive = currentView === item.id || (hasSub && item.subItems?.some((s: any) => s.id === currentView));
         const Icon = item.icon;
+        const path = item.id === 'dashboard' ? '/' : `/${item.id}`;
 
-        return (
-            <div key={item.id} className="px-3 mb-1">
-                <button
-                    onClick={() => hasSub ? toggleMenu(item.id) : onNavigate(item.id)}
-                    aria-label={item.label}
-                    aria-expanded={hasSub ? isExpanded : undefined}
-                    aria-current={isActive && !hasSub ? 'page' : undefined}
-                    className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isActive && !hasSub
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                    title={isCollapsed ? item.label : ''}
-                >
-                    <div className="flex items-center gap-3">
-                        <Icon size={20} className={isActive && !hasSub ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-blue-500'} strokeWidth={2} />
-                        {!isCollapsed && <span className="truncate">{item.label}</span>}
-                    </div>
-                    {hasSub && !isCollapsed && <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-300`} />}
-                </button>
+        if (hasSub) {
+            const isSubItemActive = item.subItems?.some((s: any) => currentView === s.id);
+            return (
+                <div key={item.id} className="px-3 mb-1">
+                    <button
+                        onClick={() => toggleMenu(item.id)}
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isSubItemActive && !isExpanded
+                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <Icon size={20} className={isSubItemActive ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500 group-hover:text-blue-500'} strokeWidth={2} />
+                            {!isCollapsed && <span className="truncate">{item.label}</span>}
+                        </div>
+                        {!isCollapsed && <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-300`} />}
+                    </button>
 
-                {hasSub && isExpanded && !isCollapsed && (
-                    <div className="flex flex-col gap-1 mt-1 ml-4 border-l border-slate-100 dark:border-slate-800 pl-2 animate-in slide-in-from-top-1 duration-200">
-                        {item.subItems?.map((sub: any) => {
-                            const isSubItemActive = currentView === sub.id;
-                            return (
-                                <button
+                    {isExpanded && !isCollapsed && (
+                        <div className="flex flex-col gap-1 mt-1 ml-4 border-l border-slate-100 dark:border-slate-800 pl-2 animate-in slide-in-from-top-1 duration-200">
+                            {item.subItems?.map((sub: any) => (
+                                <NavLink
                                     key={sub.id}
-                                    onClick={() => onNavigate(sub.id)}
-                                    aria-label={sub.label}
-                                    aria-current={isSubItemActive ? 'page' : undefined}
-                                    className={`w-full text-left pl-6 pr-4 py-2 rounded-lg text-xs font-semibold transition-all ${isSubItemActive
+                                    to={`/${sub.id}`}
+                                    onClick={onClose}
+                                    className={({ isActive }) => `w-full text-left pl-6 pr-4 py-2 rounded-lg text-xs font-semibold transition-all ${isActive
                                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50'
                                         : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50/50'
                                         }`}
                                 >
                                     {sub.label}
-                                </button>
-                            )
-                        })}
-                    </div>
-                )}
+                                </NavLink>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <div key={item.id} className="px-3 mb-1">
+                <NavLink
+                    to={path}
+                    onClick={onClose}
+                    className={({ isActive }) => `w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isActive
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                >
+                    <Icon size={20} className="group-hover:text-blue-500 transition-colors" strokeWidth={2} />
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                </NavLink>
             </div>
         );
     };
@@ -168,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {!isCollapsed && (
                         <div className="flex flex-col animate-in fade-in duration-300">
                             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
-                                {appName ? appName.split(' ')[0] : 'Gesit'} <span className="text-blue-600">{appName ? appName.split(' ').slice(1).join(' ') : 'ERP'}</span>
+                                {appName ? appSettingsName(appName).first : 'Gesit'} <span className="text-blue-600">{appName ? appSettingsName(appName).rest : 'ERP'}</span>
                             </h1>
                             <p className="text-[10px] font-semibold text-slate-300 mt-1 tracking-widest uppercase">System</p>
                         </div>
@@ -200,7 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     {!isCollapsed && (
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 mt-4 animate-in fade-in zoom-in duration-300">
-                            <button onClick={() => onNavigate('profile')} className="w-full flex items-center gap-3.5 text-left group">
+                            <NavLink to="/profile" className="w-full flex items-center gap-3.5 text-left group">
                                 <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
                                     {userName ? userName.substring(0, 2).toUpperCase() : 'GS'}
                                 </div>
@@ -208,11 +233,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     <p className="text-sm font-bold text-slate-800 dark:text-white truncate leading-none mb-1">{userName || 'User'}</p>
                                     <p className="text-[10px] font-semibold text-slate-400 truncate tracking-widest uppercase">{userRole || 'Staff'}</p>
                                 </div>
-                            </button>
+                            </NavLink>
                         </div>
                     )}
                 </div>
             </aside>
         </>
     );
+};
+
+const appSettingsName = (name: string) => {
+    const parts = name.split(' ');
+    return { first: parts[0], rest: parts.slice(1).join(' ') };
 };

@@ -1,8 +1,7 @@
-
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ]

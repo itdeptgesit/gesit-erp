@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { ITAsset } from '../types';
 import {
     Cpu, MapPin, Tag, Building2, AlertTriangle, ExternalLink,
     ShieldCheck, Zap, Server, Calendar, HardDrive, Smartphone,
-    Sun, Moon, QrCode, FileCheck, Hash, Copy, Check
+    Sun, Moon, QrCode, FileCheck, Hash, Copy, Check,
+    User, Folder, Users, AlertCircle, Monitor, Printer, Wifi, Box
 } from 'lucide-react';
 
 interface AssetPublicDetailProps {
@@ -14,10 +16,10 @@ interface AssetPublicDetailProps {
 }
 
 // ----------------------------------------------------------------------
-// Helper Components: "Spec Sheet" Style
+// Helper Components: Premium Minimalist Style
 // ----------------------------------------------------------------------
 
-const DataRow = ({ label, value, mono = false, copyable = false }: { label: string, value: string | null | undefined, mono?: boolean, copyable?: boolean }) => {
+const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: { label: string, value: string | null | undefined, icon: any, mono?: boolean, copyable?: boolean }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -28,34 +30,53 @@ const DataRow = ({ label, value, mono = false, copyable = false }: { label: stri
     };
 
     return (
-        <div className="grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 last:border-0 py-3 items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors px-4 group">
-            <div className="col-span-5 md:col-span-4">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+        <motion.div
+            whileHover={{ y: -1 }}
+            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group"
+        >
+            <div className="p-2 bg-slate-50 dark:bg-white/5 rounded-xl text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-all">
+                <Icon size={16} strokeWidth={2} />
             </div>
-            <div className="col-span-7 md:col-span-8 flex items-center justify-between">
-                <span className={`text-sm ${mono ? 'font-mono' : 'font-medium'} text-slate-900 dark:text-slate-100 truncate`}>
-                    {value || '-'}
-                </span>
-                {copyable && value && (
-                    <button
-                        onClick={handleCopy}
-                        className="text-slate-300 hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 p-1"
-                        title="Copy to clipboard"
-                    >
-                        {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                    </button>
-                )}
+            <div className="flex-1 min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 mb-0.5">{label}</p>
+                <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-white truncate`}>
+                        {value || '-'}
+                    </span>
+                    {copyable && value && (
+                        <button
+                            onClick={handleCopy}
+                            className="p-1 rounded-lg text-slate-300 hover:text-blue-500 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                            {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
-    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 mt-8">
-        <Icon size={18} className="text-slate-900 dark:text-slate-100" />
-        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+    <div className="flex items-center gap-2 mb-2 mt-10 opacity-60">
+        <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
+            <Icon size={14} strokeWidth={2} />
+        </div>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white">{title}</h3>
     </div>
 );
+
+const getCategoryIcon = (category: string) => {
+    const cat = category.toLowerCase();
+    if (cat.includes('laptop') || cat.includes('pc') || cat.includes('monitor')) return Monitor;
+    if (cat.includes('server')) return Server;
+    if (cat.includes('network') || cat.includes('router') || cat.includes('access point')) return Wifi;
+    if (cat.includes('smartphone') || cat.includes('tablet')) return Smartphone;
+    if (cat.includes('printer')) return Printer;
+    if (cat.includes('part') || cat.includes('komponen')) return Cpu;
+    if (cat.includes('furniture')) return Box;
+    return QrCode;
+};
 
 // ----------------------------------------------------------------------
 // Main Component
@@ -66,7 +87,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
-    const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Default to light for document feel
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
     useEffect(() => {
         setMounted(true);
@@ -124,11 +145,20 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
 
     if (loading) {
         return (
-            <div className={`min-h-screen flex flex-col items-center justify-center bg-white dark:bg-[#0B1120]`}>
-                <div className="w-16 h-1 bg-slate-200 dark:bg-slate-800 relative overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 w-1/3 bg-slate-900 dark:bg-slate-100 animate-[shimmer_1s_infinite]"></div>
+            <div className={`${theme} min-h-screen bg-white dark:bg-[#020617] flex flex-col items-center justify-center p-6`}>
+                <div className="w-full max-w-4xl grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="aspect-square bg-slate-50 dark:bg-white/5 animate-pulse rounded-[3rem]"></div>
+                    <div className="space-y-6">
+                        <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full"></div>
+                        <div className="h-12 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
+                        <div className="h-6 w-1/2 bg-slate-50 dark:bg-slate-900 animate-pulse rounded-lg"></div>
+                        <div className="pt-8 space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-20 bg-slate-50 dark:bg-white/[0.02] animate-pulse rounded-2xl"></div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <p className="mt-4 text-[10px] font-mono uppercase text-slate-400">Retrieving Record...</p>
             </div>
         );
     }
@@ -136,164 +166,145 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
     if (error || !asset) {
         return (
             <div className={`min-h-screen flex flex-col items-center justify-center p-6 text-center ${theme === 'dark' ? 'bg-[#0B1120] text-white' : 'bg-slate-50 text-slate-900'}`}>
-                <AlertTriangle size={32} className="mb-4 text-red-600" />
-                <h1 className="text-xl font-bold tracking-tight">Record Not Found</h1>
-                <p className="text-sm text-slate-500 mt-2">{error}</p>
-                <button onClick={toggleTheme} className="mt-8 text-xs font-medium opacity-50 hover:opacity-100">
-                    Switch Theme
+                <AlertTriangle size={32} className="mb-4 text-rose-500 animate-bounce" />
+                <h1 className="text-xl font-bold tracking-widest uppercase">Record Nullified</h1>
+                <p className="text-sm text-slate-500 mt-2 font-medium">{error}</p>
+                <button onClick={() => window.location.reload()} className="mt-8 px-6 py-2 bg-slate-100 dark:bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">
+                    Re-initialize
                 </button>
             </div>
         );
     }
 
-    const statusColors: Record<string, string> = {
-        'Active': 'text-emerald-600 border-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-400',
-        'Used': 'text-blue-600 border-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-400',
-        'Idle': 'text-amber-600 border-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-400',
-        'Broken': 'text-rose-600 border-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-400',
-        'Disposed': 'text-slate-600 border-slate-600 bg-slate-50 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-400'
+    const statusConfigs: Record<string, { color: string, bg: string }> = {
+        'Active': { color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', bg: 'bg-emerald-500' },
+        'Used': { color: 'text-blue-500 bg-blue-500/10 border-blue-500/20', bg: 'bg-blue-500' },
+        'Idle': { color: 'text-amber-500 bg-amber-500/10 border-amber-500/20', bg: 'bg-amber-500' },
+        'Broken': { color: 'text-rose-500 bg-rose-500/10 border-rose-500/20', bg: 'bg-rose-500' },
+        'Disposed': { color: 'text-slate-500 bg-slate-500/10 border-slate-500/20', bg: 'bg-slate-500' }
     };
 
-    const statusStyle = statusColors[asset.status] || statusColors['Disposed'];
+    const config = statusConfigs[asset.status] || statusConfigs['Disposed'];
+    const CategoryIcon = getCategoryIcon(asset.category);
+    const hasImage = !!asset.image_url;
 
     return (
-        <div className={`${theme} min-h-screen transition-colors duration-300`}>
-            {/* Background Layer */}
-            <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#050911] text-slate-900 dark:text-slate-100 font-sans md:py-12">
+        <div className={`${theme} min-h-screen lg:h-screen lg:overflow-hidden transition-all duration-700 ease-in-out bg-white dark:bg-[#020617]`}>
+            {/* Mesh Background */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-[-5%] left-[-5%] w-[30%] h-[30%] bg-blue-100 dark:bg-blue-900/10 rounded-full blur-[100px] opacity-40"></div>
+                <div className="absolute bottom-[-5%] right-[-5%] w-[30%] h-[30%] bg-indigo-100 dark:bg-indigo-900/10 rounded-full blur-[100px] opacity-40"></div>
+            </div>
 
-                {/* Document Container */}
-                <div className="w-full max-w-3xl mx-auto bg-white dark:bg-[#0B1120] md:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-none min-h-[calc(100vh-6rem)] md:min-h-auto relative animate-in slide-in-from-bottom-8 duration-1000 ease-out fade-in fill-mode-backwards">
+            <div className="relative z-10 h-full flex flex-col">
 
-                    {/* Watermark Background */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-[0.05] select-none">
-                        <div className="transform -rotate-45 border-8 border-current p-8 rounded-3xl">
-                            <span className="text-5xl md:text-7xl font-black uppercase text-slate-900 dark:text-white whitespace-nowrap tracking-widest">
-                                Property of Gesit
-                            </span>
+                {/* Header: Fixed Top */}
+                <header className="flex items-center justify-between px-8 py-4 border-b border-slate-100 dark:border-white/[0.05] backdrop-blur-xl bg-white/50 dark:bg-[#020617]/50">
+                    <div className="flex items-center gap-3">
+                        <img src="https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                        <span className="text-xs font-black uppercase tracking-[0.1em]">Gesit Digital Registry</span>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                            Registry Version: v4.1.2
+                        </div>
+                        <button onClick={toggleTheme} className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-500 transition-colors">
+                            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                        </button>
+                    </div>
+                </header>
+
+                {/* Main Content Area: 3 Columns on Desktop */}
+                <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+
+                    {/* Column 1: Visual & Status */}
+                    <div className="lg:w-[28%] flex flex-col p-6 lg:p-8 xl:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-white/[0.05] bg-slate-50/20 dark:bg-white/[0.005]">
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full aspect-square max-w-[280px] lg:max-w-none flex items-center justify-center group">
+                                <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[60px] opacity-40 group-hover:opacity-60 transition-opacity"></div>
+
+                                {hasImage ? (
+                                    <img src={asset.image_url} alt={asset.item} className="relative z-10 w-[85%] h-[85%] object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105" />
+                                ) : (
+                                    <div className="relative z-10 flex flex-col items-center text-blue-600/40 dark:text-blue-400/30">
+                                        <CategoryIcon size={140} strokeWidth={0.5} />
+                                        <span className="mt-6 text-[8px] font-black uppercase tracking-widest">Digital Record Only</span>
+                                    </div>
+                                )}
+
+                                <div className={`absolute -bottom-2 right-4 flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl shadow-xl ${config.color}`}>
+                                    <div className={`w-2 h-2 rounded-full animate-pulse ${config.bg}`}></div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{asset.status}</span>
+                                </div>
+                            </motion.div>
+                        </div>
+
+                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/[0.05]">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-2">Tracking Asset ID</p>
+                            <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">{asset.assetId}</h2>
                         </div>
                     </div>
 
-                    {/* Top Accent Line */}
-                    <div className="h-1.5 w-full bg-slate-900 dark:bg-blue-600" />
-
-                    {/* Header Section */}
-                    <header className="px-6 py-6 md:px-10 md:py-8 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <h1 className="text-lg md:text-xl font-bold tracking-tight leading-none mb-1">
-                                Gesit<span className="text-blue-600">Assets</span>
-                            </h1>
-                            <p className="text-xs font-medium text-slate-500">
-                                Digital Verification System
-                            </p>
+                    {/* Column 2: Logistics & Ownership (Scrollable on Tablet/Mobile) */}
+                    <div className="lg:w-[34%] flex flex-col p-6 lg:p-8 xl:p-12 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-white/[0.05] lg:overflow-y-auto custom-scrollbar">
+                        <div className="mb-10">
+                            <h1 className="text-3xl xl:text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-none mb-4 uppercase">{asset.item}</h1>
+                            <div className="w-12 h-1 bg-blue-600 rounded-full"></div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <button onClick={toggleTheme} className="opacity-40 hover:opacity-100 transition-opacity">
-                                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                            </button>
-                            <div className="w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-xl rounded-lg">
-                                <QrCode size={24} />
-                            </div>
+
+                        <SectionHeader title="Logistics & Ownership" icon={FileCheck} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                            <DataCard label="USER ASSIGNED" value={asset.user} icon={User} />
+                            <DataCard label="CATEGORY" value={asset.category} icon={Folder} />
+                            <DataCard label="ENTITAS" value={asset.company} icon={Building2} />
+                            <DataCard label="DEPARTMENT" value={asset.department} icon={Users} />
+                            <DataCard label="LOCATION" value={asset.location} icon={MapPin} />
+                            <DataCard label="BRAND" value={asset.brand} icon={Tag} />
+                            <DataCard label="SERIAL NUMBER" value={asset.serialNumber} icon={Hash} mono copyable />
+                            <DataCard label="PURCHASE DATE" value={asset.purchaseDate} icon={Calendar} mono />
                         </div>
-                    </header>
+                    </div>
 
-                    {/* Content Body */}
-                    <main className="px-6 py-8 md:px-10">
-
-                        {/* Identity Block */}
-                        <div className="flex flex-col items-center text-center gap-6 mb-10">
-                            <div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-xs font-medium text-slate-500 mb-4 border border-slate-200 dark:border-white/10 mx-auto">
-                                    <Hash size={12} />
-                                    {asset.assetId}
+                    {/* Column 3: Specs & Support */}
+                    <div className="lg:w-[38%] flex flex-col p-6 lg:p-8 xl:p-12 lg:overflow-y-auto custom-scrollbar bg-slate-50/20 dark:bg-white/[0.005]">
+                        {asset.specs && (Object.values(asset.specs).some(v => v)) ? (
+                            <section>
+                                <SectionHeader title="Technical Specifications" icon={Cpu} />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                    {asset.specs.processor && <DataCard label="PROCESSOR" value={asset.specs.processor} icon={Cpu} />}
+                                    {asset.specs.ram && <DataCard label="RAM" value={asset.specs.ram} icon={Zap} />}
+                                    {asset.specs.storage && <DataCard label="STORAGE" value={asset.specs.storage} icon={HardDrive} />}
+                                    {asset.specs.vga && <DataCard label="VGA / GPU" value={asset.specs.vga} icon={Sun} />}
+                                    {asset.specs.os && <DataCard label="OPERATING SYSTEM" value={asset.specs.os} icon={Server} />}
                                 </div>
-                                <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1] mb-2">
-                                    {asset.item}
-                                </h2>
-                                <p className="text-sm font-medium text-slate-500">
-                                    {asset.category} • {asset.brand}
-                                </p>
+                            </section>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 dark:border-white/[0.03] rounded-[2rem] p-8 text-center">
+                                <AlertTriangle size={32} className="text-slate-200 dark:text-slate-800 mb-4" />
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Non-Technical Asset Class</p>
                             </div>
+                        )}
 
-                            {/* Status "Stamp" - Centered */}
-                            <div className={`relative px-10 py-3 border-4 border-double rounded-lg text-center transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-default group shadow-sm ${statusStyle}`}>
-                                <div className="absolute inset-0 opacity-10 bg-current"></div>
-                                <span className="text-[10px] uppercase font-black tracking-[0.3em] opacity-80 block mb-1">Status Verified</span>
-                                <span className="text-3xl font-black uppercase tracking-tighter" style={{ fontFamily: 'Courier New, monospace' }}>{asset.status}</span>
-
-                                {/* Decorative stars in corners */}
-                                <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
-                                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
-                                <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
-                                <div className="absolute bottom-1 right-1 w-1.5 h-1.5 bg-current rounded-full opacity-40"></div>
-                            </div>
-                        </div>
-
-                        {/* Hero Image Section */}
-                        <div className="w-full bg-white border border-slate-200 dark:border-slate-800 p-4 mb-10 flex justify-center items-center relative overflow-hidden rounded-sm group">
-                            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
-                            {asset.image_url ? (
-                                <img
-                                    src={asset.image_url}
-                                    alt={asset.item}
-                                    className="relative z-10 w-auto h-64 md:h-80 object-contain drop-shadow-xl"
-                                />
-                            ) : (
-                                <div className="h-64 flex flex-col items-center justify-center opacity-20">
-                                    <Server size={64} />
-                                    <span className="text-xs uppercase font-bold mt-4">No Image Record</span>
+                        <div className="mt-auto pt-12">
+                            <div className="p-6 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xl shadow-blue-500/10">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-60">IT Support Hotline</span>
+                                    <ShieldCheck size={16} />
                                 </div>
-                            )}
-
-
-                        </div>
-
-                        {/* Specifications Grid */}
-                        <div className="grid md:grid-cols-2 gap-x-12 gap-y-2">
-
-                            {/* Column 1: Asset Data */}
-                            <div>
-                                <SectionHeader title="Assignment Data" icon={FileCheck} />
-                                <div className="border-t border-slate-200 dark:border-slate-800">
-                                    <DataRow label="Custodian" value={asset.user || 'Unassigned'} />
-                                    <DataRow label="Department" value={asset.department} />
-                                    <DataRow label="Company" value={asset.company} />
-                                    <DataRow label="Location" value={asset.location} />
-                                </div>
+                                <h4 className="text-lg font-bold mb-2 tracking-tight">Need assistance?</h4>
+                                <p className="text-xs opacity-70 mb-6 leading-relaxed">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
+                                <a href={`mailto:it@gesit.co.id?subject=Support: ${asset.assetId}`} className="block text-center py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors active:scale-95">
+                                    Initialize Support Chat
+                                </a>
                             </div>
 
-                            {/* Column 2: Tech Specs */}
-                            <div>
-                                <SectionHeader title="Technical Specs" icon={Cpu} />
-                                <div className="border-t border-slate-200 dark:border-slate-800">
-                                    <DataRow label="Serial Number" value={asset.serialNumber} mono copyable />
-                                    <DataRow label="Purchased" value={asset.purchaseDate} mono />
-                                    {asset.specs?.processor && <DataRow label="Processor" value={asset.specs.processor} />}
-                                    {asset.specs?.ram && <DataRow label="Memory" value={asset.specs.ram} />}
-                                    {asset.specs?.storage && <DataRow label="Storage" value={asset.specs.storage} />}
-                                    {asset.specs?.os && <DataRow label="OS" value={asset.specs.os} />}
-                                </div>
+                            <div className="mt-8 flex items-center justify-between text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                <span>The Gesit Companies</span>
+                                <span className="text-emerald-500">Document Verified</span>
                             </div>
                         </div>
-
-                        {/* Footer Action */}
-                        <div className="mt-12 pt-8 border-t border-dashed border-slate-300 dark:border-slate-700 flex justify-center">
-                            <a
-                                href={`mailto:it@gesit.co.id?subject=Report: ${asset.assetId}`}
-                                className="group flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-md hover:bg-blue-600 dark:hover:bg-blue-400 hover:text-white transition-all shadow-sm"
-                            >
-                                <ExternalLink size={16} />
-                                Report an Issue
-                            </a>
-                        </div>
-
-                    </main>
-
-                    {/* Document Footer */}
-                    <footer className="bg-slate-50 dark:bg-slate-800/30 px-6 py-4 md:px-10 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[10px] font-medium text-slate-400">
-                        <span>System Gen. v2.4</span>
-                        <span>{new Date().toLocaleDateString()}</span>
-                    </footer>
-                </div>
+                    </div>
+                </main>
             </div>
         </div>
     );
