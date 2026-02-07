@@ -171,12 +171,16 @@ export interface ITAsset {
   brand?: string;
   serialNumber?: string;
   status: 'Active' | 'Used' | 'Idle' | 'Broken' | 'Repair' | 'Disposed';
+  condition?: 'New' | 'Used' | 'Refurbished' | 'Fair' | 'Poor';
   location: string;
   user?: string;
   remarks?: string;
   company: string;
   department?: string;
+  vendor?: string;
+  price?: number;
   purchaseDate?: string;
+  warrantyExp?: string;
   specs?: {
     storage?: string;
     ram?: string;

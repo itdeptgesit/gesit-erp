@@ -126,9 +126,27 @@ const InternalApp: React.FC = () => {
   const [globalSearchTerm, setGlobalSearchTerm] = useState("");
   const [globalFloorFilter, setGlobalFloorFilter] = useState<'All' | 26 | 27>('All');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+
+  const LOADING_MESSAGES = [
+    "Synchronizing secure layers...",
+    "Initializing core modules...",
+    "Calibrating technical nodes...",
+    "Authenticating credentials...",
+    "Commencing Gesit Work..."
+  ];
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (isCheckingSession) {
+      const interval = setInterval(() => {
+        setLoadingMsgIdx(prev => (prev + 1) % LOADING_MESSAGES.length);
+      }, 1500);
+      return () => clearInterval(interval);
+    }
+  }, [isCheckingSession]);
 
   console.log("App.tsx: Rendering InternalApp, isCheckingSession:", isCheckingSession);
 
@@ -280,121 +298,190 @@ const InternalApp: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  if (isCheckingSession) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-10">
-        <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700">
-          <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center border border-blue-500/20 shadow-2xl shadow-blue-500/10">
-            <Zap className="text-blue-600 animate-pulse" size={40} />
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-1 w-32 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 w-1/2 animate-[loading_1s_infinite_ease-out]"></div>
-            </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600/50">Initialising</p>
-          </div>
-        </div>
-        <style>{`
-            @keyframes loading {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(200%); }
-            }
-        `}</style>
-      </div>
-    );
-  }
-
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/helpdesk-public" element={
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <HelpdeskPublic />
-              </motion.div>
-            } />
-            <Route path="/directory" element={
-              <PublicLayout
-                onLogout={() => setIsLogoutModalOpen(true)}
-                currentUser={currentUser}
-                groupDefinitions={groupDefinitions}
-                variant="public"
-                searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
-                appSettings={{
-                  ...appSettings,
-                  floorFilter: globalFloorFilter,
-                  onFloorFilterChange: setGlobalFloorFilter,
-                  onShare: handleGlobalShare
+      <AnimatePresence mode="wait">
+        {isCheckingSession ? (
+          <motion.div
+            key="preloader"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.05, filter: "blur(20px)" }}
+            transition={{ duration: 0.8, ease: "circOut" }}
+            className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-[#020617] overflow-hidden"
+          >
+            {/* Animated Mesh Gradient Background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 90, 180, 270, 360],
+                  x: [0, 100, 0, -100, 0],
+                  y: [0, -50, 50, -50, 0],
                 }}
-              >
-                <ExtensionDirectory
-                  currentUser={currentUser}
-                  variant="integrated"
-                  externalSearchTerm={globalSearchTerm}
-                  externalFloorFilter={globalFloorFilter}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px]"
+              />
+              <motion.div
+                animate={{
+                  scale: [1.2, 1, 1.2],
+                  rotate: [360, 270, 180, 90, 0],
+                  x: [0, -100, 0, 100, 0],
+                  y: [0, 50, -50, 50, 0],
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-blue-500/10 rounded-full blur-[100px]"
+              />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center gap-12">
+              <div className="relative w-24 h-24">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 border-2 border-blue-500/20 rounded-[2.5rem]"
                 />
-              </PublicLayout>
-            } />
-            <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
-            <Route path="/login" element={
-              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                {!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />}
-              </motion.div>
-            } />
-
-            <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
-
-            <Route path="/*" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <DashboardLayout
-                  appSettings={appSettings}
-                  currentUser={currentUser}
-                  groupDefinitions={groupDefinitions}
-                  isMobileSidebarOpen={isMobileSidebarOpen}
-                  setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-                  isSidebarCollapsed={isSidebarCollapsed}
-                  setIsSidebarCollapsed={setIsSidebarCollapsed}
-                  setIsLogoutModalOpen={setIsLogoutModalOpen}
-                  refreshUserProfile={refreshUserProfile}
-                  floorFilter={globalFloorFilter}
-                  onFloorFilterChange={setGlobalFloorFilter}
-                  onShare={handleGlobalShare}
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-2 border-2 border-blue-400/10 rounded-[2rem]"
                 />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AnimatePresence>
-
-        <DangerConfirmModal
-          isOpen={isLogoutModalOpen}
-          onClose={() => setIsLogoutModalOpen(false)}
-          onConfirm={executeLogout}
-          title={t('signOutTitle')}
-          message={t('signOutMsg')}
-        />
-
-        <AnimatePresence>
-          {toast && (
-            <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.9 }}
-              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none"
-            >
-              <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-w-[320px]">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                  {toast.type === 'success' ? <CheckCircle2 size={18} /> : <X size={18} />}
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Notification</p>
-                  <p className="text-[13px] font-bold text-white tracking-tight">{toast.message}</p>
-                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-600/40 border border-blue-400/30">
+                    <Zap className="text-white fill-white/20" size={32} />
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </React.Suspense>
+
+              <div className="flex flex-col items-center gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <h1 className="text-2xl font-black text-white tracking-[0.2em] mb-1">
+                    GESIT<span className="text-blue-500">WORK</span>
+                  </h1>
+                  <div className="h-[2px] w-48 bg-slate-800 rounded-full overflow-hidden relative">
+                    <motion.div
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                    />
+                  </div>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={loadingMsgIdx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-[10px] font-bold uppercase tracking-[0.4em] text-blue-400/60 text-center min-w-[300px]"
+                  >
+                    {LOADING_MESSAGES[loadingMsgIdx]}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="app-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col min-h-screen"
+          >
+            <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/helpdesk-public" element={
+                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                    <HelpdeskPublic />
+                  </motion.div>
+                } />
+                <Route path="/directory" element={
+                  <PublicLayout
+                    onLogout={() => setIsLogoutModalOpen(true)}
+                    currentUser={currentUser}
+                    groupDefinitions={groupDefinitions}
+                    variant="public"
+                    searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
+                    appSettings={{
+                      ...appSettings,
+                      floorFilter: globalFloorFilter,
+                      onFloorFilterChange: setGlobalFloorFilter,
+                      onShare: handleGlobalShare
+                    }}
+                  >
+                    <ExtensionDirectory
+                      currentUser={currentUser}
+                      variant="integrated"
+                      externalSearchTerm={globalSearchTerm}
+                      externalFloorFilter={globalFloorFilter}
+                    />
+                  </PublicLayout>
+                } />
+                <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
+                <Route path="/login" element={
+                  <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                    {!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />}
+                  </motion.div>
+                } />
+
+                <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
+
+                <Route path="/*" element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <DashboardLayout
+                      appSettings={appSettings}
+                      currentUser={currentUser}
+                      groupDefinitions={groupDefinitions}
+                      isMobileSidebarOpen={isMobileSidebarOpen}
+                      setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                      isSidebarCollapsed={isSidebarCollapsed}
+                      setIsSidebarCollapsed={setIsSidebarCollapsed}
+                      setIsLogoutModalOpen={setIsLogoutModalOpen}
+                      refreshUserProfile={refreshUserProfile}
+                      floorFilter={globalFloorFilter}
+                      onFloorFilterChange={setGlobalFloorFilter}
+                      onShare={handleGlobalShare}
+                    />
+                  </ProtectedRoute>
+                } />
+              </Routes>
+
+              <DangerConfirmModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={executeLogout}
+                title={t('signOutTitle')}
+                message={t('signOutMsg')}
+              />
+
+              <AnimatePresence>
+                {toast && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none"
+                  >
+                    <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-w-[320px]">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        {toast.type === 'success' ? <CheckCircle2 size={18} /> : <X size={18} />}
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Notification</p>
+                        <p className="text-[13px] font-bold text-white tracking-tight">{toast.message}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </React.Suspense>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </LanguageContext.Provider>
   );
 };
