@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
 import { TopNavigation } from './components/TopNavigation';
 import { Footer } from './components/Footer';
@@ -13,7 +14,7 @@ import {
   LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
   Network, Folder, Shield, ChevronDown, ChevronRight, X, Users, Building2,
   Briefcase, Layers, Zap, ChevronLeft, PanelLeftClose, PanelLeft, Phone,
-  Settings, Megaphone, Loader2
+  Settings, Megaphone, Loader2, CheckCircle2
 } from 'lucide-react';
 
 // Lazy Load Managers
@@ -76,6 +77,9 @@ const PublicLayout: React.FC<{
         logoUrl={appSettings.logo}
         variant={variant}
         searchProps={searchProps}
+        floorFilter={appSettings.floorFilter}
+        onFloorFilterChange={appSettings.onFloorFilterChange}
+        onShare={appSettings.onShare}
       />
 
       <main className="flex-1 p-4 md:p-8">
@@ -109,8 +113,9 @@ const InternalApp: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [groupDefinitions, setGroupDefinitions] = useState<UserGroup[]>(MOCK_GROUPS);
   const [appSettings, setAppSettings] = useState({
-    name: 'Gesit ERP',
-    logo: 'https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png'
+    name: 'GESIT WORK',
+    logo: '/image/logo.png',
+    primaryColor: '#2563eb'
   });
 
   const [language, setLanguageState] = useState<Language>('en');
@@ -119,6 +124,8 @@ const InternalApp: React.FC = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const [globalSearchTerm, setGlobalSearchTerm] = useState("");
+  const [globalFloorFilter, setGlobalFloorFilter] = useState<'All' | 26 | 27>('All');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -171,10 +178,16 @@ const InternalApp: React.FC = () => {
       try {
         const { data } = await supabase.from('system_settings').select('*').single();
         if (data) {
-          setAppSettings({
-            name: data.app_name || 'Gesit ERP',
-            logo: data.logo_url || 'https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png'
-          });
+          const newSettings = {
+            name: data.app_name || 'GESIT WORK',
+            logo: data.logo_url || '/image/logo.png',
+            primaryColor: data.primary_color || '#2563eb'
+          };
+          setAppSettings(newSettings);
+
+          // Apply primary color to CSS variables
+          document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
+          document.documentElement.style.setProperty('--color-primary', newSettings.primaryColor);
         }
       } catch (err) { /* ignore */ }
     };
@@ -256,6 +269,17 @@ const InternalApp: React.FC = () => {
     }
   };
 
+  const handleGlobalShare = () => {
+    const url = window.location.origin + '/directory';
+    navigator.clipboard.writeText(url);
+    showToast('Directory link copied to clipboard!', 'success');
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   if (isCheckingSession) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center p-10">
@@ -283,45 +307,64 @@ const InternalApp: React.FC = () => {
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-        <Routes>
-          <Route path="/helpdesk-public" element={
-            <PublicLayout appSettings={appSettings} onLogout={() => setIsLogoutModalOpen(true)} currentUser={currentUser} groupDefinitions={groupDefinitions}>
-              <HelpdeskPublic />
-            </PublicLayout>
-          } />
-          <Route path="/directory" element={
-            <PublicLayout
-              appSettings={appSettings}
-              onLogout={() => setIsLogoutModalOpen(true)}
-              currentUser={currentUser}
-              groupDefinitions={groupDefinitions}
-              variant="public"
-              searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
-            >
-              <ExtensionDirectory currentUser={currentUser} variant="integrated" externalSearchTerm={globalSearchTerm} />
-            </PublicLayout>
-          } />
-          <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
-          <Route path="/login" element={!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />} />
-
-          <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
-
-          <Route path="/*" element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <DashboardLayout
-                appSettings={appSettings}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/helpdesk-public" element={
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <HelpdeskPublic />
+              </motion.div>
+            } />
+            <Route path="/directory" element={
+              <PublicLayout
+                onLogout={() => setIsLogoutModalOpen(true)}
                 currentUser={currentUser}
                 groupDefinitions={groupDefinitions}
-                isMobileSidebarOpen={isMobileSidebarOpen}
-                setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-                isSidebarCollapsed={isSidebarCollapsed}
-                setIsSidebarCollapsed={setIsSidebarCollapsed}
-                setIsLogoutModalOpen={setIsLogoutModalOpen}
-                refreshUserProfile={refreshUserProfile}
-              />
-            </ProtectedRoute>
-          } />
-        </Routes>
+                variant="public"
+                searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
+                appSettings={{
+                  ...appSettings,
+                  floorFilter: globalFloorFilter,
+                  onFloorFilterChange: setGlobalFloorFilter,
+                  onShare: handleGlobalShare
+                }}
+              >
+                <ExtensionDirectory
+                  currentUser={currentUser}
+                  variant="integrated"
+                  externalSearchTerm={globalSearchTerm}
+                  externalFloorFilter={globalFloorFilter}
+                />
+              </PublicLayout>
+            } />
+            <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
+            <Route path="/login" element={
+              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                {!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />}
+              </motion.div>
+            } />
+
+            <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
+
+            <Route path="/*" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <DashboardLayout
+                  appSettings={appSettings}
+                  currentUser={currentUser}
+                  groupDefinitions={groupDefinitions}
+                  isMobileSidebarOpen={isMobileSidebarOpen}
+                  setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  setIsSidebarCollapsed={setIsSidebarCollapsed}
+                  setIsLogoutModalOpen={setIsLogoutModalOpen}
+                  refreshUserProfile={refreshUserProfile}
+                  floorFilter={globalFloorFilter}
+                  onFloorFilterChange={setGlobalFloorFilter}
+                  onShare={handleGlobalShare}
+                />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </AnimatePresence>
 
         <DangerConfirmModal
           isOpen={isLogoutModalOpen}
@@ -330,6 +373,27 @@ const InternalApp: React.FC = () => {
           title={t('signOutTitle')}
           message={t('signOutMsg')}
         />
+
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none"
+            >
+              <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-w-[320px]">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                  {toast.type === 'success' ? <CheckCircle2 size={18} /> : <X size={18} />}
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Notification</p>
+                  <p className="text-[13px] font-bold text-white tracking-tight">{toast.message}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </React.Suspense>
     </LanguageContext.Provider>
   );
@@ -361,6 +425,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   isMobileSidebarOpen, setIsMobileSidebarOpen,
   isSidebarCollapsed, setIsSidebarCollapsed,
   setIsLogoutModalOpen, refreshUserProfile,
+  floorFilter, onFloorFilterChange, onShare,
   children
 }) => {
   const navigate = useNavigate();
@@ -398,6 +463,9 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
         } : undefined}
         appName={appSettings.name}
         logoUrl={appSettings.logo}
+        floorFilter={floorFilter}
+        onFloorFilterChange={onFloorFilterChange}
+        onShare={onShare}
       />
 
       <div className="flex-1 flex overflow-hidden relative">
@@ -419,7 +487,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
                   <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
                   <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
                   <Route path="files" element={<FileManager currentUser={currentUser} />} />
-                  <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} />} />
+                  <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={floorFilter} />} />
                   <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
                   <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
                   <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />

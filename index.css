@@ -138,3 +138,63 @@ html.dark tr {
 html.dark thead {
     background-color: rgba(15, 23, 42, 0.5);
 }
+
+/* Dynamic Primary Color Utilities */
+.bg-primary {
+    background-color: var(--primary);
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.border-primary {
+    border-color: var(--primary);
+}
+
+.ring-primary {
+    --tw-ring-color: var(--primary);
+}
+
+.hover\:bg-primary:hover {
+    background-color: var(--primary);
+}
+
+.hover\:text-primary:hover {
+    color: var(--primary);
+}
+
+.hover\:border-primary:hover {
+    border-color: var(--primary);
+}
+
+/* Primary color with opacity variations */
+.bg-primary\/10 {
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.bg-primary\/20 {
+    background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.bg-primary\/5 {
+    background-color: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.text-primary\/50 {
+    color: color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+/* Focus states */
+.focus\:ring-primary:focus {
+    --tw-ring-color: var(--primary);
+}
+
+.focus\:border-primary:focus {
+    border-color: var(--primary);
+}
+
+/* Darker shade for hover (90% brightness) */
+.hover\:bg-primary-dark:hover {
+    background-color: color-mix(in srgb, var(--primary) 90%, black 10%);
+}

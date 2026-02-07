@@ -218,6 +218,7 @@ export interface ActivityLog {
   createdAt: string;
   completedAt?: string;
   updatedAt?: string;
+  avatarUrl?: string | null;
 }
 
 export interface WeeklyPlan {
@@ -287,4 +288,14 @@ export interface AuditLog {
   details?: string;
   ipAddress?: string;
   createdAt: string;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  is_active: boolean;
+  created_at?: string;
+  expires_at?: string;
 }
