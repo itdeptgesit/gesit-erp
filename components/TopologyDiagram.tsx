@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone } from 'lucide-react';
+import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate } from 'lucide-react';
 import { NetworkSwitch, PortStatus, DeviceType } from '../types';
 import * as htmlToImage from 'html-to-image';
 
@@ -373,6 +373,86 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
         } catch (error) { alert('Export failed.'); } finally { diagramRef.current.style.transform = originalTransform; }
     };
 
+    const handleAutoLayout = useCallback(() => {
+        // Hierarchical Auto Layout Algorithm
+        // 1. Identification: Identify `internet` as root (Level 0)
+        // 2. Grouping: Group nodes by level (BFS from root)
+        // 3. Positioning: Assign Y based on level, distribute X based on count
+
+        const LEVEL_HEIGHT = 180;
+        const NODE_SPACING_X = 140;
+
+        // Map to store children for each parent
+        const childrenMap: Record<string, string[]> = {
+            'internet': []
+        };
+
+        switches.forEach(s => {
+            const parentId = s.uplinkId === 'gateway' ? 'internet' : (s.uplinkId || 'internet');
+            if (!childrenMap[parentId]) childrenMap[parentId] = [];
+            childrenMap[parentId].push(s.id);
+        });
+
+        // BFS to determine levels and order
+        const levels: Record<number, string[]> = {};
+        const queue: { id: string, level: number }[] = [{ id: 'internet', level: 0 }];
+        const visited = new Set<string>(['internet']);
+
+        // Also add orphan nodes to level 1 for now if they have no parent? Or ignore?
+        // Let's attach unlinked nodes to 'internet' logically for layout if they have no valid parent
+        const allNodeIds = new Set(switches.map(s => s.id));
+
+        while (queue.length > 0) {
+            const { id, level } = queue.shift()!;
+
+            if (!levels[level]) levels[level] = [];
+            if (id !== 'internet') levels[level].push(id); // Don't add internet to levels array for positioning switches, it has fixed pos
+
+            const children = childrenMap[id] || [];
+            children.forEach(childId => {
+                if (!visited.has(childId)) {
+                    visited.add(childId);
+                    queue.push({ id: childId, level: level + 1 });
+                }
+            });
+        }
+
+        // Handle disconnected components?? Put them on Level 1
+        switches.forEach(s => {
+            if (!visited.has(s.id)) {
+                if (!levels[1]) levels[1] = [];
+                levels[1].push(s.id);
+            }
+        });
+
+        // Calculate new positions
+        const newSwitches = switches.map(s => ({ ...s }));
+        const centerX = internetPos.x;
+        const startY = internetPos.y;
+
+        Object.keys(levels).forEach(lvlStr => {
+            const level = parseInt(lvlStr);
+            const nodesInLevel = levels[level];
+            if (nodesInLevel.length === 0) return;
+
+            const totalWidth = (nodesInLevel.length - 1) * NODE_SPACING_X;
+            let startX = centerX - (totalWidth / 2); // Center align relative to Internet
+
+            nodesInLevel.forEach((nodeId, index) => {
+                const nodeIndex = newSwitches.findIndex(s => s.id === nodeId);
+                if (nodeIndex !== -1) {
+                    newSwitches[nodeIndex].posX = startX + (index * NODE_SPACING_X);
+                    newSwitches[nodeIndex].posY = startY + (level * LEVEL_HEIGHT);
+                }
+            });
+        });
+
+        onUpdateSwitches(newSwitches);
+        // Reset view to center on root
+        setOffset({ x: window.innerWidth / 2 - internetPos.x, y: 100 });
+        setScale(0.8);
+    }, [switches, internetPos, onUpdateSwitches]);
+
     return (
         <div
             className="w-full h-full relative overflow-hidden bg-[#080c14] rounded-lg border border-slate-800 shadow-2xl select-none flex"
@@ -400,6 +480,9 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
 
                 <button onClick={handleDownload} className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95 border border-white">
                     <Download size={16} /> Export
+                </button>
+                <button onClick={handleAutoLayout} className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-xl active:scale-95 border border-white ml-2">
+                    <LayoutTemplate size={16} /> Auto
                 </button>
             </div>
 

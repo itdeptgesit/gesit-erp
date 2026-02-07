@@ -365,11 +365,13 @@ const StatCard = ({ label, value, icon: Icon, colorClass, subtext }: { label: st
 export const ExtensionDirectory = ({
     currentUser,
     variant = 'standalone',
-    externalSearchTerm
+    externalSearchTerm,
+    externalFloorFilter
 }: {
     currentUser?: UserAccount | null;
     variant?: 'standalone' | 'integrated';
     externalSearchTerm?: string;
+    externalFloorFilter?: 'All' | 26 | 27;
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [floorFilter, setFloorFilter] = useState<'All' | 26 | 27>('All');
@@ -635,7 +637,8 @@ export const ExtensionDirectory = ({
 
     const filteredExtensions = useMemo(() => {
         return extensions.filter((item) => {
-            if (floorFilter !== 'All' && item.floor !== floorFilter) return false;
+            const activeFloorFilter = externalFloorFilter !== undefined ? externalFloorFilter : floorFilter;
+            if (activeFloorFilter !== 'All' && item.floor !== activeFloorFilter) return false;
 
             const searchLower = activeSearchTerm.toLowerCase().trim();
             if (!searchLower) return true;
@@ -647,7 +650,7 @@ export const ExtensionDirectory = ({
 
             return nameMatch || deptMatch || extMatch || roleMatch;
         }).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    }, [extensions, activeSearchTerm, floorFilter]);
+    }, [extensions, activeSearchTerm, floorFilter, externalFloorFilter]);
 
     const totalPages = Math.ceil(filteredExtensions.length / itemsPerPage);
     const paginatedExtensions = useMemo(() => {
@@ -671,7 +674,7 @@ export const ExtensionDirectory = ({
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 px-2">
                         <div>
                             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">
-                                Directory <span className="text-indigo-600">Extensions</span>
+                                Directory <span style={{ color: 'var(--primary)' }}>Extensions</span>
                             </h1>
                             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">The City Tower & Infrastructure Registry</p>
                         </div>
@@ -687,7 +690,8 @@ export const ExtensionDirectory = ({
                             {canEdit && (
                                 <button
                                     onClick={() => openModal()}
-                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 group"
+                                    className="flex items-center gap-2 px-6 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 group"
+                                    style={{ backgroundColor: 'var(--primary)', boxShadow: '0 10px 20px -10px var(--primary)' }}
                                 >
                                     <Plus size={14} className="group-hover:rotate-90 transition-transform" />
                                     Add Extension
@@ -729,7 +733,7 @@ export const ExtensionDirectory = ({
             {/* List Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 px-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-1 h-3 bg-indigo-500 rounded-full" />
+                    <div className="w-1 h-3 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
                     <h2 className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         Directory Registry
                     </h2>

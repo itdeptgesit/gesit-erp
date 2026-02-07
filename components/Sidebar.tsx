@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['admin']);
     const { t } = useLanguage();
 
-    const LOGO_URL = "https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png";
+    const LOGO_URL = "/image/logo.png";
 
     const allowedMenuIds = useMemo(() => {
         const allowed = new Set<string>();
@@ -195,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
                                 {appName ? appSettingsName(appName).first : 'Gesit'} <span className="text-blue-600">{appName ? appSettingsName(appName).rest : 'ERP'}</span>
                             </h1>
-                            <p className="text-[10px] font-semibold text-slate-300 mt-1 tracking-widest uppercase">System</p>
+                            <p className="text-[10px] font-semibold text-slate-300 mt-1 tracking-widest uppercase">Enterprise Work Platform</p>
                         </div>
                     )}
                     <button onClick={onClose} aria-label="Close sidebar" className="md:hidden ml-auto p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"><X size={18} /></button>

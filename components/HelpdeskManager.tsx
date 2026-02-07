@@ -6,10 +6,12 @@ import { UserAccount } from '../types';
 import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle,
     MessageSquare, X, Loader2, Send, ClipboardList,
-    User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw
+    User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
+    Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle
 } from 'lucide-react';
 import { StatCard } from './MainDashboard';
 import { DangerConfirmModal } from './DangerConfirmModal';
+import { FluentEmoji } from '@lobehub/fluent-emoji';
 
 interface HelpdeskManagerProps {
     currentUser: UserAccount | null;
@@ -26,10 +28,83 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const [toast, setToast] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [isSolveConfirmOpen, setIsSolveConfirmOpen] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const emojiTriggerRef = useRef<HTMLButtonElement>(null);
+    const [detailTab, setDetailTab] = useState<'chat' | 'info'>('chat');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const EMOJI_CATEGORIES = [
+        {
+            name: 'Smileys',
+            icon: <Smile size={16} />,
+            emojis: [
+                '😊', '😂', '🤣', '❤️', '😍', '😒', '😭', '😘', '😔', '😩',
+                '😁', '😉', '😌', '😎', '😅', '😋', '😶', '😏', '😑', '😐',
+                '😯', '😮', '😲', '😴', '😫', '😪', '🙌', '👏', '👋', '👍',
+                '👊', '✊', '✌️', '👌', '✋', '👐', '💪', '🙏', '🤝', '💅'
+            ]
+        },
+        {
+            name: 'Nature',
+            icon: <Globe size={16} />,
+            emojis: [
+                '🐱', '🐶', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+                '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+                '🐌', '🐞', '🐜', '🦟', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙'
+            ]
+        },
+        {
+            name: 'Tech',
+            icon: <Zap size={16} />,
+            emojis: [
+                '💻', '📱', '📧', '💡', '📌', '📎', '📅', '⏰', '🛠️', '🔧',
+                '🔒', '🔑', '💎', '📦', '🎁', '📁', '📂', '📜', '📄', '📒',
+                '📊', '📈', '📉', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '📼',
+                '🔋', '🔌', '📡', '🛰️', '传真', '电视', '收音机', '麦克风', '滑块', '旋钮'
+            ]
+        },
+        {
+            name: 'Symbols',
+            icon: <Hash size={16} />,
+            emojis: [
+                '✅', '❌', '⚠️', '⭐', '🔥', '✨', '⚡', '💯', '🎉', '🆘',
+                '🚫', '⚠️', '💎', '💠', '🌀', '💤', '💥', '💢', '💦', '💨',
+                '💫', '💬', '🗯️', '💭', '🕳️', '💣', '🔇', '🔈', '🔉', '🔊',
+                '🎵', '🎶', '➕', '➖', '✖️', '➗', '❓', '❔', '❕', '❗'
+            ]
+        }
+    ];
+
+    const EmojiRenderer = ({ text }: { text: string }) => {
+        const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
+        const emojiMatches = text.match(emojiRegex);
+        if (!emojiMatches) return <span>{text}</span>;
+        const parts = text.split(emojiRegex);
+        return (
+            <span className="flex flex-wrap items-center gap-x-0.5 whitespace-pre-wrap">
+                {parts.map((part, i) => (
+                    <React.Fragment key={i}>
+                        {part}
+                        {emojiMatches[i] && (
+                            <FluentEmoji
+                                emoji={emojiMatches[i]}
+                                size={20}
+                                className="inline-block align-middle transform translate-y-[-1px] mx-0.5"
+                            />
+                        )}
+                    </React.Fragment>
+                ))}
+            </span>
+        );
     };
 
     useEffect(() => {
@@ -204,6 +279,48 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             setMessages([]);
         }
     }, [selectedTicket?.id]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedTicket) return;
+        if (!file.type.startsWith('image/')) {
+            showToast("Please upload an image file.", 'error');
+            return;
+        }
+        setIsUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${selectedTicket.ticketId}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+            const filePath = `chat_attachments/${fileName}`;
+            const { error: uploadError } = await supabase.storage.from('helpdesk-attachments').upload(filePath, file);
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage.from('helpdesk-attachments').getPublicUrl(filePath);
+            const { error: msgError } = await supabase.from('helpdesk_ticket_messages').insert([{
+                ticket_id: selectedTicket.id,
+                sender_name: currentUser?.fullName || 'IT Support',
+                sender_role: 'IT',
+                message: `![image](${publicUrl})`
+            }]);
+            if (msgError) throw msgError;
+            console.log("Image message inserted successfully with URL:", publicUrl);
+            showToast("Image uploaded successfully.");
+        } catch (err: any) {
+            console.error('Upload Error Details:', err);
+            let userMsg = "Upload failed.";
+            if (err.message?.includes('bucket')) userMsg = "Storage bucket 'helpdesk-attachments' not found.";
+            else if (err.status === 403) userMsg = "Permission denied. Check RLS policies.";
+
+            showToast(userMsg, 'error');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const addEmoji = (emoji: string) => {
+        setResolutionNote(prev => prev + emoji);
+        setShowEmojiPicker(false);
+    };
 
     const filteredTickets = useMemo(() => {
         return tickets.filter(t => {
@@ -431,47 +548,42 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 <StatCard label="Stabilized" value={stats.resolved} icon={CheckCircle2} color="emerald" />
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-6">
-                <div className="lg:col-span-7 flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
-                    <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex flex-wrap justify-between items-center gap-4 bg-slate-50/30 dark:bg-slate-800/50 shrink-0">
-                        <div className="relative flex-1 min-w-[200px]">
-                            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input type="text" placeholder="Search by requester or ID..." className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
+                {/* LEFT COLUMN: Support Queue */}
+                <div className={`w-full lg:w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                    <div className="p-3 border-b border-slate-50 dark:border-slate-800 flex flex-col gap-3 bg-slate-50/30 dark:bg-slate-800/50 shrink-0">
+                        <div className="relative">
+                            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input type="text" placeholder="Search..." className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-semibold outline-none focus:ring-4 focus:ring-blue-500/5 transition-all dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                         </div>
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 border border-slate-200 dark:border-slate-700">
-                            {['All', 'Open', 'In Progress', 'Pending', 'Resolved'].map(st => (
-                                <button key={st} onClick={() => setStatusFilter(st)} className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all ${statusFilter === st ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-800'}`}>{st === 'In Progress' ? 'Process' : st === 'Resolved' ? 'Solved' : st}</button>
-                            ))}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex bg-slate-200/50 dark:bg-slate-800 p-0.5 rounded-lg shrink-0 border border-slate-200 dark:border-slate-700">
+                                {['All', 'Open', 'In Progress', 'Resolved'].map(st => (
+                                    <button key={st} onClick={() => setStatusFilter(st)} className={`px-2 py-1 rounded-md text-[8px] font-bold uppercase transition-all ${statusFilter === st ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{st === 'In Progress' ? 'Process' : st === 'Resolved' ? 'Solved' : st}</button>
+                                ))}
+                            </div>
+                            <div className="flex gap-1">
+                                <button onClick={resetFilters} className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors shadow-sm" title="Reset"><RotateCcw size={12} /></button>
+                                <button onClick={fetchTickets} className="p-1.5 text-slate-400 hover:text-blue-600 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-colors shadow-sm"><RefreshCcw size={12} className={isLoading ? 'animate-spin' : ''} /></button>
+                            </div>
                         </div>
-                        <button
-                            onClick={resetFilters}
-                            className="p-2.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shrink-0 transition-colors shadow-sm"
-                            title="Reset Filters"
-                        >
-                            <RotateCcw size={16} />
-                        </button>
-                        <button onClick={fetchTickets} className="p-2.5 text-slate-400 hover:text-blue-600 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shrink-0 transition-colors shadow-sm"><RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} /></button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         {isLoading ? (
-                            <div className="p-20 text-center flex flex-col items-center gap-3"><Loader2 size={32} className="animate-spin text-blue-500" /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning protocols...</p></div>
+                            <div className="p-10 text-center flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-blue-500" /><p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
                         ) : paginatedTickets.length === 0 ? (
-                            <div className="p-20 text-center text-slate-300 dark:text-slate-600 font-bold text-[10px] tracking-widest italic">No entries found.</div>
+                            <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
                         ) : (
-                            <div className="divide-y divide-slate-50 dark:divide-slate-800">
+                            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
                                 {paginatedTickets.map(ticket => (
-                                    <div key={ticket.id} onClick={() => setSelectedTicket(ticket)} className={`p-5 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group ${selectedTicket?.id === ticket.id ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-2 h-2 rounded-full shrink-0 ${ticket.status === 'Open' ? 'bg-rose-500 animate-pulse' : ticket.status === 'Resolved' ? 'bg-emerald-500' : ticket.status === 'Pending' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-0.5"><span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/50">{ticket.ticketId}</span><h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 tracking-tight group-hover:text-blue-600 transition-colors">{ticket.subject}</h4></div>
-                                                <div className="flex items-center gap-2"><p className="text-[10px] text-slate-400 font-medium">{ticket.requesterName}</p><span className="w-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></span><p className="text-[10px] text-slate-400 font-medium">{ticket.department}</p></div>
+                                    <div key={ticket.id} onClick={() => setSelectedTicket(ticket)} className={`p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group ${selectedTicket?.id === ticket.id ? 'bg-blue-50/50 dark:bg-blue-900/10 border-r-2 border-r-blue-500' : ''}`}>
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ticket.status === 'Open' ? 'bg-rose-500 animate-pulse' : ticket.status === 'Resolved' ? 'bg-emerald-500' : ticket.status === 'Pending' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                            <div className="overflow-hidden">
+                                                <div className="flex items-center gap-1.5 mb-0.5"><span className="text-[8px] font-bold text-blue-600 dark:text-blue-400 font-mono">{ticket.ticketId}</span><h4 className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 transition-colors">{ticket.subject}</h4></div>
+                                                <p className="text-[9px] text-slate-400 font-medium truncate">{ticket.requesterName} • {ticket.department}</p>
                                             </div>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-[9px] font-bold text-slate-300 dark:text-slate-700 mb-1.5 uppercase">{new Date(ticket.createdAt).toLocaleDateString('en-GB')}</p>
-                                            {getStatusIcon(ticket.status)}
                                         </div>
                                     </div>
                                 ))}
@@ -479,35 +591,103 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                         )}
                     </div>
 
-                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page {currentPage} of {totalPages || 1}</p>
-                        <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                    <div className="px-4 py-3 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">P. {currentPage}/{totalPages || 1}</p>
+                        <div className="flex items-center gap-1">
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={12} /></button>
+                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={12} /></button>
                         </div>
                     </div>
                 </div>
 
-                <div className="w-full lg:w-[420px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-2 duration-500 shrink-0">
+                {/* CENTER COLUMN: Chat Interface */}
+                <div className={`flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-500 ${!selectedTicket ? 'hidden lg:flex' : (detailTab === 'chat' ? 'flex' : 'hidden lg:flex')}`}>
                     {selectedTicket ? (
                         <>
-                            <div className="p-8 border-b border-slate-50 dark:border-slate-800 bg-slate-900 dark:bg-slate-950 text-white relative shrink-0"><div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl -mr-12 -mt-12"></div><div className="flex items-center justify-between mb-6 relative z-10"><span className="text-[10px] font-bold text-blue-400 font-mono tracking-widest">{selectedTicket.ticketId}</span><button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-500"><X size={20} /></button></div><h3 className="text-xl font-bold tracking-tight mb-2 leading-none relative z-10">{selectedTicket.subject}</h3><div className="flex flex-wrap gap-x-4 gap-y-2 relative z-10"><div className="flex items-center gap-1.5"><User size={12} className="text-slate-500" /><p className="text-[10px] font-semibold text-slate-400">{selectedTicket.requesterName}</p></div><div className="flex items-center gap-1.5"><Building2 size={12} className="text-slate-500" /><p className="text-[10px] font-semibold text-slate-400">{selectedTicket.department}</p></div></div></div>
-                            <div className="p-6 flex-1 overflow-y-auto custom-scrollbar space-y-6 bg-slate-50 dark:bg-slate-900 shadow-inner">
-                                <div className="space-y-4">
-                                    <div className="flex flex-col gap-1 max-w-[85%]">
-                                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-800 text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">System - Initial Report</p>
-                                            {selectedTicket.description}
+                            {/* Chat Header */}
+                            <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+                                <div className="flex items-center gap-3">
+                                    {/* Mobile Back Button */}
+                                    <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                        <ChevronLeft size={20} />
+                                    </button>
+
+                                    <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <MessageSquare size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight leading-tight">{selectedTicket.subject}</h3>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-[9px] font-bold text-blue-500 font-mono uppercase tracking-wider">{selectedTicket.ticketId}</span>
+                                            <span className="w-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none flex items-center gap-1">
+                                                {getStatusIcon(selectedTicket.status)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Mobile Detail Tab Switcher */}
+                            <div className="p-2 bg-slate-50 dark:bg-slate-800/50 flex lg:hidden border-b border-slate-100 dark:border-slate-800 gap-2">
+                                <button
+                                    onClick={() => setDetailTab('chat')}
+                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'chat' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Discussion
+                                </button>
+                                <button
+                                    onClick={() => setDetailTab('info')}
+                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'info' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Info & Manage
+                                </button>
+                            </div>
+
+                            {/* Chat Messages */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20 p-6 space-y-6">
+                                <div className="space-y-4 max-w-2xl mx-auto">
+                                    <div className="flex flex-col gap-1 items-start max-w-[90%]">
+                                        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-800/50 text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed shadow-sm">
+                                            <p className="text-[9px] font-black text-blue-600/50 dark:text-blue-400/30 uppercase mb-2 tracking-[0.2em]">INITIAL REPORT</p>
+                                            <EmojiRenderer text={selectedTicket.description} />
                                         </div>
                                     </div>
 
                                     {messages.map((msg, idx) => (
-                                        <div key={idx} className={`flex flex-col gap-1 max-w-[85%] ${msg.sender_role === 'IT' ? 'ml-auto items-end' : 'items-start'}`}>
-                                            <div className={`${msg.sender_role === 'IT' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-800'} p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm`}>
-                                                <div className={`text-[9px] font-bold uppercase mb-1 opacity-60 flex items-center gap-2 ${msg.sender_role === 'IT' ? 'justify-end' : ''}`}>
+                                        <div key={idx} className={`flex flex-col gap-1 max-w-[90%] ${msg.sender_role === 'IT' ? 'ml-auto items-end' : 'items-start'}`}>
+                                            <div className={`${msg.sender_role === 'IT' ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-500/10' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-800/50'} p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm`}>
+                                                <div className={`text-[8px] font-bold uppercase mb-1.5 opacity-60 flex items-center gap-2 ${msg.sender_role === 'IT' ? 'justify-end' : ''}`}>
                                                     {msg.sender_name} • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
-                                                {msg.message}
+                                                {(() => {
+                                                    const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
+                                                    if (imageMatch) {
+                                                        const imageUrl = imageMatch[1];
+                                                        return (
+                                                            <div
+                                                                onClick={() => setPreviewImage(imageUrl)}
+                                                                className="block cursor-zoom-in group/img relative"
+                                                            >
+                                                                <img
+                                                                    src={imageUrl}
+                                                                    alt="Attachment"
+                                                                    className="max-w-full rounded-xl hover:scale-[1.02] transition-transform duration-300 shadow-sm"
+                                                                    loading="lazy"
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors rounded-xl flex items-center justify-center">
+                                                                    <div className="opacity-0 group-hover/img:opacity-100 transition-opacity bg-white/20 backdrop-blur-md p-2 rounded-full text-white">
+                                                                        <Search size={16} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return <EmojiRenderer text={msg.message} />;
+                                                })()}
                                             </div>
                                         </div>
                                     ))}
@@ -515,77 +695,211 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                 </div>
                             </div>
 
-                            <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                            {/* Chat Input */}
+                            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
                                 {!isSolved ? (
-                                    <div className="space-y-4">
-                                        <textarea rows={3} className="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[13px] font-medium focus:ring-4 focus:ring-blue-500/5 outline-none transition-all placeholder:text-slate-400 dark:text-white" placeholder="Type message to requester..." value={resolutionNote} onChange={e => setResolutionNote(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}></textarea>
-                                        <div className="flex gap-2">
-                                            <button onClick={handleSendReply} disabled={isActionLoading || !resolutionNote.trim()} className="flex-1 h-12 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50">
-                                                {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Send Message
+                                    <div className="max-w-4xl mx-auto py-2">
+                                        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 px-4 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/10 transition-all">
+                                            {/* Action Buttons: Upload */}
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors shrink-0 disabled:opacity-50"
+                                                disabled={isUploading}
+                                                title="Attach Image"
+                                            >
+                                                {isUploading ? <Loader2 size={20} className="animate-spin" /> : <PlusCircle size={22} />}
+                                            </button>
+                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                                            {/* Input Area */}
+                                            <textarea
+                                                rows={1}
+                                                className="flex-1 p-2 bg-transparent border-none text-[13px] font-medium outline-none placeholder:text-slate-300 dark:text-slate-500 dark:text-white resize-none h-10 flex items-center pt-2.5"
+                                                placeholder={`Type a message to ${selectedTicket.requesterName.split(' ')[0]}...`}
+                                                value={resolutionNote}
+                                                onChange={e => setResolutionNote(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                                            />
+
+                                            {/* Emoji Picker */}
+                                            <div className="relative shrink-0">
+                                                <button
+                                                    ref={emojiTriggerRef}
+                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                    className={`p-1.5 transition-all rounded-lg ${showEmojiPicker ? 'text-blue-600' : 'text-slate-400 hover:text-blue-600'}`}
+                                                    title="Add Emoji"
+                                                >
+                                                    <Smile size={22} />
+                                                </button>
+                                                {showEmojiPicker && (
+                                                    <div className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl z-[100] w-[280px] overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
+                                                        <div className="flex items-center justify-between p-2 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900">
+                                                            <div className="flex">
+                                                                {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                    <button key={cat.name} onClick={() => setActiveEmojiCategory(idx)} className={`p-1.5 rounded-lg transition-all ${activeEmojiCategory === idx ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{cat.icon}</button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-2 grid grid-cols-7 gap-0.5 h-[180px] overflow-y-auto custom-scrollbar">
+                                                            {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
+                                                                <button key={emoji} onClick={() => addEmoji(emoji)} className="w-8 h-8 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-all hover:scale-110 active:scale-90"><FluentEmoji emoji={emoji} size={16} /></button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Send Button */}
+                                            <button
+                                                onClick={handleSendReply}
+                                                disabled={isActionLoading || !resolutionNote.trim()}
+                                                className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 shrink-0"
+                                            >
+                                                {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={20} />}
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col gap-4 w-full">
-                                        <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-3xl flex flex-col items-center gap-4 text-emerald-700 dark:text-emerald-400">
-                                            <div className="flex items-center gap-2">
-                                                <CheckCircle2 size={20} className="text-emerald-500" />
-                                                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Incident Resolved - Chat Closed</span>
-                                            </div>
-
-                                            {selectedTicket.resolution && (
-                                                <div className="w-full text-center px-4 space-y-2">
-                                                    <div className="h-px w-12 bg-emerald-200 dark:bg-emerald-800/50 mx-auto"></div>
-                                                    <p className="text-[13px] font-medium leading-relaxed italic text-emerald-800/80 dark:text-emerald-300/80">
-                                                        "{selectedTicket.resolution.split('\n\n[Resolved on:')[0]}"
-                                                    </p>
-                                                    {selectedTicket.resolution.includes('[Resolved on:') && (
-                                                        <p className="text-[9px] font-bold font-mono opacity-60">
-                                                            ON {selectedTicket.resolution.split('[Resolved on: ')[1]?.replace(']', '')}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {!selectedTicket.resolution && (
-                                                <span className="text-[8px] opacity-40 uppercase font-mono">Ref: {selectedTicket.ticketId}</span>
-                                            )}
+                                    <div className="max-w-xl mx-auto py-2">
+                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl flex items-center justify-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                            <CheckCircle2 size={16} className="text-emerald-500" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.1em]">Incident Resolved</span>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                                <div className="flex justify-between items-center shrink-0">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ticket Actions</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-bold text-slate-500 uppercase">{selectedTicket.priority} PRIORITY</span>
-                                    </div>
-                                </div>
-                                {!isSolved ? (
-                                    <div className="space-y-2">
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')} className={`h-10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}><Clock size={12} className="inline mr-1" /> Process</button>
-                                            <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')} className={`h-10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}><PauseCircle size={12} className="inline mr-1" /> Hold</button>
-                                        </div>
-                                        <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all shadow-md transition-all active:scale-95"><CheckCircle2 size={12} className="inline mr-1" /> Mark Resolved</button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={handleConvertToActivity}
-                                        disabled={isActionLoading}
-                                        className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
-                                    >
-                                        {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Convert to IT Activity
-                                    </button>
                                 )}
                             </div>
                         </>
-                    ) : (<div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-30"><div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6"><MessageSquare size={36} className="text-slate-300 dark:text-slate-600" /></div><p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em]">Select a ticket</p></div>)}
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-30">
+                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
+                                <MessageSquare size={24} className="text-slate-300 dark:text-slate-600" />
+                            </div>
+                            <p className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">Select an active session</p>
+                        </div>
+                    )}
                 </div>
+
+                {/* RIGHT COLUMN: Ticket Info & Actions */}
+                {selectedTicket && (
+                    <div className={`w-full lg:w-[320px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-2 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className="p-5 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Requester Details</h4>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <User size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[12px] font-bold text-slate-800 dark:text-slate-200 leading-none">{selectedTicket.requesterName}</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">{selectedTicket.requesterEmail || 'No email provided'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <Building2 size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Department</p>
+                                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mt-1">{selectedTicket.department}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-5 flex-1 overflow-y-auto space-y-6">
+                            <div>
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Priority & Status</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">Priority</p>
+                                        <p className={`text-[10px] font-black uppercase ${selectedTicket.priority === 'Critical' ? 'text-rose-600' : selectedTicket.priority === 'High' ? 'text-amber-600' : 'text-blue-600'}`}>{selectedTicket.priority}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">Created At</p>
+                                        <p className="text-[10px] font-black text-slate-800 dark:text-slate-200">{new Date(selectedTicket.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {!isSolved ? (
+                                <div>
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Management</h4>
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')} className={`h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>Process</button>
+                                            <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')} className={`h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>Hold</button>
+                                        </div>
+                                        <button disabled={isActionLoading || !isOwner} onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')} className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                                            <CheckCircle2 size={12} /> Mark Solved
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Final Resolution</p>
+                                        <p className="text-[11px] text-slate-600 dark:text-slate-400 italic font-medium leading-relaxed">
+                                            "{selectedTicket.resolution?.split('\n\n')[0] || 'No resolution notes'}"
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handleConvertToActivity}
+                                        disabled={isActionLoading}
+                                        className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                                    >
+                                        {isActionLoading ? <Loader2 size={12} className="animate-spin" /> : <ClipboardList size={12} />} Convert to Activity
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white flex flex-col items-center justify-center gap-1 shrink-0">
+                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-[0.4em]">OPERATIONAL SYSTEM</p>
+                            <p className="text-[7px] text-slate-500 font-mono">v4.0.2-STABLE</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
+            {/* Image Preview Modal */}
+            {
+                previewImage && (
+                    <div
+                        className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300"
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        <button
+                            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all hover:scale-110 active:scale-90"
+                            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <div
+                            className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center animate-in zoom-in-95 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+                            />
+                            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                                <a
+                                    href={previewImage}
+                                    download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10 backdrop-blur-md"
+                                >
+                                    Download Original
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
             <DangerConfirmModal isOpen={isSolveConfirmOpen} onClose={() => setIsSolveConfirmOpen(false)} onConfirm={() => executeStatusUpdate(selectedTicket.id, 'Resolved')} title="Confirm Resolution" message="Are you sure you want to mark this as Solved? This action is permanent and the ticket node will be finalized." isLoading={isActionLoading} />
-        </div>
+        </div >
     );
 };

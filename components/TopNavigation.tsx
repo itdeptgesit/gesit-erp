@@ -55,13 +55,17 @@ interface TopNavigationProps {
         value: string;
         onChange: (val: string) => void;
     };
+    floorFilter?: 'All' | 26 | 27;
+    onFloorFilterChange?: (floor: 'All' | 26 | 27) => void;
+    onShare?: () => void;
 }
 
 export const TopNavigation: React.FC<TopNavigationProps> = ({
     onMenuClick, onLogout,
     userGroups = [], userRole, groupDefinitions = [],
-    user, appName = 'Gesit ERP', logoUrl,
-    variant = 'admin', searchProps
+    user, appName = 'GESIT WORK', logoUrl,
+    variant = 'admin', searchProps,
+    floorFilter = 'All', onFloorFilterChange, onShare
 }) => {
     const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -79,7 +83,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
     const notificationRef = useRef<HTMLDivElement>(null);
 
     const userName = user?.name || 'User';
-    const LOGO_URL = "https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png";
+    const LOGO_URL = "/image/logo.png";
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -201,14 +205,14 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                 <header className="relative z-20 h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 md:px-12 flex items-center justify-between transition-all">
                     {/* Logo & Title - Left */}
                     <NavLink to="/" className="flex items-center gap-4 group shrink-0">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:shadow-xl group-hover:shadow-indigo-500/30 transition-all">
-                            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-7 w-7 transition-transform duration-300 group-hover:scale-110 object-contain brightness-0 invert" />
+                        <div className="w-12 h-12 flex items-center justify-center transition-all group-hover:scale-105">
+                            <img src="/image/logo.png" alt="Logo" className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 object-contain" />
                         </div>
                         <div className="flex flex-col leading-tight">
-                            <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
                                 TGC Directory
                             </h1>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider uppercase">Internal Grid</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-bold tracking-wider uppercase">Internal Extensions</p>
                         </div>
                     </NavLink>
 
@@ -216,11 +220,11 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                     {searchProps && (
                         <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md px-4">
                             <div className="relative group">
-                                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors pointer-events-none ${searchProps.value ? 'text-indigo-500' : 'text-slate-400'}`} />
+                                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors pointer-events-none ${searchProps.value ? 'text-primary' : 'text-slate-400'}`} />
                                 <input
                                     type="text"
                                     placeholder="Search extensions..."
-                                    className="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 outline-none transition-all"
+                                    className="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-primary outline-none transition-all"
                                     value={searchProps.value}
                                     onChange={(e) => searchProps.onChange(e.target.value)}
                                 />
@@ -241,18 +245,37 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                     <div className="flex items-center gap-3 shrink-0">
                         {/* Floor Filter Buttons */}
                         <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <button className="px-4 py-2 text-xs font-black rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white">ALL</button>
-                            <button className="px-4 py-2 text-xs font-black rounded-lg transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">27F</button>
-                            <button className="px-4 py-2 text-xs font-black rounded-lg transition-all text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">26F</button>
+                            <button
+                                onClick={() => onFloorFilterChange?.('All')}
+                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 'All' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                ALL
+                            </button>
+                            <button
+                                onClick={() => onFloorFilterChange?.(27)}
+                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 27 ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                27F
+                            </button>
+                            <button
+                                onClick={() => onFloorFilterChange?.(26)}
+                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 26 ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                26F
+                            </button>
                         </div>
 
                         {/* Share Button */}
-                        <button className="p-3 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl" title="Share">
+                        <button
+                            onClick={onShare}
+                            className="p-3 text-slate-500 hover:text-primary transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                            title="Share"
+                        >
                             <Share2 size={18} />
                         </button>
 
                         {/* Theme Toggle */}
-                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-3 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-3 text-slate-500 hover:text-primary transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
                             {isDark ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
                     </div>
@@ -267,31 +290,31 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                         <NavLink to="/" className="flex items-center gap-3 group">
                             <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 object-contain" />
                             <div className="flex flex-col leading-tight">
-                                <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
                                     <span>{appName.split(' ')[0]}</span>
-                                    <span className="text-blue-600 ml-1">{appName.split(' ').slice(1).join(' ')}</span>
+                                    <span className="text-primary">{appName.split(' ').slice(1).join(' ')}</span>
                                 </h1>
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium tracking-wider uppercase">Enterprise Infrastructure</p>
+                                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 tracking-[0.2em] mt-0.5 hidden md:block uppercase">Enterprise Work Platform</p>
                             </div>
                         </NavLink>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 pl-4">
                         {/* Language Toggle */}
                         <div className="hidden sm:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-                            <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>EN</button>
-                            <button onClick={() => setLanguage('id')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>ID</button>
+                            <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>EN</button>
+                            <button onClick={() => setLanguage('id')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>ID</button>
                         </div>
 
                         {/* Theme Toggle */}
-                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-2 text-slate-400 hover:text-blue-600 transition-all">
+                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-2 text-slate-400 hover:text-primary transition-all">
                             {isDark ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
 
                         {user ? (
                             <>
                                 <div className="relative" ref={notificationRef}>
-                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" className={`p-2 rounded-lg transition-all ${isNotificationOpen ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:text-blue-600'}`}>
+                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" className={`p-2 rounded-lg transition-all ${isNotificationOpen ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary'}`}>
                                         <Bell size={18} />
                                         {unreadCount > 0 && <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#020617]"></span>}
                                     </button>
@@ -303,7 +326,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                                 </div>
                                                 <div className="max-h-[300px] overflow-y-auto">
                                                     {notifications.length === 0 ? <div className="py-6 text-center text-[10px] text-slate-400">All caught up!</div> : notifications.map(n => (
-                                                        <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b last:border-0 dark:border-slate-700 ${!n.isRead ? 'bg-blue-50/20' : ''}`}>
+                                                        <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b last:border-0 dark:border-slate-700 ${!n.isRead ? 'bg-primary/5' : ''}`}>
                                                             <p className="text-[11px] font-bold mb-1">{n.title}</p>
                                                             <p className="text-[10px] text-slate-500 line-clamp-1">{n.message}</p>
                                                         </div>
@@ -317,8 +340,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                 <div className="relative ml-2" ref={dropdownRef}>
                                     <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 pl-3 border-l dark:border-slate-700">
                                         <div className="text-right hidden sm:block">
-                                            <p className="text-[9px] font-medium text-slate-400 leading-none mb-1">Welcome,</p>
-                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-none">{userName}</p>
+                                            <p className="text-[10px] font-medium text-slate-500 leading-none mb-1">Welcome,</p>
+                                            <p className="text-sm font-extrabold text-slate-700 dark:text-slate-200 leading-none">{userName}</p>
                                         </div>
                                         <div className="relative">
                                             <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white dark:border-slate-800 shadow-sm flex items-center justify-center text-white text-[10px] font-black overflow-hidden">
@@ -385,9 +408,9 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                             <motion.button
                                                 onClick={() => setActiveSubMenu(activeSubMenu === item.id ? null : item.id)}
                                                 className={`relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all z-10
-                            ${isSubActive ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-500/10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                            ${isSubActive ? 'text-primary bg-primary/10 ring-1 ring-primary/10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                                             >
-                                                <Icon size={18} className={isSubActive ? 'text-blue-600' : 'opacity-70'} />
+                                                <Icon size={18} className={isSubActive ? 'text-primary' : 'opacity-70'} />
                                                 <span className="ml-2 overflow-hidden whitespace-nowrap">
                                                     {item.label}
                                                 </span>
@@ -397,7 +420,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                                 {activeSubMenu === item.id && (
                                                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 left-0 w-56 bg-white dark:bg-[#0f172a] rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-[60]">
                                                         {item.subItems.map((sub: any) => (
-                                                            <NavLink key={sub.id} to={`/${sub.id}`} onClick={() => setActiveSubMenu(null)} className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold transition-all ${isActive ? 'text-blue-600 bg-blue-50/50 dark:bg-blue-900/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                                            <NavLink key={sub.id} to={`/${sub.id}`} onClick={() => setActiveSubMenu(null)} className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold transition-all ${isActive ? 'text-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                                                                 {sub.icon && <sub.icon size={14} className="opacity-50" />}
                                                                 {sub.label}
                                                             </NavLink>
@@ -414,14 +437,14 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                         key={item.id}
                                         to={path}
                                         className={({ isActive }) => `relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all z-10
-                                            ${isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                                            ${isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
                                     >
                                         {({ isActive }) => (
                                             <>
                                                 {isActive && (
-                                                    <motion.div layoutId="nav-pill" className="absolute inset-0 bg-blue-50 dark:bg-blue-900/40 ring-1 ring-blue-500/20 rounded-xl z-[-1]" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                                                    <motion.div layoutId="nav-pill" className="absolute inset-0 bg-primary/10 ring-1 ring-primary/20 rounded-xl z-[-1]" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                                                 )}
-                                                <Icon size={18} className={isActive ? 'text-blue-600' : 'opacity-70'} />
+                                                <Icon size={18} className={isActive ? 'text-primary' : 'opacity-70'} />
                                                 <span className="ml-2 overflow-hidden whitespace-nowrap">
                                                     {item.label}
                                                 </span>

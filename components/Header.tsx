@@ -53,7 +53,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onMenuClick, onLogout, onNavigate,
-  user, appName = 'Gesit ERP', logoUrl
+  user, appName = 'GESIT WORK', logoUrl
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const userName = user?.name || 'User';
-  const LOGO_URL = "https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png";
+  const LOGO_URL = "/image/logo.png";
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -173,7 +173,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="md:hidden p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+          className="md:hidden p-2 text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
         >
           <Menu size={20} />
         </button>
@@ -187,15 +187,15 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="h-8 w-px bg-slate-200 dark:bg-slate-800/80 mx-1 hidden md:block"></div>
 
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none flex items-center gap-1.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none flex items-center gap-2">
               <span className="bg-clip-text text-transparent bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
                 {appName.split(' ')[0]}
               </span>
-              <span className="text-blue-600 relative">
+              <span className="text-primary font-extrabold">
                 {appName.split(' ').slice(1).join(' ')}
               </span>
             </h1>
-            <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] mt-0.5 hidden md:block">Enterprise Infrastructure</p>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.15em] mt-1 hidden md:block">Enterprise Work Platform</p>
           </div>
         </div>
       </div>
@@ -205,16 +205,16 @@ export const Header: React.FC<HeaderProps> = ({
         {/* mobile menu toggle hidden - sidebar removed */}
 
         <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50" role="group" aria-label="Language selection">
-          <button onClick={() => setLanguage('en')} aria-label="Switch to English" aria-pressed={language === 'en'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>EN</button>
-          <button onClick={() => setLanguage('id')} aria-label="Switch to Indonesian" aria-pressed={language === 'id'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500'}`}>ID</button>
+          <button onClick={() => setLanguage('en')} aria-label="Switch to English" aria-pressed={language === 'en'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>EN</button>
+          <button onClick={() => setLanguage('id')} aria-label="Switch to Indonesian" aria-pressed={language === 'id'} className={`px-2 py-0.5 text-[8px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>ID</button>
         </div>
 
-        <button onClick={toggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+        <button onClick={toggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
           {isDark ? <Sun size={14} /> : <Moon size={14} />}
         </button>
 
         <div className="relative" ref={notificationRef}>
-          <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" aria-haspopup="true" aria-expanded={isNotificationOpen} className={`p-1.5 rounded-lg transition-all ${isNotificationOpen ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}>
+          <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" aria-haspopup="true" aria-expanded={isNotificationOpen} className={`p-1.5 rounded-lg transition-all ${isNotificationOpen ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary hover:bg-slate-50'}`}>
             <Bell size={16} />
             {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>}
           </button>
@@ -223,14 +223,14 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[100]">
               <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">Alerts</h3>
-                {unreadCount > 0 && <button onClick={markAllAsRead} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Clear All</button>}
+                {unreadCount > 0 && <button onClick={markAllAsRead} className="text-[9px] font-black text-primary uppercase hover:underline">Clear All</button>}
               </div>
               <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">No active alerts</div>
                 ) : (
                   notifications.map(n => (
-                    <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }} className={`p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-50 last:border-0 ${!n.isRead ? 'bg-blue-50/20' : ''}`}>
+                    <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }} className={`p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-50 last:border-0 ${!n.isRead ? 'bg-primary/5' : ''}`}>
                       <div className="flex gap-2">
                         <div className="w-6 h-6 rounded bg-slate-50 dark:bg-slate-900 flex items-center justify-center shrink-0">{getIcon(n.type)}</div>
                         <div className="flex-1 min-w-0">

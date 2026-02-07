@@ -20,7 +20,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     const [resetSent, setResetSent] = useState(false);
     const [isDark, setIsDark] = useState(false);
 
-    const LOGO_URL = "https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png";
+    const LOGO_URL = "/image/logo.png";
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -96,132 +96,109 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
-            <main className="flex-1 flex items-stretch">
-                {/* Left Hero Side - Blue/Dark Card */}
-                <div className="hidden lg:flex w-[45%] bg-[#0f172a] relative overflow-hidden flex-col justify-between p-16">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent"></div>
-                    <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px]"></div>
+            <main className="flex-1 flex items-stretch overflow-hidden">
+                {/* Left Hero Side - Background Image */}
+                <div className="hidden lg:flex w-[48%] relative overflow-hidden flex-col justify-between p-16">
+                    {/* Dark Background Overlay */}
+                    <div className="absolute inset-0 bg-[#0a2558]">
+                        <img
+                            src="/image/bg.jpeg"
+                            alt="Background"
+                            className="w-full h-full object-cover opacity-60 mix-blend-multiply"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#0a2558]/30 via-transparent to-[#0a2558]/80"></div>
+                    </div>
 
                     <div className="relative z-10">
-                        <img src={LOGO_URL} alt="Logo" className="h-24 w-auto mb-16 drop-shadow-2xl" />
-
-                        <div className="space-y-6 max-w-md">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400">
-                                <ShieldCheck size={14} />
-                                <span className="text-xs font-semibold uppercase tracking-widest">Secured Access</span>
+                        {/* Logo Section */}
+                        <div className="mb-8 animate-in fade-in slide-in-from-left duration-700">
+                            <div className="w-28 h-28 flex items-center justify-center">
+                                <img src="/image/logo.png" alt="Logo" className="w-full h-full object-contain" />
                             </div>
-                            <h2 className="text-5xl font-bold text-white leading-tight tracking-tight">
-                                Smart operations <br />
-                                for <span className="text-blue-500">modern teams.</span>
-                            </h2>
-                            <p className="text-slate-400 text-lg leading-relaxed font-medium">
-                                Manage infrastructure, procurement, and IT workflows from a single intuitive core.
+                        </div>
+
+                        <div className="space-y-8 max-w-xl">
+                            <div className="animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                                <h2 className="text-6xl font-black text-white leading-[1.1] tracking-tight font-display mb-2">
+                                    GESIT WORK
+                                </h2>
+                                <h3 className="text-2xl font-bold text-white/80 tracking-tight font-display">
+                                    Enterprise Work Platform
+                                </h3>
+                            </div>
+                            <p className="text-white/70 text-lg leading-relaxed font-medium max-w-md animate-in fade-in slide-in-from-bottom duration-700 delay-200">
+                                Centralized platform for enterprise operations, infrastructure documentation, asset management, and service desk — built for speed and reliability.
                             </p>
                         </div>
                     </div>
 
-                    <div className="relative z-10 flex items-center gap-8 pt-8 border-t border-white/5">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
-                            <span className="text-sm font-medium text-slate-300">All Systems Operational</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-500">
-                            <Globe size={16} />
-                            <span className="text-sm font-medium">Stable v4.1</span>
+                    <div className="relative z-10 animate-in fade-in duration-1000 delay-500">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex gap-2">
+                                <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                <div className="w-2 h-2 rounded-full bg-white/20"></div>
+                                <div className="w-2 h-2 rounded-full bg-white/20"></div>
+                            </div>
+                            <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.3em] font-display">
+                                © 2026 The Gesit Companies. GESIT WORK™. All rights reserved.
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Login Side - Adjusted pt-24 to lower the form slightly while remaining centered in content flow */}
-                <div className="flex-1 flex flex-col items-center justify-center pt-24 pb-12 px-8 bg-slate-50/50 dark:bg-slate-900/50 relative overflow-y-auto">
-
+                {/* Right Login Side */}
+                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white dark:bg-slate-950 relative">
                     {/* Theme Toggle Button */}
                     <button
                         onClick={toggleTheme}
-                        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-                        className="absolute top-8 right-8 p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all shadow-sm hover:shadow-md z-50"
+                        aria-label="Toggle Theme"
+                        className="absolute top-8 right-8 p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-[#0a2558] dark:hover:text-blue-400 transition-all shadow-sm z-50 backdrop-blur-md"
                     >
-                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                        {isDark ? <Sun size={18} /> : <Moon size={18} />}
                     </button>
 
-                    <div className="w-full max-w-[420px]">
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-800">
-                            <div className="mb-10 text-center lg:text-left">
-                                <img src={LOGO_URL} alt="Logo" className="h-12 w-auto mb-8 mx-auto lg:mx-0 lg:hidden" />
-                                <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                    {isResetMode ? 'Recover Access' : 'Sign In'}
-                                </h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
-                                    {isResetMode ? 'Enter your email to reset security key' : 'Access your enterprise dashboard'}
-                                </p>
+                    <div className="w-full max-w-[420px] transition-all duration-500">
+                        {resetSent ? (
+                            <div className="space-y-8 text-center bg-slate-50 dark:bg-slate-900/50 p-12 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl glass-card animate-in zoom-in duration-500">
+                                <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle2 size={40} />
+                                </div>
+                                <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Email Sent</h4>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Check your mailbox for instructions.</p>
+                                <button
+                                    onClick={() => { setResetSent(false); setIsResetMode(false); }}
+                                    className="w-full h-14 bg-[#0a2558] text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg active:scale-95"
+                                >
+                                    BACK TO LOGIN
+                                </button>
                             </div>
-
-                            {error && (
-                                <div className="mb-8 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 p-4 rounded-2xl text-sm font-medium flex items-start gap-3">
-                                    <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                                    <span>{error}</span>
+                        ) : (
+                            <div className="animate-in fade-in duration-500">
+                                <div className="mb-12">
+                                    <h3 className="text-4xl font-black text-[#0a2558] dark:text-white tracking-tighter font-display mb-3">
+                                        {isResetMode ? 'Recover Access' : 'Sign In'}
+                                    </h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
+                                        {isResetMode ? 'Enter your email to reset security key' : 'Access your Gesit Work dashboard'}
+                                    </p>
                                 </div>
-                            )}
 
-                            {resetSent ? (
-                                <div className="space-y-6 py-6 text-center">
-                                    <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <CheckCircle2 size={40} />
+                                {error && (
+                                    <div className="mb-8 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 p-4 rounded-xl text-sm font-medium flex items-start gap-3">
+                                        <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                                        <span>{error}</span>
                                     </div>
-                                    <h4 className="text-xl font-bold text-slate-900 dark:text-white">Email Sent</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Check your inbox for recovery instructions.</p>
-                                    <button
-                                        onClick={() => { setResetSent(false); setIsResetMode(false); }}
-                                        className="w-full py-3.5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-black transition-all"
-                                    >
-                                        Back to Login
-                                    </button>
-                                </div>
-                            ) : isResetMode ? (
-                                <form onSubmit={handleResetPassword} className="space-y-6">
+                                )}
+
+                                <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-8">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Email address</label>
+                                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest font-display ml-1">Username or Email</label>
                                         <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                                <Mail size={20} />
+                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#0a2558] transition-colors">
+                                                <Mail size={18} />
                                             </div>
                                             <input
-                                                className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
-                                                placeholder="name@company.com"
-                                                type="email"
-                                                value={identifier}
-                                                onChange={(e) => setIdentifier(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
-                                    >
-                                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : <>Send Reset Link <ChevronRight size={18} /></>}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsResetMode(false)}
-                                        className="w-full text-center py-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-bold text-sm transition-colors"
-                                    >
-                                        Return to standard login
-                                    </button>
-                                </form>
-                            ) : (
-                                <form onSubmit={handleLogin} className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Username or Email</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                                <Mail size={20} />
-                                            </div>
-                                            <input
-                                                className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
+                                                className="w-full h-15 pl-14 pr-5 rounded-xl border-none bg-slate-50 dark:bg-white/5 focus:bg-slate-100 dark:focus:bg-white/10 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium placeholder:text-slate-300"
                                                 placeholder="Enter your identity"
                                                 type="text"
                                                 value={identifier}
@@ -231,91 +208,86 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Password</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                                <Lock size={20} />
+                                    {!isResetMode && (
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center ml-1">
+                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest font-display">Password</label>
                                             </div>
-                                            <input
-                                                className="w-full h-14 pl-12 pr-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
-                                                placeholder="••••••••••••"
-                                                type={showPassword ? "text" : "password"}
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                aria-label={showPassword ? "Hide password" : "Show password"}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                            >
-                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                            </button>
+                                            <div className="relative group">
+                                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#0a2558] transition-colors">
+                                                    <ShieldCheck size={18} />
+                                                </div>
+                                                <input
+                                                    className="w-full h-15 pl-14 pr-14 rounded-xl border-none bg-slate-50 dark:bg-white/5 focus:bg-slate-100 dark:focus:bg-white/10 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium placeholder:text-slate-300"
+                                                    placeholder="••••••••••••"
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-400"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    <div className="flex items-center justify-between px-1">
-                                        <label className="flex items-center gap-3 cursor-pointer group">
-                                            <input type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/20 transition-all cursor-pointer" />
-                                            <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white">Stay connected</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="space-y-4 pt-2">
+                                    <div className="pt-4">
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="w-full h-14 bg-slate-900 dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] disabled:opacity-50"
+                                            className="w-full h-15 bg-[#0a2558] hover:bg-[#0c2d6b] text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 font-display"
                                         >
                                             {isLoading ? (
-                                                <Loader2 className="animate-spin" size={20} />
+                                                <Loader2 className="animate-spin" size={18} />
                                             ) : (
-                                                <>Authorize Access <ChevronRight size={18} /></>
+                                                isResetMode ? 'SEND RECOVERY LINK' : 'Authorize Access'
                                             )}
                                         </button>
 
-                                        <div className="text-center">
+                                        <div className="mt-8 flex flex-col items-center gap-6">
+                                            <div className="flex items-center gap-2 cursor-pointer group">
+                                                <input type="checkbox" className="w-4 h-4 rounded border-slate-200 text-[#0a2558] focus:ring-blue-500/20 transition-all" />
+                                                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest font-display">Stay connected</span>
+                                            </div>
+
                                             <button
                                                 type="button"
-                                                onClick={() => setIsResetMode(true)}
-                                                className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors py-1"
+                                                onClick={() => setIsResetMode(!isResetMode)}
+                                                className="text-[10px] font-black text-slate-400 hover:text-[#0a2558] dark:hover:text-white uppercase tracking-widest font-display transition-colors"
                                             >
-                                                Forgot your password?
+                                                {isResetMode ? 'BACK TO SECURE LOGIN' : 'Forgot your password?'}
                                             </button>
                                         </div>
-                                    </div>
 
-                                    <div className="pt-10 mt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                                            Access issues? <br />
-                                            <button type="button" className="text-blue-600 font-bold hover:underline">Contact System Administrator</button>
-                                        </p>
+                                        <div className="mt-12 pt-8 border-t border-slate-50 dark:border-white/5 text-center space-y-4">
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest font-display">Access issues?</span>
+                                                <button type="button" className="text-[10px] font-black text-[#0a2558] dark:text-blue-400 hover:underline uppercase tracking-widest font-display">
+                                                    Contact System Administrator
+                                                </button>
+                                            </div>
+
+                                            <div className="pt-2">
+                                                <button
+                                                    onClick={() => window.location.href = '/helpdesk-public'}
+                                                    className="w-full py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 font-display"
+                                                >
+                                                    <LifeBuoy size={16} />
+                                                    Portal Helpdesk
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </form>
-                            )}
-                        </div>
-
-                        {/* IT Helpdesk System Portal Button - Robust Style */}
-                        <div className="mt-12 mb-8 flex flex-col items-center gap-6">
-                            <button
-                                onClick={() => window.location.href = '/helpdesk'}
-                                className="group flex items-center gap-3 px-8 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.25rem] text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-900 hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-all shadow-sm hover:shadow-md"
-                            >
-                                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/40 text-blue-500 dark:text-blue-400 rounded-lg flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <LifeBuoy size={16} />
-                                </div>
-                                Portal IT Helpdesk
-                            </button>
-
-                            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-widest uppercase">
-                                <p>© 2025 Gesit ERP Enterprise</p>
-                                <div className="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
-                                <p>v4.1.2 Stable</p>
                             </div>
-                        </div>
+                        )}
                     </div>
+
                 </div>
             </main>
         </div>
