@@ -424,7 +424,14 @@ const InternalApp: React.FC = () => {
                 <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
                 <Route path="/login" element={
                   <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                    {!isAuthenticated ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />}
+                    {!isAuthenticated ? (
+                      <LoginPage
+                        onLogin={handleLogin}
+                        appName={appSettings.name}
+                        logoUrl={appSettings.logo}
+                        primaryColor={appSettings.primaryColor}
+                      />
+                    ) : <Navigate to="/" />}
                   </motion.div>
                 } />
 
