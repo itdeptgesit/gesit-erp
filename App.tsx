@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
 import { TopNavigation } from './components/TopNavigation';
 import { Footer } from './components/Footer';
-import { MainDashboard } from './components/MainDashboard';
+
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
 import { MOCK_GROUPS } from './constants';
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 // Lazy Load Managers
+const MainDashboard = React.lazy(() => import('./components/MainDashboard').then(m => ({ default: m.MainDashboard })));
 const NetworkDashboard = React.lazy(() => import('./components/NetworkDashboard').then(m => ({ default: m.NetworkDashboard })));
 const AssetManager = React.lazy(() => import('./components/AssetManager').then(m => ({ default: m.AssetManager })));
 const AssetLoanManager = React.lazy(() => import('./components/AssetLoanManager').then(m => ({ default: m.AssetLoanManager })));
@@ -319,7 +320,7 @@ const InternalApp: React.FC = () => {
                   y: [0, -50, 50, -50, 0],
                 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px]"
+                className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px] transform-gpu"
               />
               <motion.div
                 animate={{
@@ -329,7 +330,7 @@ const InternalApp: React.FC = () => {
                   y: [0, 50, -50, 50, 0],
                 }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-blue-500/10 rounded-full blur-[100px]"
+                className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-blue-500/10 rounded-full blur-[100px] transform-gpu"
               />
             </div>
 

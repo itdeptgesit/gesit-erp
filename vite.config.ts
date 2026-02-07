@@ -21,7 +21,16 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      sourcemap: true
+      sourcemap: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['@lobehub/fluent-emoji', 'lucide-react', 'framer-motion'],
+            supabase: ['@supabase/supabase-js']
+          }
+        }
+      }
     }
   };
 });
