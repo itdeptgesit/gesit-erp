@@ -35,6 +35,11 @@ export const HelpdeskPublic: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [appSettings, setAppSettings] = useState({
+        name: 'GESIT WORK',
+        logo: '/image/logo.png',
+        primaryColor: '#0a2558'
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emojiTriggerRef = useRef<HTMLButtonElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -122,9 +127,20 @@ export const HelpdeskPublic: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const LOGO_URL = '/image/logo.png';
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            const { data } = await supabase.from('system_settings').select('*').single();
+            if (data) {
+                setAppSettings({
+                    name: data.app_name || 'GESIT WORK',
+                    logo: data.logo_url || '/image/logo.png',
+                    primaryColor: data.primary_color || '#0a2558'
+                });
+            }
+        };
+        fetchSettings();
+
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             setIsDark(true);
@@ -145,7 +161,7 @@ export const HelpdeskPublic: React.FC = () => {
         if (Notification.permission === 'granted') {
             new Notification('GESIT WORK - Update on your Ticket', {
                 body: `New message: ${message.message.substring(0, 50)}${message.message.length > 50 ? '...' : ''}`,
-                icon: LOGO_URL
+                icon: appSettings.logo
             });
         }
     };
@@ -404,11 +420,31 @@ export const HelpdeskPublic: React.FC = () => {
         };
     }, [searchResult?.id]);
 
-    const inputClass = "w-full h-14 bg-slate-100/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-12 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all dropdown-glass text-slate-800 dark:text-slate-100 placeholder:text-slate-400";
-    const labelClass = "text-[10px] font-black text-slate-400 dark:text-slate-500 mb-2 block ml-1 uppercase tracking-[0.2em] font-display";
+    const inputClass = "w-full h-14 pl-12 pr-5 rounded-2xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]";
+    const labelClass = "text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display ml-1";
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
+            <style>{`
+                @keyframes pulse-slow {
+                    0%, 100% { opacity: 0.35; transform: scale(1.05); }
+                    50% { opacity: 0.5; transform: scale(1); }
+                }
+                .animate-pulse-slow {
+                    animation: pulse-slow 8s ease-in-out infinite;
+                }
+                @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                }
+                .text-shimmer {
+                    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                    background-size: 200% 100%;
+                    animation: shimmer 3s infinite;
+                    -webkit-background-clip: padding-box;
+                    background-clip: padding-box;
+                }
+            `}</style>
             {toast && (
                 <div className={`fixed top-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-4 duration-300 ${toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800'}`}>
                     {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
@@ -416,32 +452,41 @@ export const HelpdeskPublic: React.FC = () => {
                 </div>
             )}
             <main className="flex-1 flex items-stretch">
-                {/* Left Hero Side */}
-                <div className={`hidden lg:flex relative overflow-hidden flex-col justify-between p-16 transition-all duration-700 ease-in-out ${searchResult ? 'w-[35%]' : 'w-[48%]'}`}>
-                    <div className="absolute inset-0 bg-primary">
+                <div className={`hidden lg:flex relative overflow-hidden flex-col justify-between p-24 transition-all duration-700 ease-in-out ${searchResult ? 'w-[35%]' : 'w-[45%]'}`}>
+                    <div className="absolute inset-0" style={{ backgroundColor: 'var(--primary)' }}>
                         <img
                             src="/image/bg.jpeg"
                             alt="Background"
-                            className="w-full h-full object-cover opacity-60 mix-blend-multiply"
+                            className="w-full h-full object-cover opacity-60 mix-blend-multiply scale-105 animate-pulse-slow"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-transparent to-primary/80"></div>
+                        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, var(--primary)4D, var(--primary)B3)` }}></div>
+
+                        {/* Dynamic Light Orbs */}
+                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse"></div>
+                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '3s' }}></div>
                     </div>
 
                     <div className="relative z-10">
-                        <div className="mb-8 animate-in fade-in slide-in-from-left duration-700">
-                            <div className="w-28 h-28 flex items-center justify-center">
-                                <img src={LOGO_URL} alt="Logo" className="w-full h-full object-contain" />
+                        {/* Logo Section */}
+                        <div className="mb-20 animate-in fade-in slide-in-from-left duration-1000">
+                            <div className="w-24 h-24 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
+                                <img src={appSettings.logo} alt="Logo" className="w-full h-full object-contain filter drop-shadow-2xl group-hover:brightness-110 transition-all" />
                             </div>
                         </div>
 
-                        <div className="space-y-8 max-w-xl">
-                            <div className="animate-in fade-in slide-in-from-bottom duration-700 delay-100">
-                                <h2 className="text-6xl font-black text-white leading-[1.1] tracking-tight font-display mb-2">
-                                    Helpdesk Engine
+                        <div className="space-y-12 max-w-xl">
+                            <div className="animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
+                                <h2 className="text-6xl lg:text-7xl font-black text-white leading-none tracking-tighter font-display mb-8 uppercase whitespace-nowrap">
+                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/100 to-white/60 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
+                                        Helpdesk Engine
+                                    </span>
                                 </h2>
-                                <h3 className="text-2xl font-bold text-white/80 tracking-tight font-display">
-                                    Integrated Technical Support Node
-                                </h3>
+                                <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></div>
+                                    <span className="text-xs font-black text-white uppercase tracking-[0.3em] font-display">
+                                        Integrated Technical Support Node
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="pt-4 max-w-md animate-in fade-in slide-in-from-bottom duration-700 delay-300">
@@ -477,8 +522,8 @@ export const HelpdeskPublic: React.FC = () => {
                                         <PhoneCall size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] mb-1 font-display">Emergency Line</p>
-                                        <p className="text-white font-bold text-base tracking-tight">Internal Ext: 196</p>
+                                        <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Emergency Line</p>
+                                        <p className="text-white font-bold text-base tracking-tight drop-shadow-md">Internal Ext: 196</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-5 group">
@@ -486,8 +531,8 @@ export const HelpdeskPublic: React.FC = () => {
                                         <Clock size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] mb-1 font-display">Active Response</p>
-                                        <p className="text-white font-bold text-base tracking-tight">08:00 - 17:00 (Mon-Fri)</p>
+                                        <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Active Response</p>
+                                        <p className="text-white font-bold text-base tracking-tight drop-shadow-md">08:00 - 17:00 (Mon-Fri)</p>
                                     </div>
                                 </div>
                             </div>
@@ -496,14 +541,18 @@ export const HelpdeskPublic: React.FC = () => {
 
                     <div className="relative z-10 animate-in fade-in duration-1000 delay-500">
                         <div className="flex flex-col gap-8">
-                            <div className="flex flex-col gap-4">
-                                <div className="flex gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                                    <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                                    <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                                </div>
-                                <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.3em] font-display">
-                                    © 2026 The Gesit Companies. GESIT WORK™. All rights reserved.
+                            <div className="flex gap-3 items-center">
+                                <div className="h-[2px] w-12 bg-white/30 rounded-full"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+                                <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.5em] font-display">
+                                    © 2026 The Gesit Companies.
+                                </p>
+                                <p className="text-[11px] font-black text-white/60 uppercase tracking-[0.3em] font-display">
+                                    Gesit WORK v2.5.0 — Proprietary Node
                                 </p>
                             </div>
                         </div>
@@ -635,17 +684,17 @@ export const HelpdeskPublic: React.FC = () => {
 
                                 {activeTab === 'report' && !searchResult ? (
                                     <form onSubmit={handleSubmit} className="space-y-6">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            <div className="space-y-3">
                                                 <label htmlFor="requester-name" className={labelClass}>Requester Identity</label>
                                                 <div className="relative group">
                                                     <input id="requester-name" className={inputClass} required placeholder="Full Name"
                                                         value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
                                                     />
-                                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="space-y-3">
                                                 <label htmlFor="dept-select" className={labelClass}>Department Cluster</label>
                                                 <div className="relative group">
                                                     <select id="dept-select" className={`${inputClass} appearance-none`} required
@@ -654,32 +703,38 @@ export const HelpdeskPublic: React.FC = () => {
                                                         <option value="" disabled>Select Unit</option>
                                                         {departments.map(d => <option key={d} value={d}>{d}</option>)}
                                                     </select>
-                                                    <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                    <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <label htmlFor="incident-summary" className={labelClass}>Incident Summary</label>
                                             <div className="relative group">
                                                 <input id="incident-summary" className={inputClass} required placeholder="Subject of issue"
                                                     value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })}
                                                 />
-                                                <Zap size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <Zap size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <label htmlFor="technical-context" className={labelClass}>Technical Context</label>
                                             <div className="relative group">
                                                 <textarea id="technical-context" className={`${inputClass} min-h-[140px] py-4 resize-none leading-relaxed`} required placeholder="Describe the error or request..."
                                                     value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
                                                 />
-                                                <MessageSquare size={18} className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                <MessageSquare size={18} className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
                                             </div>
                                         </div>
                                         <button type="submit" disabled={isSubmitting}
-                                            className="w-full h-15 bg-primary hover:bg-primary-dark text-white rounded-xl font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20 disabled:opacity-50 active:scale-[0.98] font-display"
+                                            className="group relative w-full h-16 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
+                                            style={{
+                                                boxShadow: `0 10px 40px -10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.2)`
+                                            }}
                                         >
-                                            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <>Initiate Service Request <ChevronRight size={18} /></>}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                                            <span className="relative z-10 flex items-center gap-2">
+                                                {isSubmitting ? <><Loader2 className="animate-spin" size={18} /> PROCESSING...</> : <>Initiate Service Request <ChevronRight size={18} /></>}
+                                            </span>
                                         </button>
                                     </form>
                                 ) : (
