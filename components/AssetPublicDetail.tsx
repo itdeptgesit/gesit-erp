@@ -34,13 +34,13 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
             whileHover={{ y: -1 }}
             className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group"
         >
-            <div className="p-2 bg-slate-50 dark:bg-white/5 rounded-xl text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-all">
+            <div className="p-2 bg-slate-50 dark:bg-blue-500/10 rounded-xl text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 transition-all">
                 <Icon size={16} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 mb-0.5">{label}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-400 mb-0.5">{label}</p>
                 <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-white truncate`}>
+                    <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-slate-100 truncate`}>
                         {value || '-'}
                     </span>
                     {copyable && value && (
@@ -58,11 +58,11 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
 };
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
-    <div className="flex items-center gap-2 mb-2 mt-10 opacity-60">
+    <div className="flex items-center gap-2 mb-2 mt-10 opacity-80">
         <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-600 dark:text-blue-400">
             <Icon size={14} strokeWidth={2} />
         </div>
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white">{title}</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-slate-300">{title}</h3>
     </div>
 );
 
@@ -202,10 +202,10 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                 <header className="flex items-center justify-between px-8 py-4 border-b border-slate-100 dark:border-white/[0.05] backdrop-blur-xl bg-white/50 dark:bg-[#020617]/50">
                     <div className="flex items-center gap-3">
                         <img src="https://raw.githubusercontent.com/rudisiarudin/gesit-it/refs/heads/main/public/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
-                        <span className="text-xs font-black uppercase tracking-[0.1em]">Gesit Digital Registry</span>
+                        <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-900 dark:text-slate-200">Gesit Digital Registry</span>
                     </div>
                     <div className="flex items-center gap-6">
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
                             Registry Version: v4.1.2
                         </div>
                         <button onClick={toggleTheme} className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-500 transition-colors">
@@ -224,7 +224,14 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[60px] opacity-40 group-hover:opacity-60 transition-opacity"></div>
 
                                 {hasImage ? (
-                                    <img src={asset.image_url} alt={asset.item} className="relative z-10 w-[85%] h-[85%] object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-105" />
+                                    <div className="relative z-10 w-full aspect-square p-2 bg-white rounded-[3rem] border border-slate-100 dark:border-white/[0.1] shadow-2xl overflow-hidden group/img flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-700"></div>
+                                        <img
+                                            src={asset.image_url}
+                                            alt={asset.item}
+                                            className="w-full h-full object-contain transition-all duration-1000 ease-out group-hover/img:scale-110 drop-shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
+                                        />
+                                    </div>
                                 ) : (
                                     <div className="relative z-10 flex flex-col items-center text-blue-600/40 dark:text-blue-400/30">
                                         <CategoryIcon size={140} strokeWidth={0.5} />
@@ -232,7 +239,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                     </div>
                                 )}
 
-                                <div className={`absolute -bottom-2 right-4 flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl shadow-xl ${config.color}`}>
+                                <div className={`absolute -bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl shadow-2xl ${config.color} transform hover:scale-105 transition-all`}>
                                     <div className={`w-2 h-2 rounded-full animate-pulse ${config.bg}`}></div>
                                     <span className="text-[10px] font-black uppercase tracking-widest">{asset.status}</span>
                                 </div>
@@ -240,7 +247,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/[0.05]">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-2">Tracking Asset ID</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-2">Tracking Asset ID</p>
                             <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">{asset.assetId}</h2>
                         </div>
                     </div>
@@ -286,13 +293,13 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         )}
 
                         <div className="mt-auto pt-12">
-                            <div className="p-6 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-2xl shadow-blue-500/10">
+                            <div className="p-6 rounded-3xl bg-slate-900 dark:bg-white/[0.03] text-white dark:text-slate-100 border border-transparent dark:border-white/[0.05] shadow-2xl shadow-blue-500/10">
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-60">IT Support Hotline</span>
-                                    <ShieldCheck size={16} />
+                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-60 dark:text-slate-400">IT Support Hotline</span>
+                                    <ShieldCheck size={16} className="dark:text-blue-400" />
                                 </div>
                                 <h4 className="text-lg font-bold mb-2 tracking-tight">Need assistance?</h4>
-                                <p className="text-xs opacity-70 mb-6 leading-relaxed">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
+                                <p className="text-xs opacity-70 mb-6 leading-relaxed dark:text-slate-400">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
                                 <a href={`mailto:it@gesit.co.id?subject=Support: ${asset.assetId}`} className="block text-center py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors active:scale-95">
                                     Initialize Support Chat
                                 </a>

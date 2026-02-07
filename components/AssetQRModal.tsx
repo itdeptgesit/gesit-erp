@@ -70,28 +70,27 @@ export const AssetQRModal: React.FC<AssetQRModalProps> = ({ isOpen, onClose, ass
         <div className="p-8 flex flex-col items-center">
           {/* Physical Label Simulation */}
           <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-[2rem] p-6 bg-white flex flex-col items-center w-full max-w-[280px] shadow-inner relative">
-            {/* Micro Label Elements */}
-            <div className="absolute top-4 left-6 flex items-center gap-1.5 opacity-20">
-              <ShieldCheck size={10} className="text-slate-900" />
-              <span className="text-[7px] font-black text-slate-900 uppercase tracking-widest">Inventory Control</span>
-            </div>
-            <div className="absolute top-4 right-6 opacity-20">
-              <span className="text-[7px] font-black text-slate-900 uppercase tracking-widest">v4.1</span>
+            <div className="flex flex-col items-center gap-1 opacity-25 mb-8">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck size={10} className="text-slate-900" />
+                <span className="text-[7px] font-black text-slate-900 uppercase tracking-widest">Inventory Control</span>
+              </div>
+              <span className="text-[7px] font-black text-slate-900 uppercase tracking-widest">Registry v4.3</span>
             </div>
 
-            <div className="mt-4 mb-4 flex flex-col items-center">
-              <div className="bg-slate-900 px-3 py-1 rounded-lg mb-4 shadow-sm">
-                <h4 className="font-mono font-black text-lg text-white tracking-tighter leading-none">{asset.assetId}</h4>
+            <div className="flex flex-col items-center w-full gap-8 mb-8">
+              <div className="bg-slate-900 px-5 py-2 rounded-xl shadow-md z-10">
+                <h4 className="font-mono font-black text-lg text-white tracking-[0.2em] leading-none">{asset.assetId}</h4>
               </div>
 
-              <div className="p-2 bg-white rounded-xl border border-slate-50 shadow-sm">
-                <canvas ref={canvasRef} className="rounded-lg max-w-full h-auto" />
+              <div className="p-4 bg-white rounded-[2rem] border border-slate-100 shadow-2xl w-full max-w-[200px] aspect-square flex items-center justify-center relative z-0">
+                <canvas ref={canvasRef} className="rounded-xl w-full h-full" />
               </div>
             </div>
 
-            <div className="text-center">
-              <p className="font-black text-xs text-slate-900 uppercase leading-none mb-1 tracking-tight">{asset.item}</p>
-              <p className="text-[9px] font-bold text-slate-400 truncate max-w-[180px] uppercase tracking-wider">{asset.company || 'IT OPERATIONS'}</p>
+            <div className="text-center mt-2">
+              <p className="font-black text-sm text-slate-900 uppercase leading-tight mb-1 tracking-tight px-2">{asset.item}</p>
+              <p className="text-[9px] font-bold text-slate-400 truncate max-w-[200px] uppercase tracking-wider">{asset.company || 'IT OPERATIONS'}</p>
             </div>
           </div>
 

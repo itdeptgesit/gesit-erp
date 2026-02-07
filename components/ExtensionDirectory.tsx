@@ -28,8 +28,10 @@ import {
     ChevronRight,
     LayoutList,
     Share2,
-    ExternalLink
+    ExternalLink,
+    FileDown
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 import { trackActivity } from "../lib/auditLogger";
@@ -90,11 +92,11 @@ const InstructionPanel = () => {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#41 + Ext</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#70 + Ext</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Call to 26th Floor</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">88** + PIN + Ext lt.26</kbd>
+                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">## + PIN + Ext lt.26</kbd>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
                                         <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
@@ -666,6 +668,36 @@ export const ExtensionDirectory = ({
         };
     }, [extensions]);
 
+    const handleExportExcel = () => {
+        try {
+            const exportData = extensions.map(ext => ({
+                'Name': ext.name,
+                'Extension': ext.ext,
+                'Floor': `${ext.floor}th Floor`,
+                'Department': ext.dept,
+                'Role': ext.role || '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Extensions");
+            XLSX.writeFile(wb, "DIRECTORY_EXTENSIONS.xlsx");
+
+            if (currentUser) {
+                trackActivity(
+                    currentUser.fullName,
+                    currentUser.role,
+                    'Export Excel',
+                    'Directory',
+                    `Exported ${extensions.length} extensions to Excel`
+                );
+            }
+        } catch (error) {
+            console.error("Export failed:", error);
+            alert("Export failed. Please try again.");
+        }
+    };
+
     return (
         <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
             {/* Dashboard Header (Admin/Standalone) */}
@@ -682,10 +714,10 @@ export const ExtensionDirectory = ({
                         <div className="flex items-center gap-3">
                             <button
                                 className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-500/20 active:scale-95 group"
-                                onClick={() => {/* Future Export Logic */ }}
+                                onClick={handleExportExcel}
                             >
-                                <Share2 size={14} className="group-hover:rotate-12" />
-                                Export CSV
+                                <FileDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
+                                Export Excel
                             </button>
                             {canEdit && (
                                 <button

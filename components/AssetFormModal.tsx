@@ -53,10 +53,14 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
         } else {
             setFormData({
                 status: 'Active',
+                condition: 'New',
                 company: '',
                 category: '',
                 department: '',
-                purchaseDate: new Date().toISOString().split('T')[0]
+                purchaseDate: new Date().toISOString().split('T')[0],
+                location: '',
+                vendor: '',
+                price: 0
             });
             setSpecs({ storage: '', ram: '', vga: '', processor: '' });
             idSuffixRef.current = ''; // Will be populated by effect
@@ -242,7 +246,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
                             <div>
                                 <label className={labelClass}>Serial Number (S/N)</label>
                                 <input type="text" className={inputClass} value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Unique hardware ID" />
@@ -250,6 +254,16 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             <div>
                                 <label className={labelClass}>Brand / Manufacturer</label>
                                 <input type="text" className={inputClass} value={formData.brand || ''} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g. Lenovo, Dell, HP" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Condition</label>
+                                <select className={inputClass} value={formData.condition || 'New'} onChange={(e) => setFormData({ ...formData, condition: e.target.value as any })} required>
+                                    <option value="New">New</option>
+                                    <option value="Used">Used</option>
+                                    <option value="Refurbished">Refurbished</option>
+                                    <option value="Fair">Fair</option>
+                                    <option value="Poor">Poor</option>
+                                </select>
                             </div>
                             <div>
                                 <label className={labelClass}>Status</label>
@@ -282,6 +296,26 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             <div>
                                 <label className={labelClass}>Purchase Date</label>
                                 <input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100/50 dark:border-blue-900/20">
+                            <p className="text-[9px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <Shield size={12} /> PROCUREMENT & LIFECYCLE
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className={labelClass}>Vendor / Supplier</label>
+                                    <input type="text" className={inputClass} value={formData.vendor || ''} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="Store or vendor name" />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Purchase Price (IDR)</label>
+                                    <input type="number" className={inputClass} value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} placeholder="0" />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Warranty Expiration</label>
+                                    <input type="date" className={inputClass} value={formData.warrantyExp || ''} onChange={(e) => setFormData({ ...formData, warrantyExp: e.target.value })} />
+                                </div>
                             </div>
                         </div>
 

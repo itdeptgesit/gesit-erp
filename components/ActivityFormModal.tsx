@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, User, ShieldCheck, Tag, Info, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, Clock, User, ShieldCheck, Tag, Info, CheckCircle2, MapPin, Building2 } from 'lucide-react';
 import { ActivityLog } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 interface ActivityFormModalProps {
     isOpen: boolean;
@@ -14,6 +15,24 @@ interface ActivityFormModalProps {
 
 export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, currentUserName }) => {
     const [formData, setFormData] = useState<Partial<ActivityLog>>({});
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [isLoadingDepts, setIsLoadingDepts] = useState(false);
+
+    useEffect(() => {
+        const fetchDepts = async () => {
+            setIsLoadingDepts(true);
+            try {
+                const { data } = await supabase.from('departments').select('name').order('name', { ascending: true });
+                if (data) setDepartments(data.map(d => d.name));
+            } catch (err) {
+                console.error("Error fetching departments:", err);
+            } finally {
+                setIsLoadingDepts(false);
+            }
+        };
+
+        if (isOpen) fetchDepts();
+    }, [isOpen]);
 
     useEffect(() => {
         if (initialData) {
@@ -21,7 +40,9 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                 ...initialData,
                 itPersonnel: initialData.itPersonnel || currentUserName || 'IT Staff',
                 updatedAt: initialData.updatedAt || new Date().toISOString().split('T')[0],
-                status: initialData.status || 'Completed'
+                status: initialData.status || 'Completed',
+                department: initialData.department || '',
+                location: initialData.location || ''
             });
         } else {
             const today = new Date().toISOString().split('T')[0];
@@ -30,12 +51,14 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                 type: 'Minor',
                 itPersonnel: currentUserName || 'IT Admin',
                 requester: '',
-                location: '',
+                location: 'Head Office TCT 27',
+                department: '',
                 category: 'Troubleshooting',
                 remarks: '',
                 duration: '',
                 createdAt: today,
-                updatedAt: today
+                updatedAt: today,
+                completedAt: today
             });
         }
     }, [initialData, isOpen, currentUserName]);
@@ -44,10 +67,14 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        const dataToSubmit = {
+            ...formData,
+            location: formData.location?.trim() || 'Head Office TCT 27'
+        };
+        onSubmit(dataToSubmit);
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
+    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 appearance-none";
     const lockedInputClass = "w-full border border-slate-100 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm mt-1 bg-slate-50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 font-semibold cursor-not-allowed border-dashed";
     const labelClass = "block text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1";
 
@@ -108,6 +135,39 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                             </div>
 
                             <div>
+                                <label className={labelClass}>Department</label>
+                                <div className="relative">
+                                    <select
+                                        className={inputClass}
+                                        value={formData.department || ''}
+                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                        required
+                                    >
+                                        <option value="" disabled>Select Department</option>
+                                        {departments.map(dept => (
+                                            <option key={dept} value={dept}>{dept}</option>
+                                        ))}
+                                        {departments.length === 0 && !isLoadingDepts && <option value="Other">Other</option>}
+                                    </select>
+                                    <Building2 size={14} className="absolute right-3 top-4 text-slate-300 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className={labelClass}>Location / Room</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formData.location || ''}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        placeholder="e.g. Server Room, Finance Hall"
+                                    />
+                                    <MapPin size={14} className="absolute right-3 top-4 text-slate-300" />
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className={labelClass}>Start Date</label>
                                 <div className="relative">
                                     <input
@@ -118,24 +178,38 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                                         onChange={(e) => setFormData({ ...formData, createdAt: e.target.value })}
                                         required
                                     />
-
                                 </div>
                             </div>
 
-                            <div>
-                                <label className={labelClass}>Update Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        className={`${inputClass} border-blue-200 dark:border-blue-900/50 cursor-pointer`}
-                                        onClick={(e) => e.currentTarget.showPicker()}
-                                        value={formData.updatedAt || ''}
-                                        onChange={(e) => setFormData({ ...formData, updatedAt: e.target.value })}
-                                        required
-                                    />
-
+                            {formData.status === 'Completed' ? (
+                                <div>
+                                    <label className={labelClass}>Completion Date</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            className={`${inputClass} border-emerald-200 dark:border-emerald-900/50 cursor-pointer`}
+                                            onClick={(e) => e.currentTarget.showPicker()}
+                                            value={formData.completedAt || ''}
+                                            onChange={(e) => setFormData({ ...formData, completedAt: e.target.value })}
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div>
+                                    <label className={labelClass}>Update Date</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            className={`${inputClass} border-blue-200 dark:border-blue-900/50 cursor-pointer`}
+                                            onClick={(e) => e.currentTarget.showPicker()}
+                                            value={formData.updatedAt || ''}
+                                            onChange={(e) => setFormData({ ...formData, updatedAt: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <label className={labelClass}>Status</label>
@@ -150,27 +224,39 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                                         <option value="In Progress">In Progress</option>
                                         <option value="Completed">Completed</option>
                                     </select>
+                                    <CheckCircle2 size={14} className="absolute right-3 top-4 text-slate-300 pointer-events-none" />
                                 </div>
                             </div>
 
                             <div>
                                 <label className={labelClass}>Severity / Priority</label>
-                                <select className={inputClass} value={formData.type || 'Minor'} onChange={(e) => setFormData({ ...formData, type: e.target.value as any })} required>
-                                    <option value="Minor">Minor</option>
-                                    <option value="Major">Major</option>
-                                    <option value="Critical">Critical</option>
-                                </select>
+                                <div className="relative">
+                                    <select className={inputClass} value={formData.type || 'Minor'} onChange={(e) => setFormData({ ...formData, type: e.target.value as any })} required>
+                                        <option value="Minor">Minor</option>
+                                        <option value="Major">Major</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                    <Tag size={14} className="absolute right-3 top-4 text-slate-300 pointer-events-none" />
+                                </div>
                             </div>
 
                             <div>
                                 <label className={labelClass}>Category</label>
-                                <select className={inputClass} value={formData.category || 'Troubleshooting'} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required>
-                                    <option value="Troubleshooting">Troubleshooting</option>
-                                    <option value="Maintenance">Maintenance</option>
-                                    <option value="Installation">Installation</option>
-                                    <option value="Software Support">Software Support</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div className="relative">
+                                    <select className={inputClass} value={formData.category || 'Troubleshooting'} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required>
+                                        <option value="Troubleshooting">Troubleshooting</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Creative & Design">Creative & Design</option>
+                                        <option value="Software & Licensing">Software & Licensing</option>
+                                        <option value="Infrastructure & Network">Infrastructure & Network</option>
+                                        <option value="Procurement & Assets">Procurement & Assets</option>
+                                        <option value="Technical Support">Technical Support</option>
+                                        <option value="Web Development">Web Development</option>
+                                        <option value="Installation">Installation</option>
+                                        <option value="Other">Other/General</option>
+                                    </select>
+                                    <Info size={14} className="absolute right-3 top-4 text-slate-300 pointer-events-none" />
+                                </div>
                             </div>
 
                             <div>

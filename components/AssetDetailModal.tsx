@@ -71,7 +71,10 @@ export const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ isOpen, onCl
                         <InfoRow icon={Building2} label="Company" value={asset.company} />
                         <InfoRow icon={Cpu} label="Brand" value={asset.brand} />
                         <InfoRow icon={MapPin} label="Location" value={asset.location} />
+                        <InfoRow icon={ShieldCheck} label="Condition" value={asset.condition} />
                         <InfoRow icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />
+                        <InfoRow icon={Building2} label="Vendor" value={asset.vendor} />
+                        <InfoRow icon={Calendar} label="Warranty Exp" value={asset.warrantyExp} />
                         <InfoRow icon={FileText} label="Remarks" value={asset.remarks} />
                     </div>
 

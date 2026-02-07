@@ -28,6 +28,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const [selectedPort, setSelectedPort] = useState<SwitchPort | null>(null);
     const [selectedSwitch, setSelectedSwitch] = useState<NetworkSwitch | null>(null);
     const [editingDevice, setEditingDevice] = useState<NetworkSwitch | null>(null);
+    const [coreNodeId, setCoreNodeId] = useState<string | number | null>(null);
     const [deleteDevice, setDeleteDevice] = useState<NetworkSwitch | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -68,8 +69,9 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         uplinkDeviceId: p.uplink_device_id?.toString()
                     })) || [];
 
-                    if (sw.id === 'internet' || sw.name.toLowerCase().includes('core hub') || sw.name.toLowerCase().includes('mikrotik')) {
+                    if (sw.id === 'internet' || sw.name.toLowerCase().includes('core hub') || sw.name.toLowerCase().includes('mikrotik') || sw.name.toLowerCase().includes('gateway')) {
                         setInternetPos({ x: sw.pos_x || 1070, y: sw.pos_y || 120 });
+                        setCoreNodeId(sw.id);
                     }
 
                     return {
@@ -151,8 +153,17 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     useEffect(() => { fetchNetworkData(); }, []);
 
     const handleUpdateSwitches = (updatedSwitches: NetworkSwitch[], newInternetPos?: { x: number, y: number }) => {
-        setSwitches(updatedSwitches);
-        if (newInternetPos) setInternetPos(newInternetPos);
+        // Synchronize internet node inside the switches array if internetPos is provided
+        let finalSwitches = updatedSwitches;
+        if (newInternetPos) {
+            finalSwitches = updatedSwitches.map(sw =>
+                (sw.id === 'internet' || (coreNodeId && sw.id.toString() === coreNodeId.toString()))
+                    ? { ...sw, posX: newInternetPos.x, posY: newInternetPos.y }
+                    : sw
+            );
+            setInternetPos(newInternetPos);
+        }
+        setSwitches(finalSwitches);
         setHasUnsavedChanges(true);
     };
 
@@ -160,8 +171,10 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         if (!canManage) return;
         setIsSaving(true);
         try {
+            // 1. Update all physical switches positions
             for (const sw of switches) {
-                if (!sw.id.startsWith('port-device-')) {
+                // Skip leaf nodes, hardcoded UI ID, and the explicit database core node ID
+                if (!sw.id.startsWith('port-device-') && sw.id !== 'internet' && sw.id.toString() !== coreNodeId?.toString()) {
                     await supabase.from('network_switches').update({
                         pos_x: Math.round(sw.posX || 1200),
                         pos_y: Math.round(sw.posY || 400),
@@ -169,9 +182,26 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     }).eq('id', sw.id);
                 }
             }
-            await supabase.from('network_switches').update({ pos_x: Math.round(internetPos.x), pos_y: Math.round(internetPos.y) }).or(`id.eq.internet,name.eq.Main Core Hub`);
+
+            // 2. Explicitly update the Internet/Core node position in the database by its stored ID
+            if (coreNodeId) {
+                const { error: coreError } = await supabase.from('network_switches')
+                    .update({
+                        pos_x: Math.round(internetPos.x),
+                        pos_y: Math.round(internetPos.y)
+                    })
+                    .eq('id', coreNodeId);
+
+                if (coreError) throw coreError;
+            }
+
             setHasUnsavedChanges(false);
-        } catch (err) { alert("Error saving layout."); } finally { setIsSaving(false); }
+        } catch (err: any) {
+            console.error("Save error:", err);
+            alert("Error saving layout: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleSavePort = async (updatedPort: SwitchPort) => {

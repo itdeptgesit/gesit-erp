@@ -600,18 +600,47 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     </div>
                 </div>
 
+                {/* SHARED MOBILE DETAIL HEADER */}
+                {selectedTicket && (
+                    <div className="lg:hidden flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm mb-4 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
+                        <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight leading-tight line-clamp-1">{selectedTicket.subject}</h3>
+                                    <span className="text-[9px] font-bold text-blue-500 font-mono uppercase tracking-wider">{selectedTicket.ticketId}</span>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="p-2 bg-slate-50 dark:bg-slate-800/50 flex border-b border-slate-100 dark:border-slate-800 gap-2">
+                            <button
+                                onClick={() => setDetailTab('chat')}
+                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'chat' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Discussion
+                            </button>
+                            <button
+                                onClick={() => setDetailTab('info')}
+                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'info' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Info & Manage
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* CENTER COLUMN: Chat Interface */}
                 <div className={`flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-500 ${!selectedTicket ? 'hidden lg:flex' : (detailTab === 'chat' ? 'flex' : 'hidden lg:flex')}`}>
                     {selectedTicket ? (
                         <>
-                            {/* Chat Header */}
-                            <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+                            {/* Chat Header - Only show full version on Desktop */}
+                            <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 hidden lg:flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-3">
-                                    {/* Mobile Back Button */}
-                                    <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                                        <ChevronLeft size={20} />
-                                    </button>
-
                                     <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                         <MessageSquare size={20} />
                                     </div>
@@ -631,21 +660,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                 </button>
                             </div>
 
-                            {/* Mobile Detail Tab Switcher */}
-                            <div className="p-2 bg-slate-50 dark:bg-slate-800/50 flex lg:hidden border-b border-slate-100 dark:border-slate-800 gap-2">
-                                <button
-                                    onClick={() => setDetailTab('chat')}
-                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'chat' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Discussion
-                                </button>
-                                <button
-                                    onClick={() => setDetailTab('info')}
-                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'info' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Info & Manage
-                                </button>
-                            </div>
+
 
                             {/* Chat Messages */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20 p-6 space-y-6">
@@ -782,7 +797,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 {/* RIGHT COLUMN: Ticket Info & Actions */}
                 {selectedTicket && (
                     <div className={`w-full lg:w-[320px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-2 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
-                        <div className="p-5 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                        <div className="p-5 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 hidden lg:block">
                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Requester Details</h4>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">

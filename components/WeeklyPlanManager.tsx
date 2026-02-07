@@ -11,6 +11,44 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 
+const INDONESIAN_HOLIDAYS: { [key: string]: string } = {
+    // 2025
+    '2025-01-01': 'Tahun Baru Masehi',
+    '2025-01-27': 'Isra Mi\'raj',
+    '2025-01-29': 'Tahun Baru Imlek',
+    '2025-03-29': 'Hari Raya Nyepi',
+    '2025-03-31': 'Idul Fitri',
+    '2025-04-01': 'Idul Fitri',
+    '2025-04-18': 'Wafat Yesus Kristus',
+    '2025-05-01': 'Hari Buruh Internasional',
+    '2025-05-12': 'Hari Raya Waisak',
+    '2025-05-29': 'Kenaikan Yesus Kristus',
+    '2025-06-01': 'Hari Lahir Pancasila',
+    '2025-06-06': 'Idul Adha',
+    '2025-06-27': 'Tahun Baru Islam',
+    '2025-08-17': 'Hari Kemerdekaan RI',
+    '2025-09-05': 'Maulid Nabi Muhammad',
+    '2025-12-25': 'Hari Raya Natal',
+
+    // 2026
+    '2026-01-01': 'Tahun Baru Masehi',
+    '2026-02-15': 'Isra Mi\'raj',
+    '2026-02-17': 'Tahun Baru Imlek',
+    '2026-03-19': 'Hari Raya Nyepi',
+    '2026-03-20': 'Idul Fitri',
+    '2026-03-21': 'Idul Fitri',
+    '2026-04-03': 'Wafat Yesus Kristus',
+    '2026-05-01': 'Hari Buruh Internasional',
+    '2026-05-14': 'Kenaikan Yesus Kristus',
+    '2026-05-31': 'Hari Raya Waisak',
+    '2026-06-01': 'Hari Lahir Pancasila',
+    '2026-05-27': 'Idul Adha',
+    '2026-07-16': 'Tahun Baru Islam',
+    '2026-08-17': 'Hari Kemerdekaan RI',
+    '2026-09-25': 'Maulid Nabi Muhammad',
+    '2026-12-25': 'Hari Raya Natal',
+};
+
 interface WeeklyPlanManagerProps {
     currentUser: UserAccount | null;
 }
@@ -145,6 +183,12 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
 
     const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
+    const isRedDay = (date: Date) => {
+        const day = date.getDay();
+        const dateStr = formatDate(date);
+        return day === 0 || day === 6 || !!INDONESIAN_HOLIDAYS[dateStr];
+    };
+
     return (
         <div className="h-full flex flex-col gap-6 animate-in fade-in duration-700 pb-10">
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -189,10 +233,40 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                 {monthGrid.map((cell, idx) => {
                                     const dateStr = formatDate(cell.date);
                                     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+                                    const isHoliday = !!INDONESIAN_HOLIDAYS[dateStr];
+                                    const isWeekend = cell.date.getDay() === 0 || cell.date.getDay() === 6;
+                                    const isToday = cell.date.toDateString() === new Date().toDateString();
+
                                     return (
-                                        <div key={idx} onClick={() => { setViewDate(cell.date); setViewMode('Day'); }} className={`min-h-[120px] border-r border-b border-slate-50 dark:border-slate-800 p-4 transition-all cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10 ${!cell.currentMonth ? 'opacity-20' : 'bg-white dark:bg-slate-900'}`}>
-                                            <span className={`text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-lg mb-2 ${cell.date.toDateString() === new Date().toDateString() ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>{cell.date.getDate()}</span>
-                                            <div className="space-y-1">{dayTasks.slice(0, 3).map(task => (<div key={task.id} className={`px-2 py-1 rounded text-[9px] font-bold text-white truncate uppercase ${getTaskColor(task.category)}`}>{task.task}</div>))}{dayTasks.length > 3 && <div className="text-[8px] font-bold text-blue-500 uppercase">+ {dayTasks.length - 3} More</div>}</div>
+                                        <div
+                                            key={idx}
+                                            onClick={() => { setViewDate(cell.date); setViewMode('Day'); }}
+                                            className={`min-h-[120px] border-r border-b border-slate-50 dark:border-slate-800 p-4 transition-all cursor-pointer 
+                                                ${!cell.currentMonth ? 'opacity-20 bg-slate-50/10 dark:bg-slate-800/5' : 'bg-white dark:bg-slate-900'} 
+                                                hover:bg-blue-50/30 dark:hover:bg-blue-900/10 
+                                                ${(isHoliday || isWeekend) && cell.currentMonth ? 'bg-rose-50/20 dark:bg-rose-900/5' : ''}`}
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className={`text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-lg 
+                                                    ${isToday ? 'bg-blue-600 text-white shadow-md' : (isHoliday || isWeekend) ? 'text-rose-600 dark:text-rose-500' : 'text-slate-400'}`}>
+                                                    {cell.date.getDate()}
+                                                </span>
+                                                {isHoliday && cell.currentMonth && (
+                                                    <span className="text-[9px] font-black text-rose-500 uppercase leading-tight text-right max-w-[80px] line-clamp-2">
+                                                        {INDONESIAN_HOLIDAYS[dateStr]}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1">
+                                                {dayTasks.slice(0, 3).map(task => (
+                                                    <div key={task.id} className={`px-2 py-1 rounded text-[9px] font-bold text-white truncate uppercase ${getTaskColor(task.category)}`}>
+                                                        {task.task}
+                                                    </div>
+                                                ))}
+                                                {dayTasks.length > 3 && (
+                                                    <div className="text-[8px] font-bold text-blue-500 uppercase">+ {dayTasks.length - 3} More</div>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -204,9 +278,24 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                     const dateStr = formatDate(dayDate);
                                     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
                                     const isToday = dayDate.toDateString() === new Date().toDateString();
+                                    const isHoliday = !!INDONESIAN_HOLIDAYS[dateStr];
+                                    const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+
                                     return (
                                         <div key={idx} className="flex flex-col h-full bg-slate-50/10 dark:bg-slate-900/10">
-                                            <div className={`p-4 border-b border-slate-50 dark:border-slate-800 text-center ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}><p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{dayDate.toLocaleDateString('en-GB', { weekday: 'short' })}</p><p className={`text-xl font-bold ${isToday ? 'text-blue-600' : 'text-slate-900 dark:text-white'}`}>{dayDate.getDate()}</p></div>
+                                            <div className={`p-4 border-b border-slate-50 dark:border-slate-800 text-center ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : (isHoliday || isWeekend) ? 'bg-rose-50/20 dark:bg-rose-900/10' : ''}`}>
+                                                <p className={`text-[10px] font-bold uppercase mb-1 ${isHoliday || isWeekend ? 'text-rose-500' : 'text-slate-400'}`}>
+                                                    {dayDate.toLocaleDateString('en-GB', { weekday: 'short' })}
+                                                </p>
+                                                <p className={`text-xl font-bold ${isToday ? 'text-blue-600' : (isHoliday || isWeekend) ? 'text-rose-600' : 'text-slate-900 dark:text-white'}`}>
+                                                    {dayDate.getDate()}
+                                                </p>
+                                                {isHoliday && (
+                                                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1 block">
+                                                        {INDONESIAN_HOLIDAYS[dateStr]}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="flex-1 p-3 space-y-3 overflow-y-auto">{dayTasks.length === 0 ? (<div className="h-20 flex items-center justify-center border border-dashed border-slate-200 dark:border-slate-700 rounded-xl opacity-30 text-[9px] font-bold uppercase text-slate-400">Clear</div>) : dayTasks.map(task => (
                                                 <div key={task.id} className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm group hover:border-blue-500 transition-all cursor-pointer">
                                                     <div className="flex items-center justify-between mb-2"><div className="flex items-center gap-1.5"><div className={`w-1.5 h-1.5 rounded-full ${getTaskColor(task.category)}`}></div><span className="text-[8px] font-bold text-slate-400 uppercase">{task.category}</span></div>

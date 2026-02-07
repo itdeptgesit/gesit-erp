@@ -154,75 +154,84 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
     };
 
     // Styling Kelas Bawaan
-    const inputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/50 disabled:text-slate-400 text-sm font-medium";
-    const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 block ml-1 uppercase tracking-wider";
+    const inputClass = "w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/40 disabled:text-slate-400 text-sm font-semibold shadow-sm";
+    const labelClass = "text-[10px] font-black text-slate-400 dark:text-slate-500 mb-2 block ml-1 uppercase tracking-widest";
 
     return (
-        <div className="max-w-4xl mx-auto animate-in fade-in duration-500 pb-20 font-sans">
+        <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
             {/* Profil Header Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden mb-8">
-                <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700 relative">
-                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] shadow-2xl shadow-blue-500/5 overflow-hidden mb-10 relative group">
+                {/* Mesh Background */}
+                <div className="h-48 bg-slate-900 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 opacity-90"></div>
+                    <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[140%] bg-blue-400 rounded-full blur-[100px] opacity-20 animate-pulse"></div>
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[140%] bg-indigo-400 rounded-full blur-[100px] opacity-20"></div>
+                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                 </div>
 
-                <div className="px-8 pb-8">
-                    <div className="flex flex-col md:flex-row items-end gap-6 -mt-12 relative z-10">
-                        <div className="w-28 h-28 rounded-3xl bg-white dark:bg-slate-900 p-1.5 shadow-xl border border-slate-100 dark:border-slate-800 relative group/avatar overflow-hidden">
-                            <div className="w-full h-full rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-3xl font-bold text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+                <div className="px-10 pb-10">
+                    <div className="flex flex-col md:flex-row items-end gap-8 -mt-16 relative z-10">
+                        <div className="w-36 h-36 rounded-[2.5rem] bg-white dark:bg-slate-900 p-2 shadow-2xl border border-slate-100 dark:border-white/[0.05] relative group/avatar overflow-hidden">
+                            <div className="w-full h-full rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-5xl font-black text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 overflow-hidden relative shadow-inner">
                                 {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
                                 ) : (
                                     userInitial
                                 )}
 
                                 {isUploading && (
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-                                        <Loader2 size={24} className="text-white animate-spin" />
+                                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-20">
+                                        <Loader2 size={32} className="text-white animate-spin" />
                                     </div>
                                 )}
                             </div>
 
-                            <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white z-10">
+                            <label className="absolute inset-x-2 bottom-2 h-10 bg-slate-900/80 backdrop-blur-md rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-all transform translate-y-2 group-hover/avatar:translate-y-0 flex items-center justify-center cursor-pointer text-white z-10 border border-white/10">
                                 <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
-                                <Save size={18} className="mb-1" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Update Photo</span>
+                                <Save size={16} className="mr-2" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Update</span>
                             </label>
                         </div>
 
                         <div className="flex-1 mb-2">
-                            <div className="flex flex-wrap items-center gap-3 mb-1">
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{formData.fullName || 'User'}</h1>
-                                <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
+                            <div className="flex flex-wrap items-center gap-3 mb-2">
+                                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{formData.fullName || 'User'}</h1>
+                                <div className="px-4 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 border border-blue-400/20">
                                     {userRole}
-                                </span>
+                                </div>
                             </div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
-                                <Mail size={14} className="text-slate-400" /> {userEmail}
-                            </p>
+                            <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 font-bold text-[11px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                    <Mail size={12} className="text-blue-500" /> {userEmail}
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                    <ShieldCheck size={12} className="text-emerald-500" /> Document Verified
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-3 mb-2">
                             {!isEditing ? (
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-black dark:hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg"
+                                    className="px-8 py-3.5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-blue-700 transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95"
                                 >
-                                    <User size={14} /> Edit Profile
+                                    <User size={16} strokeWidth={3} /> Edit Profile
                                 </button>
                             ) : (
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     <button
                                         onClick={() => setIsEditing(false)}
-                                        className="px-6 py-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all"
+                                        className="px-8 py-3.5 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all active:scale-95"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleSave}
                                         disabled={isSaving}
-                                        className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                                        className="px-8 py-3.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-3 shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95"
                                     >
-                                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} strokeWidth={3} />}
                                         Save Changes
                                     </button>
                                 </div>
@@ -241,105 +250,120 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Organization Details */}
-                <div className="space-y-6">
-                    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6 border-b border-slate-50 dark:border-slate-800 pb-4">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                                <Building2 size={18} />
+                <div className="space-y-8">
+                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-8 shadow-2xl shadow-blue-500/5 transition-all hover:shadow-blue-500/10">
+                        <div className="flex items-center gap-4 mb-8 border-b border-slate-50 dark:border-white/5 pb-6">
+                            <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner">
+                                <Building2 size={20} strokeWidth={2.5} />
                             </div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">Organization</h3>
+                            <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Work Organization</h3>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
+                        <div className="space-y-6">
+                            <div className="relative group">
                                 <label className={labelClass}>Company Name</label>
-                                <select
-                                    className={inputClass}
-                                    value={formData.company}
-                                    disabled={!isEditing}
-                                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                >
-                                    <option value="">-- Select Company --</option>
-                                    {companyList.map(c => (
-                                        <option key={c.id} value={c.name}>{c.name}</option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        className={inputClass}
+                                        value={formData.company}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                    >
+                                        <option value="">-- Select Company --</option>
+                                        {companyList.map(c => (
+                                            <option key={c.id} value={c.name}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    <Building2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                                </div>
                             </div>
-                            <div>
+                            <div className="relative">
                                 <label className={labelClass}>Department Cluster</label>
-                                <select
-                                    className={inputClass}
-                                    value={formData.department}
-                                    disabled={!isEditing}
-                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                >
-                                    <option value="">-- Select Dept --</option>
-                                    {departmentList.map((d, i) => (
-                                        <option key={i} value={d.name}>{d.name}</option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        className={inputClass}
+                                        value={formData.department}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                    >
+                                        <option value="">-- Select Dept --</option>
+                                        {departmentList.map((d, i) => (
+                                            <option key={i} value={d.name}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                    <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                                </div>
                             </div>
-                            <div>
+                            <div className="relative">
                                 <label className={labelClass}>Job Designation</label>
-                                <input
-                                    type="text"
-                                    value={formData.jobTitle}
-                                    disabled={!isEditing}
-                                    onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                                    className={inputClass}
-                                    placeholder="e.g. Infrastructure Lead"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={formData.jobTitle}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                                        className={inputClass}
+                                        placeholder="e.g. Infrastructure Lead"
+                                    />
+                                    <Briefcase size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                                </div>
                             </div>
                         </div>
                     </section>
 
-                    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6 border-b border-slate-50 dark:border-slate-800 pb-4">
-                            <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-lg">
-                                <Key size={18} />
+                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-8 shadow-2xl shadow-blue-500/5">
+                        <div className="flex items-center gap-4 mb-8 border-b border-slate-50 dark:border-white/5 pb-6">
+                            <div className="p-3 bg-slate-50 dark:bg-white/5 text-slate-500 rounded-2xl">
+                                <Key size={20} strokeWidth={2.5} />
                             </div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">Security Access</h3>
+                            <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Security Access</h3>
                         </div>
                         <button
                             onClick={() => setIsPasswordModalOpen(true)}
-                            className="w-full py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/10 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
                         >
-                            <Lock size={14} /> Reset Passcode
+                            <Lock size={16} strokeWidth={2.5} /> Reset Passcode
                         </button>
                     </section>
                 </div>
 
                 {/* Personal Information */}
-                <div className="lg:col-span-2 space-y-6">
-                    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
-                        <div className="flex items-center justify-between mb-8 border-b border-slate-50 dark:border-slate-800 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                                    <User size={18} />
+                <div className="lg:col-span-2 space-y-8">
+                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-10 shadow-2xl shadow-blue-500/5">
+                        <div className="flex items-center justify-between mb-10 border-b border-slate-50 dark:border-white/5 pb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner">
+                                    <User size={20} strokeWidth={2.5} />
                                 </div>
-                                <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">Personnel Identity</h3>
+                                <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Personnel Identity</h3>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="md:col-span-2 relative">
                                 <label className={labelClass}>Full Legal Name</label>
-                                <input
-                                    type="text"
-                                    value={formData.fullName}
-                                    disabled={!isEditing}
-                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                    className={inputClass}
-                                    placeholder="Enter full name"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={formData.fullName}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                        className={inputClass}
+                                        placeholder="Enter full name"
+                                    />
+                                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                                </div>
                             </div>
 
-                            <div>
+                            <div className="relative">
                                 <label className={labelClass}>Primary Email</label>
-                                <input type="text" value={userEmail} disabled className={inputClass} />
+                                <div className="relative">
+                                    <input type="text" value={userEmail} disabled className={inputClass} />
+                                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                </div>
                             </div>
 
-                            <div>
+                            <div className="relative">
                                 <label className={labelClass}>Mobile Number</label>
                                 <div className="relative">
                                     <input
@@ -347,39 +371,47 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.phone}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className={`${inputClass} pl-10`}
+                                        className={inputClass}
                                         placeholder="+62 ..."
                                     />
-                                    <Phone size={14} className="absolute left-3.5 top-3.5 text-slate-300" />
+                                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
                                 </div>
                             </div>
 
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-2 relative">
                                 <label className={labelClass}>Site Office Address</label>
                                 <div className="relative">
                                     <textarea
-                                        rows={3}
+                                        rows={4}
                                         value={formData.address}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className={`${inputClass} pl-10 resize-none leading-relaxed`}
+                                        className={`${inputClass} pl-11 resize-none leading-relaxed`}
                                         placeholder="Detail location of current assignment"
                                     />
-                                    <MapPin size={14} className="absolute left-3.5 top-3.5 text-slate-300" />
+                                    <MapPin size={16} className="absolute left-4 top-6 text-slate-400 dark:text-slate-600" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <div className="flex justify-between items-center px-4">
-                        <p className="text-xs text-slate-400 font-medium">
-                            Last Authentication Logged: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
-                        </p>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-4 py-8 bg-slate-50 dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner group">
+                                <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Authentication Logged</p>
+                                <p className="text-xs text-slate-900 dark:text-white font-bold">
+                                    {user?.lastLogin ? new Date(user.lastLogin).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Session Active'}
+                                </p>
+                            </div>
+                        </div>
                         <button
                             onClick={onLogout}
-                            className="text-rose-500 hover:text-rose-600 text-xs font-bold flex items-center gap-2 transition-colors px-4 py-2 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl"
+                            className="bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3 backdrop-blur-sm"
                         >
-                            <LogOut size={14} /> Terminate Session
+                            <LogOut size={16} /> Terminate Session
                         </button>
                     </div>
                 </div>

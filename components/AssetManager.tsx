@@ -54,8 +54,14 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         setAssets(assetData.map((item: any) => ({
           id: item.id, assetId: item.asset_id, item: item.item_name, category: item.category, brand: item.brand,
           serialNumber: item.serial_number, status: item.status, location: item.location, user: item.user_assigned,
-          remarks: item.remarks, company: item.company, department: item.department, purchaseDate: item.purchase_date, specs: item.specs || {},
-          image_url: item.image_url
+          remarks: item.remarks, company: item.company, department: item.department,
+          purchaseDate: (item.purchase_date && item.purchase_date !== 'NaN') ? item.purchase_date : null,
+          specs: item.specs || {},
+          image_url: item.image_url,
+          condition: item.condition,
+          vendor: item.vendor,
+          price: item.price,
+          warrantyExp: (item.warranty_exp && item.warranty_exp !== 'NaN') ? item.warranty_exp : null
         })));
       }
     } catch (error) { console.error('Error fetching assets:', error); } finally { setIsLoading(false); }
@@ -102,19 +108,43 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (filteredAssets.length === 0) return;
-    const headers = ["Asset ID", "Item Name", "Category", "Brand", "S/N", "Status", "Location", "User Assigned", "Company", "Department", "Purchase Date", "Remarks"];
-    const rows = filteredAssets.map(a => [a.assetId, a.item, a.category, a.brand || "", a.serialNumber || "", a.status, a.location, a.user || "Unassigned", a.company, a.department || "", a.purchaseDate || "", `"${(a.remarks || "").replace(/"/g, '""')}"`]);
-    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `GESIT-ASSETS-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const exportData = filteredAssets.map(a => ({
+      "Asset ID": a.assetId,
+      "Item Name": a.item,
+      "Category": a.category,
+      "Brand": a.brand || "",
+      "S/N": a.serialNumber || "",
+      "Status": a.status,
+      "Condition": a.condition || "New",
+      "Location": a.location,
+      "User Assigned": a.user || "Unassigned",
+      "Department": a.department || "",
+      "Company": a.company,
+      "Purchase Date": a.purchaseDate || "-",
+      "Warranty Exp": a.warrantyExp || "-",
+      "Vendor": a.vendor || "",
+      "Price": a.price || 0,
+      "Barcode URL": `https://it.gesit.co.id/asset?id=${a.assetId}`,
+      "Remarks": a.remarks || ""
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Assets");
+
+    // Auto-size columns
+    const wscols = [
+      { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 },
+      { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+      { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 },
+      { wch: 40 }, { wch: 30 }
+    ];
+    ws['!cols'] = wscols;
+
+    XLSX.writeFile(wb, `GESIT-ASSETS-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleDownloadTemplate = () => {
@@ -297,7 +327,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               </button>
             </div>
           )}
-          <button onClick={handleExportCSV} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"><Download size={16} /> {t('exportData')}</button>
+          <button onClick={handleExportExcel} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"><Download size={16} /> EXPORT EXCEL</button>
         </div>
       </div>
 
@@ -433,6 +463,11 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         try {
           if (!formData.assetId) throw new Error("Asset ID could not be generated. Please select Company and Category.");
 
+          const sanitizeDate = (date: string | null | undefined) => {
+            if (!date || date === '-' || date === 'NaN') return null;
+            return date;
+          };
+
           const payload = {
             item_name: formData.item,
             category: formData.category,
@@ -444,10 +479,14 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             remarks: formData.remarks,
             company: formData.company,
             department: formData.department,
-            purchase_date: formData.purchaseDate,
+            purchase_date: sanitizeDate(formData.purchaseDate),
             specs: formData.specs,
             asset_id: formData.assetId,
-            image_url: formData.image_url
+            image_url: formData.image_url,
+            condition: formData.condition,
+            vendor: formData.vendor,
+            price: formData.price,
+            warranty_exp: sanitizeDate(formData.warrantyExp)
           };
 
           let error;
