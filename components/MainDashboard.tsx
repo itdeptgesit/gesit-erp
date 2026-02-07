@@ -229,7 +229,9 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
             </div>
 
             {/* Announcement Widget */}
-            {!isLoading && stats.activeAnnouncements.length > 0 && stats.activeAnnouncements.map(ann => !closedAnnouncements.includes(ann.id) && (
+            {isLoading ? (
+                <SkeletonAnnouncement />
+            ) : stats.activeAnnouncements.length > 0 && stats.activeAnnouncements.map(ann => !closedAnnouncements.includes(ann.id) && (
                 <div key={ann.id} className={`relative overflow-hidden rounded-[1.5rem] border p-6 flex items-start gap-4 shadow-sm animate-in slide-in-from-top-4 duration-500 ${ann.type === 'info' ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20' :
                     ann.type === 'warning' ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/20' :
                         ann.type === 'error' ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20' :
@@ -261,18 +263,18 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
             {/* Quick Actions Section */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 flex flex-wrap gap-3 shadow-sm transition-all hover:shadow-md">
-                <p className="w-full text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Quick Actions</p>
+                <p className="w-full text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Quick Actions</p>
                 <div className="flex flex-wrap gap-3">
-                    <button onClick={() => onNavigate('assets')} className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all border border-blue-100 dark:border-blue-900/50 active:scale-95">
+                    <button onClick={() => onNavigate('assets')} aria-label="Create New Asset" className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all border border-blue-100 dark:border-blue-900/50 active:scale-95">
                         <Box size={14} /> + New Asset
                     </button>
-                    <button onClick={() => onNavigate('helpdesk')} className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all border border-rose-100 dark:border-rose-900/50 active:scale-95">
+                    <button onClick={() => onNavigate('helpdesk')} aria-label="Open New Ticket" className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all border border-rose-100 dark:border-rose-900/50 active:scale-95">
                         <LifeBuoy size={14} /> Open Ticket
                     </button>
-                    <button onClick={() => onNavigate('purchase')} className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all border border-amber-100 dark:border-amber-900/50 active:scale-95">
+                    <button onClick={() => onNavigate('purchase')} aria-label="Add Purchase Request" className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all border border-amber-100 dark:border-amber-900/50 active:scale-95">
                         <ShoppingCart size={14} /> Add Purchase
                     </button>
-                    <button onClick={() => onNavigate('activity')} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-100 dark:border-emerald-900/50 active:scale-95">
+                    <button onClick={() => onNavigate('activity')} aria-label="Log Work Activity" className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-100 dark:border-emerald-900/50 active:scale-95">
                         <Activity size={14} /> Log Work
                     </button>
                 </div>
@@ -549,7 +551,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
-                        <h4 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h4>
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h3>
                         <div className="space-y-4">
                             {isLoading ? (
                                 <>
@@ -572,7 +574,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
-                        <h4 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">System Health & Personnel</h4>
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">System Health & Personnel</h3>
                         <div className="space-y-5">
                             {isLoading ? (
                                 <>
@@ -608,6 +610,16 @@ const formatCurrency = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 };
+
+const SkeletonAnnouncement = () => (
+    <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-100 dark:border-slate-800 p-6 flex items-start gap-4 shadow-sm animate-pulse bg-white dark:bg-slate-900 mb-6">
+        <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0"></div>
+        <div className="flex-1 space-y-2 pt-1">
+            <div className="h-4 w-1/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
+            <div className="h-3 w-3/4 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
+        </div>
+    </div>
+);
 
 const SkeletonCard = () => (
     <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[188px] animate-pulse">

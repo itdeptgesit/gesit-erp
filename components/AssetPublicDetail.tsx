@@ -30,15 +30,15 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
     };
 
     return (
-        <motion.div
+        <motion.li
             whileHover={{ y: -1 }}
-            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group"
+            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group list-none"
         >
             <div className="p-2 bg-slate-50 dark:bg-blue-500/10 rounded-xl text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 transition-all">
                 <Icon size={16} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-400 mb-0.5">{label}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-0.5">{label}</p>
                 <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-slate-100 truncate`}>
                         {value || '-'}
@@ -46,6 +46,7 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
                     {copyable && value && (
                         <button
                             onClick={handleCopy}
+                            aria-label="Copy to clipboard"
                             className="p-1 rounded-lg text-slate-300 hover:text-blue-500 transition-all opacity-0 group-hover:opacity-100"
                         >
                             {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
@@ -53,7 +54,7 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
                     )}
                 </div>
             </div>
-        </motion.div>
+        </motion.li>
     );
 };
 
@@ -208,7 +209,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
                             Registry Version: v4.1.2
                         </div>
-                        <button onClick={toggleTheme} className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-500 transition-colors">
+                        <button onClick={toggleTheme} aria-label="Toggle theme" className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-500 transition-colors">
                             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                         </button>
                     </div>
@@ -260,7 +261,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         </div>
 
                         <SectionHeader title="Logistics & Ownership" icon={FileCheck} />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                             <DataCard label="USER ASSIGNED" value={asset.user} icon={User} />
                             <DataCard label="CATEGORY" value={asset.category} icon={Folder} />
                             <DataCard label="ENTITAS" value={asset.company} icon={Building2} />
@@ -269,7 +270,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                             <DataCard label="BRAND" value={asset.brand} icon={Tag} />
                             <DataCard label="SERIAL NUMBER" value={asset.serialNumber} icon={Hash} mono copyable />
                             <DataCard label="PURCHASE DATE" value={asset.purchaseDate} icon={Calendar} mono />
-                        </div>
+                        </ul>
                     </div>
 
                     {/* Column 3: Specs & Support */}
@@ -277,13 +278,13 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         {asset.specs && (Object.values(asset.specs).some(v => v)) ? (
                             <section>
                                 <SectionHeader title="Technical Specifications" icon={Cpu} />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                                     {asset.specs.processor && <DataCard label="PROCESSOR" value={asset.specs.processor} icon={Cpu} />}
                                     {asset.specs.ram && <DataCard label="RAM" value={asset.specs.ram} icon={Zap} />}
                                     {asset.specs.storage && <DataCard label="STORAGE" value={asset.specs.storage} icon={HardDrive} />}
                                     {asset.specs.vga && <DataCard label="VGA / GPU" value={asset.specs.vga} icon={Sun} />}
                                     {asset.specs.os && <DataCard label="OPERATING SYSTEM" value={asset.specs.os} icon={Server} />}
-                                </div>
+                                </ul>
                             </section>
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 dark:border-white/[0.03] rounded-[2rem] p-8 text-center">
@@ -300,7 +301,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 </div>
                                 <h4 className="text-lg font-bold mb-2 tracking-tight">Need assistance?</h4>
                                 <p className="text-xs opacity-70 mb-6 leading-relaxed dark:text-slate-400">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
-                                <a href={`mailto:it@gesit.co.id?subject=Support: ${asset.assetId}`} className="block text-center py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors active:scale-95">
+                                <a href={`mailto:it@gesit.co.id?subject=Support: ${asset.assetId}`} aria-label="Contact Support" className="block text-center py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors active:scale-95">
                                     Initialize Support Chat
                                 </a>
                             </div>

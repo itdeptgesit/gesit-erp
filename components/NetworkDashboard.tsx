@@ -342,7 +342,10 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Infrastructure Engine</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Topology mapping and device configuration</p></div>
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Infrastructure Engine</h1>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">Topology mapping and device configuration</p>
+                </div>
                 <div className="flex items-center gap-3 min-h-[44px] justify-end">
                     {canManage && (
                         <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
@@ -383,7 +386,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             ) : activeTab === 'wiring' ? (
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
                             ) : (
-                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800"><tr><th className="px-6 py-4">Node Identity</th><th className="px-6 py-4">IP Config</th><th className="px-6 py-4">Site Location</th><th className="px-6 py-4 text-center">Load</th><th className="px-6 py-4 text-center">Protocol</th></tr></thead>
                                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">{filteredSwitches.map(sw => (

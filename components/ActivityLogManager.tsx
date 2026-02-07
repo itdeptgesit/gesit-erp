@@ -211,9 +211,9 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
             <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-between p-12 sm:p-20 transition-colors duration-500 overflow-hidden font-sans">
                 {/* Advanced Mesh Background */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden origin-center">
-                    <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[140%] bg-blue-600/10 dark:bg-blue-500/10 rounded-full blur-[120px] animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[140%] bg-indigo-600/10 dark:bg-indigo-500/10 rounded-full blur-[120px]"></div>
-                    <div className="absolute top-[20%] right-[10%] w-[40%] h-[60%] bg-violet-600/10 dark:bg-violet-500/5 rounded-full blur-[100px] animate-bounce duration-[10s]"></div>
+                    <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[140%] bg-blue-600/10 dark:bg-blue-500/10 rounded-full blur-[120px] animate-pulse transform-gpu"></div>
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[140%] bg-indigo-600/10 dark:bg-indigo-500/10 rounded-full blur-[120px] transform-gpu"></div>
+                    <div className="absolute top-[20%] right-[10%] w-[40%] h-[60%] bg-violet-600/10 dark:bg-violet-500/5 rounded-full blur-[100px] animate-bounce duration-[10s] transform-gpu"></div>
                     <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                 </div>
 
@@ -232,6 +232,7 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                     <div className="flex items-center gap-4">
                         <button
                             onClick={toggleInternalTheme}
+                            aria-label="Toggle presentation theme"
                             className="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl transition-all active:scale-95 border border-slate-200 dark:border-white/5 shadow-xl"
                         >
                             {isDarkTheme ? <Sun size={24} strokeWidth={2.5} /> : <Moon size={24} strokeWidth={2.5} />}
@@ -241,6 +242,7 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                                 setIsFullScreen(false);
                                 setIsPresenting(false);
                             }}
+                            aria-label="Close presentation mode"
                             className="p-4 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 hover:text-rose-600 rounded-2xl transition-all active:scale-95 border border-slate-200 dark:border-white/5 shadow-xl"
                         >
                             <X size={24} strokeWidth={2.5} />
@@ -317,6 +319,7 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                     <button
                         onClick={handlePrevSlide}
                         disabled={currentSlideIndex === 0}
+                        aria-label="Previous slide"
                         className="w-16 h-16 rounded-[2rem] bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-white/5 transition-all disabled:opacity-5 flex items-center justify-center active:scale-90 shadow-2xl hover:scale-110"
                     >
                         <ArrowLeft size={32} strokeWidth={2.5} />
@@ -335,6 +338,7 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                     <button
                         onClick={handleNextSlide}
                         disabled={currentSlideIndex === filteredActivities.length - 1}
+                        aria-label="Next slide"
                         className="w-16 h-16 rounded-[2rem] bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200 dark:border-white/5 transition-all disabled:opacity-5 flex items-center justify-center active:scale-90 shadow-2xl hover:scale-110"
                     >
                         <ArrowRight size={32} strokeWidth={2.5} />
@@ -463,9 +467,9 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                                 <option value="Installation">Installation</option>
                                 <option value="Other">Other/General</option>
                             </select>
-                            <select className="h-10 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer hover:bg-slate-50 transition-colors" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="All">All Status</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option><option value="Pending">Pending</option></select>
-                            <button onClick={() => setShowDatePicker(!showDatePicker)} className={`h-10 w-10 shrink-0 rounded-xl border transition-all flex items-center justify-center ${showDatePicker ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-600'}`}><Filter size={18} /></button>
-                            <button onClick={resetFilters} className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-600 transition-all flex items-center justify-center bg-white dark:bg-slate-900 shadow-sm"><RotateCcw size={18} /></button>
+                            <select className="h-10 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer hover:bg-slate-50 transition-colors" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} aria-label="Filter by status"><option value="All">All Status</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option><option value="Pending">Pending</option></select>
+                            <button onClick={() => setShowDatePicker(!showDatePicker)} aria-label="Filter by date" className={`h-10 w-10 shrink-0 rounded-xl border transition-all flex items-center justify-center ${showDatePicker ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-600'}`}><Filter size={18} /></button>
+                            <button onClick={resetFilters} aria-label="Reset filters" className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-600 transition-all flex items-center justify-center bg-white dark:bg-slate-900 shadow-sm"><RotateCcw size={18} /></button>
                         </div>
                     </div>
                     {showDatePicker && (
@@ -523,9 +527,9 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                                             <td className="px-6 py-6 text-xs font-mono text-slate-400 font-bold">{formatDateShort(act.createdAt)}</td>
                                             <td className="px-6 py-6 text-center">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <button onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }} className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-all"><Eye size={16} /></button>
-                                                    {canManage && <button onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 rounded-lg transition-all"><Pencil size={16} /></button>}
-                                                    {canDelete && <button onClick={() => setDeleteActivity(act)} className="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition-all"><Trash2 size={16} /></button>}
+                                                    <button onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }} aria-label={`View details for ${act.activityName}`} className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-all"><Eye size={16} /></button>
+                                                    {canManage && <button onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }} aria-label={`Edit ${act.activityName}`} className="p-2 text-slate-400 hover:text-blue-600 rounded-lg transition-all"><Pencil size={16} /></button>}
+                                                    {canDelete && <button onClick={() => setDeleteActivity(act)} aria-label={`Delete ${act.activityName}`} className="p-2 text-slate-400 hover:text-rose-600 rounded-lg transition-all"><Trash2 size={16} /></button>}
                                                 </div>
                                             </td>
                                         </tr>
@@ -536,8 +540,8 @@ export const ActivityLogManager: React.FC<ActivityLogManagerProps> = ({ currentU
                         <div className="px-8 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <p className="text-[11px] font-semibold text-slate-400">Page {currentPage} of {totalPages || 1}</p>
                             <div className="flex items-center gap-2">
-                                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-30"><ChevronLeft size={18} /></button>
-                                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-30"><ChevronRight size={18} /></button>
+                                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} aria-label="Previous page" className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-30"><ChevronLeft size={18} /></button>
+                                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} aria-label="Next page" className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-30"><ChevronRight size={18} /></button>
                             </div>
                         </div>
                     </div>

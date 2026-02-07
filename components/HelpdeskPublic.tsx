@@ -457,31 +457,33 @@ export const HelpdeskPublic: React.FC = () => {
                         <img
                             src="/image/bg.jpeg"
                             alt="Background"
-                            className="w-full h-full object-cover opacity-60 mix-blend-multiply scale-105 animate-pulse-slow"
+                            fetchPriority="high"
+                            loading="eager"
+                            className="w-full h-full object-cover opacity-60 mix-blend-multiply scale-105 animate-pulse-slow transform-gpu"
                         />
                         <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, var(--primary)4D, var(--primary)B3)` }}></div>
 
                         {/* Dynamic Light Orbs */}
-                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse"></div>
-                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '3s' }}></div>
+                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse transform-gpu"></div>
+                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse transform-gpu" style={{ animationDelay: '3s' }}></div>
                     </div>
 
                     <div className="relative z-10">
                         {/* Logo Section */}
                         <div className="mb-20 animate-in fade-in slide-in-from-left duration-1000">
-                            <div className="w-24 h-24 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
+                            <div className="w-20 h-20 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
                                 <img src={appSettings.logo} alt="Logo" className="w-full h-full object-contain filter drop-shadow-2xl group-hover:brightness-110 transition-all" />
                             </div>
                         </div>
 
                         <div className="space-y-12 max-w-xl">
                             <div className="animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
-                                <h2 className="text-6xl lg:text-7xl font-black text-white leading-none tracking-tighter font-display mb-8 uppercase whitespace-nowrap">
+                                <h2 className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tighter font-display mb-8 uppercase whitespace-nowrap">
                                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/100 to-white/60 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
                                         Helpdesk Engine
                                     </span>
                                 </h2>
-                                <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
+                                <div className="inline-flex items-center gap-4 px-5 py-2 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
                                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></div>
                                     <span className="text-xs font-black text-white uppercase tracking-[0.3em] font-display">
                                         Integrated Technical Support Node
@@ -498,6 +500,7 @@ export const HelpdeskPublic: React.FC = () => {
                                             value={searchId}
                                             onChange={e => setSearchId(e.target.value)}
                                             required
+                                            aria-label="Ticket Reference ID"
                                         />
                                         <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" />
                                     </div>
@@ -523,7 +526,7 @@ export const HelpdeskPublic: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Emergency Line</p>
-                                        <p className="text-white font-bold text-base tracking-tight drop-shadow-md">Internal Ext: 196</p>
+                                        <p className="text-white font-bold text-sm tracking-tight drop-shadow-md">Internal Ext: 196</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-5 group">
@@ -532,7 +535,7 @@ export const HelpdeskPublic: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Active Response</p>
-                                        <p className="text-white font-bold text-base tracking-tight drop-shadow-md">08:00 - 17:00 (Mon-Fri)</p>
+                                        <p className="text-white font-bold text-sm tracking-tight drop-shadow-md">08:00 - 17:00 (Mon-Fri)</p>
                                     </div>
                                 </div>
                             </div>
@@ -588,7 +591,7 @@ export const HelpdeskPublic: React.FC = () => {
                                 <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
                                     <CheckCircle2 size={48} className="animate-in zoom-in duration-700 delay-300" />
                                 </div>
-                                <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter font-display">Request Commenced</h1>
+                                <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter font-display">Request Commenced</h1>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium mb-12 leading-relaxed text-lg">
                                     Our deployment team has been engaged. <br className="hidden sm:block" />
                                     Your requisition is being processed.
@@ -605,13 +608,13 @@ export const HelpdeskPublic: React.FC = () => {
                                             setSearchId(ticketId);
                                             setTimeout(() => handleCheckStatus(), 100);
                                         }}
-                                        className="py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary/10 active:scale-95 scroll-smooth"
+                                        className="h-14 px-6 bg-primary hover:bg-primary-dark text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary/10 active:scale-95 scroll-smooth flex items-center justify-center"
                                     >
                                         Monitor Activity
                                     </button>
                                     <button
                                         onClick={() => { setMode('form'); setActiveTab('report'); }}
-                                        className="py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95"
+                                        className="h-14 px-6 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 flex items-center justify-center"
                                     >
                                         New Requisition
                                     </button>
@@ -651,9 +654,10 @@ export const HelpdeskPublic: React.FC = () => {
                                             <div className="lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                                                 <form onSubmit={handleCheckStatus} className="space-y-4">
                                                     <div className="space-y-2">
-                                                        <label className={labelClass}>Ticket Reference ID</label>
+                                                        <label htmlFor="mobile-ticket-id" className={labelClass}>Ticket Reference ID</label>
                                                         <div className="relative group">
                                                             <input
+                                                                id="mobile-ticket-id"
                                                                 className={inputClass}
                                                                 placeholder="TKT-XXXX"
                                                                 value={searchId}
@@ -726,7 +730,7 @@ export const HelpdeskPublic: React.FC = () => {
                                             </div>
                                         </div>
                                         <button type="submit" disabled={isSubmitting}
-                                            className="group relative w-full h-16 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
+                                            className="group relative w-full h-14 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
                                             style={{
                                                 boxShadow: `0 10px 40px -10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.2)`
                                             }}

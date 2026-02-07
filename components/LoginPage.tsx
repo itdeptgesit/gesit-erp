@@ -131,26 +131,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         <img
                             src="/image/bg.jpeg"
                             alt="Background"
+                            fetchPriority="high"
+                            loading="eager"
                             className="w-full h-full object-cover opacity-60 mix-blend-multiply scale-105 animate-pulse-slow"
                         />
                         <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${primaryColor}4D, ${primaryColor}B3)` }}></div>
 
                         {/* Dynamic Light Orbs - Subtle for background clarity */}
-                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse"></div>
-                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '3s' }}></div>
+                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse transform-gpu"></div>
+                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse transform-gpu" style={{ animationDelay: '3s' }}></div>
                     </div>
 
                     <div className="relative z-10">
                         {/* Logo Section */}
                         <div className="mb-12 animate-in fade-in slide-in-from-left duration-1000">
-                            <div className="w-32 h-32 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
-                                <img src={logoUrl} alt="Logo" className="w-full h-full object-contain filter drop-shadow-2xl group-hover:brightness-110 transition-all" />
+                            <div className="w-24 h-24 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
+                                <img src={logoUrl} alt="Logo" fetchPriority="high" loading="eager" className="w-full h-full object-contain filter drop-shadow-2xl group-hover:brightness-110 transition-all" />
                             </div>
                         </div>
 
                         <div className="space-y-12 max-w-full">
                             <div className="animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
-                                <h1 className="text-6xl lg:text-7xl font-black text-white leading-none tracking-tighter font-display mb-8 uppercase whitespace-nowrap">
+                                <h1 className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tighter font-display mb-6 uppercase whitespace-nowrap">
                                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/100 to-white/60 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
                                         {appName}
                                     </span>
@@ -163,14 +165,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 </div>
                             </div>
 
-                            <p className="text-white/90 text-lg leading-relaxed font-medium max-w-xl animate-in fade-in slide-in-from-bottom duration-1000 delay-400 drop-shadow-lg">
+                            <p className="text-white/90 text-sm leading-relaxed font-medium max-w-lg animate-in fade-in slide-in-from-bottom duration-1000 delay-400 drop-shadow-lg">
                                 Centralized platform for enterprise operations, infrastructure documentation, asset management, and service desk — built for speed and reliability.
                             </p>
 
                             <div className="flex gap-8 animate-in fade-in slide-in-from-bottom duration-1000 delay-600">
                                 <div className="group/badge p-0.5 rounded-2xl bg-gradient-to-br from-white/30 to-transparent hover:from-white/50 transition-all duration-500 shadow-2xl">
-                                    <div className="bg-white/10 backdrop-blur-2xl px-8 py-5 rounded-[14px] border border-white/10 flex items-center gap-4 group-hover/badge:bg-white/20 transition-all">
-                                        <span className="text-3xl filter drop-shadow-md group-hover/badge:scale-110 transition-transform duration-300">🚀</span>
+                                    <div className="bg-white/10 backdrop-blur-2xl px-6 py-4 rounded-xl border border-white/10 flex items-center gap-3 group-hover/badge:bg-white/20 transition-all">
+                                        <span className="text-2xl filter drop-shadow-md group-hover/badge:scale-110 transition-transform duration-300">🚀</span>
                                         <div>
                                             <div className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] leading-none mb-1.5">Engine</div>
                                             <div className="text-sm font-black text-white uppercase tracking-wider">High Speed</div>
@@ -178,8 +180,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     </div>
                                 </div>
                                 <div className="group/badge p-0.5 rounded-2xl bg-gradient-to-br from-white/30 to-transparent hover:from-white/50 transition-all duration-500 shadow-2xl">
-                                    <div className="bg-white/10 backdrop-blur-2xl px-8 py-5 rounded-[14px] border border-white/10 flex items-center gap-4 group-hover/badge:bg-white/20 transition-all">
-                                        <span className="text-3xl filter drop-shadow-md group-hover/badge:scale-110 transition-transform duration-300">🔒</span>
+                                    <div className="bg-white/10 backdrop-blur-2xl px-6 py-4 rounded-xl border border-white/10 flex items-center gap-3 group-hover/badge:bg-white/20 transition-all">
+                                        <span className="text-2xl filter drop-shadow-md group-hover/badge:scale-110 transition-transform duration-300">🔒</span>
                                         <div>
                                             <div className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] leading-none mb-1.5">Security</div>
                                             <div className="text-sm font-black text-white uppercase tracking-wider">Enterprise</div>
@@ -211,11 +213,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
 
                 {/* Right Login Side */}
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
                     {/* Animated Background Orbs */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-20 -right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
-                        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        <div className="absolute top-20 -right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse transform-gpu"></div>
+                        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl animate-pulse transform-gpu" style={{ animationDelay: '1s' }}></div>
                     </div>
 
                     {/* Theme Toggle Button */}
@@ -246,7 +248,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         ) : (
                             <div className="animate-in fade-in duration-500">
                                 <div className="mb-12">
-                                    <h3 className="text-4xl font-black tracking-tighter font-display mb-3" style={{ color: primaryColor }}>
+                                    <h3 className="text-2xl md:text-3xl font-black tracking-tighter font-display mb-2" style={{ color: primaryColor }}>
                                         {isResetMode ? 'Recover Access' : 'Sign In'}
                                     </h3>
                                     <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
@@ -269,7 +271,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 <Mail size={20} />
                                             </div>
                                             <input
-                                                className="w-full h-16 pl-14 pr-5 rounded-2xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]"
+                                                className="w-full h-14 pl-12 pr-5 rounded-xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01] text-sm"
                                                 placeholder="Enter your identity"
                                                 type="text"
                                                 value={identifier}
@@ -279,39 +281,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         </div>
                                     </div>
 
-                                    {!isResetMode && (
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center ml-1">
-                                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display">Password</label>
-                                            </div>
-                                            <div className="relative group">
-                                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110 z-10 pointer-events-none">
-                                                    <ShieldCheck size={20} />
-                                                </div>
-                                                <input
-                                                    className="w-full h-16 pl-14 pr-14 rounded-2xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]"
-                                                    placeholder="••••••••••••"
-                                                    type={showPassword ? "text" : "password"}
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    required
-                                                />
-                                                <button
-                                                    type="button"
-                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-primary transition-all duration-300 hover:scale-110"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                >
-                                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                                </button>
-                                            </div>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center ml-1">
+                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display">Password</label>
                                         </div>
-                                    )}
+                                        <div className="relative group">
+                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110 z-10 pointer-events-none">
+                                                <ShieldCheck size={20} />
+                                            </div>
+                                            <input
+                                                className="w-full h-14 pl-12 pr-16 rounded-xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01] text-sm"
+                                                placeholder="••••••••••••"
+                                                type={showPassword ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-primary transition-all duration-300 p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     <div className="pt-6">
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="group relative w-full h-16 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden"
+                                            className="group relative w-full h-14 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden"
                                             style={{
                                                 backgroundColor: primaryColor,
                                                 boxShadow: `0 10px 40px -10px ${primaryColor}40, 0 0 0 1px ${primaryColor}20`
@@ -333,11 +334,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         <div className="mt-8 flex flex-col items-center gap-6">
                                             <div className="flex items-center gap-3 cursor-pointer group">
                                                 <input
+                                                    id="stay-connected"
                                                     type="checkbox"
                                                     className="w-5 h-5 rounded-lg border-2 border-slate-200 dark:border-slate-700 focus:ring-4 focus:ring-primary/20 transition-all cursor-pointer accent-current"
                                                     style={{ accentColor: primaryColor }}
                                                 />
-                                                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors">Stay connected</span>
+                                                <label htmlFor="stay-connected" className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors cursor-pointer">Stay connected</label>
                                             </div>
 
                                             <button

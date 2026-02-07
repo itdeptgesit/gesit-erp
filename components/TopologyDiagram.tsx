@@ -462,32 +462,37 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
             <div className="absolute top-0 left-0 w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-[40%] h-[40%] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-            <div className="absolute bottom-6 left-6 z-[100] flex items-center gap-4">
-                <div className="flex items-center bg-slate-900/80 backdrop-blur-2xl p-1 rounded-xl border border-white/5 shadow-2xl">
-                    <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-2.5 hover:bg-white/10 rounded-lg text-slate-400 transition-all"><Minus size={16} /></button>
-                    <div className="px-3 text-[10px] font-black text-blue-500 font-mono tracking-tighter w-12 text-center">{Math.round(scale * 100)}%</div>
-                    <button onClick={() => setScale(s => Math.min(s + 0.1, 4))} className="p-2.5 hover:bg-white/10 rounded-lg text-slate-400 transition-all"><Plus size={16} /></button>
+            <div className="absolute bottom-6 left-6 right-6 md:right-auto z-[100] flex flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-4">
+                <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
+                    <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 hover:bg-white/10 rounded-xl text-slate-400 transition-all active:scale-90"><Minus size={18} /></button>
+                    <div className="px-2 text-[11px] font-black text-blue-500 font-mono tracking-tighter w-14 text-center">{Math.round(scale * 100)}%</div>
+                    <button onClick={() => setScale(s => Math.min(s + 0.1, 4))} className="p-3 hover:bg-white/10 rounded-xl text-slate-400 transition-all active:scale-90"><Plus size={18} /></button>
                 </div>
 
-                <div className="flex items-center bg-slate-900/80 backdrop-blur-2xl p-1 rounded-xl border border-white/5 shadow-2xl">
-                    <button onClick={() => setIsLocked(!isLocked)} className={`p-2.5 rounded-lg transition-all ${isLocked ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-white/10'}`}>
-                        {isLocked ? <Lock size={16} /> : <Unlock size={16} />}
+                <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
+                    <button onClick={() => setIsLocked(!isLocked)} className={`p-3 rounded-xl transition-all active:scale-90 ${isLocked ? 'bg-amber-500/20 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
+                        {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
                     </button>
-                    <button onClick={() => setSnapToGrid(!snapToGrid)} className={`p-2.5 rounded-lg transition-all ${snapToGrid ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-white/10'}`}>
-                        <Grid3X3 size={16} />
+                    <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
+                    <button onClick={() => setSnapToGrid(!snapToGrid)} className={`p-3 rounded-xl transition-all active:scale-90 ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
+                        <Grid3X3 size={18} />
                     </button>
                 </div>
 
-                <button onClick={handleDownload} className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95 border border-white">
-                    <Download size={16} /> Export
+                <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
+
+                <button onClick={handleDownload} className="group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600/90 hover:text-white transition-all shadow-2xl active:scale-95 border border-white/10 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                    <Download size={16} className="group-hover:-translate-y-0.5 transition-transform duration-300" />
+                    <span>Export Map</span>
                 </button>
-                <button onClick={handleAutoLayout} className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-xl active:scale-95 border border-white ml-2">
-                    <LayoutTemplate size={16} /> Auto
+                <button onClick={handleAutoLayout} className="group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600/90 hover:text-white transition-all shadow-2xl active:scale-95 border border-white/10 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                    <LayoutTemplate size={16} className="group-hover:rotate-90 transition-transform duration-500" />
+                    <span>Auto Layout</span>
                 </button>
             </div>
 
             {selectedNode && (
-                <div className="absolute top-6 right-6 w-80 z-[100] bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-right-8 duration-500 overflow-hidden">
+                <div className="absolute top-6 left-6 right-6 md:left-auto md:w-80 z-[100] bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-right-8 duration-500 overflow-hidden">
                     <div className="p-6 border-b border-white/5 bg-slate-950/40">
                         <div className="flex justify-between items-start">
                             <div>
