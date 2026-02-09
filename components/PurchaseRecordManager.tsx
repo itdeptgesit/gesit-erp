@@ -4,41 +4,55 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
-    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3
+    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { PurchaseRecord } from '../types';
+import { PurchaseRecord, UserAccount } from '../types';
 import { PurchaseRecordFormModal } from './PurchaseRecordFormModal';
+import { PurchaseRecordDetailModal } from './PurchaseRecordDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { StatCard } from './MainDashboard';
 
-export const PurchaseRecordManager: React.FC = () => {
+export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }> = ({ currentUser }) => {
     const { t } = useLanguage();
     const [records, setRecords] = useState<PurchaseRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [projectFilter, setProjectFilter] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState<PurchaseRecord | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<PurchaseRecord | null>(null);
+    const [selectedDetail, setSelectedDetail] = useState<PurchaseRecord | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
 
     const fetchRecords = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.from('purchase_records').select('*').order('purchase_date', { ascending: false });
+            const { data, error } = await supabase.from('purchase_records').select('*, payment_method, evidence_link').order('purchase_date', { ascending: false });
             if (data) {
+                const sanitizeFetchDate = (date: string | null | undefined) => {
+                    if (!date || date === '-' || date.toString().toLowerCase() === 'nan') return null;
+                    return date;
+                };
+
                 setRecords(data.map((r: any) => ({
                     id: r.id, transactionId: r.transaction_id, description: r.description,
                     qty: r.qty, price: r.price, vat: r.vat, deliveryFee: r.delivery_fee,
                     insurance: r.insurance, appFee: r.app_fee, otherCost: r.other_cost,
                     subtotal: r.subtotal, totalVa: r.total_va, projectName: r.project_name,
                     user: r.user_name, department: r.department, company: r.company,
-                    status: r.status, purchaseDate: r.purchase_date, paymentDate: r.payment_date,
+                    status: r.status,
+                    purchaseDate: sanitizeFetchDate(r.purchase_date),
+                    paymentDate: sanitizeFetchDate(r.payment_date),
+                    paymentMethod: r.payment_method,
+                    evidenceLink: r.evidence_link,
+                    inputBy: r.input_by,
                     vendor: r.vendor, platform: r.platform, remarks: r.remarks, docs: r.docs || {},
                     items: r.items || []
                 })));
@@ -51,14 +65,25 @@ export const PurchaseRecordManager: React.FC = () => {
     const handleFormSubmit = async (formData: Partial<PurchaseRecord>) => {
         setIsActionLoading(true);
         try {
+            const sanitizeSaveDate = (date: string | null | undefined) => {
+                if (!date || date === '-' || date.toString().toLowerCase() === 'nan') return null;
+                return date;
+            };
+
             const payload = {
                 transaction_id: formData.transactionId, description: formData.description,
                 qty: formData.qty, price: formData.price, vat: formData.vat, delivery_fee: formData.deliveryFee,
                 insurance: formData.insurance, app_fee: formData.appFee, other_cost: formData.otherCost,
                 subtotal: formData.subtotal, total_va: formData.totalVa, project_name: formData.projectName,
                 user_name: formData.user, department: formData.department, company: formData.company,
-                status: formData.status, purchase_date: formData.purchaseDate, payment_date: formData.paymentDate,
-                vendor: formData.vendor, platform: formData.platform, remarks: formData.remarks, docs: formData.docs,
+                status: formData.status,
+                purchase_date: sanitizeSaveDate(formData.purchaseDate),
+                payment_date: sanitizeSaveDate(formData.paymentDate),
+                vendor: formData.vendor, platform: formData.platform,
+                payment_method: formData.paymentMethod,
+                evidence_link: formData.evidenceLink,
+                input_by: formData.inputBy || currentUser?.fullName || 'System',
+                remarks: formData.remarks, docs: formData.docs,
                 items: formData.items
             };
 
@@ -78,9 +103,15 @@ export const PurchaseRecordManager: React.FC = () => {
             const matchesSearch = (r.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (r.transactionId || '').toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'All' ? true : r.status === statusFilter;
-            return matchesSearch && matchesStatus;
+            const matchesProject = projectFilter === 'All' ? true : r.projectName === projectFilter;
+            return matchesSearch && matchesStatus && matchesProject;
         });
-    }, [records, searchTerm, statusFilter]);
+    }, [records, searchTerm, statusFilter, projectFilter]);
+
+    const projects = useMemo(() => {
+        const unique = Array.from(new Set(records.map(r => r.projectName).filter(Boolean)));
+        return unique.sort();
+    }, [records]);
 
     const stats = useMemo(() => {
         const paid = records.filter(r => r.status === 'Paid').reduce((sum, r) => sum + (r.subtotal || 0), 0);
@@ -101,8 +132,10 @@ export const PurchaseRecordManager: React.FC = () => {
         }
 
         records.forEach(r => {
-            if (!r.purchaseDate) return;
+            if (!r.purchaseDate || r.purchaseDate.toString().toLowerCase() === 'nan') return;
             const d = new Date(r.purchaseDate);
+            if (isNaN(d.getTime())) return;
+
             const key = `${months[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`;
             if (monthlyData.hasOwnProperty(key)) {
                 monthlyData[key] += r.subtotal || 0;
@@ -235,6 +268,10 @@ export const PurchaseRecordManager: React.FC = () => {
                         <input type="text" placeholder="Search transaction or item..." className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-500/5 dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                     <div className="flex gap-2">
+                        <select className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400" value={projectFilter} onChange={e => setProjectFilter(e.target.value)}>
+                            <option value="All">All Projects</option>
+                            {projects.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
                         <select className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                             <option value="All">All Status</option>
                             <option value="Paid">Paid</option>
@@ -273,7 +310,7 @@ export const PurchaseRecordManager: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col max-w-xs">
                                             <p className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight leading-none truncate">{record.description}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate uppercase">{record.vendor} • {record.platform}</p>
+                                            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate uppercase">{record.vendor} • {record.platform} • {record.paymentMethod || 'N/A'}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -305,7 +342,8 @@ export const PurchaseRecordManager: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Pencil size={14} /></button>
+                                            <button onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all" title="View Detail"><Eye size={14} /></button>
+                                            <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-amber-600 transition-all"><Pencil size={14} /></button>
                                             <button onClick={() => setDeleteRecord(record)} className="p-2 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
                                         </div>
                                     </td>
@@ -317,6 +355,8 @@ export const PurchaseRecordManager: React.FC = () => {
             </div>
 
             <PurchaseRecordFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleFormSubmit} initialData={editingRecord} />
+
+            <PurchaseRecordDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} record={selectedDetail} />
 
             <DangerConfirmModal
                 isOpen={!!deleteRecord} onClose={() => setDeleteRecord(null)}

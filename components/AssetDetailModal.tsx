@@ -128,7 +128,7 @@ const InfoRow = ({ icon: Icon, label, value }: any) => (
             <Icon size={10} /> {label}
         </span>
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase truncate" title={value || '-'}>
-            {value || '-'}
+            {(!value || value.toString().toLowerCase() === 'nan' || value === '-') ? '-' : value}
         </span>
     </div>
 );

@@ -87,7 +87,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                     assignee: t.assignee,
                     priority: t.priority,
                     status: t.status,
-                    dueDate: t.due_date,
+                    dueDate: (t.due_date && t.due_date.toString().toLowerCase() !== 'nan' && t.due_date !== '-') ? t.due_date : null,
                     startTime: t.start_time || '09:00',
                     week: t.week,
                     category: t.category,

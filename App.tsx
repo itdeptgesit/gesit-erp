@@ -577,7 +577,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
                   <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
                   <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
                   <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
-                  <Route path="purchase-record" element={<PurchaseRecordManager />} />
+                  <Route path="purchase-record" element={<PurchaseRecordManager currentUser={currentUser} />} />
                   <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
                   <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
                   <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />

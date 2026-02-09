@@ -55,13 +55,13 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           id: item.id, assetId: item.asset_id, item: item.item_name, category: item.category, brand: item.brand,
           serialNumber: item.serial_number, status: item.status, location: item.location, user: item.user_assigned,
           remarks: item.remarks, company: item.company, department: item.department,
-          purchaseDate: (item.purchase_date && item.purchase_date !== 'NaN') ? item.purchase_date : null,
+          purchaseDate: (item.purchase_date && item.purchase_date.toString().toLowerCase() !== 'nan' && item.purchase_date !== '-') ? item.purchase_date : null,
           specs: item.specs || {},
           image_url: item.image_url,
           condition: item.condition,
           vendor: item.vendor,
           price: item.price,
-          warrantyExp: (item.warranty_exp && item.warranty_exp !== 'NaN') ? item.warranty_exp : null
+          warrantyExp: (item.warranty_exp && item.warranty_exp.toString().toLowerCase() !== 'nan' && item.warranty_exp !== '-') ? item.warranty_exp : null
         })));
       }
     } catch (error) { console.error('Error fetching assets:', error); } finally { setIsLoading(false); }
@@ -464,7 +464,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           if (!formData.assetId) throw new Error("Asset ID could not be generated. Please select Company and Category.");
 
           const sanitizeDate = (date: string | null | undefined) => {
-            if (!date || date === '-' || date === 'NaN') return null;
+            if (!date || date.toString().toLowerCase() === 'nan' || date === '-') return null;
             return date;
           };
 

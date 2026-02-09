@@ -71,11 +71,21 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
     useEffect(() => {
         if (!isOpen || !formData.company || !formData.category) return;
 
-        // Only auto-generate if it's a new asset OR if the current ID starts with GEN
+        const isContextChanged = initialData && (
+            formData.company !== initialData.company ||
+            formData.category !== initialData.category
+        );
+
         const currentId = formData.assetId || '';
         const isBadId = currentId.startsWith('GEN-') || !currentId;
 
-        if (initialData && !isBadId) return;
+        // Jika dalam mode edit, konteks belum berubah, dan ID sudah benar -> pertahankan ID original
+        if (initialData && !isContextChanged && !isBadId) {
+            if (formData.assetId !== initialData.assetId) {
+                setFormData(prev => ({ ...prev, assetId: initialData.assetId }));
+            }
+            return;
+        }
 
         const generateSequentialId = async () => {
             const companyObj = companyList.find(c => c.name === formData.company);

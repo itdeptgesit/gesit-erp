@@ -41,7 +41,7 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
                 <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-0.5">{label}</p>
                 <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-slate-100 truncate`}>
-                        {value || '-'}
+                        {(!value || value.toString().toLowerCase() === 'nan' || value === '-') ? '-' : value}
                     </span>
                     {copyable && value && (
                         <button

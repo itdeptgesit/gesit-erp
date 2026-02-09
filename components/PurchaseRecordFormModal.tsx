@@ -14,6 +14,17 @@ interface PurchaseRecordFormModalProps {
     initialData?: PurchaseRecord | null;
 }
 
+const formatNumber = (val: number | string | undefined) => {
+    if (val === undefined || val === null || val === '') return '';
+    const num = typeof val === 'string' ? parseInt(val.replace(/\D/g, ''), 10) : val;
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('id-ID').format(num);
+};
+
+const parseNumber = (val: string) => {
+    return parseInt(val.replace(/\D/g, ''), 10) || 0;
+};
+
 export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
     const { t } = useLanguage();
     const [formData, setFormData] = useState<Partial<PurchaseRecord>>({});
@@ -22,9 +33,12 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
     const [isGeneratingId, setIsGeneratingId] = useState(false);
 
     const generateNextTransactionId = async (date: string) => {
+        if (!date) return;
         setIsGeneratingId(true);
         try {
             const dateObj = new Date(date);
+            if (isNaN(dateObj.getTime())) return;
+
             const yy = dateObj.getFullYear().toString().slice(-2);
             const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
             const dd = dateObj.getDate().toString().padStart(2, '0');
@@ -187,14 +201,59 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             </div>
                             <div>
                                 <label className={labelClass}>Platform</label>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="platform"
+                                            value="Vendor"
+                                            checked={formData.platform === 'Vendor'}
+                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                        />
+                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Vendor</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="platform"
+                                            value="Market Place"
+                                            checked={formData.platform === 'Market Place'}
+                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                        />
+                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Market Place</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Payment Method</label>
                                 <select
                                     className={inputClass}
-                                    value={formData.platform || ''}
-                                    onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                                    value={formData.paymentMethod || ''}
+                                    onChange={e => setFormData({ ...formData, paymentMethod: e.target.value as any })}
                                 >
                                     <option value="">- {t('pilih')} -</option>
-                                    <option value="Online - Tokopedia">Online - Tokopedia</option>
-                                    <option value="Offline - Vendor">Offline - Vendor</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="VA">VA</option>
+                                    <option value="Debit/CC">Debit/CC</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className={labelClass}>Evidence / Drive Link</label>
+                                <input
+                                    type="url"
+                                    className={inputClass}
+                                    value={formData.evidenceLink || ''}
+                                    onChange={e => setFormData({ ...formData, evidenceLink: e.target.value })}
+                                    placeholder="https://drive.google.com/..."
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Status</label>
+                                <select className={inputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
+                                    <option value="Paid">Paid (Verified)</option>
+                                    <option value="Pending">Pending</option>
                                 </select>
                             </div>
                         </div>
@@ -206,23 +265,55 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                                 <div>
                                     <label className={labelClass}>Base Price</label>
-                                    <input type="number" className={inputClass} value={formData.price || 0} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} disabled={formData.items && formData.items.length > 0} />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formatNumber(formData.price)}
+                                        onChange={e => setFormData({ ...formData, price: parseNumber(e.target.value) })}
+                                        disabled={formData.items && formData.items.length > 0}
+                                        placeholder="0"
+                                    />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Qty/Items</label>
-                                    <input type="number" className={inputClass} value={formData.qty || 1} onChange={e => setFormData({ ...formData, qty: Number(e.target.value) })} disabled={formData.items && formData.items.length > 0} />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formatNumber(formData.qty)}
+                                        onChange={e => setFormData({ ...formData, qty: parseNumber(e.target.value) })}
+                                        disabled={formData.items && formData.items.length > 0}
+                                        placeholder="1"
+                                    />
                                 </div>
                                 <div>
                                     <label className={labelClass}>VAT Fee (PPN)</label>
-                                    <input type="number" className={inputClass} value={formData.vat || 0} onChange={e => setFormData({ ...formData, vat: Number(e.target.value) })} />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formatNumber(formData.vat)}
+                                        onChange={e => setFormData({ ...formData, vat: parseNumber(e.target.value) })}
+                                        placeholder="0"
+                                    />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Delivery Fee</label>
-                                    <input type="number" className={inputClass} value={formData.deliveryFee || 0} onChange={e => setFormData({ ...formData, deliveryFee: Number(e.target.value) })} />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formatNumber(formData.deliveryFee)}
+                                        onChange={e => setFormData({ ...formData, deliveryFee: parseNumber(e.target.value) })}
+                                        placeholder="0"
+                                    />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Service Fee</label>
-                                    <input type="number" className={inputClass} value={formData.appFee || 0} onChange={e => setFormData({ ...formData, appFee: Number(e.target.value) })} />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        value={formatNumber(formData.appFee)}
+                                        onChange={e => setFormData({ ...formData, appFee: parseNumber(e.target.value) })}
+                                        placeholder="0"
+                                    />
                                 </div>
 
                                 <div className="md:col-span-5 bg-white/50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 mt-4">
@@ -287,13 +378,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div>
                                                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Qty</label>
                                                             <input
-                                                                type="number"
+                                                                type="text"
                                                                 placeholder="1"
                                                                 className={inputClass}
-                                                                value={item.qty}
+                                                                value={formatNumber(item.qty)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].qty = Number(e.target.value);
+                                                                    newItems[idx].qty = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -301,13 +392,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div>
                                                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Unit Price</label>
                                                             <input
-                                                                type="number"
-                                                                placeholder="Price"
+                                                                type="text"
+                                                                placeholder="0"
                                                                 className={inputClass}
-                                                                value={item.price}
+                                                                value={formatNumber(item.price)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].price = Number(e.target.value);
+                                                                    newItems[idx].price = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -315,13 +406,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div>
                                                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Ongkir</label>
                                                             <input
-                                                                type="number"
+                                                                type="text"
                                                                 placeholder="0"
                                                                 className={inputClass}
-                                                                value={item.deliveryFee || 0}
+                                                                value={formatNumber(item.deliveryFee)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].deliveryFee = Number(e.target.value);
+                                                                    newItems[idx].deliveryFee = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -329,13 +420,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div>
                                                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Asuransi</label>
                                                             <input
-                                                                type="number"
+                                                                type="text"
                                                                 placeholder="0"
                                                                 className={inputClass}
-                                                                value={item.insuranceFee || 0}
+                                                                value={formatNumber(item.insuranceFee)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].insuranceFee = Number(e.target.value);
+                                                                    newItems[idx].insuranceFee = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -347,13 +438,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div className="bg-rose-50/50 dark:bg-rose-900/10 p-3 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
                                                             <label className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1.5 block">Kupon Diskon Barang (-)</label>
                                                             <input
-                                                                type="number"
-                                                                placeholder="e.g. 95340"
+                                                                type="text"
+                                                                placeholder="0"
                                                                 className={`${inputClass} !bg-white/50 border-rose-200/50 text-rose-600 font-bold`}
-                                                                value={item.itemDiscount || 0}
+                                                                value={formatNumber(item.itemDiscount)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].itemDiscount = Number(e.target.value);
+                                                                    newItems[idx].itemDiscount = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -361,13 +452,13 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
                                                             <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1.5 block">Gratis Ongkir (-)</label>
                                                             <input
-                                                                type="number"
-                                                                placeholder="e.g. 34000"
+                                                                type="text"
+                                                                placeholder="0"
                                                                 className={`${inputClass} !bg-white/50 border-emerald-200/50 text-emerald-600 font-bold`}
-                                                                value={item.shippingDiscount || 0}
+                                                                value={formatNumber(item.shippingDiscount)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].shippingDiscount = Number(e.target.value);
+                                                                    newItems[idx].shippingDiscount = parseNumber(e.target.value);
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
@@ -409,14 +500,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label className={labelClass}>Status</label>
-                                <select className={inputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-                                    <option value="Paid">Paid (Verified)</option>
-                                    <option value="Pending">Pending</option>
-                                </select>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className={labelClass}>Purchase Date</label>
                                 <input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })} />
@@ -473,7 +557,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                         <Save size={16} /> Save Record
                     </button>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };

@@ -62,6 +62,9 @@ export interface PurchaseRecord {
   paymentDate?: string;
   vendor: string;
   platform: string;
+  paymentMethod?: 'Transfer' | 'VA' | 'Debit/CC';
+  evidenceLink?: string;
+  inputBy?: string;
   remarks: string;
   items?: {
     description: string;
