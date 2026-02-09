@@ -538,34 +538,32 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
 
             console.log(`[HelpdeskUpdate] Payload:`, payload);
 
-            // Step 1: Force Update by ID
-            const { error: idErr, count: idCnt, status: idStat } = await supabase
+            // Perform Update
+            const { error: updateErr, count: affectedRows, status: dbStatus } = await supabase
                 .from('helpdesk_tickets')
                 .update(payload, { count: 'exact' })
                 .eq('id', ticketId);
 
-            console.log(`[HelpdeskUpdate] ID Update Result - Status: ${idStat} ${idCnt === 0 ? 'No Error BUT 0 Rows affected' : 'Success'}`, idErr || '');
+            console.log(`[HelpdeskUpdate] DB Result - Status: ${dbStatus} Affected: ${affectedRows}`, updateErr || '');
 
-            // Step 2: Verification Check
-            const { data: checkRow } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
-            console.log(`[HelpdeskUpdate] Verification Check:`, checkRow);
+            if (updateErr) throw updateErr;
 
-            if (checkRow?.status !== nextStatus) {
-                console.warn(`[HelpdeskUpdate] Verification failed for ID update. Trying Ticket ID...`);
-
-                const { error: tktErr, count: tktCnt, status: tktStat } = await supabase
+            if (affectedRows === 0) {
+                // Try fallback by ticket_id string if ID failed
+                const { count: fallbackRows } = await supabase
                     .from('helpdesk_tickets')
                     .update(payload, { count: 'exact' })
-                    .eq('ticket_id', checkRow?.ticket_id || selectedTicket?.ticketId);
+                    .eq('ticket_id', selectedTicket?.ticketId);
 
-                console.log(`[HelpdeskUpdate] Ticket ID Update Result - Status: ${tktStat} ${tktCnt === 0 ? 'No Error BUT 0 Rows affected' : 'Success'}`, tktErr || '');
-
-                const { data: finalCheck } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
-                console.log(`[HelpdeskUpdate] Ticket ID Verification:`, finalCheck);
-
-                if (finalCheck?.status !== nextStatus) {
-                    throw new Error("Persistence failure: Database accepted the update but the value remains unchanged. Check RLS policies.");
+                if (!fallbackRows || fallbackRows === 0) {
+                    throw new Error("RLS Block: Your account does not have permission to update this ticket. Please ensure the Supabase RLS policy is correctly applied.");
                 }
+            }
+
+            // Verification Check
+            const { data: verifyData } = await supabase.from('helpdesk_tickets').select('status').eq('id', ticketId).single();
+            if (verifyData?.status !== nextStatus) {
+                throw new Error("Silent Failure: Database accepted the update but the status remains unchanged. Check for DB triggers.");
             }
 
             showToast(`Ticket status updated to ${nextStatus}`);

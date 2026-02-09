@@ -536,7 +536,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 <div className="lg:col-span-4">
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm h-[400px] flex flex-col">
                         <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h3>
-                        <div className="space-y-4 flex-1 flex flex-col justify-center">
+                        <div className="space-y-3 flex-1 flex flex-col justify-start">
                             {isLoading ? (
                                 <>
                                     <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
@@ -544,23 +544,26 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 </>
                             ) : (
                                 <>
-                                    <div className="p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                        <div className="flex justify-between items-start mb-2">
+                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                        <div className="flex justify-between items-start mb-1">
                                             <p className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Approved funds</p>
                                             <ShieldCheck size={14} className="text-emerald-500" />
                                         </div>
                                         <h5 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.approvedBudget)}</h5>
                                     </div>
-                                    <div className="p-5 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-                                        <div className="flex justify-between items-start mb-2">
+                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+                                        <div className="flex justify-between items-start mb-1">
                                             <p className="text-[10px] font-bold text-blue-600 tracking-widest uppercase">Actual Paid (MTD)</p>
                                             <Wallet size={14} className="text-blue-500" />
                                         </div>
                                         <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.monthlyPaidSpend)}</h5>
-                                        <p className="text-[9px] font-bold text-blue-400 mt-1 uppercase">Vat Included</p>
+                                        <p className="text-[9px] font-bold text-blue-400 mt-0.5 uppercase">Vat Included</p>
                                     </div>
-                                    <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/30">
-                                        <p className="text-[10px] font-bold text-slate-500 tracking-widest mb-2 uppercase">Pending requests</p>
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/30">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <p className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Pending requests</p>
+                                            <AlertCircle size={14} className="text-slate-400" />
+                                        </div>
                                         <h5 className="text-xl font-bold text-slate-700 dark:text-slate-300">{formatCurrency(stats.pendingBudget)}</h5>
                                     </div>
                                 </>

@@ -190,7 +190,12 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
         }
     };
 
-    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    const formatDate = (date: Date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
 
     const isRedDay = (date: Date) => {
         const day = date.getDay();
@@ -242,7 +247,9 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                 {monthGrid.map((cell, idx) => {
                                     const dateStr = formatDate(cell.date);
                                     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
-                                    const isHoliday = !!INDONESIAN_HOLIDAYS[dateStr];
+                                    const holidayName = INDONESIAN_HOLIDAYS[dateStr];
+                                    const isCutiBersama = holidayName?.toLowerCase().includes('cuti bersama');
+                                    const isHoliday = !!holidayName && !isCutiBersama;
                                     const isWeekend = cell.date.getDay() === 0 || cell.date.getDay() === 6;
                                     const isToday = cell.date.toDateString() === new Date().toDateString();
 
@@ -253,16 +260,16 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                             className={`min-h-[120px] border-r border-b border-slate-50 dark:border-slate-800 p-4 transition-all cursor-pointer 
                                                 ${!cell.currentMonth ? 'opacity-20 bg-slate-50/10 dark:bg-slate-800/5' : 'bg-white dark:bg-slate-900'} 
                                                 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 
-                                                ${(isHoliday || isWeekend) && cell.currentMonth ? 'bg-rose-50/20 dark:bg-rose-900/5' : ''}`}
+                                                ${isCutiBersama && cell.currentMonth ? 'bg-amber-50/40 dark:bg-amber-900/10' : (isHoliday || isWeekend) && cell.currentMonth ? 'bg-rose-50/20 dark:bg-rose-900/5' : ''}`}
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className={`text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-lg 
-                                                    ${isToday ? 'bg-blue-600 text-white shadow-md' : (isHoliday || isWeekend) ? 'text-rose-600 dark:text-rose-500' : 'text-slate-400'}`}>
+                                                    ${isToday ? 'bg-blue-600 text-white shadow-md' : isCutiBersama ? 'text-amber-600 dark:text-amber-500' : (isHoliday || isWeekend) ? 'text-rose-600 dark:text-rose-500' : 'text-slate-400'}`}>
                                                     {cell.date.getDate()}
                                                 </span>
-                                                {isHoliday && cell.currentMonth && (
-                                                    <span className="text-[9px] font-black text-rose-500 uppercase leading-tight text-right max-w-[80px] line-clamp-2">
-                                                        {INDONESIAN_HOLIDAYS[dateStr]}
+                                                {holidayName && cell.currentMonth && (
+                                                    <span className={`text-[8px] font-black uppercase leading-[1.1] text-right max-w-[100px] px-1.5 py-0.5 rounded-md ${isCutiBersama ? 'text-amber-600 bg-amber-100/50 dark:bg-amber-900/30 border border-amber-200 border-dashed' : 'text-rose-500'}`}>
+                                                        {holidayName}
                                                     </span>
                                                 )}
                                             </div>
@@ -286,22 +293,24 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                 {weekGrid.map((dayDate, idx) => {
                                     const dateStr = formatDate(dayDate);
                                     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
-                                    const isToday = dayDate.toDateString() === new Date().toDateString();
-                                    const isHoliday = !!INDONESIAN_HOLIDAYS[dateStr];
+                                    const holidayName = INDONESIAN_HOLIDAYS[dateStr];
+                                    const isCutiBersama = holidayName?.toLowerCase().includes('cuti bersama');
+                                    const isHoliday = !!holidayName && !isCutiBersama;
                                     const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+                                    const isToday = dayDate.toDateString() === new Date().toDateString();
 
                                     return (
                                         <div key={idx} className="flex flex-col h-full bg-slate-50/10 dark:bg-slate-900/10">
-                                            <div className={`p-4 border-b border-slate-50 dark:border-slate-800 text-center ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : (isHoliday || isWeekend) ? 'bg-rose-50/20 dark:bg-rose-900/10' : ''}`}>
-                                                <p className={`text-[10px] font-bold uppercase mb-1 ${isHoliday || isWeekend ? 'text-rose-500' : 'text-slate-400'}`}>
+                                            <div className={`p-4 border-b border-slate-50 dark:border-slate-800 text-center ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : isCutiBersama ? 'bg-amber-50/40 dark:bg-amber-900/10' : (isHoliday || isWeekend) ? 'bg-rose-50/20 dark:bg-rose-900/10' : ''}`}>
+                                                <p className={`text-[10px] font-bold uppercase mb-1 ${isCutiBersama ? 'text-amber-500' : isHoliday || isWeekend ? 'text-rose-500' : 'text-slate-400'}`}>
                                                     {dayDate.toLocaleDateString('en-GB', { weekday: 'short' })}
                                                 </p>
-                                                <p className={`text-xl font-bold ${isToday ? 'text-blue-600' : (isHoliday || isWeekend) ? 'text-rose-600' : 'text-slate-900 dark:text-white'}`}>
+                                                <p className={`text-xl font-bold ${isToday ? 'text-blue-600' : isCutiBersama ? 'text-amber-600' : (isHoliday || isWeekend) ? 'text-rose-600' : 'text-slate-900 dark:text-white'}`}>
                                                     {dayDate.getDate()}
                                                 </p>
-                                                {isHoliday && (
-                                                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1 block">
-                                                        {INDONESIAN_HOLIDAYS[dateStr]}
+                                                {holidayName && (
+                                                    <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 block px-1 py-0.5 rounded ${isCutiBersama ? 'text-amber-600 bg-amber-100/50 border border-amber-200 border-dashed' : 'text-rose-500'}`}>
+                                                        {holidayName}
                                                     </span>
                                                 )}
                                             </div>

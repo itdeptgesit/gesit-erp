@@ -450,8 +450,8 @@ export const HelpdeskPublic: React.FC = () => {
         };
     }, [searchResult?.id]);
 
-    const inputClass = "w-full h-14 pl-12 pr-5 rounded-2xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]";
-    const labelClass = "text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display ml-1";
+    const inputClass = "w-full h-11 pl-12 pr-5 rounded-xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-[13px] dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]";
+    const labelClass = "text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display ml-1";
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
@@ -508,14 +508,14 @@ export const HelpdeskPublic: React.FC = () => {
 
                         <div className="space-y-12 max-w-xl">
                             <div className="animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
-                                <h2 className="text-5xl lg:text-6xl font-black text-white leading-none tracking-tighter font-display mb-8 uppercase whitespace-nowrap">
+                                <h2 className="text-4xl lg:text-5xl font-black text-white leading-none tracking-tighter font-display mb-6 uppercase whitespace-nowrap">
                                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/100 to-white/60 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
                                         Helpdesk Engine
                                     </span>
                                 </h2>
-                                <div className="inline-flex items-center gap-4 px-5 py-2 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></div>
-                                    <span className="text-xs font-black text-white uppercase tracking-[0.3em] font-display">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></div>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] font-display">
                                         Integrated Technical Support Node
                                     </span>
                                 </div>
@@ -525,7 +525,7 @@ export const HelpdeskPublic: React.FC = () => {
                                 <form onSubmit={handleCheckStatus} className="flex gap-2">
                                     <div className="relative flex-1 group">
                                         <input
-                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-12 text-sm font-black text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono uppercase tracking-widest backdrop-blur-md"
+                                            className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-12 text-[13px] font-black text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono uppercase tracking-widest backdrop-blur-md"
                                             placeholder="TKT-XXXX"
                                             value={searchId}
                                             onChange={e => setSearchId(e.target.value)}
@@ -598,13 +598,23 @@ export const HelpdeskPublic: React.FC = () => {
 
                     <div className="absolute top-8 left-8 z-50">
                         <button
-                            onClick={() => window.location.href = '/'}
+                            onClick={() => {
+                                if (searchResult || mode === 'success') {
+                                    setSearchResult(null);
+                                    setMode('form');
+                                    setActiveTab('report');
+                                    setSearchId('');
+                                    window.history.pushState({}, '', window.location.pathname);
+                                } else {
+                                    window.location.href = '/';
+                                }
+                            }}
                             className="flex items-center gap-3 text-slate-400 hover:text-primary dark:hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] group font-display w-fit"
                         >
                             <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                                 <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
                             </div>
-                            Return to Login
+                            {searchResult || mode === 'success' ? 'Back to Portal' : 'Return to Login'}
                         </button>
                     </div>
 
@@ -761,14 +771,14 @@ export const HelpdeskPublic: React.FC = () => {
                                             </div>
                                         </div>
                                         <button type="submit" disabled={isSubmitting}
-                                            className="group relative w-full h-14 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
+                                            className="group relative w-full h-11 text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
                                             style={{
                                                 boxShadow: `0 10px 40px -10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.2)`
                                             }}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                                             <span className="relative z-10 flex items-center gap-2">
-                                                {isSubmitting ? <><Loader2 className="animate-spin" size={18} /> PROCESSING...</> : <>Initiate Service Request <ChevronRight size={18} /></>}
+                                                {isSubmitting ? <><Loader2 className="animate-spin" size={16} /> PROCESSING...</> : <>Initiate Service Request <ChevronRight size={16} /></>}
                                             </span>
                                         </button>
                                     </form>
