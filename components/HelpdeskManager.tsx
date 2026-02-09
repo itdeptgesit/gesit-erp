@@ -523,64 +523,53 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 }
             }
 
-            console.log(`[HelpdeskUpdate] STAGE 1: Claiming/Verifying Ticket ${ticketId}`);
-
             const { data: { session } } = await supabase.auth.getSession();
             const userEmail = session?.user?.email;
 
-            // Check current DB state before acting
-            const { data: dbRow } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
-            console.log("[HelpdeskUpdate] Current DB State:", dbRow);
+            console.log(`[HelpdeskUpdate] EXECUTION START - Ticket:${ticketId} Status:${nextStatus}`);
+            console.log(`[HelpdeskUpdate] Auth Session: ${session ? 'Active (' + userEmail + ')' : 'None'}`);
 
-            const isUnassigned = !dbRow?.assigned_to_email;
+            const payload = {
+                status: nextStatus,
+                resolution: finalResolution,
+                assigned_to: currentUser?.fullName || 'IT Support',
+                assigned_to_email: userEmail
+            };
 
-            // Step 1: Claim the ticket if unassigned or assigned to someone else
-            // This ensures we satisfy (assigned_to_email = auth.email()) RLS if it exists
-            if (isUnassigned || dbRow.assigned_to_email !== userEmail) {
-                console.log("[HelpdeskUpdate] Ticket requires assignment. Attempting Claim...");
-                const { error: claimError, status: claimStatus } = await supabase
-                    .from('helpdesk_tickets')
-                    .update({
-                        assigned_to: currentUser?.fullName || 'Support Staff',
-                        assigned_to_email: userEmail
-                    })
-                    .eq('id', ticketId);
+            console.log(`[HelpdeskUpdate] Payload:`, payload);
 
-                console.log(`[HelpdeskUpdate] Claim Result Code: ${claimStatus}`, claimError || 'Success');
-                if (claimError) throw new Error(`Claim failed: ${claimError.message}`);
-
-                // Immediate verification of claim
-                const { data: claimedRow } = await supabase.from('helpdesk_tickets').select('assigned_to_email').eq('id', ticketId).single();
-                if (claimedRow?.assigned_to_email !== userEmail) {
-                    throw new Error("Claim Verification Failed: RLS likely prevented you from assigning this ticket to yourself.");
-                }
-                console.log("[HelpdeskUpdate] Claim Verified.");
-            }
-
-            // Step 2: Now update the status (now that we are definitely the owner)
-            console.log(`[HelpdeskUpdate] STAGE 2: Updating Status to ${nextStatus}`);
-            const { error: statusError, status: statusStatus } = await supabase
+            // Step 1: Force Update by ID
+            const { error: idErr, count: idCnt, status: idStat } = await supabase
                 .from('helpdesk_tickets')
-                .update({
-                    status: nextStatus,
-                    resolution: finalResolution
-                })
+                .update(payload, { count: 'exact' })
                 .eq('id', ticketId);
 
-            console.log(`[HelpdeskUpdate] Status Update Result Code: ${statusStatus}`, statusError || 'Success');
-            if (statusError) throw statusError;
+            console.log(`[HelpdeskUpdate] ID Update Result - Status: ${idStat} ${idCnt === 0 ? 'No Error BUT 0 Rows affected' : 'Success'}`, idErr || '');
 
-            // Step 3: Final Verification
-            const { data: finalRow } = await supabase.from('helpdesk_tickets').select('status').eq('id', ticketId).single();
-            console.log("[HelpdeskUpdate] Final DB Status:", finalRow?.status);
+            // Step 2: Verification Check
+            const { data: checkRow } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
+            console.log(`[HelpdeskUpdate] Verification Check:`, checkRow);
 
-            if (finalRow?.status !== nextStatus) {
-                throw new Error(`State Mismatch: Database accepted status update but value remains '${finalRow?.status}'. This might be a DB Trigger rollback.`);
+            if (checkRow?.status !== nextStatus) {
+                console.warn(`[HelpdeskUpdate] Verification failed for ID update. Trying Ticket ID...`);
+
+                const { error: tktErr, count: tktCnt, status: tktStat } = await supabase
+                    .from('helpdesk_tickets')
+                    .update(payload, { count: 'exact' })
+                    .eq('ticket_id', checkRow?.ticket_id || selectedTicket?.ticketId);
+
+                console.log(`[HelpdeskUpdate] Ticket ID Update Result - Status: ${tktStat} ${tktCnt === 0 ? 'No Error BUT 0 Rows affected' : 'Success'}`, tktErr || '');
+
+                const { data: finalCheck } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
+                console.log(`[HelpdeskUpdate] Ticket ID Verification:`, finalCheck);
+
+                if (finalCheck?.status !== nextStatus) {
+                    throw new Error("Persistence failure: Database accepted the update but the value remains unchanged. Check RLS policies.");
+                }
             }
 
-            showToast(`Ticket ${nextStatus} successfully`);
+            showToast(`Ticket status updated to ${nextStatus}`);
             setIsSolveConfirmOpen(false);
-
             await fetchTickets();
 
             if (selectedTicket?.id === ticketId) {
@@ -594,7 +583,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 setResolutionNote(finalResolution);
             }
 
-            // Notify Requester on Resolution
+            // Notify Requester
             if (nextStatus === 'Resolved' && selectedTicket?.requesterEmail) {
                 await supabase.from('notifications').insert([{
                     user_email: selectedTicket.requesterEmail,
