@@ -244,7 +244,55 @@ export const HelpdeskPublic: React.FC = () => {
             if (data) setDepartments(data.map(d => d.name));
         };
         fetchDepts();
+
+        // Detect Ticket ID in URL (e.g., ?TKT-7348)
+        const searchParams = window.location.search;
+        if (searchParams && searchParams.startsWith('?TKT-')) {
+            const tktId = searchParams.substring(1).toUpperCase();
+            console.log("[HelpdeskURL] Detected Ticket ID in URL:", tktId);
+            setSearchId(tktId);
+            setActiveTab('check');
+
+            // We need to trigger the search. Since we can't call handleCheckStatus directly 
+            // due to state update cycles, we utilize a separate effect or a slight delay.
+            setTimeout(() => {
+                const triggerSearch = document.getElementById('search-trigger-btn');
+                if (triggerSearch) triggerSearch.click();
+                else {
+                    // Fallback to manual call if button not found
+                    performSearch(tktId);
+                }
+            }, 500);
+        }
     }, []);
+
+    const performSearch = async (id: string) => {
+        if (!id) return;
+        setIsSubmitting(true);
+        setError(null);
+        setSearchResult(null);
+        try {
+            const { data, error: dbError } = await supabase
+                .from('helpdesk_tickets')
+                .select('*')
+                .eq('ticket_id', id.toUpperCase().trim())
+                .maybeSingle();
+
+            if (dbError) throw dbError;
+            if (!data) throw new Error('Ticket ID not found.');
+            setSearchResult(data);
+            fetchMessages(data.id);
+
+            // Sync URL
+            const url = new URL(window.location.href);
+            url.search = id.toUpperCase();
+            window.history.pushState({}, '', url);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -294,25 +342,7 @@ export const HelpdeskPublic: React.FC = () => {
     const handleCheckStatus = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!searchId) return;
-        setIsSubmitting(true);
-        setError(null);
-        setSearchResult(null);
-        try {
-            const { data, error: dbError } = await supabase
-                .from('helpdesk_tickets')
-                .select('*')
-                .eq('ticket_id', searchId.toUpperCase().trim())
-                .maybeSingle();
-
-            if (dbError) throw dbError;
-            if (!data) throw new Error('Ticket ID not found.');
-            setSearchResult(data);
-            fetchMessages(data.id);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setIsSubmitting(false);
-        }
+        await performSearch(searchId);
     };
 
     const fetchMessages = async (ticketId: number) => {
@@ -506,6 +536,7 @@ export const HelpdeskPublic: React.FC = () => {
                                     </div>
                                     <button
                                         type="submit"
+                                        id="search-trigger-btn"
                                         disabled={isSubmitting}
                                         className="px-8 py-3 bg-white hover:bg-white/90 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-black/20 active:scale-95 font-display flex items-center gap-2 whitespace-nowrap text-primary"
                                     >
