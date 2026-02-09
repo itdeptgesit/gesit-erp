@@ -26,9 +26,18 @@ interface DashboardStats {
     totalDepts: number;
     pendingBudget: number;
     approvedBudget: number;
+    totalPaidSpend: number;
+    monthlyPaidSpend: number;
     activeLoans: number;
+    ticketPriorities: {
+        critical: number;
+        high: number;
+        medium: number;
+        low: number;
+    };
     recentActivities: ActivityLog[];
     assetCategories: Record<string, number>;
+    deptSpending: Record<string, number>;
     assetStatuses: {
         operational: number;
         maintenance: number;
@@ -64,9 +73,13 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         totalDepts: 0,
         pendingBudget: 0,
         approvedBudget: 0,
+        totalPaidSpend: 0,
+        monthlyPaidSpend: 0,
         activeLoans: 0,
+        ticketPriorities: { critical: 0, high: 0, medium: 0, low: 0 },
         recentActivities: [],
         assetCategories: {},
+        deptSpending: {},
         assetStatuses: { operational: 0, maintenance: 0, retired: 0 },
         personalTasks: [],
         upcomingLoans: [],
@@ -86,6 +99,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 { data: tasks },
                 { data: ports },
                 { data: purchases },
+                { data: purchaseRecords },
+                { data: allTickets },
                 { count: userCount, data: allUsers },
                 { count: deptCount },
                 { count: activeLoans },
@@ -100,6 +115,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 supabase.from('weekly_plans').select('status'),
                 supabase.from('switch_ports').select('status'),
                 supabase.from('purchase_plans').select('status, total_price'),
+                supabase.from('purchase_records').select('total_va, purchase_date, status, department'),
+                supabase.from('helpdesk_tickets').select('priority, status'),
                 supabase.from('user_accounts').select('full_name, avatar_url', { count: 'exact' }),
                 supabase.from('departments').select('*', { count: 'exact', head: true }),
                 supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
@@ -131,6 +148,29 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
             const pendingBudget = purchases?.filter(p => p.status.includes('Pending')).reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
             const approvedBudget = purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
 
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            const totalPaidSpend = purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum: number, r: any) => sum + (r.total_va || 0), 0) || 0;
+            const monthlyPaidSpend = purchaseRecords?.filter((r: any) => {
+                if (r.status !== 'Paid' || !r.purchase_date) return false;
+                const d = new Date(r.purchase_date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            }).reduce((sum: number, r: any) => sum + (r.total_va || 0), 0) || 0;
+
+            const ticketPriorities = {
+                critical: allTickets?.filter((t: any) => t.priority === 'Critical' && t.status !== 'Closed').length || 0,
+                high: allTickets?.filter((t: any) => t.priority === 'High' && t.status !== 'Closed').length || 0,
+                medium: allTickets?.filter((t: any) => t.priority === 'Medium' && t.status !== 'Closed').length || 0,
+                low: allTickets?.filter((t: any) => t.priority === 'Low' && t.status !== 'Closed').length || 0,
+            };
+
+            const deptSpending = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
+                const dept = curr.department || 'General';
+                acc[dept] = (acc[dept] || 0) + (curr.total_va || 0);
+                return acc;
+            }, {} as Record<string, number>);
+
             const userMap = new Map((allUsers || []).map((u: any) => [u.full_name, u.avatar_url]));
 
             setStats({
@@ -138,7 +178,10 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 plannedTasks: tasks?.length || 0, completedTasks, inProgressTasks, todoTasks,
                 pendingPurchases: purchases?.filter(p => p.status.includes('Pending')).length || 0,
                 activePorts: activePortsCount, totalPorts: ports?.length || 0, errorPorts: errorPortsCount, totalUsers: userCount || 0, totalDepts: deptCount || 0,
-                pendingBudget, approvedBudget, activeLoans: activeLoans || 0,
+                pendingBudget, approvedBudget,
+                totalPaidSpend, monthlyPaidSpend,
+                activeLoans: activeLoans || 0,
+                ticketPriorities,
                 recentActivities: (activities || []).map((a: any) => ({
                     ...a,
                     activityName: a.activity_name,
@@ -148,6 +191,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     avatarUrl: userMap.get(a.it_personnel) || null
                 })),
                 assetCategories: categories,
+                deptSpending,
                 assetStatuses,
                 personalTasks: pTasks || [],
                 upcomingLoans: loans || [],
@@ -285,7 +329,14 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     Array(7).fill(0).map((_, i) => <SkeletonCard key={i} />)
                 ) : (
                     <>
-                        <StatCard label="Service desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
+                        <StatCard label="Service desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')}>
+                            <div className="mt-4 flex gap-1.5">
+                                {stats.ticketPriorities.critical > 0 && <div className="h-1.5 flex-1 bg-rose-600 rounded-full" title="Critical"></div>}
+                                {stats.ticketPriorities.high > 0 && <div className="h-1.5 flex-1 bg-orange-500 rounded-full" title="High"></div>}
+                                {stats.ticketPriorities.medium > 0 && <div className="h-1.5 flex-1 bg-amber-400 rounded-full" title="Medium"></div>}
+                                <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                            </div>
+                        </StatCard>
                         <StatCard label="IT assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
                         <StatCard label="Asset loans" value={stats.activeLoans} subValue="Active borrowing" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loans')} />
                         <StatCard label="Network health" value={`${networkHealth}%`} subValue={`${stats.activePorts} active ports`} icon={Network} color="emerald" onClick={() => onNavigate('network')} />
@@ -301,14 +352,20 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                         </StatCard>
                         <StatCard label="Personnel" value={stats.totalUsers} subValue={`${stats.totalDepts} units`} icon={Users} color="blue" onClick={() => onNavigate('users')} />
-                        <StatCard label="Finance" value={stats.pendingPurchases} subValue={formatCurrency(stats.pendingBudget)} icon={ShoppingCart} color="amber" onClick={() => onNavigate('purchase')} />
+                        <StatCard label="Finance" value={formatCurrency(stats.monthlyPaidSpend)} subValue="Paid this month" icon={Wallet} color="amber" onClick={() => onNavigate('purchase')}>
+                            <div className="mt-4 flex justify-between items-end">
+                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Total: {formatCurrency(stats.totalPaidSpend)}</span>
+                                <span className="text-[10px] font-black text-amber-600">+{stats.pendingPurchases} pending</span>
+                            </div>
+                        </StatCard>
                     </>
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 space-y-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Row 1: Recent Activities (8) + Network Health (4) */}
+                <div className="lg:col-span-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden h-[400px] flex flex-col">
                         <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Zap size={18} className="text-blue-500" />
@@ -373,142 +430,10 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             )}
                         </div>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[350px] md:col-span-2">
-                            <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase flex items-center justify-between">
-                                Upcoming Schedule
-                                <div className="flex gap-2">
-                                    <span className="flex items-center gap-1 text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-800/50"><ListTodo size={10} /> TASKS</span>
-                                    <span className="flex items-center gap-1 text-[9px] font-bold bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-800/50"><Zap size={10} /> LOANS</span>
-                                </div>
-                            </h3>
-                            <div className="space-y-0 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[240px]">
-                                {isLoading ? (
-                                    Array(3).fill(0).map((_, i) => (
-                                        <div key={i} className="flex gap-4 animate-pulse mb-3">
-                                            <div className="w-12 text-right space-y-2 pt-1">
-                                                <div className="h-3 w-8 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
-                                                <div className="h-2 w-6 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
-                                            </div>
-                                            <div className="w-0.5 h-16 bg-slate-100 dark:bg-slate-800"></div>
-                                            <div className="flex-1 space-y-2 pt-1">
-                                                <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                                <div className="h-2 w-1/2 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (stats.personalTasks.length === 0 && stats.upcomingLoans.length === 0) ? (
-                                    <div className="flex h-full items-center justify-center text-[10px] font-bold text-slate-300 uppercase italic">No upcoming schedule.</div>
-                                ) : (() => {
-                                    const timeline = [
-                                        ...stats.personalTasks.map(t => ({ ...t, type: 'task', date: t.due_date, title: t.task, subtitle: t.category })),
-                                        ...stats.upcomingLoans.map(l => ({ ...l, type: 'loan', date: l.expected_return_date, title: l.it_assets?.item_name || 'Asset', subtitle: `Borrower: ${l.borrower_name}` }))
-                                    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-                                    return timeline.map((item, idx) => (
-                                        <div key={`${item.type}-${item.id}`} className="flex gap-4 group cursor-pointer" onClick={() => onNavigate(item.type === 'task' ? 'weekly' : 'asset-loans')}>
-                                            <div className="w-14 text-right pt-2 shrink-0">
-                                                <p className="text-sm font-black text-slate-700 dark:text-slate-300 leading-none">{new Date(item.date).getDate()}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(item.date).toLocaleDateString('en-US', { month: 'short' })}</p>
-                                            </div>
-                                            <div className="relative flex flex-col items-center">
-                                                <div className={`w-3 h-3 rounded-full border-2 z-10 mt-2 transition-all group-hover:scale-125 ${item.type === 'task' ? 'bg-white dark:bg-slate-900 border-blue-500' : 'bg-white dark:bg-slate-900 border-rose-500'}`}></div>
-                                                {idx !== timeline.length - 1 && <div className="w-0.5 flex-1 bg-slate-100 dark:bg-slate-800 my-1 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>}
-                                            </div>
-                                            <div className={`flex-1 p-3 rounded-xl border mb-3 transition-all ${item.type === 'task'
-                                                ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20 group-hover:border-blue-300 dark:group-hover:border-blue-700 group-hover:shadow-sm'
-                                                : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20 group-hover:border-rose-300 dark:group-hover:border-rose-700 group-hover:shadow-sm'
-                                                }`}>
-                                                <div className="flex justify-between items-start">
-                                                    <h4 className={`text-xs font-bold line-clamp-1 ${item.type === 'task' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-800 dark:text-slate-200'}`}>{item.title}</h4>
-                                                    {item.type === 'task' ? <ListTodo size={14} className="text-blue-400 group-hover:text-blue-600 transition-colors" /> : <Zap size={14} className="text-rose-400 group-hover:text-rose-600 transition-colors" />}
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${item.type === 'task' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                                                        {item.type === 'task' ? 'TASK' : 'RETURN'}
-                                                    </span>
-                                                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{item.subtitle}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ));
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                            <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Asset distribution</h3>
-                            <div className="space-y-5 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                {isLoading ? (
-                                    Array(6).fill(0).map((_, i) => (
-                                        <div key={i} className="space-y-2 animate-pulse">
-                                            <div className="flex justify-between">
-                                                <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                                <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
-                                        </div>
-                                    ))
-                                ) : Object.entries(stats.assetCategories).map(([cat, count]) => (
-                                    <div key={cat} className="space-y-1.5 cursor-pointer group/bar" onClick={() => onNavigate('assets')}>
-                                        <div className="flex justify-between items-center text-[11px] font-bold">
-                                            <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors">{cat}</span>
-                                            <span className="text-slate-900 dark:text-white">{count} units</span>
-                                        </div>
-                                        <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(37,99,235,0.2)] group-hover/bar:bg-blue-500"
-                                                style={{ width: `${(Number(count) / (stats.totalAssets || 1)) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                            <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Infrastructure Status</h3>
-                            <div className="flex-1 flex flex-col justify-center items-center">
-                                {isLoading ? (
-                                    <div className="w-full space-y-8 animate-pulse">
-                                        <div className="relative w-40 h-40 flex items-center justify-center mx-auto">
-                                            <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="relative w-40 h-40 flex items-center justify-center mb-6">
-                                            <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
-                                            <div className="absolute inset-0 rounded-full border-[12px] border-emerald-500 border-l-transparent border-t-transparent -rotate-45" style={{ background: `conic-gradient(from 0deg, #10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-                                            <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-
-                                            <div className="text-center z-10">
-                                                <h4 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{Math.round((stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100)}%</h4>
-                                                <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Healthy</p>
-                                            </div>
-                                        </div>
-                                        <div className="w-full space-y-3">
-                                            <PlanBar label="Operational" count={stats.assetStatuses.operational} total={stats.totalAssets} color="bg-emerald-500" />
-                                            <PlanBar label="Maintenance" count={stats.assetStatuses.maintenance} total={stats.totalAssets} color="bg-amber-500" />
-                                            <PlanBar label="Retired / Broken" count={stats.assetStatuses.retired} total={stats.totalAssets} color="bg-rose-500" />
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <div className="lg:col-span-4 space-y-8">
-                    <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden group">
+                <div className="lg:col-span-4 self-stretch">
+                    <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden group h-[400px] flex flex-col justify-center">
                         <div className="relative z-10">
                             <span className="text-[10px] font-bold text-blue-400 tracking-widest mb-8 block uppercase">Network health</span>
                             {isLoading ? (
@@ -549,10 +474,69 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             )}
                         </div>
                     </div>
+                </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
+                {/* Row 2: Heatmap (8) + Procurement (4) */}
+                <div className="lg:col-span-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase flex items-center justify-between">
+                            Department Spending Heatmap
+                            <Wallet size={12} className="text-blue-500" />
+                        </h3>
+                        <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                            {isLoading ? (
+                                Array(4).fill(0).map((_, i) => (
+                                    <div key={i} className="space-y-2 animate-pulse">
+                                        <div className="flex justify-between">
+                                            <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                            <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
+                                    </div>
+                                ))
+                            ) : Object.keys(stats.deptSpending).length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                                    <AlertCircle size={32} className="text-slate-200 mb-2" />
+                                    <p className="text-[10px] font-bold text-slate-300 uppercase italic">No paid records found.</p>
+                                </div>
+                            ) : Object.entries(stats.deptSpending)
+                                .sort(([, a], [, b]) => b - a)
+                                .map(([dept, amount], idx) => {
+                                    const totalSpend = Object.values(stats.deptSpending).reduce((a, b) => a + b, 0) || 1;
+                                    const percentage = (amount / totalSpend) * 100;
+                                    return (
+                                        <div key={dept} className="space-y-2 cursor-pointer group/bar" onClick={() => onNavigate('purchase')}>
+                                            <div className="flex justify-between items-center text-xs font-bold">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-emerald-500' : idx === 2 ? 'bg-amber-500' : 'bg-slate-400'}`}></div>
+                                                    <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors uppercase tracking-tight">{dept}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-slate-900 dark:text-white block">{formatCurrency(amount)}</span>
+                                                    <span className="text-[9px] text-slate-400">{percentage.toFixed(1)}% of total</span>
+                                                </div>
+                                            </div>
+                                            <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-1000 shadow-sm ${idx === 0 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/20' :
+                                                        idx === 1 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/20' :
+                                                            idx === 2 ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/20' :
+                                                                'bg-slate-300 dark:bg-slate-700'
+                                                        }`}
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm h-[400px] flex flex-col">
                         <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h3>
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex-1 flex flex-col justify-center">
                             {isLoading ? (
                                 <>
                                     <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
@@ -561,21 +545,99 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             ) : (
                                 <>
                                     <div className="p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                        <p className="text-[10px] font-bold text-emerald-600 tracking-widest mb-2 uppercase">Approved funds</p>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <p className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Approved funds</p>
+                                            <ShieldCheck size={14} className="text-emerald-500" />
+                                        </div>
                                         <h5 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.approvedBudget)}</h5>
                                     </div>
                                     <div className="p-5 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-                                        <p className="text-[10px] font-bold text-blue-600 tracking-widest mb-2 uppercase">Pending requests</p>
-                                        <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.pendingBudget)}</h5>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <p className="text-[10px] font-bold text-blue-600 tracking-widest uppercase">Actual Paid (MTD)</p>
+                                            <Wallet size={14} className="text-blue-500" />
+                                        </div>
+                                        <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.monthlyPaidSpend)}</h5>
+                                        <p className="text-[9px] font-bold text-blue-400 mt-1 uppercase">Vat Included</p>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/30">
+                                        <p className="text-[10px] font-bold text-slate-500 tracking-widest mb-2 uppercase">Pending requests</p>
+                                        <h5 className="text-xl font-bold text-slate-700 dark:text-slate-300">{formatCurrency(stats.pendingBudget)}</h5>
                                     </div>
                                 </>
                             )}
                         </div>
                     </div>
+                </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
+                {/* Row 3: Schedule (6) + Personnel (6) */}
+                <div className="lg:col-span-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase flex items-center justify-between">
+                            Upcoming Schedule
+                            <div className="flex gap-2">
+                                <span className="flex items-center gap-1 text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-800/50"><ListTodo size={10} /> TASKS</span>
+                                <span className="flex items-center gap-1 text-[9px] font-bold bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-800/50"><Zap size={10} /> LOANS</span>
+                            </div>
+                        </h3>
+                        <div className="space-y-0 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[240px]">
+                            {isLoading ? (
+                                Array(3).fill(0).map((_, i) => (
+                                    <div key={i} className="flex gap-4 animate-pulse mb-3">
+                                        <div className="w-12 text-right space-y-2 pt-1">
+                                            <div className="h-3 w-8 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
+                                            <div className="h-2 w-6 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
+                                        </div>
+                                        <div className="w-0.5 h-16 bg-slate-100 dark:bg-slate-800"></div>
+                                        <div className="flex-1 space-y-2 pt-1">
+                                            <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                            <div className="h-2 w-1/2 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (stats.personalTasks.length === 0 && stats.upcomingLoans.length === 0) ? (
+                                <div className="flex h-full items-center justify-center text-[10px] font-bold text-slate-300 uppercase italic">No upcoming schedule.</div>
+                            ) : (() => {
+                                const timeline = [
+                                    ...stats.personalTasks.map(t => ({ ...t, type: 'task', date: t.due_date, title: t.task, subtitle: t.category })),
+                                    ...stats.upcomingLoans.map(l => ({ ...l, type: 'loan', date: l.expected_return_date, title: l.it_assets?.item_name || 'Asset', subtitle: `Borrower: ${l.borrower_name}` }))
+                                ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                                return timeline.map((item, idx) => (
+                                    <div key={`${item.type}-${item.id}`} className="flex gap-4 group cursor-pointer" onClick={() => onNavigate(item.type === 'task' ? 'weekly' : 'asset-loans')}>
+                                        <div className="w-14 text-right pt-2 shrink-0">
+                                            <p className="text-sm font-black text-slate-700 dark:text-slate-300 leading-none">{new Date(item.date).getDate()}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(item.date).toLocaleDateString('en-US', { month: 'short' })}</p>
+                                        </div>
+                                        <div className="relative flex flex-col items-center">
+                                            <div className={`w-3 h-3 rounded-full border-2 z-10 mt-2 transition-all group-hover:scale-125 ${item.type === 'task' ? 'bg-white dark:bg-slate-900 border-blue-500' : 'bg-white dark:bg-slate-900 border-rose-500'}`}></div>
+                                            {idx !== timeline.length - 1 && <div className="w-0.5 flex-1 bg-slate-100 dark:bg-slate-800 my-1 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>}
+                                        </div>
+                                        <div className={`flex-1 p-3 rounded-xl border mb-3 transition-all ${item.type === 'task'
+                                            ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20 group-hover:border-blue-300 dark:group-hover:border-blue-700 group-hover:shadow-sm'
+                                            : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20 group-hover:border-rose-300 dark:group-hover:border-rose-700 group-hover:shadow-sm'
+                                            }`}>
+                                            <div className="flex justify-between items-start">
+                                                <h4 className={`text-xs font-bold line-clamp-1 ${item.type === 'task' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-800 dark:text-slate-200'}`}>{item.title}</h4>
+                                                {item.type === 'task' ? <ListTodo size={14} className="text-blue-400 group-hover:text-blue-600 transition-colors" /> : <Zap size={14} className="text-rose-400 group-hover:text-rose-600 transition-colors" />}
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${item.type === 'task' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                                    {item.type === 'task' ? 'TASK' : 'RETURN'}
+                                                </span>
+                                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm h-[400px] flex flex-col">
                         <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">System Health & Personnel</h3>
-                        <div className="space-y-5">
+                        <div className="space-y-5 flex-1 flex flex-col justify-center">
                             {isLoading ? (
                                 <>
                                     <div className="h-14 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
@@ -596,6 +658,92 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                     {stats.errorPorts > 0 && (
                                         <VitalsRow icon={AlertCircle} label="Active threats" status="Detected" color="text-rose-600" />
                                     )}
+                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/20">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Database connection</span>
+                                            <Database size={14} className="text-blue-500" />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Synchronized</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Row 4: Asset Distribution (6) + Infrastructure Status (6) */}
+                <div className="lg:col-span-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Asset distribution</h3>
+                        <div className="space-y-5 flex-1 overflow-y-auto custom-scrollbar pr-2">
+                            {isLoading ? (
+                                Array(6).fill(0).map((_, i) => (
+                                    <div key={i} className="space-y-2 animate-pulse">
+                                        <div className="flex justify-between">
+                                            <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                            <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
+                                    </div>
+                                ))
+                            ) : Object.keys(stats.assetCategories).length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                                    <AlertCircle size={32} className="text-slate-100 mb-2" />
+                                    <p className="text-[10px] font-bold text-slate-300 uppercase italic">No data.</p>
+                                </div>
+                            ) : Object.entries(stats.assetCategories).map(([cat, count]) => (
+                                <div key={cat} className="space-y-1.5 cursor-pointer group/bar" onClick={() => onNavigate('assets')}>
+                                    <div className="flex justify-between items-center text-[11px] font-bold">
+                                        <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors uppercase tracking-tight">{cat}</span>
+                                        <span className="text-slate-900 dark:text-white">{count} units</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(37,99,235,0.2)] group-hover/bar:bg-blue-500"
+                                            style={{ width: `${(Number(count) / (stats.totalAssets || 1)) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
+                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Infrastructure Status</h3>
+                        <div className="flex-1 flex flex-col justify-center items-center">
+                            {isLoading ? (
+                                <div className="w-full space-y-8 animate-pulse">
+                                    <div className="relative w-40 h-40 flex items-center justify-center mx-auto">
+                                        <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative w-40 h-40 flex items-center justify-center mb-6">
+                                        <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
+                                        <div className="absolute inset-0 rounded-full border-[12px] border-emerald-500 border-l-transparent border-t-transparent -rotate-45" style={{ background: `conic-gradient(from 0deg, #10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
+                                        <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
+
+                                        <div className="text-center z-10">
+                                            <h4 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{Math.round((stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100)}%</h4>
+                                            <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Healthy</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-full space-y-3">
+                                        <PlanBar label="Operational" count={stats.assetStatuses.operational} total={stats.totalAssets} color="bg-emerald-500" />
+                                        <PlanBar label="Maintenance" count={stats.assetStatuses.maintenance} total={stats.totalAssets} color="bg-amber-500" />
+                                        <PlanBar label="Retired / Broken" count={stats.assetStatuses.retired} total={stats.totalAssets} color="bg-rose-500" />
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -607,7 +755,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 };
 
 const formatCurrency = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 };
 

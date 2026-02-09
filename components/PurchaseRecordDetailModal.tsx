@@ -5,7 +5,7 @@ import {
     X, Calendar, ShieldCheck, FileText,
     Receipt, Fingerprint, Download,
     Building2, User, CheckCircle2, XCircle, Clock, ShieldAlert, Award, Briefcase,
-    ExternalLink, ShoppingCart, CreditCard, Globe, Store
+    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag
 } from 'lucide-react';
 import { PurchaseRecord } from '../types';
 
@@ -140,6 +140,9 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-widest pt-1">
                                         <Building2 size={10} /> {record.company}
                                     </p>
+                                    <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                        <Tag size={10} className="text-blue-500" /> {record.category || 'Uncategorized'}
+                                    </div>
                                 </div>
                             </div>
 

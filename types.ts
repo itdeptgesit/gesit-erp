@@ -63,6 +63,7 @@ export interface PurchaseRecord {
   vendor: string;
   platform: string;
   paymentMethod?: 'Transfer' | 'VA' | 'Debit/CC';
+  category?: 'Hardware' | 'Software & License' | 'Cloud & Hosting' | 'Network & Internet' | 'Maintenance & Support' | 'IT Services' | 'Security' | 'Subscription' | string;
   evidenceLink?: string;
   inputBy?: string;
   remarks: string;

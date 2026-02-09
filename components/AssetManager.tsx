@@ -428,7 +428,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                     {getStatusIcon(asset.status)}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
+                    <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
                       <button onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all" title="Label"><QrCode size={16} /></button>
 
                       {canManage && (

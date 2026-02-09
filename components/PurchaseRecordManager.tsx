@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
-    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye
+    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye, Tag
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
@@ -30,6 +29,8 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
     const [selectedDetail, setSelectedDetail] = useState<PurchaseRecord | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
     const fetchRecords = async () => {
         setIsLoading(true);
@@ -51,6 +52,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                     purchaseDate: sanitizeFetchDate(r.purchase_date),
                     paymentDate: sanitizeFetchDate(r.payment_date),
                     paymentMethod: r.payment_method,
+                    category: r.category,
                     evidenceLink: r.evidence_link,
                     inputBy: r.input_by,
                     vendor: r.vendor, platform: r.platform, remarks: r.remarks, docs: r.docs || {},
@@ -81,6 +83,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 payment_date: sanitizeSaveDate(formData.paymentDate),
                 vendor: formData.vendor, platform: formData.platform,
                 payment_method: formData.paymentMethod,
+                category: formData.category,
                 evidence_link: formData.evidenceLink,
                 input_by: formData.inputBy || currentUser?.fullName || 'System',
                 remarks: formData.remarks, docs: formData.docs,
@@ -107,6 +110,16 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             return matchesSearch && matchesStatus && matchesProject;
         });
     }, [records, searchTerm, statusFilter, projectFilter]);
+
+    // Reset to page 1 when filters change
+    useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, projectFilter]);
+
+    const paginatedRecords = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredRecords.slice(start, start + itemsPerPage);
+    }, [filteredRecords, currentPage]);
+
+    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
 
     const projects = useMemo(() => {
         const unique = Array.from(new Set(records.map(r => r.projectName).filter(Boolean)));
@@ -157,6 +170,17 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             .slice(0, 5);
     }, [records]);
 
+    const categoryData = useMemo(() => {
+        const data: Record<string, number> = {};
+        records.forEach(r => {
+            const cat = r.category || 'Uncategorized';
+            data[cat] = (data[cat] || 0) + (r.subtotal || 0);
+        });
+        return Object.entries(data)
+            .map(([name, total]) => ({ name, total }))
+            .sort((a, b) => b.total - a.total);
+    }, [records]);
+
     const handleExport = () => {
         const headers = ["TR-ID", "Description", "Project", "Qty", "Subtotal", "Company", "Vendor", "Platform", "Date", "Status"];
         const csvData = filteredRecords.map(r => [
@@ -197,7 +221,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 <StatCard label="FISCAL VOLUME" value={formatIDR(stats.total)} subValue="Total record value" icon={Wallet} color="blue" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
@@ -259,6 +283,36 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                         ))}
                     </div>
                 </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                            <Tag size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-sm">By Category</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Spending distribution</p>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        {categoryData.length === 0 ? (
+                            <p className="text-center py-10 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data available</p>
+                        ) : categoryData.map((cat, idx) => (
+                            <div key={cat.name} className="space-y-1.5">
+                                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                                    <span className="text-slate-500 truncate max-w-[120px]">{cat.name}</span>
+                                    <span className="text-slate-900 dark:text-slate-300">{formatIDR(cat.total)}</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                                        style={{ width: `${(cat.total / (categoryData[0]?.total || 1)) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
@@ -299,7 +353,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                 <tr><td colSpan={7} className="py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
                             ) : filteredRecords.length === 0 ? (
                                 <tr><td colSpan={7} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest">No transaction records found.</td></tr>
-                            ) : filteredRecords.map(record => (
+                            ) : paginatedRecords.map(record => (
                                 <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all group">
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
@@ -341,7 +395,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all" title="View Detail"><Eye size={14} /></button>
                                             <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-amber-600 transition-all"><Pencil size={14} /></button>
                                             <button onClick={() => setDeleteRecord(record)} className="p-2 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
@@ -352,12 +406,58 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredRecords.length > 0 && (
+                    <div className="px-6 py-4 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900/50">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Showing <span className="text-slate-900 dark:text-slate-200">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-200">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span> of <span className="text-slate-900 dark:text-slate-200">{filteredRecords.length}</span> entries
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                            >
+                                Prev
+                            </button>
+
+                            {[...Array(totalPages)].map((_, i) => {
+                                const page = i + 1;
+                                // Show first, last, and relative to current
+                                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                                    return (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all ${currentPage === page
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                    return <span key={page} className="text-slate-300">...</span>;
+                                }
+                                return null;
+                            })}
+
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <PurchaseRecordFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleFormSubmit} initialData={editingRecord} />
-
             <PurchaseRecordDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} record={selectedDetail} />
-
             <DangerConfirmModal
                 isOpen={!!deleteRecord} onClose={() => setDeleteRecord(null)}
                 onConfirm={async () => {

@@ -138,6 +138,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         id: t.id,
         ticketId: t.ticket_id,
         requesterName: t.requester_name,
+        requesterEmail: t.requester_email,
+        requesterPhone: t.requester_phone,
         department: t.department,
         subject: t.subject,
         description: t.description,
@@ -145,20 +147,23 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         status: t.status,
         createdAt: t.created_at,
         assignedTo: t.assigned_to,
-        requesterEmail: t.requester_email,
-        resolution: t.resolution,
-        requesterFeedback: t.requester_feedback
+        assignedToEmail: t.assigned_to_email,
+        resolution: t.resolution
     });
 
     const fetchTickets = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.from('helpdesk_tickets').select('*').order('id', { ascending: false });
+            const { data, error } = await supabase.from('helpdesk_tickets').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             if (data) {
+                if (data.length > 0) {
+                    console.log("[HelpdeskInit] Data structure sample (Ticket 0):", Object.keys(data[0]));
+                }
                 setTickets(data.map(mapTicket));
             }
         } catch (err: any) {
+            console.error("Fetch Tickets Error:", err);
             showToast(err.message, 'error');
         } finally {
             setIsLoading(false);
@@ -195,13 +200,43 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 table: 'helpdesk_tickets'
             }, (payload) => {
                 if (payload.eventType === 'INSERT') {
-                    const newTicket = mapTicket(payload.new);
+                    const newTicket = {
+                        id: payload.new.id,
+                        ticketId: payload.new.ticket_id,
+                        requesterName: payload.new.requester_name,
+                        requesterEmail: payload.new.requester_email,
+                        requesterPhone: payload.new.requester_phone,
+                        department: payload.new.department,
+                        subject: payload.new.subject,
+                        description: payload.new.description,
+                        priority: payload.new.priority,
+                        status: payload.new.status,
+                        createdAt: payload.new.created_at,
+                        assignedTo: payload.new.assigned_to,
+                        assignedToEmail: payload.new.assigned_to_email,
+                        resolution: payload.new.resolution
+                    };
                     setTickets(prev => [newTicket, ...prev]);
                     showToast(`New Ticket: ${newTicket.subject}`, 'success');
                     playNotificationSound();
                     sendBrowserNotification(newTicket);
                 } else if (payload.eventType === 'UPDATE') {
-                    const updatedTicket = mapTicket(payload.new);
+                    const updatedTicket = {
+                        id: payload.new.id,
+                        ticketId: payload.new.ticket_id,
+                        requesterName: payload.new.requester_name,
+                        requesterEmail: payload.new.requester_email,
+                        requesterPhone: payload.new.requester_phone,
+                        department: payload.new.department,
+                        subject: payload.new.subject,
+                        description: payload.new.description,
+                        priority: payload.new.priority,
+                        status: payload.new.status,
+                        createdAt: payload.new.created_at,
+                        assignedTo: payload.new.assigned_to,
+                        assignedToEmail: payload.new.assigned_to_email,
+                        resolution: payload.new.resolution
+                    };
                     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
 
                     // Update selected ticket if it's the one being modified
@@ -474,40 +509,93 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     };
 
-    const executeStatusUpdate = async (ticketId: number, nextStatus: string) => {
+    const executeStatusUpdate = async (ticketId: number, nextStatus: string, forcedNote?: string) => {
         setIsActionLoading(true);
         try {
-            let finalResolution = resolutionNote;
+            let finalResolution = forcedNote || resolutionNote;
             if (nextStatus === 'Resolved') {
                 const now = new Date().toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
                 }).replace(',', '');
                 if (!finalResolution.includes('[Resolved on:')) {
                     finalResolution = `${finalResolution}\n\n[Resolved on: ${now}]`;
                 }
             }
-            const { error } = await supabase.from('helpdesk_tickets').update({
-                status: nextStatus,
-                resolution: finalResolution,
-                assigned_to: selectedTicket.assignedTo || currentUser?.fullName || 'IT Staff',
-                assigned_to_email: currentUser?.email
-            }).eq('id', ticketId);
-            if (error) throw error;
-            showToast(`Status updated to ${nextStatus}`);
+
+            console.log(`[HelpdeskUpdate] STAGE 1: Claiming/Verifying Ticket ${ticketId}`);
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const userEmail = session?.user?.email;
+
+            // Check current DB state before acting
+            const { data: dbRow } = await supabase.from('helpdesk_tickets').select('*').eq('id', ticketId).single();
+            console.log("[HelpdeskUpdate] Current DB State:", dbRow);
+
+            const isUnassigned = !dbRow?.assigned_to_email;
+
+            // Step 1: Claim the ticket if unassigned or assigned to someone else
+            // This ensures we satisfy (assigned_to_email = auth.email()) RLS if it exists
+            if (isUnassigned || dbRow.assigned_to_email !== userEmail) {
+                console.log("[HelpdeskUpdate] Ticket requires assignment. Attempting Claim...");
+                const { error: claimError, status: claimStatus } = await supabase
+                    .from('helpdesk_tickets')
+                    .update({
+                        assigned_to: currentUser?.fullName || 'Support Staff',
+                        assigned_to_email: userEmail
+                    })
+                    .eq('id', ticketId);
+
+                console.log(`[HelpdeskUpdate] Claim Result Code: ${claimStatus}`, claimError || 'Success');
+                if (claimError) throw new Error(`Claim failed: ${claimError.message}`);
+
+                // Immediate verification of claim
+                const { data: claimedRow } = await supabase.from('helpdesk_tickets').select('assigned_to_email').eq('id', ticketId).single();
+                if (claimedRow?.assigned_to_email !== userEmail) {
+                    throw new Error("Claim Verification Failed: RLS likely prevented you from assigning this ticket to yourself.");
+                }
+                console.log("[HelpdeskUpdate] Claim Verified.");
+            }
+
+            // Step 2: Now update the status (now that we are definitely the owner)
+            console.log(`[HelpdeskUpdate] STAGE 2: Updating Status to ${nextStatus}`);
+            const { error: statusError, status: statusStatus } = await supabase
+                .from('helpdesk_tickets')
+                .update({
+                    status: nextStatus,
+                    resolution: finalResolution
+                })
+                .eq('id', ticketId);
+
+            console.log(`[HelpdeskUpdate] Status Update Result Code: ${statusStatus}`, statusError || 'Success');
+            if (statusError) throw statusError;
+
+            // Step 3: Final Verification
+            const { data: finalRow } = await supabase.from('helpdesk_tickets').select('status').eq('id', ticketId).single();
+            console.log("[HelpdeskUpdate] Final DB Status:", finalRow?.status);
+
+            if (finalRow?.status !== nextStatus) {
+                throw new Error(`State Mismatch: Database accepted status update but value remains '${finalRow?.status}'. This might be a DB Trigger rollback.`);
+            }
+
+            showToast(`Ticket ${nextStatus} successfully`);
             setIsSolveConfirmOpen(false);
+
             await fetchTickets();
+
             if (selectedTicket?.id === ticketId) {
-                setSelectedTicket(prev => prev ? { ...prev, status: nextStatus as any, resolution: finalResolution, assignedTo: prev.assignedTo || currentUser?.fullName } : null);
+                setSelectedTicket(prev => prev ? {
+                    ...prev,
+                    status: nextStatus as any,
+                    resolution: finalResolution,
+                    assignedTo: currentUser?.fullName || prev.assignedTo,
+                    assignedToEmail: userEmail || prev.assignedToEmail
+                } : null);
                 setResolutionNote(finalResolution);
             }
 
             // Notify Requester on Resolution
-            if (nextStatus === 'Resolved' && selectedTicket.requesterEmail) {
+            if (nextStatus === 'Resolved' && selectedTicket?.requesterEmail) {
                 await supabase.from('notifications').insert([{
                     user_email: selectedTicket.requesterEmail,
                     title: 'Ticket Resolved',
@@ -517,7 +605,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 }]);
             }
         } catch (err: any) {
-            showToast(err.message, 'error');
+            console.error("[HelpdeskUpdate] FATAL ERROR:", err);
+            showToast(err.message || "Failed to save status", 'error');
         } finally {
             setIsActionLoading(false);
         }
@@ -914,7 +1003,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     </div>
                 )
             }
-            <DangerConfirmModal isOpen={isSolveConfirmOpen} onClose={() => setIsSolveConfirmOpen(false)} onConfirm={() => executeStatusUpdate(selectedTicket.id, 'Resolved')} title="Confirm Resolution" message="Are you sure you want to mark this as Solved? This action is permanent and the ticket node will be finalized." isLoading={isActionLoading} />
+            <DangerConfirmModal isOpen={isSolveConfirmOpen} onClose={() => setIsSolveConfirmOpen(false)} onConfirm={() => executeStatusUpdate(selectedTicket.id, 'Resolved', resolutionNote)} title="Confirm Resolution" message="Are you sure you want to mark this as Solved? This action is permanent and the ticket node will be finalized." isLoading={isActionLoading} />
         </div >
     );
 };

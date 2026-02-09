@@ -183,7 +183,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                             <div>
                                 <label className={labelClass}>Requester Name</label>
                                 <input type="text" className={inputClass} value={formData.user || ''} onChange={e => setFormData({ ...formData, user: e.target.value })} />
@@ -200,33 +200,6 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                 <input type="text" className={inputClass} value={formData.vendor || ''} onChange={e => setFormData({ ...formData, vendor: e.target.value })} />
                             </div>
                             <div>
-                                <label className={labelClass}>Platform</label>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="radio"
-                                            name="platform"
-                                            value="Vendor"
-                                            checked={formData.platform === 'Vendor'}
-                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Vendor</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="radio"
-                                            name="platform"
-                                            value="Market Place"
-                                            checked={formData.platform === 'Market Place'}
-                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Market Place</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
                                 <label className={labelClass}>Payment Method</label>
                                 <select
                                     className={inputClass}
@@ -239,7 +212,51 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                     <option value="Debit/CC">Debit/CC</option>
                                 </select>
                             </div>
-                            <div className="md:col-span-2">
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                            <div>
+                                <label className={labelClass}>Category</label>
+                                <select className={inputClass} value={formData.category || ''} onChange={e => setFormData({ ...formData, category: e.target.value })} required>
+                                    <option value="">- {t('pilih')} -</option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Software & License">Software & License</option>
+                                    <option value="Cloud & Hosting">Cloud & Hosting</option>
+                                    <option value="Network & Internet">Network & Internet</option>
+                                    <option value="Maintenance & Support">Maintenance & Support</option>
+                                    <option value="IT Services">IT Services</option>
+                                    <option value="Security">Security</option>
+                                    <option value="Subscription">Subscription</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Platform</label>
+                                <div className="flex items-center gap-4 mt-2 h-[38px]">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="platform"
+                                            value="Vendor"
+                                            checked={formData.platform === 'Vendor'}
+                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Vendor</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="platform"
+                                            value="Market Place"
+                                            checked={formData.platform === 'Market Place'}
+                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Market</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
                                 <label className={labelClass}>Evidence / Drive Link</label>
                                 <input
                                     type="url"
@@ -262,7 +279,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
                                 <Calculator size={14} /> Financial Data Entry
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
                                 <div>
                                     <label className={labelClass}>Base Price</label>
                                     <input
@@ -340,7 +357,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                     </div>
 
                                     {(formData.items || []).length > 0 ? (
-                                        <div className="space-y-4">
+                                        <div className="space-y-6">
                                             {(formData.items || []).map((item, idx) => (
                                                 <div key={idx} className="p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm relative group">
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -374,7 +391,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                                                         <div>
                                                             <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Qty</label>
                                                             <input
@@ -434,7 +451,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                     </div>
 
                                                     {/* Row Diskon */}
-                                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50 dark:border-slate-800">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-50 dark:border-slate-800">
                                                         <div className="bg-rose-50/50 dark:bg-rose-900/10 p-3 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
                                                             <label className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1.5 block">Kupon Diskon Barang (-)</label>
                                                             <input
@@ -483,18 +500,18 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                     )}
                                 </div>
 
-                                <div className="md:col-span-5 flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mt-4">
+                                <div className="md:col-span-5 flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mt-4 gap-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl flex items-center justify-center">
+                                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
                                             <ShieldCheck size={24} />
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Calculation</p>
-                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Sum of all entered fields</p>
+                                            <p className="text-[10px] md:text-sm font-bold text-slate-600 dark:text-slate-400">Sum of all entered fields</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-3xl font-black text-blue-600">Rp {new Intl.NumberFormat('id-ID').format(formData.subtotal || 0)}</p>
+                                    <div className="text-left md:text-right">
+                                        <p className="text-2xl md:text-3xl font-black text-blue-600">Rp {new Intl.NumberFormat('id-ID').format(formData.subtotal || 0)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -519,7 +536,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             <h3 className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                 <CheckCircle2 size={14} /> Document Checklist
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 {Object.entries({
                                     prForm: 'PR Form',
                                     cashAdvance: 'Cash Advance',
