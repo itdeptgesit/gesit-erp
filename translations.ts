@@ -174,7 +174,10 @@ export const translations = {
     serverTime: 'Time',
     version: 'V',
     managedBy: 'IT Ops',
-    privacy: 'Policy'
+    privacy: 'Policy',
+    auditLogs: 'Audit Logs',
+    masterData: 'Master Data',
+    permissions: 'Permissions'
   },
   id: {
     // General
@@ -346,7 +349,10 @@ export const translations = {
     serverTime: 'Waktu',
     version: 'V',
     managedBy: 'IT Ops',
-    privacy: 'Kebijakan'
+    privacy: 'Kebijakan',
+    auditLogs: 'Log Audit',
+    masterData: 'Data Master',
+    permissions: 'Hak Akses'
   }
 };
 

@@ -116,7 +116,8 @@ const InternalApp: React.FC = () => {
   const [appSettings, setAppSettings] = useState({
     name: 'GESIT WORK',
     logo: '/image/logo.png',
-    primaryColor: '#2563eb'
+    primaryColor: '#2563eb',
+    fontFamily: 'Inter'
   });
 
   const [language, setLanguageState] = useState<Language>('en');
@@ -200,13 +201,17 @@ const InternalApp: React.FC = () => {
           const newSettings = {
             name: data.app_name || 'GESIT WORK',
             logo: data.logo_url || '/image/logo.png',
-            primaryColor: data.primary_color || '#2563eb'
+            primaryColor: data.primary_color || '#2563eb',
+            fontFamily: data.font_family || 'Inter'
           };
           setAppSettings(newSettings);
 
           // Apply primary color to CSS variables
           document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
           document.documentElement.style.setProperty('--color-primary', newSettings.primaryColor);
+
+          // Apply font family
+          document.documentElement.style.setProperty('--font-sans', newSettings.fontFamily);
         }
       } catch (err) { /* ignore */ }
     };
