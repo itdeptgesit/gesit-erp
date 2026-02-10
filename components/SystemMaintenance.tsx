@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 // Added Briefcase to the lucide-react imports to fix the "Cannot find name 'Briefcase'" error
-import { Trash2, AlertCircle, Database, ShieldAlert, CheckCircle2, RefreshCcw, Zap, Briefcase, LifeBuoy, Phone, Megaphone } from 'lucide-react';
+import { Trash2, AlertCircle, Database, ShieldAlert, CheckCircle2, RefreshCcw, Zap, Briefcase, LifeBuoy, Phone, Megaphone, History, ShieldCheck, LayoutTemplate, Users, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { useLanguage } from '../translations';
@@ -18,22 +18,62 @@ export const SystemMaintenance: React.FC = () => {
         setIsLoading(true);
         try {
             const tables = Array.isArray(table) ? table : [table];
-            for (const t of tables) {
-                const { error } = await supabase.from(t).delete().neq('id', -1);
-                if (error) throw error;
+
+            // Use RPC function to bypass RLS
+            const { data, error } = await supabase.rpc('wipe_tables', {
+                table_names: tables
+            });
+
+            if (error) {
+                console.error('RPC Error:', error);
+                throw new Error(`Failed to wipe tables: ${error.message}`);
             }
-            setStatusMsg({ text: `Records purged successfully.`, type: 'success' });
+
+            console.log('Wipe result:', data);
+
+            if (data && data.success) {
+                const failures = data.results?.filter((r: any) => !r.success);
+                if (failures?.length > 0) {
+                    const errorMsg = failures.map((f: any) => `${f.table}: ${f.error}`).join(' | ');
+                    throw new Error(`Partial failure: ${errorMsg}`);
+                }
+
+                setStatusMsg({
+                    text: `Successfully purged ${data.total_deleted} record(s).`,
+                    type: 'success'
+                });
+            } else {
+                throw new Error(data?.error || 'Unknown error occurred');
+            }
+
             setConfirmModal(null);
         } catch (err: any) {
-            setStatusMsg({ text: err.message, type: 'error' });
+            console.error('Wipe error:', err);
+            setStatusMsg({ text: `Error: ${err.message}`, type: 'error' });
         } finally {
             setIsLoading(false);
             setTimeout(() => setStatusMsg(null), 5000);
         }
     };
 
+    const SAFE_WIPE_ORDER = [
+        // Leaf Nodes (Transaction Data)
+        'it_asset_loans', 'switch_ports', 'purchase_records', 'files',
+        'helpdesk_tickets', 'activity_logs', 'weekly_plans', 'purchase_plans', 'announcements',
+        'user_activity_logs',
+
+        // Mid-Level Nodes (Assets & Infrastructure)
+        'it_assets', 'network_switches', 'phone_extensions',
+
+        // Core User Data (Must be deleted before Departments/Groups)
+        'user_accounts',
+
+        // Root Nodes (Master Data)
+        'user_groups', 'departments', 'asset_categories', 'companies'
+    ];
+
     const modules = [
-        { title: t('assets'), table: ['it_assets', 'it_asset_loans'], icon: Database, color: 'blue' },
+        { title: t('assets'), table: ['it_asset_loans', 'it_assets'], icon: Database, color: 'blue' },
         { title: t('helpdesk'), table: 'helpdesk_tickets', icon: LifeBuoy, color: 'sky' },
         { title: t('activity'), table: 'activity_logs', icon: RefreshCcw, color: 'indigo' },
         { title: t('weekly'), table: 'weekly_plans', icon: ShieldAlert, color: 'purple' },
@@ -42,7 +82,12 @@ export const SystemMaintenance: React.FC = () => {
         { title: t('network'), table: ['switch_ports', 'network_switches'], icon: Zap, color: 'rose' },
         { title: t('extensionDirectory'), table: 'phone_extensions', icon: Phone, color: 'cyan' },
         { title: t('announcements'), table: 'announcements', icon: Megaphone, color: 'teal' },
-        { title: t('files'), table: 'files', icon: Database, color: 'slate' }
+        { title: t('files'), table: 'files', icon: Database, color: 'slate' },
+        { title: t('auditLogs'), table: 'user_activity_logs', icon: History, color: 'amber' },
+        { title: t('masterData'), table: ['departments', 'companies', 'asset_categories'], icon: LayoutTemplate, color: 'blue' },
+        { title: t('permissions'), table: 'user_groups', icon: ShieldCheck, color: 'indigo' },
+        { title: t('users'), table: 'user_accounts', icon: Users, color: 'slate' },
+        { title: t('admin'), table: 'system_settings', icon: Settings, color: 'zinc' }
     ];
 
     return (
@@ -96,7 +141,7 @@ export const SystemMaintenance: React.FC = () => {
                         {t('totalResetDesc')}
                     </p>
                     <button
-                        onClick={() => setConfirmModal({ open: true, type: 'TOTAL RESET', title: 'FULL SYSTEM WIPE', table: modules.map(m => Array.isArray(m.table) ? m.table : [m.table]).flat() as string[] })}
+                        onClick={() => setConfirmModal({ open: true, type: 'TOTAL RESET', title: 'FULL SYSTEM WIPE', table: SAFE_WIPE_ORDER })}
                         className="px-8 py-3 bg-rose-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-rose-700 shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
                         <AlertCircle size={16} /> {t('executePurge')}
