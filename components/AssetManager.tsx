@@ -14,7 +14,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { trackActivity } from '../lib/auditLogger';
 import * as XLSX from 'xlsx';
-import { StatCard } from './MainDashboard';
+import { StatCard } from './StatCard';
 
 interface AssetManagerProps {
   currentUser: UserAccount | null;

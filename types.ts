@@ -286,6 +286,7 @@ export interface PhoneExtension {
   floor: number;
   role?: string;
   pin?: string;
+  photo_url?: string;
 }
 export interface AuditLog {
   id: number;

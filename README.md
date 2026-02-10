@@ -1,285 +1,158 @@
-# GESIT WORK 🚀
+# GESIT WORK - Enterprise Work Platform
 
-**Modern Enterprise Work Platform - Streamline Your Operations**
+![GESIT WORK Logo](/public/image/logo.png)
 
-GESIT WORK is a comprehensive enterprise resource planning (ERP) system designed for modern businesses. Built with cutting-edge technologies, it provides a seamless experience for managing assets, infrastructure, helpdesk operations, and more.
-
-![Version](https://img.shields.io/badge/version-4.1.2-blue.svg)
-![React](https://img.shields.io/badge/React-19.0-61dafb.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg)
-![License](https://img.shields.io/badge/license-Proprietary-red.svg)
+**GESIT WORK** is a robust, enterprise-grade Internal Work Platform designed to centralize and streamline IT operations, asset management, procurement, and helpdesk services. Built with modern web technologies, it offers a secure, responsive, and intuitive interface for managing organizational resources.
 
 ---
 
-## ✨ Features
+## 🚀 Table of Contents
 
-### � Core Modules
-
-#### � **Dashboard**
-- Real-time business metrics and KPIs
-- Interactive data visualizations with Recharts
-- Smart greetings and contextual insights
-- Quick access to all modules
-
-#### 🌐 **Infrastructure Documentation V3.0**
-- **Interactive Network Topology**: Visual network mapping with drag-and-drop
-- **Smart Path Tracing**: Automatic route highlighting from devices to core
-- **IPAM Integration**: IP address and MAC tracking
-- **VLAN Visualization**: Color-coded network segmentation
-- **Search & Filter**: Intelligent node highlighting and dimming
-- **Export Capabilities**: PNG/JPEG topology exports
-
-#### 📦 **Asset & Inventory Management**
-- Complete asset lifecycle tracking
-- QR code generation for asset identification
-- Asset loan/borrow workflow
-- Maintenance scheduling and history
-- Custom categorization and tagging
-- Advanced search and filtering
-
-#### 🎫 **Helpdesk & Service Desk**
-- Public ticket submission portal
-- Real-time ticket notifications
-- Admin dashboard for ticket management
-- Live chat integration
-- SLA tracking and reporting
-- Ticket categorization and prioritization
-
-#### ⚙️ **System Settings**
-- **Modern Tab Interface**: Organized settings across General, Appearance, Security, and System tabs
-- **17 Font Options**: Choose from popular fonts including Inter, Roboto, Poppins, Google Sans, Ubuntu, and more
-- **Theme Customization**: 5 color presets + custom color picker
-- **Security Policies**: Session timeout, login attempts, password requirements
-- **Data Management**: Audit log export and cache management
-- **Organization Settings**: Branding, contact info, and company details
-
-#### 👥 **User Management**
-- Role-based access control (Admin, User, Guest)
-- User activity logging and audit trails
-- Profile management
-- Permission management
+- [Key Features](#-key-features)
+  - [Asset Management](#-asset-management)
+  - [Helpdesk System](#-helpdesk-system)
+  - [Procurement & Finance](#-procurement--finance)
+  - [Network Infrastructure](#-network-infrastructure)
+  - [Administration & Security](#-administration--security)
+- [Technical Architecture](#-technical-architecture)
+- [Installation & Setup](#-installation--setup)
+- [Configuration](#-configuration)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
 
 ---
 
-## 🛠️ Technology Stack
+## 🌟 Key Features
+
+### 📦 Asset Management
+Complete lifecycle management for IT and organizational assets.
+- **Inventory Tracking:** Log hardware details (Specs, Serial Numbers, Purchase Date).
+- **Life Cycle Status:** Track assets from *New* -> *Active* -> *Broken* -> *Disposed*.
+- **Asset Loans:** Managed workflow for temporary asset lending to employees.
+- **QR Code Integration:** Generate QRs for instant mobile access to asset details.
+- **Public View:** External-facing pages for verifying asset ownership and status.
+
+### 🎫 Helpdesk System
+A centralized ticketing system for IT support.
+- **Ticket Management:** Create, assign, and track support requests.
+- **SLA Tracking:** Monitor priority levels (*Critical, High, Medium, Low*).
+- **Interactive Communication:** Comment threads between requesters and IT staff.
+- **Resolution Knowledge Base:** Archive solutions for future reference.
+
+### 💰 Procurement & Finance
+Streamlined purchasing workflows.
+- **Purchase Planning:** Submit and approve budget plans for upcoming quarters.
+- **Purchase Records:** Detailed logging of transactions, vendors, and costs.
+- **Approval Workflows:** Multi-stage approval (Supervisor -> Manager -> Finance).
+- **Document Management:** Attach invoices, receipts, and delivery notes.
+
+### 🌐 Network Infrastructure
+Visual tools for network administrators.
+- **Topology Diagrams:** Interactive visualization of network nodes and links.
+- **Switch Management:** Manage port status, VLANs, and connected devices.
+- **Wiring Schedules:** Document structured cabling and patch panel connections.
+
+### 🛡️ Administration & Security
+- **RBAC (Role-Based Access Control):** Granular permissions for Admins, Staff, and Users.
+- **Audit Logging:** Comprehensive trails of all user actions for compliance.
+- **System Maintenance:** Tools for data sanitation and system resets (*Nucleus Wipe*).
+- **Dynamic Theming:** Customizable branding (Logo, Colors, Fonts) via System Settings.
+
+---
+
+## 🏗️ Technical Architecture
 
 ### Frontend
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite 6.0
-- **Styling**: Tailwind CSS 4.1 + Custom CSS
-- **Icons**: Lucide React
-- **Charts**: Recharts
-- **Animations**: Framer Motion
-- **Routing**: React Router DOM 7
+- **Framework:** [React 19](https://react.dev/) with [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Routing:** [React Router v7](https://reactrouter.com/)
+- **State Management:** React Hooks & Context API
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **UI Components:** [Lucide React](https://lucide.dev/) (Icons), [Framer Motion](https://www.framer.com/motion/) (Animations)
 
-### Backend & Services
-- **BaaS**: Supabase (PostgreSQL, Auth, Realtime, Storage)
-- **Authentication**: Supabase Auth with RLS
-- **Database**: PostgreSQL with Row Level Security
-
-### Utilities
-- **QR Codes**: qrcode library
-- **Image Export**: html-to-image
-- **Excel Export**: xlsx
-- **Emojis**: Lobehub Fluent Emoji
+### Backend & Data
+- **Platform:** [Supabase](https://supabase.com/) (BaaS)
+- **Database:** PostgreSQL
+- **Authentication:** Supabase Auth (Email/Password)
+- **Storage:** Supabase Storage (for Assets/Documents)
+- **Security:** Row Level Security (RLS) policies acting as the authorization layer.
 
 ---
 
-## 🚀 Getting Started
+## � Installation & Setup
 
 ### Prerequisites
-- **Node.js**: v18 or higher
-- **npm** or **yarn**
-- **Supabase Account**: For backend services
+- Node.js (v18 or higher)
+- npm (v9 or higher)
 
-### Installation
+### Steps
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/itdeptgesit/gesit-erp.git
-   cd gesit-erp
-   ```
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/your-org/gesit-work.git
+    cd gesit-work
+    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-3. **Environment Configuration**
-   
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
+3.  **Environment Configuration**
+    Create a `.env` file in the root directory. You can copy the structure from `.env.example` if available.
+    ```env
+    VITE_SUPABASE_URL=your_supabase_project_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+    *Note: The application also supports runtime environment injection via `window.process.env` in `index.html` for specific deployment scenarios.*
 
-4. **Database Setup**
-   
-   Run the SQL migration files in your Supabase SQL editor:
-   - `update_system_settings.sql`
-   - `update_activity_logs.sql`
-   - `update_it_assets.sql`
-   - `add_font_to_settings.sql`
-   - `add_more_settings_columns.sql`
-
-5. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-   
-   The application will be available at `http://localhost:5173`
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-Preview production build:
-```bash
-npm run preview
-```
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    Access the app at `http://localhost:5173`.
 
 ---
 
-## � Project Structure
+## ⚙️ Configuration
 
-```
-gesit-erp/
-├── components/          # React components
-│   ├── Dashboard.tsx
-│   ├── SystemSettings.tsx
-│   ├── AssetManagement.tsx
-│   ├── InfrastructureDoc.tsx
-│   └── ...
-├── lib/                # Utility libraries
-│   ├── supabaseClient.ts
-│   └── auditLogger.ts
-├── public/             # Static assets
-│   └── image/
-├── types.ts            # TypeScript type definitions
-├── constants.ts        # Application constants
-├── translations.ts     # i18n translations
-├── index.css          # Global styles
-├── App.tsx            # Main application component
-└── index.tsx          # Application entry point
-```
+### System Settings
+The application allows dynamic configuration without redeployment via the **System Settings** module (Admin only).
+- **Branding:** Change App Name, Logo, Favicon.
+- **Appearance:** Set Primary Color, Font Family (Inter, Roboto, etc.).
+- **Security:** Configure Session Timeout, Max Login Attempts.
+
+### Database Migrations
+SQL migrations are stored in the root directory (e.g., `migration.sql`, `nucleus_wipe_migration.sql`).
+To apply migrations:
+1.  Go to Supabase Dashboard -> SQL Editor.
+2.  Copy/Paste the content of the SQL file.
+3.  Run the query.
 
 ---
 
-## 🎨 Customization
+## 🚀 Deployment
 
-### Fonts
-The application supports 17 Google Fonts:
-- Inter, Roboto, Poppins, Lato, Montserrat
-- Open Sans, Nunito, Work Sans, Raleway
-- Source Sans Pro, Outfit, Plus Jakarta Sans
-- DM Sans, Space Grotesk, Manrope
-- Ubuntu, Google Sans
+The project is optimized for deployment on **Vercel**.
 
-Change fonts in **System Settings → Appearance → Typography**
+1.  Push your code to a Git repository (GitHub/GitLab).
+2.  Import the project into Vercel.
+3.  Add the Environment Variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the Vercel Project Settings.
+4.  Deploy.
 
-### Theme Colors
-Choose from 5 preset colors or use the custom color picker:
-- Default Blue (#2563eb)
-- Royal Indigo (#4f46e5)
-- Rose Red (#e11d48)
-- Emerald Green (#059669)
-- Violet Purple (#7c3aed)
-
-Customize in **System Settings → Appearance → Theme Color**
-
----
-
-## 📈 Deployment
-
-### Vercel (Recommended)
-
-1. **Install Vercel CLI**
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Deploy**
-   ```bash
-   vercel
-   ```
-
-The project includes a `vercel.json` configuration for optimized deployment.
-
-### Other Platforms
-The application can be deployed to any static hosting service:
-- Netlify
-- Cloudflare Pages
-- AWS S3 + CloudFront
-- GitHub Pages
-
----
-
-## 🔒 Security Features
-
-- Row Level Security (RLS) on all database tables
-- Role-based access control
-- Session timeout management
-- Password strength requirements
-- Audit logging for all critical actions
-- Secure authentication with Supabase Auth
-
----
-
-## 📊 Database Schema
-
-Key tables:
-- `user_accounts` - User profiles and authentication
-- `system_settings` - Global application settings
-- `it_assets` - Asset inventory
-- `infrastructure_devices` - Network devices
-- `helpdesk_tickets` - Support tickets
-- `user_activity_logs` - Audit trail
+*A `vercel.json` file is included to handle client-side routing rewrites.*
 
 ---
 
 ## 🤝 Contributing
 
-This is a proprietary project for internal use. For feature requests or bug reports, please contact the IT Department.
+1.  **Branching:** Use descriptive branch names (e.g., `feature/add-dark-mode`, `fix/login-bug`).
+2.  **Commits:** Follow conventional commit messages.
+3.  **Pull Requests:** Submit PRs for review before merging to `main`.
 
 ---
 
-## 📝 License
+## 📄 License
 
-**Proprietary / Internal Use Only**
-
-© 2024-2026 IT DEPT GESIT. All rights reserved.
-
----
-
-## 👨‍💻 Development Team
-
-**IT Department GESIT**
-- Enterprise Solutions Development
-- Infrastructure Management
-- System Administration
-
----
-
-## 📞 Support
-
-For technical support or questions:
-- **Email**: Check System Settings for configured support email
-- **Phone**: Check System Settings for configured support phone
-- **Helpdesk**: Use the built-in ticketing system
-
----
-
-## 🎯 Roadmap
-
-- [ ] Mobile application (React Native)
-- [ ] Advanced analytics dashboard
-- [ ] API documentation
-- [ ] Multi-language support expansion
-- [ ] Dark mode enhancements
-- [ ] Offline mode support
-
----
-
-**Built with ❤️ by IT DEPT GESIT**
+Proprietary Software. Internal Use Only.
+Copyright © 2026 GESIT WORK. All rights reserved.

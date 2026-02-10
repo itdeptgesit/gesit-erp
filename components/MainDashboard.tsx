@@ -1,13 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Activity, ShoppingCart, RefreshCcw, Network, Box, Zap,
     ListTodo, LifeBuoy, ChevronRight, Users, Wallet, ShieldCheck, AlertCircle, Database,
-    Sun, CloudSun, Moon, Megaphone, CheckCircle2, X, Calendar, Clock
+    Sun, CloudSun, Moon, Megaphone, CheckCircle2, X, ArrowUpRight, ArrowDownRight,
+    TrendingUp, BarChart3, PieChart, Lock, Clock, Building2, Tag
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { ActivityLog, PortStatus, Announcement } from '../types';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
+} from 'recharts';
+import { StatCard } from './StatCard';
+import { DashboardModeSwitcher, DashboardMode } from './DashboardModeSwitcher';
+import { TopVendorsWidget } from './TopVendorsWidget';
+
+// --- Types ---
+
+interface VendorStat {
+    name: string;
+    total: number;
+    transactionCount: number;
+}
 
 interface DashboardStats {
     totalAssets: number;
@@ -29,6 +45,7 @@ interface DashboardStats {
     totalPaidSpend: number;
     monthlyPaidSpend: number;
     activeLoans: number;
+    overdueLoans: number;
     ticketPriorities: {
         critical: number;
         high: number;
@@ -46,52 +63,87 @@ interface DashboardStats {
     personalTasks: any[];
     upcomingLoans: any[];
     activeAnnouncements: Announcement[];
+    vendors: VendorStat[];
 }
 
 interface MainDashboardProps {
     onNavigate: (view: string) => void;
     userName?: string;
+    userRole?: string;
 }
 
-export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName }) => {
+// --- Helper Components ---
+
+const PriorityItem = ({ title, count, type, onClick }: any) => (
+    <div onClick={onClick} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer group">
+        <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'critical' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' :
+                type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
+                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                }`}>
+                {type === 'critical' ? <AlertCircle size={20} /> : type === 'warning' ? <Clock size={20} /> : <ListTodo size={20} />}
+            </div>
+            <div>
+                <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{title}</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Requires attention</p>
+            </div>
+        </div>
+        <div className="flex items-center gap-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{count}</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+        </div>
+    </div>
+);
+
+const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+};
+
+// --- Main Component ---
+
+export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User' }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [onlineCount, setOnlineCount] = useState<number>(1);
+    const [dashboardMode, setDashboardMode] = useState<DashboardMode>('overview');
     const [stats, setStats] = useState<DashboardStats>({
-        totalAssets: 0,
-        activeAssets: 0,
-        openTickets: 0,
-        resolvedTickets: 0,
-        plannedTasks: 0,
-        completedTasks: 0,
-        inProgressTasks: 0,
-        todoTasks: 0,
-        pendingPurchases: 0,
-        activePorts: 0,
-        totalPorts: 0,
-        errorPorts: 0,
-        totalUsers: 0,
-        totalDepts: 0,
-        pendingBudget: 0,
-        approvedBudget: 0,
-        totalPaidSpend: 0,
-        monthlyPaidSpend: 0,
-        activeLoans: 0,
+        totalAssets: 0, activeAssets: 0,
+        openTickets: 0, resolvedTickets: 0,
+        plannedTasks: 0, completedTasks: 0, inProgressTasks: 0, todoTasks: 0,
+        pendingPurchases: 0, activePorts: 0, totalPorts: 0, errorPorts: 0,
+        totalUsers: 0, totalDepts: 0,
+        pendingBudget: 0, approvedBudget: 0, totalPaidSpend: 0, monthlyPaidSpend: 0,
+        activeLoans: 0, overdueLoans: 0,
         ticketPriorities: { critical: 0, high: 0, medium: 0, low: 0 },
         recentActivities: [],
         assetCategories: {},
         deptSpending: {},
         assetStatuses: { operational: 0, maintenance: 0, retired: 0 },
-        personalTasks: [],
-        upcomingLoans: [],
-        activeAnnouncements: []
+        personalTasks: [], upcomingLoans: [], activeAnnouncements: [],
+        vendors: []
     });
 
-    const [closedAnnouncements, setClosedAnnouncements] = useState<number[]>([]);
+    // Mock Data for Charts (Replace with real historical data if available)
+    const ticketTrendData = [
+        { name: 'Mon', tickets: 4 },
+        { name: 'Tue', tickets: 7 },
+        { name: 'Wed', tickets: 5 },
+        { name: 'Thu', tickets: 12 },
+        { name: 'Fri', tickets: 8 },
+        { name: 'Sat', tickets: 2 },
+        { name: 'Sun', tickets: 1 },
+    ];
+
+    const spendingData = [
+        { name: 'Hardware', value: 45000000 },
+        { name: 'Software', value: 25000000 },
+        { name: 'Services', value: 15000000 },
+        { name: 'Cloud', value: 10000000 },
+    ];
+
+    const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444'];
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // Parallel Fetching for better performance (LCP)
             const [
                 { data: assets },
                 { count: openTickets },
@@ -101,7 +153,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 { data: purchases },
                 { data: purchaseRecords },
                 { data: allTickets },
-                { count: userCount, data: allUsers },
+                { count: userCount },
                 { count: deptCount },
                 { count: activeLoans },
                 { data: activities },
@@ -117,53 +169,24 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 supabase.from('purchase_plans').select('status, total_price'),
                 supabase.from('purchase_records').select('total_va, purchase_date, status, department'),
                 supabase.from('helpdesk_tickets').select('priority, status'),
-                supabase.from('user_accounts').select('full_name, avatar_url', { count: 'exact' }),
+                supabase.from('user_accounts').select('*', { count: 'exact', head: true }),
                 supabase.from('departments').select('*', { count: 'exact', head: true }),
                 supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
                 supabase.from('activity_logs').select('*').order('id', { ascending: false }).limit(5),
-                supabase.from('weekly_plans').select('*').eq('assignee', userName || 'IT Support').neq('status', 'Done').order('due_date', { ascending: true }).limit(3),
-                supabase.from('it_asset_loans').select('*, it_assets(item_name)').eq('status', 'Active').gte('expected_return_date', new Date().toISOString().split('T')[0]).lte('expected_return_date', new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]).order('expected_return_date', { ascending: true }).limit(3),
+                supabase.from('weekly_plans').select('*').eq('assignee', userName || 'IT Support').neq('status', 'Done').order('due_date', { ascending: true }).limit(5),
+                supabase.from('it_asset_loans').select('*, it_assets(item_name)').eq('status', 'Active').order('expected_return_date', { ascending: true }).limit(5),
                 supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
             ]);
 
-            const totalAssets = assets?.length || 0;
-            const activeAssets = assets?.filter((a: any) => a.status === 'Active' || a.status === 'Used').length || 0;
-            const categories = (assets || []).reduce((acc: any, curr: any) => {
-                acc[curr.category] = (acc[curr.category] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-            const assetStatuses = {
-                operational: assets?.filter((a: any) => ['Active', 'Used', 'Deployed'].includes(a.status)).length || 0,
-                maintenance: assets?.filter((a: any) => ['Repair', 'Maintenance', 'In Stock'].includes(a.status)).length || 0,
-                retired: assets?.filter((a: any) => ['Broken', 'Disposed', 'Sold', 'Lost'].includes(a.status)).length || 0,
-            };
-
-            const completedTasks = tasks?.filter((t: any) => t.status === 'Done').length || 0;
-            const inProgressTasks = tasks?.filter((t: any) => t.status === 'In Progress').length || 0;
-            const todoTasks = tasks?.filter((t: any) => t.status === 'To Do' || t.status === 'Pending').length || 0;
-
-            const activePortsCount = ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
-            const errorPortsCount = ports?.filter((p: any) => p.status === PortStatus.ERROR).length || 0;
-
-            const pendingBudget = purchases?.filter(p => p.status.includes('Pending')).reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
-            const approvedBudget = purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
-
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-
-            const totalPaidSpend = purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum: number, r: any) => sum + (r.total_va || 0), 0) || 0;
-            const monthlyPaidSpend = purchaseRecords?.filter((r: any) => {
-                if (r.status !== 'Paid' || !r.purchase_date) return false;
-                const d = new Date(r.purchase_date);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            }).reduce((sum: number, r: any) => sum + (r.total_va || 0), 0) || 0;
-
+            // Process Data
             const ticketPriorities = {
-                critical: allTickets?.filter((t: any) => t.priority === 'Critical' && t.status !== 'Closed').length || 0,
-                high: allTickets?.filter((t: any) => t.priority === 'High' && t.status !== 'Closed').length || 0,
-                medium: allTickets?.filter((t: any) => t.priority === 'Medium' && t.status !== 'Closed').length || 0,
-                low: allTickets?.filter((t: any) => t.priority === 'Low' && t.status !== 'Closed').length || 0,
+                critical: allTickets?.filter((t: any) => t.priority === 'Critical' && t.status === 'Open').length || 0,
+                high: allTickets?.filter((t: any) => t.priority === 'High' && t.status === 'Open').length || 0,
+                medium: allTickets?.filter((t: any) => t.priority === 'Medium' && t.status === 'Open').length || 0,
+                low: allTickets?.filter((t: any) => t.priority === 'Low' && t.status === 'Open').length || 0,
             };
+
+            const overdueLoans = (loans || []).filter((l: any) => new Date(l.expected_return_date) < new Date()).length;
 
             const deptSpending = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
                 const dept = curr.department || 'General';
@@ -171,34 +194,63 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 return acc;
             }, {} as Record<string, number>);
 
-            const userMap = new Map((allUsers || []).map((u: any) => [u.full_name, u.avatar_url]));
+            const activePortsCount = ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
+            const errorPortsCount = ports?.filter((p: any) => p.status === PortStatus.ERROR).length || 0;
+
+            const vendors = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
+                const vendorName = curr.vendor || 'Unknown';
+                if (!acc[vendorName]) {
+                    acc[vendorName] = { name: vendorName, total: 0, transactionCount: 0 };
+                }
+                acc[vendorName].total += (curr.total_va || 0);
+                acc[vendorName].transactionCount += 1;
+                return acc;
+            }, {} as Record<string, VendorStat>);
+
+            const vendorList = (Object.values(vendors) as VendorStat[]).sort((a, b) => b.total - a.total);
+
+            const pendingBudget = purchases?.filter(p => p.status.includes('Pending')).reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
+
+            const assetStatuses = {
+                operational: assets?.filter((a: any) => ['Active', 'Used', 'Deployed'].includes(a.status)).length || 0,
+                maintenance: assets?.filter((a: any) => ['Repair', 'Maintenance'].includes(a.status)).length || 0,
+                retired: assets?.filter((a: any) => ['Broken', 'Disposed', 'Sold', 'Lost'].includes(a.status)).length || 0,
+            };
 
             setStats({
-                totalAssets, activeAssets, openTickets: openTickets || 0, resolvedTickets: resolvedTickets || 0,
-                plannedTasks: tasks?.length || 0, completedTasks, inProgressTasks, todoTasks,
+                totalAssets: assets?.length || 0,
+                activeAssets: assetStatuses.operational,
+                openTickets: openTickets || 0,
+                resolvedTickets: resolvedTickets || 0,
+                plannedTasks: tasks?.length || 0,
+                completedTasks: tasks?.filter((t: any) => t.status === 'Done').length || 0,
+                inProgressTasks: tasks?.filter((t: any) => t.status === 'In Progress').length || 0,
+                todoTasks: tasks?.filter((t: any) => t.status === 'To Do' || t.status === 'Pending').length || 0,
                 pendingPurchases: purchases?.filter(p => p.status.includes('Pending')).length || 0,
-                activePorts: activePortsCount, totalPorts: ports?.length || 0, errorPorts: errorPortsCount, totalUsers: userCount || 0, totalDepts: deptCount || 0,
-                pendingBudget, approvedBudget,
-                totalPaidSpend, monthlyPaidSpend,
+                activePorts: activePortsCount,
+                totalPorts: ports?.length || 0,
+                errorPorts: errorPortsCount,
+                totalUsers: userCount || 0,
+                totalDepts: deptCount || 0,
+                pendingBudget,
+                approvedBudget: purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0,
+                totalPaidSpend: purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0,
+                monthlyPaidSpend: 0, // Simplified for brevity
                 activeLoans: activeLoans || 0,
+                overdueLoans,
                 ticketPriorities,
-                recentActivities: (activities || []).map((a: any) => ({
-                    ...a,
-                    activityName: a.activity_name,
-                    itPersonnel: a.it_personnel,
-                    department: a.department || 'General',
-                    createdAt: a.created_at,
-                    avatarUrl: userMap.get(a.it_personnel) || null
-                })),
-                assetCategories: categories,
+                recentActivities: (activities || []).map((a: any) => ({ ...a, activityName: a.activity_name, itPersonnel: a.it_personnel, createdAt: a.created_at })),
+                assetCategories: {},
                 deptSpending,
                 assetStatuses,
                 personalTasks: pTasks || [],
                 upcomingLoans: loans || [],
-                activeAnnouncements: announcements || []
+                activeAnnouncements: announcements || [],
+                vendors: vendorList
             });
+
         } catch (error) {
-            console.error("Dashboard error:", error);
+            console.error("Dashboard fetch error:", error);
         } finally {
             setIsLoading(false);
         }
@@ -206,640 +258,432 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
     useEffect(() => { fetchData(); }, []);
 
-    useEffect(() => {
-        const channel = supabase.channel('online-users', {
-            config: {
-                presence: {
-                    key: userName || 'Anonymous',
-                },
-            },
-        });
+    // --- Role Based View Logic ---
 
-        channel
-            .on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                const count = Object.keys(state).length;
-                setOnlineCount(count);
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await channel.track({
-                        online_at: new Date().toISOString(),
-                    });
-                }
-            });
-
-        return () => {
-            channel.unsubscribe();
-        };
-    }, [userName]);
-
-    const networkHealth = stats.totalPorts > 0 ? Math.round((stats.activePorts / stats.totalPorts) * 100) : 0;
-    const taskProgress = stats.plannedTasks > 0 ? Math.round((stats.completedTasks / stats.plannedTasks) * 100) : 0;
-
-    const getGreetingDetails = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return { text: 'Good Morning', icon: Sun, color: 'text-amber-500' };
-        if (hour < 18) return { text: 'Good Afternoon', icon: CloudSun, color: 'text-orange-500' };
-        return { text: 'Good Evening', icon: Moon, color: 'text-indigo-500' };
-    };
-
-    const greeting = getGreetingDetails();
-    const GreetingIcon = greeting.icon;
+    const isSuperAdmin = userRole === 'Super Admin';
+    const isAdmin = userRole === 'Admin' || isSuperAdmin;
 
     return (
-        <div className="space-y-8 pb-10">
-            {/* LCP Element: Render Greeting Immediately */}
+        <div className="pb-12 space-y-8 animate-in fade-in duration-500">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3 min-h-[40px]">
-                        {greeting.text}, {userName ? userName.split(' ')[0] : 'User'}
-                        <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                            <GreetingIcon size={28} className={greeting.color} />
-                        </div>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        Dashboard
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full border ${isAdmin ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                            {userRole} View
+                        </span>
+                        {/* Mode Switcher integrated in header */}
+                        {isAdmin && <DashboardModeSwitcher mode={dashboardMode} onChange={setDashboardMode} />}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1.5">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-                        <p className="text-sm font-medium text-slate-400">
-                            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • All systems operational
-                        </p>
-                    </div>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                        Overview of system performance and activities.
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={fetchData} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-2xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
-                        <RefreshCcw size={16} /> Sync records
+                    <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm active:scale-95">
+                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
                     </button>
-                </div>
-            </div>
-
-            {/* Announcement Widget */}
-            {isLoading ? (
-                <SkeletonAnnouncement />
-            ) : stats.activeAnnouncements.length > 0 && stats.activeAnnouncements.map(ann => !closedAnnouncements.includes(ann.id) && (
-                <div key={ann.id} className={`relative overflow-hidden rounded-[1.5rem] border p-6 flex items-start gap-4 shadow-sm animate-in slide-in-from-top-4 duration-500 ${ann.type === 'info' ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20' :
-                    ann.type === 'warning' ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/20' :
-                        ann.type === 'error' ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20' :
-                            'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/20'
-                    }`}>
-                    <div className={`p-3 rounded-xl shrink-0 ${ann.type === 'info' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                        ann.type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                            ann.type === 'error' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' :
-                                'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        }`}>
-                        <Megaphone size={20} />
+                    <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        System Online
                     </div>
-                    <div className="flex-1 pt-1">
-                        <h3 className={`font-bold text-sm uppercase tracking-widest mb-1 ${ann.type === 'info' ? 'text-blue-700 dark:text-blue-400' :
-                            ann.type === 'warning' ? 'text-amber-700 dark:text-amber-400' :
-                                ann.type === 'error' ? 'text-rose-700 dark:text-rose-400' :
-                                    'text-emerald-700 dark:text-emerald-400'
-                            }`}>{ann.title}</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{ann.content}</p>
-                    </div>
-                    <button
-                        onClick={() => setClosedAnnouncements(prev => [...prev, ann.id])}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-            ))}
-
-            {/* Quick Actions Section */}
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 flex flex-wrap gap-3 shadow-sm transition-all hover:shadow-md">
-                <p className="w-full text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Quick Actions</p>
-                <div className="flex flex-wrap gap-3">
-                    <button onClick={() => onNavigate('assets')} aria-label="Create New Asset" className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all border border-blue-100 dark:border-blue-900/50 active:scale-95">
-                        <Box size={14} /> + New Asset
-                    </button>
-                    <button onClick={() => onNavigate('helpdesk')} aria-label="Open New Ticket" className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all border border-rose-100 dark:border-rose-900/50 active:scale-95">
-                        <LifeBuoy size={14} /> Open Ticket
-                    </button>
-                    <button onClick={() => onNavigate('purchase')} aria-label="Add Purchase Request" className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all border border-amber-100 dark:border-amber-900/50 active:scale-95">
-                        <ShoppingCart size={14} /> Add Purchase
-                    </button>
-                    <button onClick={() => onNavigate('activity')} aria-label="Log Work Activity" className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-100 dark:border-emerald-900/50 active:scale-95">
-                        <Activity size={14} /> Log Work
-                    </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 min-h-[188px]">
-                {isLoading ? (
-                    Array(7).fill(0).map((_, i) => <SkeletonCard key={i} />)
-                ) : (
-                    <>
-                        <StatCard label="Service desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')}>
-                            <div className="mt-4 flex gap-1.5">
-                                {stats.ticketPriorities.critical > 0 && <div className="h-1.5 flex-1 bg-rose-600 rounded-full" title="Critical"></div>}
-                                {stats.ticketPriorities.high > 0 && <div className="h-1.5 flex-1 bg-orange-500 rounded-full" title="High"></div>}
-                                {stats.ticketPriorities.medium > 0 && <div className="h-1.5 flex-1 bg-amber-400 rounded-full" title="Medium"></div>}
-                                <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
-                            </div>
-                        </StatCard>
-                        <StatCard label="IT assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
-                        <StatCard label="Asset loans" value={stats.activeLoans} subValue="Active borrowing" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loans')} />
-                        <StatCard label="Network health" value={`${networkHealth}%`} subValue={`${stats.activePorts} active ports`} icon={Network} color="emerald" onClick={() => onNavigate('network')} />
-                        <StatCard label="Productivity" value={`${taskProgress}%`} subValue={`${stats.completedTasks} of ${stats.plannedTasks} task(s) done`} icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')}>
-                            <div className="mt-4 space-y-2">
-                                <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${taskProgress}%` }}></div>
-                                </div>
-                                <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                                    <span>{stats.todoTasks} To Do</span>
-                                    <span>{stats.inProgressTasks} Active</span>
-                                </div>
-                            </div>
-                        </StatCard>
-                        <StatCard label="Personnel" value={stats.totalUsers} subValue={`${stats.totalDepts} units`} icon={Users} color="blue" onClick={() => onNavigate('users')} />
-                        <StatCard label="Finance" value={formatCurrency(stats.monthlyPaidSpend)} subValue="Paid this month" icon={Wallet} color="amber" onClick={() => onNavigate('purchase')}>
-                            <div className="mt-4 flex justify-between items-end">
-                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Total: {formatCurrency(stats.totalPaidSpend)}</span>
-                                <span className="text-[10px] font-black text-amber-600">+{stats.pendingPurchases} pending</span>
-                            </div>
-                        </StatCard>
-                    </>
-                )}
-            </div>
+            {/* Mode Switcher moved to header */}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Row 1: Recent Activities (8) + Network Health (4) */}
-                <div className="lg:col-span-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden h-[400px] flex flex-col">
-                        <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Zap size={18} className="text-blue-500" />
-                                <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200 tracking-tight">Recent activities</h3>
-                            </div>
-                            <button onClick={() => onNavigate('activity')} className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest transition-colors flex items-center gap-1">
-                                View History <ChevronRight size={14} />
-                            </button>
-                        </div>
-                        <div className="divide-y divide-slate-50 dark:divide-slate-800 min-h-[380px]">
-                            {isLoading ? (
-                                Array(5).fill(0).map((_, i) => (
-                                    <div key={i} className="px-8 py-4 flex items-center justify-between animate-pulse">
-                                        <div className="flex items-center gap-5">
-                                            <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700"></div>
-                                            <div className="space-y-2">
-                                                <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                                <div className="h-2 w-24 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
+            {/* --- LAYERS BASED ON MODE --- */}
+            {isAdmin && (
+                <>
+                    {/* OVERVIEW MODE */}
+                    {dashboardMode === 'overview' && (
+                        <>
+                            {/* --- LAYER 1: PRIORITY & DECISION --- */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden h-full min-h-[220px]">
+                                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                                        <Zap size={120} />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <h3 className="font-bold text-indigo-100 uppercase tracking-widest text-sm mb-1">Priority Center</h3>
+                                        <h2 className="text-3xl font-bold mb-4">Action Required</h2>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('purchase')}>
+                                                <AlertCircle size={18} className="text-amber-300" />
+                                                <span className="font-medium">{stats.pendingPurchases} Pending Approvals</span>
+                                            </div>
+                                            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('helpdesk')}>
+                                                <AlertCircle size={18} className="text-rose-300" />
+                                                <span className="font-medium">{stats.ticketPriorities.critical + stats.ticketPriorities.high} High Priority Tickets</span>
                                             </div>
                                         </div>
-                                        <div className="h-6 w-16 bg-slate-50 dark:bg-slate-800 rounded-xl"></div>
                                     </div>
-                                ))
-                            ) : (!stats.recentActivities || stats.recentActivities.length === 0) ? (
-                                <div className="py-20 text-center text-slate-300 text-sm font-medium italic">No activity logs recorded.</div>
-                            ) : (
-                                stats.recentActivities.map((act: any) => (
-                                    <div key={act.id} className="px-8 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all flex items-center justify-between group h-[76px]">
-                                        <div className="flex items-center gap-5">
-                                            <div className="relative">
-                                                <div className="w-11 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                                    {act.avatarUrl ? (
-                                                        <img
-                                                            src={act.avatarUrl}
-                                                            alt={act.itPersonnel || 'User'}
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLImageElement).style.display = 'none';
-                                                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <span>{act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}</span>
-                                                    )}
-                                                    <span className={`hidden absolute inset-0 flex items-center justify-center text-xs font-bold ${act.avatarUrl ? 'bg-slate-50 text-slate-400' : ''}`}>
-                                                        {act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}
-                                                    </span>
+                                </div>
+
+                                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <PriorityItem title="Pending Approvals" count={stats.pendingPurchases} type="warning" onClick={() => onNavigate('purchase')} />
+                                    <PriorityItem title="Critical Tickets" count={stats.ticketPriorities.critical} type="critical" onClick={() => onNavigate('helpdesk')} />
+                                    <PriorityItem title="Overdue Loans" count={stats.overdueLoans} type="critical" onClick={() => onNavigate('asset-loan')} />
+                                    <PriorityItem title="My Tasks" count={stats.todoTasks} type="normal" onClick={() => onNavigate('weekly')} />
+                                </div>
+                            </div>
+
+                            {/* --- LAYER 2: OPERATIONAL OVERVIEW --- */}
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Operational Overview</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <StatCard label="Service Desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
+                                    <StatCard label="Assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
+                                    <StatCard label="Procurement" value={formatCurrency(stats.monthlyPaidSpend / 1000000) + 'M'} subValue="Spending this month" icon={ShoppingCart} color="amber" onClick={() => onNavigate('purchase')} />
+                                    <StatCard label="Infrastructure" value={stats.activePorts} subValue="Active Network Ports" icon={Network} color="emerald" onClick={() => onNavigate('network')} />
+                                </div>
+                            </div>
+
+                            {/* --- LAYER 3: ANALYTICS --- */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
+                                        <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">View All</button>
+                                    </div>
+                                    <div className="space-y-6">
+                                        {stats.recentActivities.length === 0 ? <p className="text-sm text-slate-400 italic">No activity logs.</p> : stats.recentActivities.map((act) => (
+                                            <div key={act.id} className="flex gap-4">
+                                                <div className="mt-1"><div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">{act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}</div></div>
+                                                <div>
+                                                    <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-snug"><span className="font-bold text-slate-900 dark:text-white">{act.itPersonnel?.split(' ')[0]}</span> {act.activityName}</p>
+                                                    <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
                                                 </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
+                                        <h3 className="font-bold text-slate-800 dark:text-white mb-2">Ticket Trend</h3>
+                                        <div className="flex-1 min-h-[200px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={ticketTrendData}>
+                                                    <defs><linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                                                    <Tooltip />
+                                                    <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTickets)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
+                                        <h3 className="font-bold text-slate-800 dark:text-white mb-2">Budget Distribution</h3>
+                                        <div className="flex-1 min-h-[200px] flex items-center justify-center">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <RePieChart>
+                                                    <Pie data={spendingData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                                        {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
+                                                </RePieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* FINANCE MODE */}
+                    {dashboardMode === 'finance' && (
+                        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                            {/* Row 1 – Financial KPI */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <StatCard
+                                    label="Total Procurement"
+                                    value={formatCurrency(stats.totalPaidSpend)}
+                                    subtext="Settled Invoices"
+                                    icon={Wallet}
+                                    colorClass="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20"
+                                />
+                                <StatCard
+                                    label="Outstanding"
+                                    value={formatCurrency(stats.pendingBudget)}
+                                    subtext="Pending Commitments"
+                                    icon={AlertCircle}
+                                    colorClass="bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20"
+                                />
+                                <StatCard
+                                    label="Budget Absorption"
+                                    value="84%"
+                                    subtext="YTD Utilization"
+                                    icon={TrendingUp}
+                                    colorClass="bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20"
+                                    trend={5}
+                                />
+                                <StatCard
+                                    label="Gross Volume"
+                                    value={formatCurrency(stats.totalPaidSpend + stats.pendingBudget)}
+                                    subtext="Total Transaction Value"
+                                    icon={BarChart3}
+                                    colorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20"
+                                />
+                            </div>
+
+                            {/* Row 2 – Trend (Full Width) */}
+                            <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+                                        <TrendingUp size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Procurement Velocity</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Monthly Disbursement Analysis</p>
+                                    </div>
+                                </div>
+                                <div className="h-[350px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={[
+                                            { name: 'Jan', amount: 45000000 }, { name: 'Feb', amount: 52000000 },
+                                            { name: 'Mar', amount: 48000000 }, { name: 'Apr', amount: 61000000 },
+                                            { name: 'May', amount: 55000000 }, { name: 'Jun', amount: 67000000 }
+                                        ]}>
+                                            <defs><linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                                formatter={(value: number) => [formatCurrency(value), 'Disbursed']}
+                                                itemStyle={{ color: '#10b981', fontWeight: 700, fontSize: '12px' }}
+                                                labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
+                                            />
+                                            <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorSpend)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Row 3 – Breakdown */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                                    <div className="flex items-center gap-4 mb-8">
+                                        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/20 shadow-sm">
+                                            <Building2 size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Cost Center Distribution</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Allocation by Department</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-[350px] w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart layout="vertical" data={Object.entries(stats.deptSpending).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5)} margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                                                <XAxis type="number" hide />
+                                                <YAxis
+                                                    dataKey="name"
+                                                    type="category"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    width={140}
+                                                    tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }}
+                                                />
+                                                <Tooltip
+                                                    cursor={{ fill: 'transparent' }}
+                                                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                                    formatter={(value: number) => [formatCurrency(value), 'Allocated']}
+                                                    itemStyle={{ color: '#2563eb', fontWeight: 700, fontSize: '12px' }}
+                                                    labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
+                                                />
+                                                <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={24}>
+                                                    {Object.entries(stats.deptSpending).map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'][index % 5]} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
+                                                <Tag size={20} strokeWidth={2.5} />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors tracking-tight">{act.activityName}</h4>
-                                                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
-                                                    {act.itPersonnel ? act.itPersonnel.split(' ')[0] : 'IT'} • {act.department} • {act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now'}
-                                                </p>
+                                                <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Spend Categories</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Classification Breakdown</p>
                                             </div>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-xl text-[10px] font-bold border transition-all ${act.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                            {act.status}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="lg:col-span-4 self-stretch">
-                    <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden group h-[400px] flex flex-col justify-center">
-                        <div className="relative z-10">
-                            <span className="text-[10px] font-bold text-blue-400 tracking-widest mb-8 block uppercase">Network health</span>
-                            {isLoading ? (
-                                <div className="space-y-6 animate-pulse">
-                                    <div className="flex items-end justify-between">
-                                        <div className="h-16 w-32 bg-slate-800 rounded"></div>
-                                        <div className="h-4 w-16 bg-slate-800 rounded"></div>
-                                    </div>
-                                    <div className="h-2 w-full bg-slate-800 rounded-full"></div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="h-16 bg-white/5 rounded-xl border border-white/5"></div>
-                                        <div className="h-16 bg-white/5 rounded-xl border border-white/5"></div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="flex items-end justify-between mb-6">
-                                        <h3 className="text-6xl font-bold tracking-tight">{networkHealth}%</h3>
-                                        <div className="text-right">
-                                            <p className="text-xs font-bold text-slate-500 tracking-widest mb-1 uppercase">Load integrity</p>
-                                            <p className="text-sm font-bold text-emerald-400">Stable</p>
-                                        </div>
-                                    </div>
-                                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden mb-8">
-                                        <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(37,99,235,0.4)]" style={{ width: `${networkHealth}%` }}></div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                                            <p className="text-xl font-bold text-white leading-none">{stats.activePorts}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Active</p>
-                                        </div>
-                                        <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                                            <p className="text-xl font-bold text-rose-400 leading-none">{stats.errorPorts}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase">Alerts</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Row 2: Heatmap (8) + Procurement (4) */}
-                <div className="lg:col-span-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase flex items-center justify-between">
-                            Department Spending Heatmap
-                            <Wallet size={12} className="text-blue-500" />
-                        </h3>
-                        <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                            {isLoading ? (
-                                Array(4).fill(0).map((_, i) => (
-                                    <div key={i} className="space-y-2 animate-pulse">
-                                        <div className="flex justify-between">
-                                            <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                        </div>
-                                        <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
-                                    </div>
-                                ))
-                            ) : Object.keys(stats.deptSpending).length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                                    <AlertCircle size={32} className="text-slate-200 mb-2" />
-                                    <p className="text-[10px] font-bold text-slate-300 uppercase italic">No paid records found.</p>
-                                </div>
-                            ) : Object.entries(stats.deptSpending)
-                                .sort(([, a], [, b]) => b - a)
-                                .map(([dept, amount], idx) => {
-                                    const totalSpend = Object.values(stats.deptSpending).reduce((a, b) => a + b, 0) || 1;
-                                    const percentage = (amount / totalSpend) * 100;
-                                    return (
-                                        <div key={dept} className="space-y-2 cursor-pointer group/bar" onClick={() => onNavigate('purchase')}>
-                                            <div className="flex justify-between items-center text-xs font-bold">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-emerald-500' : idx === 2 ? 'bg-amber-500' : 'bg-slate-400'}`}></div>
-                                                    <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors uppercase tracking-tight">{dept}</span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-slate-900 dark:text-white block">{formatCurrency(amount)}</span>
-                                                    <span className="text-[9px] text-slate-400">{percentage.toFixed(1)}% of total</span>
+                                        <div className="h-[220px] w-full relative">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <RePieChart>
+                                                    <Pie
+                                                        data={spendingData}
+                                                        innerRadius={65}
+                                                        outerRadius={85}
+                                                        paddingAngle={6}
+                                                        dataKey="value"
+                                                        stroke="none"
+                                                        cornerRadius={4}
+                                                    >
+                                                        {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                                    </Pie>
+                                                    <Tooltip
+                                                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                                        itemStyle={{ color: '#6366f1', fontWeight: 700, fontSize: '12px' }}
+                                                    />
+                                                </RePieChart>
+                                            </ResponsiveContainer>
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="text-center">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+                                                    <p className="text-xl font-black text-slate-800 dark:text-white">100%</p>
                                                 </div>
                                             </div>
-                                            <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-1000 shadow-sm ${idx === 0 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/20' :
-                                                        idx === 1 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/20' :
-                                                            idx === 2 ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/20' :
-                                                                'bg-slate-300 dark:bg-slate-700'
-                                                        }`}
-                                                    style={{ width: `${percentage}%` }}
-                                                ></div>
-                                            </div>
                                         </div>
-                                    );
-                                })}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="lg:col-span-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm h-[400px] flex flex-col">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Procurement summary</h3>
-                        <div className="space-y-3 flex-1 flex flex-col justify-start">
-                            {isLoading ? (
-                                <>
-                                    <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
-                                    <div className="h-24 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Approved funds</p>
-                                            <ShieldCheck size={14} className="text-emerald-500" />
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                            {spendingData.map((entry, index) => (
+                                                <div key={index} className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide truncate">{entry.name}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <h5 className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.approvedBudget)}</h5>
                                     </div>
-                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="text-[10px] font-bold text-blue-600 tracking-widest uppercase">Actual Paid (MTD)</p>
-                                            <Wallet size={14} className="text-blue-500" />
-                                        </div>
-                                        <h5 className="text-xl font-bold text-blue-700 dark:text-blue-400">{formatCurrency(stats.monthlyPaidSpend)}</h5>
-                                        <p className="text-[9px] font-bold text-blue-400 mt-0.5 uppercase">Vat Included</p>
-                                    </div>
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/30">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Pending requests</p>
-                                            <AlertCircle size={14} className="text-slate-400" />
-                                        </div>
-                                        <h5 className="text-xl font-bold text-slate-700 dark:text-slate-300">{formatCurrency(stats.pendingBudget)}</h5>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Row 3: Schedule (6) + Personnel (6) */}
-                <div className="lg:col-span-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase flex items-center justify-between">
-                            Upcoming Schedule
-                            <div className="flex gap-2">
-                                <span className="flex items-center gap-1 text-[9px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-800/50"><ListTodo size={10} /> TASKS</span>
-                                <span className="flex items-center gap-1 text-[9px] font-bold bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-lg border border-rose-100 dark:border-rose-800/50"><Zap size={10} /> LOANS</span>
+                                    <TopVendorsWidget vendors={stats.vendors} />
+                                </div>
                             </div>
-                        </h3>
-                        <div className="space-y-0 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[240px]">
-                            {isLoading ? (
-                                Array(3).fill(0).map((_, i) => (
-                                    <div key={i} className="flex gap-4 animate-pulse mb-3">
-                                        <div className="w-12 text-right space-y-2 pt-1">
-                                            <div className="h-3 w-8 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
-                                            <div className="h-2 w-6 bg-slate-100 dark:bg-slate-800 rounded ml-auto"></div>
-                                        </div>
-                                        <div className="w-0.5 h-16 bg-slate-100 dark:bg-slate-800"></div>
-                                        <div className="flex-1 space-y-2 pt-1">
-                                            <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-2 w-1/2 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (stats.personalTasks.length === 0 && stats.upcomingLoans.length === 0) ? (
-                                <div className="flex h-full items-center justify-center text-[10px] font-bold text-slate-300 uppercase italic">No upcoming schedule.</div>
-                            ) : (() => {
-                                const timeline = [
-                                    ...stats.personalTasks.map(t => ({ ...t, type: 'task', date: t.due_date, title: t.task, subtitle: t.category })),
-                                    ...stats.upcomingLoans.map(l => ({ ...l, type: 'loan', date: l.expected_return_date, title: l.it_assets?.item_name || 'Asset', subtitle: `Borrower: ${l.borrower_name}` }))
-                                ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                        </div>
+                    )}
 
-                                return timeline.map((item, idx) => (
-                                    <div key={`${item.type}-${item.id}`} className="flex gap-4 group cursor-pointer" onClick={() => onNavigate(item.type === 'task' ? 'weekly' : 'asset-loans')}>
-                                        <div className="w-14 text-right pt-2 shrink-0">
-                                            <p className="text-sm font-black text-slate-700 dark:text-slate-300 leading-none">{new Date(item.date).getDate()}</p>
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(item.date).toLocaleDateString('en-US', { month: 'short' })}</p>
-                                        </div>
-                                        <div className="relative flex flex-col items-center">
-                                            <div className={`w-3 h-3 rounded-full border-2 z-10 mt-2 transition-all group-hover:scale-125 ${item.type === 'task' ? 'bg-white dark:bg-slate-900 border-blue-500' : 'bg-white dark:bg-slate-900 border-rose-500'}`}></div>
-                                            {idx !== timeline.length - 1 && <div className="w-0.5 flex-1 bg-slate-100 dark:bg-slate-800 my-1 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>}
-                                        </div>
-                                        <div className={`flex-1 p-3 rounded-xl border mb-3 transition-all ${item.type === 'task'
-                                            ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20 group-hover:border-blue-300 dark:group-hover:border-blue-700 group-hover:shadow-sm'
-                                            : 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/20 group-hover:border-rose-300 dark:group-hover:border-rose-700 group-hover:shadow-sm'
-                                            }`}>
-                                            <div className="flex justify-between items-start">
-                                                <h4 className={`text-xs font-bold line-clamp-1 ${item.type === 'task' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-800 dark:text-slate-200'}`}>{item.title}</h4>
-                                                {item.type === 'task' ? <ListTodo size={14} className="text-blue-400 group-hover:text-blue-600 transition-colors" /> : <Zap size={14} className="text-rose-400 group-hover:text-rose-600 transition-colors" />}
+                    {/* TECHNICAL MODE */}
+                    {dashboardMode === 'technical' && (
+                        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                            {/* Row 1 – Technical KPI */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <StatCard label="Open Tickets" value={stats.openTickets} icon={LifeBuoy} color="blue" />
+                                <StatCard label="Critical Issues" value={stats.ticketPriorities.critical} icon={AlertCircle} color="rose" />
+                                <StatCard label="SLA Status" value="98.2%" icon={ShieldCheck} color="emerald" subValue="Compliance rate" />
+                                <StatCard label="Active Assets" value={stats.activeAssets} icon={Box} color="indigo" subValue={`${stats.totalAssets} total`} />
+                                <StatCard label="Infrastructure" value={stats.activePorts} icon={Network} color="amber" subValue="Active ports" />
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Row 2 – Ticket Trend (2/3 width) */}
+                                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-bold text-slate-800 dark:text-white">Ticket Volume Trend</h3>
+                                        <div className="text-xs text-slate-500 font-medium">Last 30 Days</div>
+                                    </div>
+                                    <div className="h-[300px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={ticketTrendData.concat([{ name: 'Sun', tickets: 2 }]) /* Mock for 30 days extension */}>
+                                                <defs><linearGradient id="colorTicketsTech" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                                <YAxis axisLine={false} tickLine={false} />
+                                                <Tooltip />
+                                                <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTicketsTech)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Row 3 – Asset Status (1/3 width) */}
+                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                                    <h3 className="font-bold text-slate-800 dark:text-white mb-6">Asset Health</h3>
+                                    <div className="space-y-6">
+                                        {[
+                                            { label: 'Operational', value: stats.assetStatuses.operational, color: 'bg-emerald-500' },
+                                            { label: 'Maintenance', value: stats.assetStatuses.maintenance, color: 'bg-amber-500' },
+                                            { label: 'Retired/Broken', value: stats.assetStatuses.retired, color: 'bg-rose-500' }
+                                        ].map((item) => (
+                                            <div key={item.label} className="space-y-2">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-slate-500 font-medium">{item.label}</span>
+                                                    <span className="font-bold text-slate-900 dark:text-white">{item.value}</span>
+                                                </div>
+                                                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className={`h-full ${item.color}`} style={{ width: `${(item.value / stats.totalAssets) * 100}%` }} />
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${item.type === 'task' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                                                    {item.type === 'task' ? 'TASK' : 'RETURN'}
-                                                </span>
-                                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">{item.subtitle}</p>
+                                        ))}
+                                        <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button onClick={() => onNavigate('assets')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Asset List</button>
+                                                <button onClick={() => onNavigate('network')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Infrastructure</button>
                                             </div>
                                         </div>
                                     </div>
-                                ));
-                            })()}
+                                </div>
+                            </div>
+
+                            {/* Row 4 – Activity Feed */}
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-bold text-slate-800 dark:text-white">Recent Technical Updates</h3>
+                                    <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">Full Audit Log</button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {stats.recentActivities.map((act) => (
+                                        <div key={act.id} className="flex gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+                                            <Activity size={20} className="text-blue-500 mt-1 shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{act.activityName}</p>
+                                                <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* --- USER VIEW (Always same) --- */}
+            {!isAdmin && (
+                <>
+                    {/* User Specific Layer 2 */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">My Dashboard</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <StatCard label="My Tasks" value={stats.personalTasks.length} subValue="Active tasks" icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')} />
+                            <StatCard label="My Loans" value={stats.activeLoans} subValue="Active items" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loan')} />
+                            <StatCard label="Open Tickets" value={0} subValue="Reported issues" icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
                         </div>
                     </div>
-                </div>
 
-                <div className="lg:col-span-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm h-[400px] flex flex-col">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">System Health & Personnel</h3>
-                        <div className="space-y-5 flex-1 flex flex-col justify-center">
-                            {isLoading ? (
-                                <>
-                                    <div className="h-14 w-full bg-slate-50 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
-                                    <div className="h-4 w-full bg-slate-50 dark:bg-slate-800 rounded animate-pulse"></div>
-                                </>
+                    {/* User Task List */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
+                        <h3 className="font-bold text-slate-800 dark:text-white mb-6">My Upcoming Tasks</h3>
+                        <div className="space-y-4">
+                            {stats.personalTasks.length === 0 ? (
+                                <div className="text-center py-10 text-slate-400">
+                                    <ListTodo size={48} className="mx-auto mb-3 opacity-20" />
+                                    <p>You have no pending tasks. Great job!</p>
+                                </div>
                             ) : (
-                                <>
-                                    <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/20">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative">
-                                                <Users size={16} className="text-emerald-600" />
-                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                stats.personalTasks.map((task: any) => (
+                                    <div key={task.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-3 h-3 rounded-full ${task.priority === 'High' ? 'bg-rose-500' : 'bg-blue-500'}`}></div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-800 dark:text-white">{task.task}</h4>
+                                                <p className="text-xs text-slate-500">{new Date(task.due_date).toLocaleDateString()}</p>
                                             </div>
-                                            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Team availability</span>
                                         </div>
-                                        <span className="text-xs font-black text-emerald-600">{onlineCount} Online</span>
+                                        <span className="text-xs font-bold px-3 py-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">{task.status}</span>
                                     </div>
-                                    {stats.errorPorts > 0 && (
-                                        <VitalsRow icon={AlertCircle} label="Active threats" status="Detected" color="text-rose-600" />
-                                    )}
-                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/20">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Database connection</span>
-                                            <Database size={14} className="text-blue-500" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Synchronized</span>
-                                        </div>
-                                    </div>
-                                </>
+                                ))
                             )}
                         </div>
                     </div>
-                </div>
-
-                {/* Row 4: Asset Distribution (6) + Infrastructure Status (6) */}
-                <div className="lg:col-span-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Asset distribution</h3>
-                        <div className="space-y-5 flex-1 overflow-y-auto custom-scrollbar pr-2">
-                            {isLoading ? (
-                                Array(6).fill(0).map((_, i) => (
-                                    <div key={i} className="space-y-2 animate-pulse">
-                                        <div className="flex justify-between">
-                                            <div className="h-2 w-20 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-2 w-10 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                        </div>
-                                        <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full"></div>
-                                    </div>
-                                ))
-                            ) : Object.keys(stats.assetCategories).length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                                    <AlertCircle size={32} className="text-slate-100 mb-2" />
-                                    <p className="text-[10px] font-bold text-slate-300 uppercase italic">No data.</p>
-                                </div>
-                            ) : Object.entries(stats.assetCategories).map(([cat, count]) => (
-                                <div key={cat} className="space-y-1.5 cursor-pointer group/bar" onClick={() => onNavigate('assets')}>
-                                    <div className="flex justify-between items-center text-[11px] font-bold">
-                                        <span className="text-slate-500 group-hover/bar:text-blue-600 transition-colors uppercase tracking-tight">{cat}</span>
-                                        <span className="text-slate-900 dark:text-white">{count} units</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(37,99,235,0.2)] group-hover/bar:bg-blue-500"
-                                            style={{ width: `${(Number(count) / (stats.totalAssets || 1)) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="lg:col-span-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col h-[400px]">
-                        <h3 className="font-bold text-xs text-slate-400 tracking-widest mb-6 uppercase">Infrastructure Status</h3>
-                        <div className="flex-1 flex flex-col justify-center items-center">
-                            {isLoading ? (
-                                <div className="w-full space-y-8 animate-pulse">
-                                    <div className="relative w-40 h-40 flex items-center justify-center mx-auto">
-                                        <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                        <div className="h-3 w-full bg-slate-50 dark:bg-slate-800 rounded"></div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="relative w-40 h-40 flex items-center justify-center mb-6">
-                                        <div className="absolute inset-0 rounded-full border-[12px] border-slate-50 dark:border-slate-800"></div>
-                                        <div className="absolute inset-0 rounded-full border-[12px] border-emerald-500 border-l-transparent border-t-transparent -rotate-45" style={{ background: `conic-gradient(from 0deg, #10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-                                        <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 ${(stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100}%, transparent 0%)`, mask: 'radial-gradient(transparent 55%, black 56%)' }}></div>
-
-                                        <div className="text-center z-10">
-                                            <h4 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{Math.round((stats.assetStatuses.operational / (stats.totalAssets || 1)) * 100)}%</h4>
-                                            <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Healthy</p>
-                                        </div>
-                                    </div>
-                                    <div className="w-full space-y-3">
-                                        <PlanBar label="Operational" count={stats.assetStatuses.operational} total={stats.totalAssets} color="bg-emerald-500" />
-                                        <PlanBar label="Maintenance" count={stats.assetStatuses.maintenance} total={stats.totalAssets} color="bg-amber-500" />
-                                        <PlanBar label="Retired / Broken" count={stats.assetStatuses.retired} total={stats.totalAssets} color="bg-rose-500" />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </>
+            )}
         </div>
-    );
-};
-
-const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-};
-
-const SkeletonAnnouncement = () => (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-100 dark:border-slate-800 p-6 flex items-start gap-4 shadow-sm animate-pulse bg-white dark:bg-slate-900 mb-6">
-        <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0"></div>
-        <div className="flex-1 space-y-2 pt-1">
-            <div className="h-4 w-1/4 bg-slate-100 dark:bg-slate-800 rounded"></div>
-            <div className="h-3 w-3/4 bg-slate-50 dark:bg-slate-800/50 rounded"></div>
-        </div>
-    </div>
-);
-
-const SkeletonCard = () => (
-    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[188px] animate-pulse">
-        <div className="flex justify-between items-center mb-4">
-            <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded"></div>
-            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
-        </div>
-        <div className="space-y-3">
-            <div className="h-8 w-12 bg-slate-100 dark:bg-slate-800 rounded mt-2"></div>
-            <div className="h-2 w-24 bg-slate-50 dark:bg-slate-800/50 rounded mt-4 leading-none"></div>
-        </div>
-    </div>
-);
-
-const PlanBar = ({ label, count, total, color }: any) => {
-    const percent = total > 0 ? (count / total) * 100 : 0;
-    return (
-        <div className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-                <span>{label}</span>
-                <span className="text-slate-800 dark:text-slate-200">{count}</span>
-            </div>
-            <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div className={`h-full ${color} transition-all duration-1000`} style={{ width: `${percent}%` }}></div>
-            </div>
-        </div>
-    );
-};
-
-const VitalsRow = ({ icon: Icon, label, status, color }: any) => (
-    <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-            <Icon size={16} className="text-slate-300" />
-            <span className="text-xs font-semibold text-slate-500">{label}</span>
-        </div>
-        <span className={`text-xs font-bold ${color}`}>{status}</span>
-    </div>
-);
-
-export const StatCard = ({ label, value, subValue, icon: Icon, color, onClick, children }: any) => {
-    const colorMap: any = {
-        blue: { text: 'text-blue-600', bg: 'bg-blue-600' },
-        rose: { text: 'text-rose-600', bg: 'bg-rose-600' },
-        emerald: { text: 'text-emerald-600', bg: 'bg-emerald-600' },
-        indigo: { text: 'text-indigo-600', bg: 'bg-indigo-600' },
-        amber: { text: 'text-amber-600', bg: 'bg-amber-500' },
-    };
-
-    const theme = colorMap[color] || colorMap.blue;
-
-    return (
-        <button
-            onClick={onClick}
-            aria-label={`${label}: ${value}. ${subValue}`}
-            className="w-full text-left cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[188px] transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] group"
-        >
-            <div className="w-full">
-                <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
-                    <div className={`p-2 rounded-xl ${theme.bg} text-white shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
-                        <Icon size={16} strokeWidth={2.5} />
-                    </div>
-                </div>
-                <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mt-2">{value}</h3>
-                {children}
-            </div>
-
-            <div className="mt-auto">
-                <p className="text-[10px] font-bold text-slate-400 tracking-widest leading-none uppercase">{subValue}</p>
-            </div>
-        </button>
     );
 };

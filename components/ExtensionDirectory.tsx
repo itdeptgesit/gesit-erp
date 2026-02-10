@@ -29,7 +29,9 @@ import {
     LayoutList,
     Share2,
     ExternalLink,
-    FileDown
+    FileDown,
+    UploadCloud,
+    Image as ImageIcon
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +39,8 @@ import { supabase } from "../lib/supabaseClient";
 import { trackActivity } from "../lib/auditLogger";
 import { PhoneExtension, UserAccount } from "../types";
 import { useLanguage } from "../translations";
+import { UserAvatar } from "./UserAvatar";
+import { StatCard } from "./StatCard";
 
 /* ===========================
    Components
@@ -47,36 +51,34 @@ const InstructionPanel = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
             <div
                 className={`
-          w-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border transition-all duration-500 ease-in-out
-          ${isOpen ? 'border-indigo-200/50 dark:border-indigo-500/30 shadow-2xl shadow-indigo-500/10' : 'border-slate-200/60 dark:border-slate-800/60 shadow-sm'}
+          w-full bg-white dark:bg-slate-900 border transition-all duration-500 ease-in-out overflow-hidden
+          ${isOpen ? 'rounded-[2rem] border-indigo-100 dark:border-indigo-500/20 shadow-2xl shadow-indigo-500/5' : 'rounded-2xl border-transparent bg-transparent'}
         `}
             >
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     aria-expanded={isOpen}
-                    aria-label={isOpen ? "Close dial instructions" : "View dial instructions"}
-                    className="w-full flex items-center justify-between px-6 py-4 bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all duration-300 rounded-2xl"
+                    className={`w-full flex items-center justify-between px-6 py-4 transition-all duration-300 rounded-2xl border ${!isOpen ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30' : 'border-transparent bg-slate-50/50 dark:bg-slate-800/50'}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className={`
-              p-2.5 rounded-2xl transition-all duration-500 shadow-sm
-              ${isOpen ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200/50 dark:border-slate-700'}
+              p-2.5 rounded-xl transition-all duration-500 shadow-sm
+              ${isOpen ? 'bg-indigo-600 text-white rotate-0' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 -rotate-12'}
             `}>
-                            <Info className="w-4 h-4" aria-hidden="true" />
+                            <Info className="w-5 h-5" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col items-start leading-tight">
-                            <h3 className={`text-[11px] font-black transition-colors duration-300 uppercase tracking-widest ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                            <h3 className={`text-xs font-black uppercase tracking-widest transition-colors duration-300 ${isOpen ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-400'}`}>
                                 Dialing Protocol
                             </h3>
-                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">Quick reference guide</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Quick Reference Guide</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800/50 px-3 py-1 rounded-full">
-                        {isOpen ? 'Minimize' : 'Expand'}
-                        {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-indigo-600 rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                        <ChevronDown className="w-4 h-4" strokeWidth={3} />
                     </div>
                 </button>
 
@@ -85,41 +87,50 @@ const InstructionPanel = () => {
           ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}
         `}>
                     <div className="overflow-hidden">
-                        <div className="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* 27th Floor Guide (City Tower) */}
-                            <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
-                                <h4 className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">Floor 27 - City Tower</h4>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#70 + Ext</kbd>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Call to 26th Floor</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">## + PIN + Ext lt.26</kbd>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">* + PIN + 9 + PIN</kbd>
-                                    </div>
+                        <div className="p-8 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* 27th Floor Guide */}
+                            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <Building2 size={80} />
+                                </div>
+                                <h4 className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                                    Floor 27 - City Tower
+                                </h4>
+                                <div className="space-y-4 relative z-10">
+                                    {[
+                                        { label: 'Pickup Incoming', code: '#70 + Ext' },
+                                        { label: 'Call to 26th Floor', code: '## + PIN + Ext lt.26' },
+                                        { label: 'Outgoing Call', code: '* + PIN + 9 + PHONE NUMBER' }
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex justify-between items-center group/item">
+                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors">{item.label}</span>
+                                            <kbd className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 shadow-sm group-hover/item:border-indigo-200 dark:group-hover/item:border-indigo-500/30 transition-all">{item.code}</kbd>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            {/* 26th Floor Guide (Gesit Resources) */}
-                            <div className="p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
-                                <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">Floor 26 - Gesit Natural Resources</h4>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Pickup Incoming</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">#41 + Ext</kbd>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Call to 27th Floor</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">88** + PIN + Ext lt.27</kbd>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2 border-t border-slate-200/20">
-                                        <span className="text-xs text-slate-600 dark:text-slate-400">Outgoing Call</span>
-                                        <kbd className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono font-bold">81** + PIN + PIN</kbd>
-                                    </div>
+
+                            {/* 26th Floor Guide */}
+                            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <MapPin size={80} />
+                                </div>
+                                <h4 className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    Floor 26 - Gesit Resources
+                                </h4>
+                                <div className="space-y-4 relative z-10">
+                                    {[
+                                        { label: 'Pickup Incoming', code: '#41 + Ext' },
+                                        { label: 'Call to 27th Floor', code: '88** + PIN + Ext lt.27' },
+                                        { label: 'Outgoing Call', code: '81** + PIN + PHONE NUMBER' }
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex justify-between items-center group/item">
+                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors">{item.label}</span>
+                                            <kbd className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 shadow-sm group-hover/item:border-emerald-200 dark:group-hover/item:border-emerald-500/30 transition-all">{item.code}</kbd>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -144,17 +155,21 @@ const ExtensionCard: React.FC<{
     const is27 = ext.floor === 27;
 
     const theme = is27 ? {
-        border: 'border-slate-100 dark:border-slate-800 hover:border-indigo-500/20',
-        dot: 'bg-indigo-400',
-        text: 'text-indigo-600 dark:text-indigo-400',
-        bg: 'bg-indigo-50/50 dark:bg-indigo-500/5',
-        focus: 'ring-4 ring-indigo-500/5 border-indigo-500/30'
+        border: 'border-slate-100 dark:border-slate-800',
+        wrapper: 'hover:shadow-indigo-500/20',
+        activeRing: 'ring-indigo-500/30',
+        leftBg: 'bg-white dark:bg-slate-900',
+        rightBg: 'group-hover:bg-indigo-600 bg-indigo-50 dark:bg-slate-800',
+        rightText: 'text-indigo-600 dark:text-indigo-400 group-hover:text-white',
+        badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
     } : {
-        border: 'border-slate-100 dark:border-slate-800 hover:border-emerald-500/20',
-        dot: 'bg-emerald-400',
-        text: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-50/50 dark:bg-emerald-500/5',
-        focus: 'ring-4 ring-emerald-500/5 border-emerald-500/30'
+        border: 'border-slate-100 dark:border-slate-800',
+        wrapper: 'hover:shadow-emerald-500/20',
+        activeRing: 'ring-emerald-500/30',
+        leftBg: 'bg-white dark:bg-slate-900',
+        rightBg: 'group-hover:bg-emerald-600 bg-emerald-50 dark:bg-slate-800',
+        rightText: 'text-emerald-600 dark:text-emerald-400 group-hover:text-white',
+        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
     };
 
     const handleCopy = () => {
@@ -163,81 +178,85 @@ const ExtensionCard: React.FC<{
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const delay = Math.min(index * 20, 300);
+    const delay = Math.min(index * 30, 400);
 
     return (
-        <div
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: delay / 1000, duration: 0.3 }}
             className={`
-                group relative bg-white dark:bg-slate-900/60 rounded-2xl border transition-all duration-300
-                animate-in fade-in slide-in-from-bottom-2 duration-500
-                ${theme.border} ${isFocused ? theme.focus : 'shadow-sm'}
+                group relative flex w-full h-28 rounded-[1.5rem] overflow-hidden border transition-all duration-300
+                hover:-translate-y-1 hover:shadow-2xl ${theme.wrapper} ${theme.border}
+                ${isFocused ? `ring-2 ${theme.activeRing} shadow-lg` : 'shadow-sm'}
             `}
-            style={{ animationDelay: `${delay}ms` }}
         >
-            <div className="flex p-6 gap-6">
-                {/* Information Block */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className={`w-1 h-1 rounded-full ${theme.dot}`} />
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                Floor {ext.floor}
-                            </span>
-                        </div>
-
-                        <h3 className="text-[14px] font-bold text-slate-800 dark:text-white truncate tracking-tight mb-2">
+            {/* Left Side: Info */}
+            <div className={`flex-1 p-4 flex flex-col justify-between ${theme.leftBg} relative z-10`}>
+                <div className="flex items-start gap-3">
+                    <UserAvatar
+                        name={ext.name}
+                        url={ext.photo_url}
+                        size="md"
+                        className="shadow-sm ring-2 ring-white dark:ring-slate-800 shrink-0"
+                    />
+                    <div className="min-w-0 pr-1">
+                        <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight truncate leading-tight mb-0.5" title={ext.name}>
                             {ext.name}
                         </h3>
-
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                <span className="truncate">{ext.dept}</span>
-                            </div>
-                            {ext.role && (
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 italic truncate">
-                                    {ext.role}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-5 mt-4 border-t border-slate-50 dark:border-slate-800/30">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Status</span>
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Active</span>
-                        </div>
-
-                        {canEdit && (
-                            <div className="flex items-center gap-0.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => onEdit?.(ext)} className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"><Pencil size={12} /></button>
-                                {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={12} /></button>}
-                            </div>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate leading-tight" title={ext.dept}>
+                            {ext.dept}
+                        </p>
+                        {ext.role && (
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 italic truncate mt-0.5">
+                                {ext.role}
+                            </p>
                         )}
                     </div>
                 </div>
 
-                {/* Extension Display Wrapper */}
-                <button
-                    onClick={handleCopy}
-                    className={`
-                        min-w-[80px] flex flex-col items-center justify-center rounded-2xl transition-all duration-300
-                        ${theme.bg} ${theme.text} hover:scale-105 active:scale-95 border border-transparent hover:border-current/10
-                    `}
-                >
-                    <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest mb-1">Ext</span>
-                    <span className="text-3xl font-black tracking-tighter">
+                <div className="flex items-end justify-between mt-2">
+                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${theme.badge}`}>
+                        Floor {ext.floor}
+                    </span>
+
+                    {/* Admin Actions (Small, Bottom Left/Center) */}
+                    {canEdit && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button onClick={(e) => { e.stopPropagation(); onEdit?.(ext); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"><Pencil size={12} /></button>
+                            {isAdmin && <button onClick={(e) => { e.stopPropagation(); onDelete?.(ext.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"><Trash2 size={12} /></button>}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Right Side: Extension Action Button */}
+            <button
+                onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+                className={`
+                    w-24 group/btn relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300
+                    ${theme.rightBg} ${theme.rightText} border-l border-slate-100 dark:border-slate-800
+                `}
+                title="Click to copy"
+            >
+                <div className="relative z-10 flex flex-col items-center">
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-0.5 group-hover/btn:text-white/80">
+                        {copied ? 'Copied' : 'Ext'}
+                    </span>
+                    <span className="text-3xl font-black tracking-tighter transition-transform duration-300 group-hover/btn:scale-110 group-active/btn:scale-95">
                         {ext.ext}
                     </span>
-                    <div className="mt-2 h-3 flex items-center justify-center">
-                        {copied ? (
-                            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">Copied</span>
-                        ) : (
-                            <Copy size={10} className="opacity-0 group-hover/card:opacity-40 transition-opacity" />
-                        )}
-                    </div>
-                </button>
-            </div>
-        </div>
+                </div>
+
+                {/* Background Icon Decoration */}
+                <Phone className="absolute -bottom-4 -right-4 w-20 h-20 opacity-5 group-hover/btn:opacity-20 transition-opacity rotate-12" />
+
+                {/* Copied Overlay Feedback */}
+                <div className={`absolute inset-0 flex items-center justify-center bg-emerald-500 transition-all duration-300 ${copied ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <Check className="text-white w-8 h-8 animate-in zoom-in duration-300" strokeWidth={4} />
+                </div>
+            </button>
+        </motion.div>
     );
 };
 
@@ -258,78 +277,76 @@ const ExtensionTable: React.FC<{
     };
 
     return (
-        <div className="w-full overflow-hidden bg-white dark:bg-slate-900 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
+        <div className="w-full overflow-hidden bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center w-20">Initial</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Contact Identity</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Extension</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Cluster</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Floor</th>
-                            {isAdmin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Security PIN</th>}
-                            {(canEdit || isAdmin) && <th className="px-6 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">Control</th>}
+                        <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
+                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center w-20">Identity</th>
+                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Contact Details</th>
+                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Extension Code</th>
+                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Department</th>
+                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Location</th>
+                            {isAdmin && <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">PIN</th>}
+                            {(canEdit || isAdmin) && <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Actions</th>}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                         {extensions.map((ext) => (
-                            <tr key={ext.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                <td className="px-6 py-5 text-center">
-                                    <div className={`
-                                        w-10 h-10 rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-sm mx-auto
-                                        bg-gradient-to-br transition-transform duration-300 group-hover:scale-110
-                                        ${ext.floor === 27 ? 'from-indigo-500 to-indigo-700' : 'from-emerald-500 to-emerald-700'}
-                                    `}>
-                                        {ext.name.charAt(0).toUpperCase()}
+                            <tr key={ext.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                                <td className="px-6 py-4 text-center">
+                                    <div className="flex justify-center">
+                                        <UserAvatar
+                                            name={ext.name}
+                                            url={ext.photo_url}
+                                            size="sm"
+                                            className="ring-2 ring-white dark:ring-slate-800 shadow-sm group-hover:scale-110 transition-transform"
+                                        />
                                     </div>
                                 </td>
-                                <td className="px-6 py-5">
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{ext.name}</span>
-                                        {ext.role && <span className="text-[10px] font-medium text-slate-400 italic dark:text-slate-500">{ext.role}</span>}
+                                <td className="px-6 py-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">{ext.name}</span>
+                                        {ext.role && <span className="text-[10px] font-medium text-slate-400 italic mt-0.5">{ext.role}</span>}
                                     </div>
                                 </td>
-                                <td className="px-6 py-5 text-center">
+                                <td className="px-6 py-4 text-center">
                                     <button
                                         onClick={() => handleCopy(ext.id, ext.ext)}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 font-mono font-black text-xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all active:scale-95 group/btn"
+                                        className="inline-flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-mono font-bold text-lg hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 transition-all active:scale-95 shadow-sm group/btn min-w-[100px] justify-center"
                                     >
-                                        <span className="group-hover/btn:text-indigo-600 dark:group-hover/btn:text-indigo-400 transition-colors">{ext.ext}</span>
-                                        {copiedId === ext.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} className="opacity-20 group-hover/btn:opacity-60 transition-opacity" />}
+                                        <span>{ext.ext}</span>
+                                        {copiedId === ext.id ? <Check size={14} className="text-white" /> : <Copy size={14} className="opacity-0 group-hover/btn:opacity-50 transition-opacity" />}
                                     </button>
                                 </td>
-                                <td className="px-6 py-5">
+                                <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                            <Building2 size={12} className="text-slate-400" />
-                                        </div>
-                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">{ext.dept}</span>
+                                        <span className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                            {ext.dept}
+                                        </span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-5 text-center">
-                                    <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest
+                                <td className="px-6 py-4 text-center">
+                                    <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest shadow-sm
                                         ${ext.floor === 27
-                                            ? 'bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20'
-                                            : 'bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'}
+                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800'
+                                            : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'}
                                     `}>
-                                        {ext.floor}F LEVEL
+                                        Floor {ext.floor}
                                     </span>
                                 </td>
                                 {isAdmin && (
-                                    <td className="px-6 py-5 text-center">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                                            <span className="text-[10px] font-mono font-black text-slate-400 dark:text-slate-500">
-                                                {ext.pin || '---'}
-                                            </span>
-                                        </div>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="font-mono text-xs text-slate-400 dark:text-slate-600 select-all">
+                                            {ext.pin || '---'}
+                                        </span>
                                     </td>
                                 )}
-                                {canEdit && (
-                                    <td className="px-6 py-5 text-center">
-                                        <div className="inline-flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-                                            <button onClick={() => onEdit?.(ext)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm"><Pencil size={14} /></button>
-                                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm"><Trash2 size={14} /></button>}
+                                {(canEdit || isAdmin) && (
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="inline-flex gap-1 opacity-20 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                                            <button onClick={() => onEdit?.(ext)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all"><Pencil size={14} /></button>
+                                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all"><Trash2 size={14} /></button>}
                                         </div>
                                     </td>
                                 )}
@@ -342,26 +359,7 @@ const ExtensionTable: React.FC<{
     );
 };
 
-// 4. Stat Card
-const StatCard = ({ label, value, icon: Icon, colorClass, subtext }: { label: string; value: string | number; icon: any; colorClass: string; subtext?: string }) => (
-    <motion.div
-        whileHover={{ y: -2 }}
-        className="flex flex-col p-6 bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 group"
-    >
-        <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{label}</span>
-            <div className={`p-2 rounded-xl border transition-all duration-500 ${colorClass}`}>
-                <Icon size={16} strokeWidth={2.5} />
-            </div>
-        </div>
-        <div className="flex flex-col">
-            <span className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white mb-1">
-                {value}
-            </span>
-            {subtext && <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{subtext}</span>}
-        </div>
-    </motion.div>
-);
+
 
 // 5. Main Component
 export const ExtensionDirectory = ({
@@ -383,6 +381,7 @@ export const ExtensionDirectory = ({
     const [editingExt, setEditingExt] = useState<PhoneExtension | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // New state for upload status
     const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
         // Integrated variant (public) always uses grid, standalone uses table for admin
         if (variant === 'integrated') return 'grid';
@@ -406,7 +405,8 @@ export const ExtensionDirectory = ({
         ext: '',
         floor: 27,
         role: '',
-        pin: ''
+        pin: '',
+        photo_url: ''
     });
 
     const isAdmin = currentUser?.role === 'Admin';
@@ -475,7 +475,8 @@ export const ExtensionDirectory = ({
                         ext: formData.ext,
                         floor: formData.floor,
                         role: formData.role,
-                        pin: formData.pin
+                        pin: formData.pin,
+                        photo_url: formData.photo_url
                     })
                     .eq('id', editingExt.id);
                 if (error) throw error;
@@ -493,6 +494,36 @@ export const ExtensionDirectory = ({
             console.error('Error saving extension:', error);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+        formDataUpload.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                {
+                    method: 'POST',
+                    body: formDataUpload,
+                }
+            );
+
+            if (!response.ok) throw new Error('Upload failed');
+
+            const data = await response.json();
+            setFormData({ ...formData, photo_url: data.secure_url });
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload image. Please try again or use a URL.');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -520,7 +551,8 @@ export const ExtensionDirectory = ({
                 ext: ext.ext,
                 floor: ext.floor,
                 role: ext.role,
-                pin: ext.pin || ''
+                pin: ext.pin || '',
+                photo_url: ext.photo_url || ''
             });
         } else {
             setEditingExt(null);
@@ -530,7 +562,8 @@ export const ExtensionDirectory = ({
                 ext: '',
                 floor: 27,
                 role: '',
-                pin: ''
+                pin: '',
+                photo_url: ''
             });
         }
         setIsModalOpen(true);
@@ -763,79 +796,79 @@ export const ExtensionDirectory = ({
             <InstructionPanel />
 
             {/* List Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 px-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-1 h-3 rounded-full" style={{ backgroundColor: 'var(--primary)' }} />
-                    <h2 className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600" />
+                    <h2 className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         Directory Registry
                     </h2>
                 </div>
 
-                <div className="flex items-center gap-4 flex-1 md:flex-initial">
+                <div className="flex items-center gap-4 flex-1 md:flex-initial bg-white dark:bg-slate-900 p-2 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
                     {/* Search Bar */}
                     {variant === 'standalone' && (
-                        <div className="relative flex-1 md:max-w-md">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <div className="relative flex-1 md:w-64">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search extensions..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-indigo-500/20 rounded-2xl text-xs font-semibold text-slate-900 dark:text-slate-200 transition-all outline-none"
+                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent focus:border-indigo-500/20 focus:bg-white dark:focus:bg-slate-900 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-200 transition-all outline-none"
                             />
                         </div>
                     )}
 
+                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+
                     {/* View Mode Toggle */}
-                    <div className="flex p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
+                    <div className="flex gap-1">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`p-2 rounded-xl transition-all ${viewMode === 'grid'
-                                ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm scale-105'
-                                : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                                ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
                                 }`}
                             title="Grid View"
                         >
-                            <LayoutGrid size={16} />
+                            <LayoutGrid size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('table')}
                             className={`p-2 rounded-xl transition-all ${viewMode === 'table'
-                                ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm scale-105'
-                                : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                                ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
                                 }`}
                             title="Table View"
                         >
-                            <LayoutList size={16} />
+                            <LayoutList size={18} />
                         </button>
                     </div>
+                </div>
 
-                    {/* Pagination Controls */}
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 px-3 py-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 backdrop-blur-md shadow-sm">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                {filteredExtensions.length} Active
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="p-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all active:scale-90"
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
-                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 min-w-[60px] text-center">
-                                {currentPage} / {totalPages || 1}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                className="p-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60 rounded-xl text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all active:scale-90"
-                            >
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
+                {/* Pagination Controls */}
+                <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                        {filteredExtensions.length} Active
+                    </span>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 min-w-[30px] text-center">
+                            {currentPage}/{totalPages || 1}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -954,6 +987,76 @@ export const ExtensionDirectory = ({
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
+
+                            {/* Photo Upload Section */}
+                            <div>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Profile Photo</label>
+                                <div className="flex gap-4 items-start">
+                                    <div className="relative group shrink-0">
+                                        <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                            {formData.photo_url ? (
+                                                <img
+                                                    src={formData.photo_url}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <ImageIcon className="text-slate-400" size={24} />
+                                            )}
+                                            {isUploading && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                    <Loader2 className="animate-spin text-white" size={20} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 space-y-3">
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFileUpload}
+                                                className="hidden"
+                                                id="photo-upload"
+                                                disabled={isUploading}
+                                            />
+                                            <label
+                                                htmlFor="photo-upload"
+                                                className={`
+                                                    flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border-2 border-dashed transition-all cursor-pointer
+                                                    ${isUploading
+                                                        ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
+                                                        : 'bg-indigo-50/50 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:hover:bg-indigo-500/20 dark:text-indigo-400'}
+                                                `}
+                                            >
+                                                <UploadCloud size={16} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">
+                                                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <div className="relative">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                                            </div>
+                                            <div className="relative flex justify-center text-xs uppercase">
+                                                <span className="bg-white dark:bg-slate-900 px-2 text-[9px] font-bold text-slate-400">Or use URL</span>
+                                            </div>
+                                        </div>
+
+                                        <input
+                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-700/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                                            value={formData.photo_url || ''}
+                                            placeholder="https://..."
+                                            onChange={e => setFormData({ ...formData, photo_url: e.target.value })}
+                                            disabled={isUploading}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Extension Code</label>
@@ -1028,25 +1131,27 @@ export const ExtensionDirectory = ({
             )}
 
             {/* Floating Theme Toggle and Back Button (Public Only) */}
-            {isPublic && (
-                <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-                    <button
-                        onClick={toggleTheme}
-                        aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
-                        className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
-                    >
-                        {theme === 'light' ? <Moon size={24} className="group-hover:rotate-12 transition-transform" /> : <Sun size={24} className="group-hover:rotate-90 transition-transform" />}
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/'}
-                        aria-label="Back to Portal"
-                        className="w-14 h-14 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
-                        title="Back to Portal"
-                    >
-                        <ExternalLink size={24} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                </div>
-            )}
-        </div>
+            {
+                isPublic && (
+                    <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+                        <button
+                            onClick={toggleTheme}
+                            aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
+                            className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
+                        >
+                            {theme === 'light' ? <Moon size={24} className="group-hover:rotate-12 transition-transform" /> : <Sun size={24} className="group-hover:rotate-90 transition-transform" />}
+                        </button>
+                        <button
+                            onClick={() => window.location.href = '/'}
+                            aria-label="Back to Portal"
+                            className="w-14 h-14 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
+                            title="Back to Portal"
+                        >
+                            <ExternalLink size={24} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                    </div>
+                )
+            }
+        </div >
     );
 };

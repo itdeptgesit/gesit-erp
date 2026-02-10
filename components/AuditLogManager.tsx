@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { AuditLog, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
-import { StatCard } from './MainDashboard';
+import { StatCard } from './StatCard';
 
 interface AuditLogManagerProps {
     currentUser: UserAccount | null;

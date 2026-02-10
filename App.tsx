@@ -577,7 +577,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
             <div className="max-w-[1800px] mx-auto h-full">
               {children ? children : (
                 <Routes>
-                  <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} />} />
+                  <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} />} />
                   <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
                   <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
                   <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />

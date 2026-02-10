@@ -9,7 +9,7 @@ import {
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
     Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle
 } from 'lucide-react';
-import { StatCard } from './MainDashboard';
+import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { FluentEmoji } from '@lobehub/fluent-emoji';
 

@@ -5,7 +5,7 @@ import { FileText, Search, LayoutGrid, List, Plus, RefreshCcw, Trash2, Cloud, Fi
 import { FileFormModal } from './FileFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
-import { StatCard } from './MainDashboard';
+import { StatCard } from './StatCard';
 import { UserAccount } from '../types';
 
 interface FileItem { id: string; name: string; type: 'pdf' | 'doc' | 'sheet' | 'image' | 'folder'; updatedAt: string; gdriveUrl: string; category?: string; }

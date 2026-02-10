@@ -8,7 +8,7 @@ import {
 import { ITAssetLoan, UserAccount, ITAsset } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
-import { StatCard } from './MainDashboard';
+import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { LoanFormModal } from './LoanFormModal';
 
@@ -161,8 +161,8 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
             const { error: assetError } = await supabase
                 .from('it_assets')
-                .update({ 
-                    status: 'Idle', 
+                .update({
+                    status: 'Idle',
                     user_assigned: null,
                     department: 'IT' // Or keep current, but usually returns to IT
                 })
@@ -325,15 +325,15 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                         if (editingLoan) {
                             await supabase.from('it_asset_loans').update(payload).eq('id', editingLoan.id);
                             // Update asset as well even if editing
-                            await supabase.from('it_assets').update({ 
-                                status: formData.status === 'Active' ? 'Used' : 'Idle', 
+                            await supabase.from('it_assets').update({
+                                status: formData.status === 'Active' ? 'Used' : 'Idle',
                                 user_assigned: formData.status === 'Active' ? formData.borrowerName : null,
                                 department: formData.borrowerDept
                             }).eq('id', formData.assetId);
                         } else {
                             // Mark asset as 'Used' when loaned
-                            await supabase.from('it_assets').update({ 
-                                status: 'Used', 
+                            await supabase.from('it_assets').update({
+                                status: 'Used',
                                 user_assigned: formData.borrowerName,
                                 department: formData.borrowerDept
                             }).eq('id', formData.assetId);
