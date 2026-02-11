@@ -14,6 +14,8 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { RejectReasonModal } from './RejectReasonModal';
 import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
+import { exportToExcel } from '../lib/excelExport';
+import { FileSpreadsheet } from 'lucide-react';
 
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
@@ -105,8 +107,31 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     const filteredPlans = useMemo(() => {
         const list = activeTab === 'approvals' ? plans.filter(isMyTurnToApprove) : plans;
-        return list.filter(p => p.item.toLowerCase().includes(searchTerm.toLowerCase()) || p.requester.toLowerCase().includes(searchTerm.toLowerCase()));
+        return list.filter(p =>
+            p.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.vendor || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
     }, [plans, allUsers, searchTerm, activeTab, currentUser]);
+
+    const handleExportExcel = () => {
+        if (filteredPlans.length === 0) return;
+
+        const dataToExport = filteredPlans.map(p => ({
+            "Item": p.item,
+            "Specs": p.specs,
+            "Quantity": p.quantity,
+            "Unit Price": p.unitPrice,
+            "Total Price": p.totalPrice,
+            "Vendor": p.vendor || "-",
+            "Requester": p.requester,
+            "Date": p.requestDate,
+            "Status": p.status,
+            "Justification": p.justification
+        }));
+
+        exportToExcel(dataToExport, `GESIT-PURCHASE-PLANS-${new Date().toISOString().split('T')[0]}`);
+    };
 
     const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
     const paginatedPlans = useMemo(() => {
@@ -166,11 +191,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Procurement center</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Managed investment and equipment requests</p></div>
-                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    {[{ id: 'registry', icon: ListFilter, label: 'History' }, { id: 'approvals', icon: UserCheck, label: `My tasks (${stats.actionsCount})` }, { id: 'analytics', icon: BarChart3, label: 'Reports' }].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}><tab.icon size={14} /> {tab.label}</button>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                        <ShoppingCart size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Procurement <span className="text-blue-600">Center</span></h1>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Managed investment & equipment</p>
+                    </div>
+                </div>
+                <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
+                    {[{ id: 'registry', icon: ListFilter, label: 'REGISTRY' }, { id: 'approvals', icon: UserCheck, label: `TASKS (${stats.actionsCount})` }, { id: 'analytics', icon: BarChart3, label: 'REPORTS' }].map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 px-6 py-2 rounded-[0.9rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}><tab.icon size={14} /> {tab.label}</button>
                     ))}
                 </div>
             </div>
@@ -186,8 +219,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 <div className="px-6 py-5 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900 sticky top-0 z-20">
                     <div className="relative flex-1 w-full md:max-w-md"><input type="text" placeholder="Search by hardware or account..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-blue-500/20 rounded-2xl text-xs font-semibold dark:text-slate-200 transition-all outline-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" /></div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                        <button onClick={fetchData} className="p-2.5 text-slate-400 hover:text-blue-600 bg-slate-50 dark:bg-slate-800 rounded-xl transition-all" title="Force Data Sync"><RefreshCcw size={18} className={loading ? 'animate-spin' : ''} /></button>
-                        {canManage && <button onClick={() => setIsModalOpen(true)} className="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/10">New request</button>}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleExportExcel}
+                                className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-emerald-500 hover:text-emerald-600 transition-all shadow-sm active:scale-95 group"
+                                title="Export Excel"
+                            >
+                                <FileSpreadsheet size={18} className="group-hover:scale-110 transition-transform" />
+                            </button>
+                            <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
+                                <RefreshCcw size={18} className={loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
+                            </button>
+                        </div>
+                        {canManage && <button onClick={() => setIsModalOpen(true)} className="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20">New request</button>}
                     </div>
                 </div>
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
@@ -195,7 +239,16 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         <div className="p-20 text-center flex flex-col items-center justify-center opacity-30 grayscale"><BarChart3 size={48} className="mb-4 text-slate-400" /><h3 className="text-sm font-bold text-slate-500">Analytics processing</h3><p className="text-[10px] text-slate-400 mt-1 font-medium">Syncing cost distribution trends...</p></div>
                     ) : (
                         <table className="w-full text-left border-collapse">
-                            <thead><tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold text-[10px] border-b border-slate-100 dark:border-slate-800 uppercase"><th className="px-6 py-4">Item identity</th><th className="px-6 py-4 text-center">Qty</th><th className="px-6 py-4 text-right">Commitment</th><th className="px-6 py-4">Status</th><th className="px-6 py-4">Originator</th><th className="px-6 py-4 text-center">Actions</th></tr></thead>
+                            <thead>
+                                <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                                    <th className="px-6 py-5">Item Identity</th>
+                                    <th className="px-6 py-5 text-center">Qty</th>
+                                    <th className="px-6 py-5 text-right">Commitment</th>
+                                    <th className="px-6 py-5">Status</th>
+                                    <th className="px-6 py-5">Originator</th>
+                                    <th className="px-6 py-5 text-center">Protocol</th>
+                                </tr>
+                            </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">{loading && !paginatedPlans.length ? (<tr><td colSpan={6} className="py-24 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={28} /></td></tr>) : paginatedPlans.length === 0 ? (<tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">Registry empty.</td></tr>) : paginatedPlans.map(plan => {
                                 const isMyTurn = isMyTurnToApprove(plan);
                                 const requesterProfile = getRequesterProfile(plan.requester);

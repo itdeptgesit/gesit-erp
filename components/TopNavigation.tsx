@@ -202,7 +202,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             {/* HEADER - Different layout for public vs admin */}
             {variant === 'public' ? (
                 // PUBLIC VARIANT - Modern TGC Directory Style
-                <header className="relative z-20 h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 md:px-12 flex items-center justify-between transition-all">
+                <header className="relative z-20 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-8 md:px-12 flex items-center justify-between transition-all">
                     {/* Logo & Title - Left */}
                     <NavLink to="/" className="flex items-center gap-4 group shrink-0">
                         <div className="w-12 h-12 flex items-center justify-center transition-all group-hover:scale-105">
@@ -210,59 +210,36 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                         </div>
                         <div className="flex flex-col leading-tight">
                             <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-                                TGC Directory
+                                TGC <span className="text-primary">Directory</span>
                             </h1>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 font-bold tracking-wider uppercase">Internal Extensions</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black tracking-[0.2em] uppercase">Internal Registry</p>
                         </div>
                     </NavLink>
 
-                    {/* Search Bar - Center */}
-                    {searchProps && (
-                        <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md px-4">
-                            <div className="relative group">
-                                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors pointer-events-none ${searchProps.value ? 'text-primary' : 'text-slate-400'}`} />
-                                <input
-                                    type="text"
-                                    placeholder="Search extensions..."
-                                    className="w-full pl-11 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-primary outline-none transition-all"
-                                    value={searchProps.value}
-                                    onChange={(e) => searchProps.onChange(e.target.value)}
-                                />
-                                {searchProps.value && (
-                                    <button
-                                        onClick={() => searchProps.onChange("")}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all"
-                                        aria-label="Clear search"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex-1" />
 
                     {/* Right Controls */}
                     <div className="flex items-center gap-3 shrink-0">
-                        {/* Floor Filter Buttons */}
-                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <button
-                                onClick={() => onFloorFilterChange?.('All')}
-                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 'All' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                            >
-                                ALL
-                            </button>
-                            <button
-                                onClick={() => onFloorFilterChange?.(27)}
-                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 27 ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                            >
-                                27F
-                            </button>
-                            <button
-                                onClick={() => onFloorFilterChange?.(26)}
-                                className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${floorFilter === 26 ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                            >
-                                26F
-                            </button>
+                        {/* Floor Filter Segmented Control */}
+                        <div className="hidden md:flex items-center bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 relative">
+                            <LayoutGroup id="floor-filter">
+                                {['All', 27, 26].map((f) => (
+                                    <button
+                                        key={f}
+                                        onClick={() => onFloorFilterChange?.(f as any)}
+                                        className={`relative px-5 py-2 text-[10px] font-black rounded-xl transition-colors duration-300 z-10 uppercase tracking-widest ${floorFilter === f ? 'text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                    >
+                                        {floorFilter === f && (
+                                            <motion.div
+                                                layoutId="active-pill"
+                                                className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-xl z-[-1]"
+                                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                            />
+                                        )}
+                                        {f === 'All' ? 'ALL' : `${f}F`}
+                                    </button>
+                                ))}
+                            </LayoutGroup>
                         </div>
 
                         {/* Share Button */}

@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    Activity, ShoppingCart, RefreshCcw, Network, Box, Zap,
-    ListTodo, LifeBuoy, ChevronRight, Users, Wallet, ShieldCheck, AlertCircle, Database,
-    Sun, CloudSun, Moon, Megaphone, CheckCircle2, X, ArrowUpRight, ArrowDownRight,
-    TrendingUp, BarChart3, PieChart, Lock, Clock, Building2, Tag
+    ShoppingCart, RefreshCcw, Network, Box, Zap,
+    ListTodo, LifeBuoy, ChevronRight, AlertCircle, Clock
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { ActivityLog, PortStatus, Announcement } from '../types';
-import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
-} from 'recharts';
 import { StatCard } from './StatCard';
-import { DashboardModeSwitcher, DashboardMode } from './DashboardModeSwitcher';
-import { TopVendorsWidget } from './TopVendorsWidget';
 
 // --- Types ---
 
@@ -46,12 +38,6 @@ interface DashboardStats {
     monthlyPaidSpend: number;
     activeLoans: number;
     overdueLoans: number;
-    ticketPriorities: {
-        critical: number;
-        high: number;
-        medium: number;
-        low: number;
-    };
     recentActivities: ActivityLog[];
     assetCategories: Record<string, number>;
     deptSpending: Record<string, number>;
@@ -75,22 +61,22 @@ interface MainDashboardProps {
 // --- Helper Components ---
 
 const PriorityItem = ({ title, count, type, onClick }: any) => (
-    <div onClick={onClick} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer group">
+    <div onClick={onClick} className="flex items-center justify-between p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-slate-100 dark:border-slate-800/50 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
         <div className="flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'critical' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' :
-                type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${type === 'critical' ? 'bg-rose-50 text-rose-500 dark:bg-rose-950/30' :
+                type === 'warning' ? 'bg-amber-50 text-amber-500 dark:bg-amber-950/30' :
+                    'bg-slate-50 text-slate-500 dark:bg-slate-800'
                 }`}>
-                {type === 'critical' ? <AlertCircle size={20} /> : type === 'warning' ? <Clock size={20} /> : <ListTodo size={20} />}
+                {type === 'critical' ? <AlertCircle size={18} /> : type === 'warning' ? <Clock size={18} /> : <ListTodo size={18} />}
             </div>
             <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{title}</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Requires attention</p>
+                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{title}</h4>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Requires attention</p>
             </div>
         </div>
         <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-slate-900 dark:text-white">{count}</span>
-            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+            <span className="text-xl font-black text-slate-900 dark:text-white mb-0.5">{count}</span>
+            <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
         </div>
     </div>
 );
@@ -103,7 +89,6 @@ const formatCurrency = (num: number) => {
 
 export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User' }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [dashboardMode, setDashboardMode] = useState<DashboardMode>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalAssets: 0, activeAssets: 0,
         openTickets: 0, resolvedTickets: 0,
@@ -112,7 +97,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         totalUsers: 0, totalDepts: 0,
         pendingBudget: 0, approvedBudget: 0, totalPaidSpend: 0, monthlyPaidSpend: 0,
         activeLoans: 0, overdueLoans: 0,
-        ticketPriorities: { critical: 0, high: 0, medium: 0, low: 0 },
         recentActivities: [],
         assetCategories: {},
         deptSpending: {},
@@ -120,26 +104,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         personalTasks: [], upcomingLoans: [], activeAnnouncements: [],
         vendors: []
     });
-
-    // Mock Data for Charts (Replace with real historical data if available)
-    const ticketTrendData = [
-        { name: 'Mon', tickets: 4 },
-        { name: 'Tue', tickets: 7 },
-        { name: 'Wed', tickets: 5 },
-        { name: 'Thu', tickets: 12 },
-        { name: 'Fri', tickets: 8 },
-        { name: 'Sat', tickets: 2 },
-        { name: 'Sun', tickets: 1 },
-    ];
-
-    const spendingData = [
-        { name: 'Hardware', value: 45000000 },
-        { name: 'Software', value: 25000000 },
-        { name: 'Services', value: 15000000 },
-        { name: 'Cloud', value: 10000000 },
-    ];
-
-    const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444'];
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -179,13 +143,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
             ]);
 
             // Process Data
-            const ticketPriorities = {
-                critical: allTickets?.filter((t: any) => t.priority === 'Critical' && t.status === 'Open').length || 0,
-                high: allTickets?.filter((t: any) => t.priority === 'High' && t.status === 'Open').length || 0,
-                medium: allTickets?.filter((t: any) => t.priority === 'Medium' && t.status === 'Open').length || 0,
-                low: allTickets?.filter((t: any) => t.priority === 'Low' && t.status === 'Open').length || 0,
-            };
-
             const overdueLoans = (loans || []).filter((l: any) => new Date(l.expected_return_date) < new Date()).length;
 
             const deptSpending = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
@@ -238,7 +195,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 monthlyPaidSpend: 0, // Simplified for brevity
                 activeLoans: activeLoans || 0,
                 overdueLoans,
-                ticketPriorities,
                 recentActivities: (activities || []).map((a: any) => ({ ...a, activityName: a.activity_name, itPersonnel: a.it_personnel, createdAt: a.created_at })),
                 assetCategories: {},
                 deptSpending,
@@ -248,6 +204,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 activeAnnouncements: announcements || [],
                 vendors: vendorList
             });
+
+
 
         } catch (error) {
             console.error("Dashboard fetch error:", error);
@@ -266,400 +224,168 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
     return (
         <div className="pb-12 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        Dashboard
-                        <span className={`px-3 py-1 text-xs font-bold rounded-full border ${isAdmin ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                            {userRole} View
-                        </span>
-                        {/* Mode Switcher integrated in header */}
-                        {isAdmin && <DashboardModeSwitcher mode={dashboardMode} onChange={setDashboardMode} />}
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">
-                        Overview of system performance and activities.
-                    </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 shadow-lg shrink-0">
+                        <Zap size={24} strokeWidth={2} />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-3 mb-0.5">
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+                            <span className="px-2 py-0.5 text-[9px] font-bold text-slate-400 border border-slate-200 dark:border-slate-800 rounded-lg uppercase tracking-widest">
+                                {userRole} Terminal
+                            </span>
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">System operational overview</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm active:scale-95">
-                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
+                <div className="flex items-center gap-4">
+                    <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
+                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
                     </button>
-                    <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                        System Online
+                    <div className="px-4 py-2 bg-white dark:bg-slate-900 text-emerald-500 dark:text-emerald-400 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-800 flex items-center gap-2.5 shadow-sm">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                        Online
                     </div>
                 </div>
             </div>
 
-            {/* Mode Switcher moved to header */}
-
-            {/* --- LAYERS BASED ON MODE --- */}
-            {isAdmin && (
+            {/* --- ADMIN VIEW --- */}
+            {isAdmin ? (
                 <>
-                    {/* OVERVIEW MODE */}
-                    {dashboardMode === 'overview' && (
-                        <>
-                            {/* --- LAYER 1: PRIORITY & DECISION --- */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden h-full min-h-[220px]">
-                                    <div className="absolute top-0 right-0 p-8 opacity-10">
-                                        <Zap size={120} />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <h3 className="font-bold text-indigo-100 uppercase tracking-widest text-sm mb-1">Priority Center</h3>
-                                        <h2 className="text-3xl font-bold mb-4">Action Required</h2>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('purchase')}>
-                                                <AlertCircle size={18} className="text-amber-300" />
-                                                <span className="font-medium">{stats.pendingPurchases} Pending Approvals</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('helpdesk')}>
-                                                <AlertCircle size={18} className="text-rose-300" />
-                                                <span className="font-medium">{stats.ticketPriorities.critical + stats.ticketPriorities.high} High Priority Tickets</span>
-                                            </div>
+                    {/* --- PRIORITY CENTER --- */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between relative overflow-hidden h-full min-h-[220px]">
+                            <div className="relative z-10">
+                                <h3 className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.25em] mb-1">Priority Operations</h3>
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Action Required</h2>
+                                <div className="space-y-4">
+                                    <div className="group flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 cursor-pointer hover:border-blue-500/30 transition-all" onClick={() => onNavigate('purchase')}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{stats.pendingPurchases} Pending Approvals</span>
                                         </div>
+                                        <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
                                     </div>
-                                </div>
-
-                                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <PriorityItem title="Pending Approvals" count={stats.pendingPurchases} type="warning" onClick={() => onNavigate('purchase')} />
-                                    <PriorityItem title="Critical Tickets" count={stats.ticketPriorities.critical} type="critical" onClick={() => onNavigate('helpdesk')} />
-                                    <PriorityItem title="Overdue Loans" count={stats.overdueLoans} type="critical" onClick={() => onNavigate('asset-loan')} />
-                                    <PriorityItem title="My Tasks" count={stats.todoTasks} type="normal" onClick={() => onNavigate('weekly')} />
-                                </div>
-                            </div>
-
-                            {/* --- LAYER 2: OPERATIONAL OVERVIEW --- */}
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Operational Overview</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <StatCard label="Service Desk" value={stats.openTickets} subValue={`${stats.resolvedTickets} resolved`} icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
-                                    <StatCard label="Assets" value={stats.totalAssets} subValue={`${stats.activeAssets} operational`} icon={Box} color="blue" onClick={() => onNavigate('assets')} />
-                                    <StatCard label="Procurement" value={formatCurrency(stats.monthlyPaidSpend / 1000000) + 'M'} subValue="Spending this month" icon={ShoppingCart} color="amber" onClick={() => onNavigate('purchase')} />
-                                    <StatCard label="Infrastructure" value={stats.activePorts} subValue="Active Network Ports" icon={Network} color="emerald" onClick={() => onNavigate('network')} />
-                                </div>
-                            </div>
-
-                            {/* --- LAYER 3: ANALYTICS --- */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
-                                        <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">View All</button>
-                                    </div>
-                                    <div className="space-y-6">
-                                        {stats.recentActivities.length === 0 ? <p className="text-sm text-slate-400 italic">No activity logs.</p> : stats.recentActivities.map((act) => (
-                                            <div key={act.id} className="flex gap-4">
-                                                <div className="mt-1"><div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">{act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}</div></div>
-                                                <div>
-                                                    <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-snug"><span className="font-bold text-slate-900 dark:text-white">{act.itPersonnel?.split(' ')[0]}</span> {act.activityName}</p>
-                                                    <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
-                                        <h3 className="font-bold text-slate-800 dark:text-white mb-2">Ticket Trend</h3>
-                                        <div className="flex-1 min-h-[200px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={ticketTrendData}>
-                                                    <defs><linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                                                    <Tooltip />
-                                                    <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTickets)" />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
+                                    <div className="group flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 cursor-pointer hover:border-blue-500/30 transition-all" onClick={() => onNavigate('helpdesk')}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-rose-500" />
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{stats.openTickets} Open Helpdesk Tickets</span>
                                         </div>
+                                        <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
                                     </div>
-                                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
-                                        <h3 className="font-bold text-slate-800 dark:text-white mb-2">Budget Distribution</h3>
-                                        <div className="flex-1 min-h-[200px] flex items-center justify-center">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <RePieChart>
-                                                    <Pie data={spendingData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                                        {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                                    </Pie>
-                                                    <Tooltip />
-                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
-                                                </RePieChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {/* FINANCE MODE */}
-                    {dashboardMode === 'finance' && (
-                        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                            {/* Row 1 – Financial KPI */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard
-                                    label="Total Procurement"
-                                    value={formatCurrency(stats.totalPaidSpend)}
-                                    subtext="Settled Invoices"
-                                    icon={Wallet}
-                                    colorClass="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20"
-                                />
-                                <StatCard
-                                    label="Outstanding"
-                                    value={formatCurrency(stats.pendingBudget)}
-                                    subtext="Pending Commitments"
-                                    icon={AlertCircle}
-                                    colorClass="bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20"
-                                />
-                                <StatCard
-                                    label="Budget Absorption"
-                                    value="84%"
-                                    subtext="YTD Utilization"
-                                    icon={TrendingUp}
-                                    colorClass="bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20"
-                                    trend={5}
-                                />
-                                <StatCard
-                                    label="Gross Volume"
-                                    value={formatCurrency(stats.totalPaidSpend + stats.pendingBudget)}
-                                    subtext="Total Transaction Value"
-                                    icon={BarChart3}
-                                    colorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20"
-                                />
-                            </div>
-
-                            {/* Row 2 – Trend (Full Width) */}
-                            <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
-                                        <TrendingUp size={20} strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Procurement Velocity</h3>
-                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Monthly Disbursement Analysis</p>
-                                    </div>
-                                </div>
-                                <div className="h-[350px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={[
-                                            { name: 'Jan', amount: 45000000 }, { name: 'Feb', amount: 52000000 },
-                                            { name: 'Mar', amount: 48000000 }, { name: 'Apr', amount: 61000000 },
-                                            { name: 'May', amount: 55000000 }, { name: 'Jun', amount: 67000000 }
-                                        ]}>
-                                            <defs><linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                                formatter={(value: number) => [formatCurrency(value), 'Disbursed']}
-                                                itemStyle={{ color: '#10b981', fontWeight: 700, fontSize: '12px' }}
-                                                labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
-                                            />
-                                            <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorSpend)" activeDot={{ r: 6, strokeWidth: 0 }} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* Row 3 – Breakdown */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/20 shadow-sm">
-                                            <Building2 size={20} strokeWidth={2.5} />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Cost Center Distribution</h3>
-                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Allocation by Department</p>
-                                        </div>
-                                    </div>
-                                    <div className="h-[350px] w-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart layout="vertical" data={Object.entries(stats.deptSpending).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5)} margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                                                <XAxis type="number" hide />
-                                                <YAxis
-                                                    dataKey="name"
-                                                    type="category"
-                                                    axisLine={false}
-                                                    tickLine={false}
-                                                    width={140}
-                                                    tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }}
-                                                />
-                                                <Tooltip
-                                                    cursor={{ fill: 'transparent' }}
-                                                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                                    formatter={(value: number) => [formatCurrency(value), 'Allocated']}
-                                                    itemStyle={{ color: '#2563eb', fontWeight: 700, fontSize: '12px' }}
-                                                    labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
-                                                />
-                                                <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={24}>
-                                                    {Object.entries(stats.deptSpending).map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'][index % 5]} />
-                                                    ))}
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                                <div className="space-y-6">
-                                    <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
-                                                <Tag size={20} strokeWidth={2.5} />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Spend Categories</h3>
-                                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Classification Breakdown</p>
-                                            </div>
-                                        </div>
-                                        <div className="h-[220px] w-full relative">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <RePieChart>
-                                                    <Pie
-                                                        data={spendingData}
-                                                        innerRadius={65}
-                                                        outerRadius={85}
-                                                        paddingAngle={6}
-                                                        dataKey="value"
-                                                        stroke="none"
-                                                        cornerRadius={4}
-                                                    >
-                                                        {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                                    </Pie>
-                                                    <Tooltip
-                                                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                                        itemStyle={{ color: '#6366f1', fontWeight: 700, fontSize: '12px' }}
-                                                    />
-                                                </RePieChart>
-                                            </ResponsiveContainer>
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                <div className="text-center">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
-                                                    <p className="text-xl font-black text-slate-800 dark:text-white">100%</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 grid grid-cols-2 gap-3">
-                                            {spendingData.map((entry, index) => (
-                                                <div key={index} className="flex items-center gap-2">
-                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide truncate">{entry.name}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <TopVendorsWidget vendors={stats.vendors} />
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* TECHNICAL MODE */}
-                    {dashboardMode === 'technical' && (
-                        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                            {/* Row 1 – Technical KPI */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                <StatCard label="Open Tickets" value={stats.openTickets} icon={LifeBuoy} color="blue" />
-                                <StatCard label="Critical Issues" value={stats.ticketPriorities.critical} icon={AlertCircle} color="rose" />
-                                <StatCard label="SLA Status" value="98.2%" icon={ShieldCheck} color="emerald" subValue="Compliance rate" />
-                                <StatCard label="Active Assets" value={stats.activeAssets} icon={Box} color="indigo" subValue={`${stats.totalAssets} total`} />
-                                <StatCard label="Infrastructure" value={stats.activePorts} icon={Network} color="amber" subValue="Active ports" />
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Row 2 – Ticket Trend (2/3 width) */}
-                                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="font-bold text-slate-800 dark:text-white">Ticket Volume Trend</h3>
-                                        <div className="text-xs text-slate-500 font-medium">Last 30 Days</div>
-                                    </div>
-                                    <div className="h-[300px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={ticketTrendData.concat([{ name: 'Sun', tickets: 2 }]) /* Mock for 30 days extension */}>
-                                                <defs><linearGradient id="colorTicketsTech" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                                                <YAxis axisLine={false} tickLine={false} />
-                                                <Tooltip />
-                                                <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTicketsTech)" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-
-                                {/* Row 3 – Asset Status (1/3 width) */}
-                                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                                    <h3 className="font-bold text-slate-800 dark:text-white mb-6">Asset Health</h3>
-                                    <div className="space-y-6">
-                                        {[
-                                            { label: 'Operational', value: stats.assetStatuses.operational, color: 'bg-emerald-500' },
-                                            { label: 'Maintenance', value: stats.assetStatuses.maintenance, color: 'bg-amber-500' },
-                                            { label: 'Retired/Broken', value: stats.assetStatuses.retired, color: 'bg-rose-500' }
-                                        ].map((item) => (
-                                            <div key={item.label} className="space-y-2">
-                                                <div className="flex justify-between text-sm">
-                                                    <span className="text-slate-500 font-medium">{item.label}</span>
-                                                    <span className="font-bold text-slate-900 dark:text-white">{item.value}</span>
-                                                </div>
-                                                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${item.color}`} style={{ width: `${(item.value / stats.totalAssets) * 100}%` }} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <button onClick={() => onNavigate('assets')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Asset List</button>
-                                                <button onClick={() => onNavigate('network')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Infrastructure</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Row 4 – Activity Feed */}
-                            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="font-bold text-slate-800 dark:text-white">Recent Technical Updates</h3>
-                                    <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">Full Audit Log</button>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {stats.recentActivities.map((act) => (
-                                        <div key={act.id} className="flex gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                                            <Activity size={20} className="text-blue-500 mt-1 shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{act.activityName}</p>
-                                                <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <PriorityItem title="Pending Approvals" count={stats.pendingPurchases} type="warning" onClick={() => onNavigate('purchase')} />
+                            <PriorityItem title="Open Tickets" count={stats.openTickets} type="normal" onClick={() => onNavigate('helpdesk')} />
+                            <PriorityItem title="Overdue Loans" count={stats.overdueLoans} type="critical" onClick={() => onNavigate('asset-loan')} />
+                            <PriorityItem title="My Tasks" count={stats.todoTasks} type="normal" onClick={() => onNavigate('weekly')} />
                         </div>
-                    )}
-                </>
-            )}
+                    </div>
 
-            {/* --- USER VIEW (Always same) --- */}
-            {!isAdmin && (
-                <>
-                    {/* User Specific Layer 2 */}
+                    {/* --- KPI CARDS --- */}
                     <div>
-                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">My Dashboard</h3>
+                        <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-4 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600" />
+                            Operational Overview
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <StatCard
+                                label="Service Desk"
+                                value={stats.openTickets}
+                                subValue={`${stats.resolvedTickets} resolved`}
+                                icon={LifeBuoy}
+                                color="rose"
+                                onClick={() => onNavigate('helpdesk')}
+                                trendData={[12, 15, 8, 10, 7, 9, stats.openTickets]}
+                                percentageChange={-12.5}
+                                comparisonPeriod="vs Last Week"
+                            />
+                            <StatCard
+                                label="Assets"
+                                value={stats.totalAssets}
+                                subValue={`${stats.activeAssets} operational`}
+                                icon={Box}
+                                color="blue"
+                                onClick={() => onNavigate('assets')}
+                                trendData={[stats.totalAssets - 15, stats.totalAssets - 10, stats.totalAssets - 5, stats.totalAssets - 3, stats.totalAssets - 1, stats.totalAssets]}
+                                percentageChange={5.2}
+                                comparisonPeriod="MTD"
+                            />
+                            <StatCard
+                                label="Procurement"
+                                value={formatCurrency(stats.totalPaidSpend / 1000000) + 'M'}
+                                subValue="Total spending"
+                                icon={ShoppingCart}
+                                color="amber"
+                                onClick={() => onNavigate('purchase')}
+                                trendData={[35, 42, 38, 45, 41, 48, stats.totalPaidSpend / 1000000]}
+                                percentageChange={8.3}
+                                comparisonPeriod="vs Last Month"
+                                target={100000000}
+                            />
+                            <StatCard
+                                label="Infrastructure"
+                                value={stats.activePorts}
+                                subValue="Active Network Ports"
+                                icon={Network}
+                                color="emerald"
+                                onClick={() => onNavigate('network')}
+                                trendData={[stats.activePorts - 2, stats.activePorts - 1, stats.activePorts, stats.activePorts, stats.activePorts + 1, stats.activePorts]}
+                                percentageChange={0.5}
+                            />
+                        </div>
+                    </div>
+                </>
+            ) : (
+                /* --- USER VIEW --- */
+                <>
+                    {/* User Summary */}
+                    <div>
+                        <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-4 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600" />
+                            My Dashboard
+                        </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <StatCard label="My Tasks" value={stats.personalTasks.length} subValue="Active tasks" icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')} />
-                            <StatCard label="My Loans" value={stats.activeLoans} subValue="Active items" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loan')} />
-                            <StatCard label="Open Tickets" value={0} subValue="Reported issues" icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
+                            <StatCard
+                                label="My Tasks"
+                                value={stats.personalTasks.length}
+                                subValue="Active tasks"
+                                icon={ListTodo}
+                                color="blue"
+                                onClick={() => onNavigate('weekly')}
+                            />
+                            <StatCard
+                                label="My Loans"
+                                value={stats.activeLoans}
+                                subValue="Active items"
+                                icon={Zap}
+                                color="indigo"
+                                onClick={() => onNavigate('asset-loan')}
+                            />
+                            <StatCard
+                                label="Open Tickets"
+                                value={0} // Mocked for personal view
+                                subValue="Reported issues"
+                                icon={LifeBuoy}
+                                color="rose"
+                                onClick={() => onNavigate('helpdesk')}
+                            />
                         </div>
                     </div>
 
                     {/* User Task List */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
-                        <h3 className="font-bold text-slate-800 dark:text-white mb-6">My Upcoming Tasks</h3>
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                My Upcoming Tasks
+                            </h3>
+                            <button onClick={() => onNavigate('weekly')} className="text-blue-600 text-xs font-bold hover:underline">View All</button>
+                        </div>
                         <div className="space-y-4">
                             {stats.personalTasks.length === 0 ? (
                                 <div className="text-center py-10 text-slate-400">

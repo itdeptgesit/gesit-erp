@@ -4,10 +4,11 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import {
     Send, CheckCircle2, Search, Clock, Loader2,
-    Phone, AlertCircle, Hash, ArrowLeft, PhoneCall, ShieldCheck, Headphones, MessageSquare, User, Globe, Sun, Moon, ChevronRight, MessageCircle, Zap, Building2, ChevronLeft, Image as ImageIcon, Smile, Paperclip, PlusCircle, X
+    Phone, AlertCircle, Hash, ArrowLeft, ArrowRight, PhoneCall, ShieldCheck, Headphones, MessageSquare, User, Globe, Sun, Moon, ChevronRight, MessageCircle, Zap, Building2, ChevronLeft, Image as ImageIcon, Smile, Paperclip, PlusCircle, X
 } from 'lucide-react';
 import { useLanguage } from '../translations';
 import { FluentEmoji } from '@lobehub/fluent-emoji';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const HelpdeskPublic: React.FC = () => {
     const { t } = useLanguage();
@@ -481,115 +482,171 @@ export const HelpdeskPublic: React.FC = () => {
                     <span className="text-sm font-bold tracking-tight">{toast.text}</span>
                 </div>
             )}
-            <main className="flex-1 flex items-stretch">
-                <div className={`hidden lg:flex relative overflow-hidden flex-col justify-between p-24 transition-all duration-700 ease-in-out ${searchResult ? 'w-[35%]' : 'w-[45%]'}`}>
-                    <div className="absolute inset-0" style={{ backgroundColor: 'var(--primary)' }}>
-                        <img
+            <main className="flex-1 flex items-stretch overflow-hidden">
+                <div className={`hidden lg:flex relative overflow-hidden flex-col justify-between p-16 xl:p-24 transition-all duration-1000 ease-in-out ${searchResult ? 'w-[32%]' : 'w-[45%]'}`}>
+                    {/* Background Layer */}
+                    <div className="absolute inset-0" style={{ backgroundColor: appSettings.primaryColor }}>
+                        <motion.img
+                            initial={{ scale: 1.1, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 0.6 }}
+                            transition={{ duration: 2, ease: "easeOut" }}
                             src="/image/bg.jpeg"
                             alt="Background"
-                            fetchPriority="high"
-                            loading="eager"
-                            className="w-full h-full object-cover opacity-60 mix-blend-multiply scale-105 animate-pulse-slow transform-gpu"
+                            className="w-full h-full object-cover mix-blend-multiply"
                         />
-                        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, var(--primary)4D, var(--primary)B3)` }}></div>
+                        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${appSettings.primaryColor}66, ${appSettings.primaryColor}E6)` }}></div>
+
+                        {/* Glass Overlay for depth */}
+                        <div className="absolute inset-0 backdrop-blur-[2px] pointer-events-none"></div>
 
                         {/* Dynamic Light Orbs */}
-                        <div className="absolute top-[-5%] right-[-5%] w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px] animate-pulse transform-gpu"></div>
-                        <div className="absolute bottom-[5%] left-[-5%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] animate-pulse transform-gpu" style={{ animationDelay: '3s' }}></div>
+                        <motion.div
+                            animate={{
+                                opacity: [0.1, 0.2, 0.1],
+                                scale: [1, 1.1, 1],
+                            }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-white/5 rounded-full blur-[120px] transform-gpu"
+                        ></motion.div>
+                        <motion.div
+                            animate={{
+                                opacity: [0.1, 0.3, 0.1],
+                                scale: [1, 1.2, 1],
+                            }}
+                            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                            className="absolute bottom-[20%] left-[-5%] w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] transform-gpu"
+                        ></motion.div>
                     </div>
 
-                    <div className="relative z-10">
-                        {/* Logo Section */}
-                        <div className="mb-20 animate-in fade-in slide-in-from-left duration-1000">
-                            <div className="w-20 h-20 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
-                                <img src={appSettings.logo} alt="Logo" className="w-full h-full object-contain filter drop-shadow-2xl group-hover:brightness-110 transition-all" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-12 max-w-xl">
-                            <div className="animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
-                                <h2 className="text-4xl lg:text-5xl font-black text-white leading-none tracking-tighter font-display mb-6 uppercase whitespace-nowrap">
-                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/100 to-white/60 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
-                                        Helpdesk Engine
-                                    </span>
-                                </h2>
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl ring-1 ring-white/10">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.6)]"></div>
-                                    <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] font-display">
-                                        Integrated Technical Support Node
-                                    </span>
+                    <div className="relative z-10 h-full flex flex-col justify-between">
+                        <div>
+                            {/* Logo Section */}
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="mb-16"
+                            >
+                                <div className="w-24 h-24 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative cursor-pointer" onClick={() => window.location.href = '/'}>
+                                    <div className="absolute inset-0 bg-white/5 rounded-3xl blur-2xl group-hover:bg-white/10 transition-colors"></div>
+                                    <img src={appSettings.logo} alt="Logo" className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:brightness-110 transition-all z-10" />
                                 </div>
-                            </div>
+                            </motion.div>
 
-                            <div className="pt-4 max-w-md animate-in fade-in slide-in-from-bottom duration-700 delay-300">
-                                <form onSubmit={handleCheckStatus} className="flex gap-2">
-                                    <div className="relative flex-1 group">
-                                        <input
-                                            className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-12 text-[13px] font-black text-white placeholder:text-white/30 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono uppercase tracking-widest backdrop-blur-md"
-                                            placeholder="TKT-XXXX"
-                                            value={searchId}
-                                            onChange={e => setSearchId(e.target.value)}
-                                            required
-                                            aria-label="Ticket Reference ID"
-                                        />
-                                        <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" />
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        id="search-trigger-btn"
-                                        disabled={isSubmitting}
-                                        className="px-8 py-3 bg-white hover:bg-white/90 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-black/20 active:scale-95 font-display flex items-center gap-2 whitespace-nowrap text-primary"
+                            <div className="space-y-12 max-w-xl">
+                                <div>
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 30 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                                        className="text-5xl lg:text-6xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase"
                                     >
-                                        {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <><Search size={18} /> Lookup</>}
-                                    </button>
-                                </form>
-                                {error && (
-                                    <p className="mt-3 text-rose-300 text-[10px] font-black uppercase tracking-widest animate-pulse px-2 flex items-center gap-2">
-                                        <AlertCircle size={12} /> {error}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="pt-8 space-y-6">
-                                <div className="flex items-center gap-5 group">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
-                                        <PhoneCall size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Emergency Line</p>
-                                        <p className="text-white font-bold text-sm tracking-tight drop-shadow-md">Internal Ext: 196</p>
-                                    </div>
+                                        <span className="block opacity-60 text-xl tracking-[0.3em] font-light mb-2">SERVICE</span>
+                                        <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/40 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
+                                            Intelligence
+                                        </span>
+                                    </motion.h2>
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.6, delay: 0.5 }}
+                                        className="inline-flex items-center gap-4 px-6 py-3 bg-white/5 backdrop-blur-2xl rounded-full border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10"
+                                    >
+                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.8)]"></div>
+                                        <span className="text-[10px] font-black text-white uppercase tracking-[0.4em] font-display">
+                                            Integrated Technical Support Node
+                                        </span>
+                                    </motion.div>
                                 </div>
-                                <div className="flex items-center gap-5 group">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
-                                        <Clock size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em] mb-1 font-display drop-shadow-md">Active Response</p>
-                                        <p className="text-white font-bold text-sm tracking-tight drop-shadow-md">08:00 - 17:00 (Mon-Fri)</p>
-                                    </div>
+
+                                <div className="pt-4 max-w-md">
+                                    <motion.form
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.8, delay: 0.6 }}
+                                        onSubmit={handleCheckStatus}
+                                        className="flex gap-2"
+                                    >
+                                        <div className="relative flex-1 group">
+                                            <input
+                                                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-14 text-[13px] font-black text-white placeholder:text-white/20 focus:ring-4 focus:ring-primary/20 focus:border-white/30 transition-all font-mono uppercase tracking-[0.4em] backdrop-blur-md"
+                                                placeholder="TKT-XXXX"
+                                                value={searchId}
+                                                onChange={e => setSearchId(e.target.value)}
+                                                required
+                                            />
+                                            <Hash size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-white transition-colors" />
+                                        </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="px-8 bg-white text-slate-900 hover:bg-white/90 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-display flex items-center gap-3 whitespace-nowrap"
+                                        >
+                                            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Search size={20} /> Lookup</>}
+                                        </motion.button>
+                                    </motion.form>
+                                    <AnimatePresence>
+                                        {error && (
+                                            <motion.p
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="mt-4 text-rose-300 text-[10px] font-black uppercase tracking-widest px-2 flex items-center gap-2"
+                                            >
+                                                <AlertCircle size={14} /> {error}
+                                            </motion.p>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                <div className="pt-6 space-y-8">
+                                    {[
+                                        { icon: <PhoneCall size={20} />, label: 'Emergency Line', value: 'Internal Ext: 196' },
+                                        { icon: <Clock size={20} />, label: 'Active Response', value: '08:00 - 17:00 (Mon-Fri)' }
+                                    ].map((item, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.6, delay: 0.8 + (i * 0.1) }}
+                                            className="flex items-center gap-6 group cursor-default"
+                                        >
+                                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 group-hover:bg-white/10 group-hover:text-white group-hover:border-white/20 group-hover:shadow-[0_10px_30px_rgba(255,255,255,0.05)] transition-all duration-500">
+                                                {item.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-1.5 font-display">{item.label}</p>
+                                                <p className="text-white font-black text-sm tracking-widest uppercase">{item.value}</p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="relative z-10 animate-in fade-in duration-1000 delay-500">
-                        <div className="flex flex-col gap-8">
-                            <div className="flex gap-3 items-center">
-                                <div className="h-[2px] w-12 bg-white/30 rounded-full"></div>
-                                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]"></div>
-                                <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
-                                <div className="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 1, delay: 1.2 }}
+                            className="flex flex-col gap-8"
+                        >
+                            <div className="flex gap-4 items-center">
+                                <div className="h-[1px] w-16 bg-white/20 rounded-full"></div>
+                                <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]"></div>
+                                <div className="w-2 h-2 rounded-full bg-white/10"></div>
+                                <div className="w-2 h-2 rounded-full bg-white/10"></div>
                             </div>
-                            <div className="space-y-2">
-                                <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.5em] font-display">
-                                    © 2026 The Gesit Companies.
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.6em] font-display">
+                                    © 2026 THE GESIT COMPANIES
                                 </p>
-                                <p className="text-[11px] font-black text-white/60 uppercase tracking-[0.3em] font-display">
-                                    Gesit WORK v2.5.0 — Proprietary Node
+                                <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
+                                    SYSTEM {appSettings.name} v3.0.1 — PUBLIC PORTAL
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
 
@@ -626,425 +683,447 @@ export const HelpdeskPublic: React.FC = () => {
                         {isDark ? <Sun size={18} /> : <Moon size={18} />}
                     </button>
 
-                    <div className={`w-full ${searchResult ? 'max-w-[1400px]' : 'max-w-[560px]'} py-12 relative z-10 transition-all duration-700 mx-auto`}>
-                        {mode === 'success' ? (
-                            <div className="text-center animate-in fade-in zoom-in duration-500 space-y-12">
-                                <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-                                    <CheckCircle2 size={48} className="animate-in zoom-in duration-700 delay-300" />
-                                </div>
-                                <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter font-display">Request Commenced</h1>
-                                <p className="text-slate-500 dark:text-slate-400 font-medium mb-12 leading-relaxed text-lg">
-                                    Our deployment team has been engaged. <br className="hidden sm:block" />
-                                    Your requisition is being processed.
-                                </p>
-                                <div className="bg-slate-50 dark:bg-slate-800/40 p-10 rounded-[2rem] mb-12 border border-slate-100 dark:border-white/5 shadow-inner">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-3 font-display">Voucher Identity</p>
-                                    <p className="text-5xl font-black text-primary font-mono tracking-tighter">{ticketId}</p>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => {
-                                            setMode('form');
-                                            setActiveTab('check');
-                                            setSearchId(ticketId);
-                                            setTimeout(() => handleCheckStatus(), 100);
-                                        }}
-                                        className="h-14 px-6 bg-primary hover:bg-primary-dark text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary/10 active:scale-95 scroll-smooth flex items-center justify-center"
-                                    >
-                                        Monitor Activity
-                                    </button>
-                                    <button
-                                        onClick={() => { setMode('form'); setActiveTab('report'); }}
-                                        className="h-14 px-6 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 flex items-center justify-center"
-                                    >
-                                        New Requisition
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="animate-in fade-in duration-500">
-                                {searchResult && <div className="mb-4" />}
-                                {searchResult && <div className="mb-4" />}
-                                {!searchResult && (
-                                    <div className="mb-8">
-                                        <div className="mb-8 text-center space-y-2">
-                                            <div className="w-12 h-1 bg-primary/20 mx-auto rounded-full mb-6"></div>
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] font-display">
+                    <div className={`w-full ${searchResult ? 'max-w-[1400px]' : 'max-w-[560px]'} py-12 relative z-10 mx-auto transition-all duration-700`}>
+                        <AnimatePresence mode="wait">
+                            {mode === 'success' ? (
+                                <motion.div
+                                    key="success-screen"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className="text-center space-y-12 bg-white/40 dark:bg-white/[0.02] backdrop-blur-3xl p-16 rounded-[4rem] border border-white/20 dark:border-white/10 shadow-2xl glass-card"
+                                >
+                                    <div className="w-28 h-28 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-8 ring-emerald-500/5">
+                                        <CheckCircle2 size={56} className="animate-in zoom-in duration-700 delay-300" />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <h1 className="text-4xl font-black text-slate-950 dark:text-white tracking-tighter font-display leading-none">Request Commenced</h1>
+                                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed text-lg max-w-sm mx-auto">
+                                            The deployment node has been engaged. Your requisition is now being processed.
+                                        </p>
+                                    </div>
+                                    <div className="bg-slate-900/5 dark:bg-white/5 p-12 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-inner group">
+                                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4 font-display">Voucher Identity</p>
+                                        <p className="text-6xl font-black text-primary dark:text-white font-mono tracking-tighter group-hover:scale-105 transition-transform duration-500">{ticketId}</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => {
+                                                setMode('form');
+                                                setActiveTab('check');
+                                                setSearchId(ticketId);
+                                                setTimeout(() => handleCheckStatus(), 100);
+                                            }}
+                                            className="h-16 px-8 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl flex items-center justify-center gap-3"
+                                        >
+                                            Monitor Activity
+                                            <ArrowRight size={18} />
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => { setMode('form'); setActiveTab('report'); }}
+                                            className="h-16 px-8 bg-white/60 dark:bg-white/5 backdrop-blur-xl text-slate-600 dark:text-slate-400 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all border border-slate-200/50 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 shadow-xl flex items-center justify-center"
+                                        >
+                                            New Requisition
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key={searchResult ? "chat-view" : "portal-view"}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                >
+                                    {!searchResult && (
+                                        <div className="mb-14 text-center space-y-4">
+                                            <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] font-display">
                                                 {activeTab === 'report' ? 'New Manifest Requisition' : 'Track Existing Requisition'}
                                             </h4>
+                                            <div className="w-16 h-[1.5px] bg-primary/20 mx-auto rounded-full"></div>
                                         </div>
+                                    )}
 
-                                        {/* Mobile Tab Switcher */}
-                                        <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-xl mb-8 lg:hidden">
+                                    {/* Mobile Tab Switcher */}
+                                    {!searchResult && (
+                                        <div className="flex p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-12 lg:hidden">
                                             <button
                                                 onClick={() => { setActiveTab('report'); setSearchId(''); setError(null); }}
-                                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'report' ? 'bg-white dark:bg-white/10 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'report' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                             >
                                                 New Request
                                             </button>
                                             <button
                                                 onClick={() => { setActiveTab('check'); setSearchId(''); setError(null); }}
-                                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'check' ? 'bg-white dark:bg-white/10 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'check' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                             >
                                                 Track Ticket
                                             </button>
                                         </div>
+                                    )}
 
-                                        {/* Mobile Lookup Form */}
-                                        {activeTab === 'check' && (
-                                            <div className="lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                                <form onSubmit={handleCheckStatus} className="space-y-4">
-                                                    <div className="space-y-2">
-                                                        <label htmlFor="mobile-ticket-id" className={labelClass}>Ticket Reference ID</label>
-                                                        <div className="relative group">
-                                                            <input
-                                                                id="mobile-ticket-id"
-                                                                className={inputClass}
-                                                                placeholder="TKT-XXXX"
-                                                                value={searchId}
-                                                                onChange={e => setSearchId(e.target.value)}
-                                                                required
-                                                            />
-                                                            <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="submit"
-                                                        disabled={isSubmitting}
-                                                        className="w-full h-14 bg-primary hover:bg-primary-dark text-white rounded-xl font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-[0.98] font-display"
-                                                    >
-                                                        {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <><Search size={18} /> Lookup Record</>}
-                                                    </button>
-                                                    {error && (
-                                                        <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-xl flex items-center gap-3 text-rose-600 dark:text-rose-400">
-                                                            <AlertCircle size={16} />
-                                                            <span className="text-xs font-bold">{error}</span>
-                                                        </div>
-                                                    )}
-                                                </form>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {activeTab === 'report' && !searchResult ? (
-                                    <form onSubmit={handleSubmit} className="space-y-6">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                            <div className="space-y-3">
-                                                <label htmlFor="requester-name" className={labelClass}>Requester Identity</label>
-                                                <div className="relative group">
-                                                    <input id="requester-name" className={inputClass} required placeholder="Full Name"
-                                                        value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                    />
-                                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <label htmlFor="dept-select" className={labelClass}>Department Cluster</label>
-                                                <div className="relative group">
-                                                    <select id="dept-select" className={`${inputClass} appearance-none`} required
-                                                        value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })}
-                                                    >
-                                                        <option value="" disabled>Select Unit</option>
-                                                        {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                                                    </select>
-                                                    <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label htmlFor="incident-summary" className={labelClass}>Incident Summary</label>
-                                            <div className="relative group">
-                                                <input id="incident-summary" className={inputClass} required placeholder="Subject of issue"
-                                                    value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                                                />
-                                                <Zap size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label htmlFor="technical-context" className={labelClass}>Technical Context</label>
-                                            <div className="relative group">
-                                                <textarea id="technical-context" className={`${inputClass} min-h-[140px] py-4 resize-none leading-relaxed`} required placeholder="Describe the error or request..."
-                                                    value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                                />
-                                                <MessageSquare size={18} className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110" />
-                                            </div>
-                                        </div>
-                                        <button type="submit" disabled={isSubmitting}
-                                            className="group relative w-full h-11 text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-[0.97] disabled:opacity-50 font-display overflow-hidden bg-primary"
-                                            style={{
-                                                boxShadow: `0 10px 40px -10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.2)`
-                                            }}
+                                    {activeTab === 'check' && !searchResult && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="lg:hidden"
                                         >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                                            <span className="relative z-10 flex items-center gap-2">
-                                                {isSubmitting ? <><Loader2 className="animate-spin" size={16} /> PROCESSING...</> : <>Initiate Service Request <ChevronRight size={16} /></>}
-                                            </span>
-                                        </button>
-                                    </form>
-                                ) : (
-                                    <div className="space-y-6">
-                                        {searchResult && (
-                                            <div className="flex flex-col-reverse lg:flex-row gap-8 animate-in fade-in duration-700 items-start">
-                                                <div className="flex-1 w-full flex flex-col min-w-0 bg-slate-50/30 dark:bg-white/[0.02] rounded-3xl border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm h-[500px] lg:h-[750px] sticky top-8">
-                                                    <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-white dark:bg-slate-900/50">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 shadow-sm bg-white">
-                                                                <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />
-                                                            </div>
-                                                            <div>
-                                                                <h5 className="text-[13px] font-black text-slate-900 dark:text-white leading-none mb-1">Support Engineer</h5>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Online</span>
+                                            <form onSubmit={handleCheckStatus} className="space-y-6">
+                                                <div className="space-y-3">
+                                                    <label htmlFor="mobile-ticket-id" className={labelClass}>Ticket Reference ID</label>
+                                                    <div className="relative group">
+                                                        <input id="mobile-ticket-id" className={inputClass} placeholder="TKT-XXXX" value={searchId} onChange={e => setSearchId(e.target.value)} required />
+                                                        <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                                    </div>
+                                                </div>
+                                                <button type="submit" disabled={isSubmitting} className="w-full h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]">
+                                                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Search size={20} /> Lookup Record</>}
+                                                </button>
+                                            </form>
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === 'report' && !searchResult ? (
+                                        <form onSubmit={handleSubmit} className="space-y-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-3xl p-8 md:p-12 rounded-[3.5rem] border border-white/20 dark:border-white/5 shadow-2xl">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                                <div className="space-y-3">
+                                                    <label htmlFor="requester-name" className={labelClass}>Requester Identity</label>
+                                                    <div className="relative group">
+                                                        <input id="requester-name" className={inputClass} required placeholder="Full Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                                        <User size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label htmlFor="dept-select" className={labelClass}>Department Cluster</label>
+                                                    <div className="relative group">
+                                                        <select id="dept-select" className={`${inputClass} appearance-none`} required value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })}>
+                                                            <option value="" disabled>Select Unit</option>
+                                                            {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                                                        </select>
+                                                        <Building2 size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label htmlFor="incident-summary" className={labelClass}>Incident Summary</label>
+                                                <div className="relative group">
+                                                    <input id="incident-summary" className={inputClass} required placeholder="Subject of issue" value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} />
+                                                    <Zap size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label htmlFor="technical-context" className={labelClass}>Technical Context</label>
+                                                <div className="relative group">
+                                                    <textarea id="technical-context" className={`${inputClass} min-h-[160px] py-5 px-14 resize-none leading-relaxed`} required placeholder="Describe the error or request in detail..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                                                    <MessageSquare size={18} className="absolute left-5 top-6 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110" />
+                                                </div>
+                                            </div>
+                                            <motion.button
+                                                whileHover={{ scale: 1.01, y: -2 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                className="group relative w-full h-16 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl disabled:opacity-50 overflow-hidden"
+                                                style={{
+                                                    backgroundColor: appSettings.primaryColor,
+                                                    boxShadow: `0 20px 40px -10px ${appSettings.primaryColor}66`
+                                                }}
+                                            >
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                                                <span className="relative z-10 flex items-center gap-3">
+                                                    {isSubmitting ? (
+                                                        <Loader2 className="animate-spin" size={20} />
+                                                    ) : (
+                                                        <>INITIATE SERVICE REQUEST <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+                                                    )}
+                                                </span>
+                                            </motion.button>
+                                        </form>
+                                    ) : (
+                                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                            {searchResult && (
+                                                <div className="flex flex-col lg:flex-row gap-10 items-start">
+                                                    {/* Central Chat Node */}
+                                                    {/* Chat Interface */}
+                                                    <div className="flex-1 w-full flex flex-col min-w-0 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm h-[600px] lg:h-[800px] sticky top-8">
+                                                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm p-0.5 bg-white dark:bg-slate-800">
+                                                                    <div className="w-full h-full rounded-lg overflow-hidden">
+                                                                        <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <h5 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Support Agent</h5>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">Online</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${searchResult.status === 'Resolved' || searchResult.status === 'Closed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
-                                                            {searchResult.status}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                                                        <div className="flex justify-center mb-8">
-                                                            <div className="px-5 py-2 bg-slate-100 dark:bg-white/5 rounded-full text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] border border-slate-200/50 dark:border-white/5">
-                                                                Portal Activity Commenced • {new Date(searchResult.created_at).toLocaleDateString()}
+                                                            <div className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${searchResult.status === 'Resolved' || searchResult.status === 'Closed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                                                {searchResult.status}
                                                             </div>
                                                         </div>
 
-                                                        {messages.map((msg, idx) => {
-                                                            const isUser = msg.sender_role === 'User';
-                                                            const initials = msg.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                                        <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
+                                                            <div className="flex justify-center mb-12">
+                                                                <div className="px-8 py-3 bg-white/10 dark:bg-white/[0.02] backdrop-blur-xl rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] border border-white/10 shadow-sm">
+                                                                    Session Synced • {new Date(searchResult.created_at).toLocaleDateString()}
+                                                                </div>
+                                                            </div>
 
-                                                            return (
-                                                                <div key={idx} className={`flex gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-500 ${isUser ? 'ml-auto flex-row-reverse' : 'flex-row'}`}>
-                                                                    <div className="flex-shrink-0 mt-1">
-                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black border shadow-sm overflow-hidden ${isUser
-                                                                            ? 'bg-primary/10 text-primary border-primary/10'
-                                                                            : 'bg-white border-slate-100 dark:bg-white/10 dark:border-white/10'
-                                                                            }`}>
-                                                                            {isUser ? initials : <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />}
-                                                                        </div>
-                                                                    </div>
+                                                            {messages.map((msg, idx) => {
+                                                                const isUser = msg.sender_role === 'User';
+                                                                const initials = msg.sender_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-                                                                    <div className={`flex flex-col gap-1.5 ${isUser ? 'items-end' : 'items-start'}`}>
-                                                                        <div className={`flex items-center gap-2 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
-                                                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40 font-display">
-                                                                                {msg.sender_name}
-                                                                            </span>
-                                                                            <span className="text-[8px] font-bold opacity-20 tabular-nums">
-                                                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                            </span>
+                                                                return (
+                                                                    <motion.div
+                                                                        initial={{ opacity: 0, y: 10 }}
+                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                        transition={{ duration: 0.4, delay: idx * 0.05 }}
+                                                                        key={idx}
+                                                                        className={`flex gap-4 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'flex-row'}`}
+                                                                    >
+                                                                        <div className="flex-shrink-0 mt-1">
+                                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border overflow-hidden ${isUser
+                                                                                ? 'bg-white dark:bg-slate-800 text-blue-600 border-slate-200 dark:border-slate-700 shadow-sm'
+                                                                                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                                                                                }`}>
+                                                                                {isUser ? initials : <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />}
+                                                                            </div>
                                                                         </div>
-                                                                        <div className={`${isUser
-                                                                            ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/10'
-                                                                            : 'bg-white dark:bg-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-white/10 shadow-sm'
-                                                                            } px-4 py-3 rounded-[1.4rem] text-[13px] font-medium leading-relaxed transition-all tracking-tight overflow-hidden`}>
-                                                                            {(() => {
-                                                                                const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
-                                                                                if (imageMatch) {
-                                                                                    const imageUrl = imageMatch[1];
-                                                                                    return (
-                                                                                        <div
-                                                                                            onClick={() => setPreviewImage(imageUrl)}
-                                                                                            className="block cursor-zoom-in group/img relative"
-                                                                                        >
-                                                                                            <img
-                                                                                                src={imageUrl}
-                                                                                                alt="Attachment"
-                                                                                                className="max-w-full rounded-xl hover:scale-[1.02] transition-transform duration-300 shadow-sm"
-                                                                                                loading="lazy"
-                                                                                            />
-                                                                                            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-all rounded-xl flex items-center justify-center">
-                                                                                                <div className="opacity-0 group-hover/img:opacity-100 transition-all bg-white/20 backdrop-blur-md p-2 rounded-full text-white">
-                                                                                                    <Search size={16} />
+
+                                                                        <div className={`flex flex-col gap-1.5 ${isUser ? 'items-end' : 'items-start'}`}>
+                                                                            <div className={`flex items-center gap-2 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+                                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                                                    {msg.sender_name}
+                                                                                </span>
+                                                                                <span className="text-[9px] font-medium text-slate-300 tabular-nums">
+                                                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className={`${isUser
+                                                                                ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-slate-700'
+                                                                                } px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed break-words`}>
+                                                                                {(() => {
+                                                                                    const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
+                                                                                    if (imageMatch) {
+                                                                                        const imageUrl = imageMatch[1];
+                                                                                        return (
+                                                                                            <div
+                                                                                                onClick={() => setPreviewImage(imageUrl)}
+                                                                                                className="block cursor-zoom-in group/img relative"
+                                                                                            >
+                                                                                                <img
+                                                                                                    src={imageUrl}
+                                                                                                    alt="Attachment"
+                                                                                                    className="max-w-full rounded-2xl hover:scale-[1.02] transition-transform duration-500 shadow-2xl"
+                                                                                                    loading="lazy"
+                                                                                                />
+                                                                                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-all rounded-2xl flex items-center justify-center">
+                                                                                                    <div className="opacity-0 group-hover/img:opacity-100 transition-all bg-white/20 backdrop-blur-xl p-3 rounded-full text-white border border-white/30">
+                                                                                                        <Search size={22} strokeWidth={3} />
+                                                                                                    </div>
                                                                                                 </div>
                                                                                             </div>
-                                                                                        </div>
-                                                                                    );
-                                                                                }
-                                                                                return <EmojiRenderer text={msg.message} />;
-                                                                            })()}
+                                                                                        );
+                                                                                    }
+                                                                                    return <EmojiRenderer text={msg.message} />;
+                                                                                })()}
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                        <div ref={messagesEndRef} />
-                                                    </div>
-
-                                                    {(searchResult.status === 'Resolved' || searchResult.status === 'Closed') && (
-                                                        <div className="px-6 py-4 bg-emerald-500/5 border-t border-emerald-500/10 text-center">
-                                                            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em]">Communication Channel Closed</p>
+                                                                    </motion.div>
+                                                                );
+                                                            })}
+                                                            <div ref={messagesEndRef} />
                                                         </div>
-                                                    )}
 
-                                                    {searchResult.status !== 'Resolved' && searchResult.status !== 'Closed' && (
-                                                        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5">
-                                                            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-2 px-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/10 transition-all">
-                                                                {/* Action Buttons: Upload */}
-                                                                <button
-                                                                    onClick={() => fileInputRef.current?.click()}
-                                                                    className="p-1.5 text-slate-400 hover:text-primary dark:hover:text-white transition-colors shrink-0 disabled:opacity-50"
-                                                                    disabled={isUploading}
-                                                                    title="Attach Image"
-                                                                >
-                                                                    {isUploading ? <Loader2 size={20} className="animate-spin" /> : <PlusCircle size={22} />}
-                                                                </button>
-                                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+                                                        {(searchResult.status === 'Resolved' || searchResult.status === 'Closed') && (
+                                                            <div className="px-10 py-6 bg-emerald-500/10 border-t border-emerald-500/20 text-center backdrop-blur-md">
+                                                                <p className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em]">Encrypted Channel Closed</p>
+                                                            </div>
+                                                        )}
 
-                                                                {/* Input Area */}
-                                                                <textarea
-                                                                    rows={1}
-                                                                    className="flex-1 p-2 bg-transparent border-none text-[13px] font-medium outline-none placeholder:text-slate-400 dark:text-slate-500 dark:text-white resize-none h-10 flex items-center pt-2.5 custom-scrollbar"
-                                                                    placeholder="Type a message..."
-                                                                    value={feedbackText}
-                                                                    onChange={e => setFeedbackText(e.target.value)}
-                                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendFeedback(); } }}
-                                                                />
-
-                                                                {/* Emoji Picker */}
-                                                                <div className="relative shrink-0">
+                                                        {searchResult.status !== 'Resolved' && searchResult.status !== 'Closed' && (
+                                                            <div className="p-10 bg-white/40 dark:bg-black/20 backdrop-blur-md border-t border-white/10">
+                                                                <div className="flex items-end gap-4 bg-white/60 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 rounded-[3rem] p-3 px-4 shadow-2xl focus-within:ring-2 focus-within:ring-primary/20 transition-all max-w-5xl mx-auto ring-1 ring-white/10">
                                                                     <button
-                                                                        ref={emojiTriggerRef}
-                                                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                                        className={`p-1.5 transition-all rounded-lg ${showEmojiPicker ? 'text-primary dark:text-white' : 'text-slate-400 hover:text-primary dark:hover:text-white'}`}
-                                                                        title="Add Emoji"
+                                                                        onClick={() => fileInputRef.current?.click()}
+                                                                        className="w-14 h-14 flex items-center justify-center bg-slate-100/50 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition-all shrink-0 rounded-2xl hover:scale-105 active:scale-95 border border-white/10"
+                                                                        disabled={isUploading}
+                                                                        title="Attach Document"
                                                                     >
-                                                                        <Smile size={22} />
+                                                                        {isUploading ? <Loader2 size={24} className="animate-spin" /> : <ImageIcon size={24} strokeWidth={2.5} />}
                                                                     </button>
-                                                                    {showEmojiPicker && (
-                                                                        <div className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl z-[100] w-[320px] overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
-                                                                            <div className="flex items-center justify-between p-2 border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                                                                                <div className="flex">
-                                                                                    {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                                                                    <div className="flex-1 min-h-[56px] flex items-center pt-1">
+                                                                        <textarea
+                                                                            rows={1}
+                                                                            className="w-full bg-transparent border-none text-[15px] font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 dark:text-white resize-none max-h-40 custom-scrollbar py-3"
+                                                                            placeholder={`Message to Support Node...`}
+                                                                            value={feedbackText}
+                                                                            onChange={e => {
+                                                                                setFeedbackText(e.target.value);
+                                                                                e.target.style.height = 'auto';
+                                                                                e.target.style.height = `${e.target.scrollHeight}px`;
+                                                                            }}
+                                                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendFeedback(); } }}
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="relative shrink-0 flex items-center pb-1">
+                                                                        <button
+                                                                            ref={emojiTriggerRef}
+                                                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                            className={`w-12 h-12 flex items-center justify-center transition-all rounded-xl ${showEmojiPicker ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-primary'}`}
+                                                                            title="Add Expression"
+                                                                        >
+                                                                            <Smile size={24} strokeWidth={2.5} />
+                                                                        </button>
+                                                                        {showEmojiPicker && (
+                                                                            <div className="absolute bottom-full right-0 mb-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 dark:border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.4)] z-[100] w-[340px] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                                                                                <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/40 dark:bg-white/5">
+                                                                                    <div className="flex gap-1">
+                                                                                        {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                                            <button
+                                                                                                key={cat.name}
+                                                                                                onClick={() => setActiveEmojiCategory(idx)}
+                                                                                                className={`p-2.5 rounded-xl transition-all ${activeEmojiCategory === idx ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/10'}`}
+                                                                                                title={cat.name}
+                                                                                            >
+                                                                                                {cat.icon}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="p-5 grid grid-cols-6 gap-2 h-[280px] overflow-y-auto custom-scrollbar">
+                                                                                    {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
                                                                                         <button
-                                                                                            key={cat.name}
-                                                                                            onClick={() => setActiveEmojiCategory(idx)}
-                                                                                            className={`p-2 rounded-lg transition-all ${activeEmojiCategory === idx ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
-                                                                                            title={cat.name}
+                                                                                            key={emoji}
+                                                                                            onClick={() => addEmoji(emoji)}
+                                                                                            className="w-11 h-11 flex items-center justify-center hover:bg-primary/10 rounded-2xl transition-all hover:scale-125 active:scale-90"
                                                                                         >
-                                                                                            {cat.icon}
+                                                                                            <FluentEmoji emoji={emoji} size={28} />
                                                                                         </button>
                                                                                     ))}
                                                                                 </div>
-                                                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3">
-                                                                                    {EMOJI_CATEGORIES[activeEmojiCategory].name}
-                                                                                </span>
                                                                             </div>
+                                                                        )}
+                                                                    </div>
 
-                                                                            <div className="p-3 grid grid-cols-7 gap-1 h-[240px] overflow-y-auto custom-scrollbar">
-                                                                                {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
-                                                                                    <button
-                                                                                        key={emoji}
-                                                                                        onClick={() => addEmoji(emoji)}
-                                                                                        className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all hover:scale-110 active:scale-90"
-                                                                                    >
-                                                                                        <FluentEmoji emoji={emoji} size={24} />
-                                                                                    </button>
-                                                                                ))}
+                                                                    <button
+                                                                        onClick={handleSendFeedback}
+                                                                        disabled={isSendingFeedback || !feedbackText.trim()}
+                                                                        className="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:grayscale overflow-hidden group/send relative z-10"
+                                                                    >
+                                                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/send:translate-y-0 transition-transform duration-300"></div>
+                                                                        {isSendingFeedback ? <Loader2 size={22} className="animate-spin relative z-10" /> : <Send size={22} strokeWidth={2.5} className="relative z-10" />}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Management Sidebar */}
+                                                    <div className="w-full lg:w-[420px] flex flex-col gap-8 lg:sticky lg:top-8">
+                                                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-8 shadow-sm">
+                                                            <div>
+                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-3">
+                                                                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                                    Ticket Details
+                                                                </h6>
+                                                                <div className="grid grid-cols-1 gap-4">
+                                                                    {[
+                                                                        { icon: <Hash size={16} />, label: 'Reference ID', value: searchResult.ticket_id, color: 'blue' },
+                                                                        { icon: <ShieldCheck size={16} />, label: 'Status', value: searchResult.status, color: 'indigo' }
+                                                                    ].map((item, i) => (
+                                                                        <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                                            <div className={`w-10 h-10 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-${item.color}-600 dark:text-${item.color}-400 shadow-sm border border-slate-100 dark:border-slate-600`}>
+                                                                                {item.icon}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
+                                                                                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{item.value}</p>
                                                                             </div>
                                                                         </div>
-                                                                    )}
+                                                                    ))}
                                                                 </div>
+                                                            </div>
 
-                                                                {/* Send Button */}
-                                                                <button
-                                                                    onClick={handleSendFeedback}
-                                                                    disabled={isSendingFeedback || !feedbackText.trim()}
-                                                                    className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all disabled:opacity-30"
+                                                            <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+
+                                                            <div>
+                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-3">
+                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                                                    Requester
+                                                                </h6>
+                                                                <div className="space-y-6">
+                                                                    <div className="space-y-4">
+                                                                        {[
+                                                                            { icon: <User size={16} />, label: 'Name', value: searchResult.requester_name, color: 'slate' },
+                                                                            { icon: <Building2 size={16} />, label: 'Department', value: searchResult.department, color: 'slate' }
+                                                                        ].map((item, i) => (
+                                                                            <div key={i} className="flex items-center gap-4">
+                                                                                <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 border border-slate-100 dark:border-slate-700">
+                                                                                    {item.icon}
+                                                                                </div>
+                                                                                <div className="min-w-0">
+                                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
+                                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">{item.value}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-inner relative overflow-hidden">
+                                                                <div className="absolute top-0 right-0 p-6 opacity-[0.03]">
+                                                                    <MessageCircle size={80} strokeWidth={1} />
+                                                                </div>
+                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 relative z-10">Initial Request</h6>
+                                                                <div className="relative z-10 pl-6 border-l-2 border-blue-500/30">
+                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white mb-2 leading-tight">{searchResult.subject}</p>
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                                                        "{searchResult.description}"
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {searchResult.status === 'Resolved' && (
+                                                                <motion.div
+                                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                                    animate={{ opacity: 1, scale: 1 }}
+                                                                    className="bg-emerald-500/10 backdrop-blur-3xl rounded-[3rem] border border-emerald-500/20 p-10 shadow-2xl relative overflow-hidden"
                                                                 >
-                                                                    {isSendingFeedback ? <Loader2 size={18} className="animate-spin" /> : <Send size={20} />}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="w-full lg:w-[360px] flex flex-col gap-6 lg:sticky lg:top-8">
-                                                    <div className="bg-white dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 p-6 space-y-6 shadow-sm">
-                                                        <div>
-                                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 font-display">Ticket Info</h6>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
-                                                                        <Hash size={16} />
+                                                                    <div className="absolute top-0 right-0 p-6 text-emerald-500/20">
+                                                                        <CheckCircle2 size={60} strokeWidth={1} />
                                                                     </div>
-                                                                    <div>
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Reference</p>
-                                                                        <p className="text-[13px] font-black text-primary tracking-tight font-display">{searchResult.ticket_id}</p>
+                                                                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                                                                        <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                                                                            <CheckCircle2 size={24} strokeWidth={3} />
+                                                                        </div>
+                                                                        <h6 className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] font-display">Resolution Success</h6>
                                                                     </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-9 h-9 rounded-xl bg-slate-500/10 flex items-center justify-center text-slate-500 border border-slate-500/10">
-                                                                        <ShieldCheck size={16} />
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Status</p>
-                                                                        <p className="text-[13px] font-black text-slate-800 dark:text-white tracking-tight font-display">{searchResult.status}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="h-px bg-slate-100 dark:bg-white/5"></div>
-
-                                                        <div>
-                                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 font-display">User Data</h6>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 border border-emerald-500/10">
-                                                                        <User size={16} />
-                                                                    </div>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Requester</p>
-                                                                        <p className="text-[13px] font-black text-slate-800 dark:text-white tracking-tight truncate">{searchResult.requester_name}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 border border-indigo-500/10">
-                                                                        <Building2 size={16} />
-                                                                    </div>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Department</p>
-                                                                        <p className="text-[13px] font-black text-slate-800 dark:text-white tracking-tight truncate">{searchResult.department}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                                    <p className="text-[13px] text-emerald-800/70 dark:text-emerald-400/70 font-medium leading-relaxed relative z-10">
+                                                                        This requisition has been successfully synchronized and marked as resolved. No further intervention required.
+                                                                    </p>
+                                                                </motion.div>
+                                                            )}
                                                         </div>
                                                     </div>
-
-                                                    <div className="bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 p-6 shadow-sm">
-                                                        <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-4 font-display">Initial Requisition</h6>
-                                                        <div className="relative">
-                                                            <div className="absolute left-0 top-0 w-1 h-full bg-primary/20 rounded-full"></div>
-                                                            <div className="pl-5">
-                                                                <p className="text-[13px] font-bold text-slate-900 dark:text-white mb-2 leading-tight">{searchResult.subject}</p>
-                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed italic line-clamp-4">
-                                                                    "{searchResult.description}"
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {searchResult.status === 'Resolved' && (
-                                                        <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-3xl border border-emerald-100 dark:border-emerald-500/20 p-6 shadow-sm">
-                                                            <div className="flex items-center gap-3 mb-4">
-                                                                <CheckCircle2 size={18} className="text-emerald-500" />
-                                                                <h6 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] font-display">Quick Resolution</h6>
-                                                            </div>
-                                                            <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 leading-relaxed mb-4">
-                                                                This manifest has been marked as resolved by the support node. No further action is required.
-                                                            </p>
-                                                        </div>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                     </div>
                 </div>
             </main>

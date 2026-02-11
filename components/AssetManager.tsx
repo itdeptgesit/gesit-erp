@@ -299,9 +299,17 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Asset Manager</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Managed Asset Company</p></div>
-        <div className="flex gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+            <Package size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Asset <span className="text-blue-600">Manager</span></h1>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Managed corporate inventory</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
           <input
             type="file"
             ref={fileInputRef}
@@ -310,10 +318,10 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             onChange={handleImportExcel}
           />
           {isAdmin && (
-            <div className="flex gap-2">
+            <>
               <button
                 onClick={handleDownloadTemplate}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
+                className="flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-[1rem] hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
                 title="Download Blank Template"
               >
                 <Download size={14} /> Template
@@ -321,13 +329,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95"
+                className="flex items-center justify-center gap-3 px-4 py-3 border-2 border-dashed border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-[1rem] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95 shadow-sm"
               >
-                <FileSpreadsheet size={16} className={isImporting ? 'animate-bounce' : ''} /> {isImporting ? 'Processing...' : 'Import Data'}
+                <FileSpreadsheet size={16} className={isImporting ? 'animate-bounce' : ''} /> {isImporting ? 'Processing...' : 'Bulk Import'}
               </button>
-            </div>
+            </>
           )}
-          <button onClick={handleExportExcel} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"><Download size={16} /> EXPORT EXCEL</button>
+          <button onClick={handleExportExcel} className="flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
+            <Download size={16} />
+            Export Excel
+          </button>
         </div>
       </div>
 
@@ -369,8 +380,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
 
           {canManage && (
             <div className="flex gap-2">
-
-              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
+              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/10 whitespace-nowrap">
                 <Plus size={14} /> Add Asset
               </button>
             </div>
@@ -382,12 +392,12 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold text-[9px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-4">Node Profile</th>
-                <th className="px-6 py-4">Cluster</th>
-                <th className="px-6 py-4">Assignment / Site</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-center">Actions</th>
+              <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                <th className="px-6 py-5">Node Profile</th>
+                <th className="px-6 py-5">Cluster</th>
+                <th className="px-6 py-5">Assignment / Site</th>
+                <th className="px-6 py-5">Status</th>
+                <th className="px-6 py-5 text-center">Protocol</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">

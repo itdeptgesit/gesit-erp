@@ -137,31 +137,34 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
         }));
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all font-medium";
-    const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1";
+    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 mt-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 shadow-sm";
+    const labelClass = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2";
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-5xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[95vh] border border-white/20 dark:border-slate-800">
-                <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                            Purchase Audit
-                        </h2>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Document Verification</p>
+                <div className="flex justify-between items-center px-10 py-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/30">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <ShieldCheck className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                Purchase Audit Entry
+                            </h2>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Certified Document Traceability</p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400"><X size={20} /></button>
-                    </div>
+                    <button onClick={onClose} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400"><X size={24} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     <form id="recordForm" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-8">
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                             <div className="md:col-span-2">
-                                <label className={labelClass}>Summary Description</label>
-                                <textarea rows={2} className={`${inputClass} resize-none`} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} required placeholder="Enter purchase details..." />
+                                <label className={labelClass}>Descriptive Overview</label>
+                                <textarea rows={2} className={`${inputClass} resize-none h-[54px]`} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} required placeholder="Enter primary procurement description..." />
                             </div>
                             <div>
                                 <label className={labelClass}>Reference ID(s)</label>
@@ -568,10 +571,10 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                     </form>
                 </div>
 
-                <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-[2.5rem] flex justify-end gap-3">
-                    <button type="button" onClick={onClose} className="px-6 py-2.5 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700">Cancel</button>
-                    <button type="submit" form="recordForm" className="px-10 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg active:scale-95 flex items-center gap-2">
-                        <Save size={16} /> Save Record
+                <div className="px-10 py-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-[2.5rem] flex justify-end gap-4">
+                    <button type="button" onClick={onClose} className="px-8 py-3 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95">Discard</button>
+                    <button type="submit" form="recordForm" className="px-12 py-3 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center gap-3">
+                        <Save size={18} /> Commit Record
                     </button>
                 </div>
             </div >

@@ -41,6 +41,7 @@ import { PhoneExtension, UserAccount } from "../types";
 import { useLanguage } from "../translations";
 import { UserAvatar } from "./UserAvatar";
 import { StatCard } from "./StatCard";
+import { exportToExcel } from "../lib/excelExport";
 
 /* ===========================
    Components
@@ -51,17 +52,17 @@ const InstructionPanel = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
             <div
                 className={`
-          w-full bg-white dark:bg-slate-900 border transition-all duration-500 ease-in-out overflow-hidden
-          ${isOpen ? 'rounded-[2rem] border-indigo-100 dark:border-indigo-500/20 shadow-2xl shadow-indigo-500/5' : 'rounded-2xl border-transparent bg-transparent'}
+          w-full transition-all duration-500 ease-in-out overflow-hidden
+          ${isOpen ? 'rounded-[2rem] bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-500/20 shadow-2xl shadow-indigo-500/5' : 'bg-transparent'}
         `}
             >
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     aria-expanded={isOpen}
-                    className={`w-full flex items-center justify-between px-6 py-4 transition-all duration-300 rounded-2xl border ${!isOpen ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30' : 'border-transparent bg-slate-50/50 dark:bg-slate-800/50'}`}
+                    className={`w-full flex items-center justify-between px-6 py-3.5 transition-all duration-300 rounded-[1.25rem] border ${!isOpen ? 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:border-indigo-500/30' : 'border-transparent bg-slate-50/50 dark:bg-slate-800/50'}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className={`
@@ -71,10 +72,10 @@ const InstructionPanel = () => {
                             <Info className="w-5 h-5" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col items-start leading-tight">
-                            <h3 className={`text-xs font-black uppercase tracking-widest transition-colors duration-300 ${isOpen ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                            <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isOpen ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-400'}`}>
                                 Dialing Protocol
                             </h3>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Quick Reference Guide</p>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">Quick Reference Guide</p>
                         </div>
                     </div>
                     <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-indigo-600 rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
@@ -93,8 +94,8 @@ const InstructionPanel = () => {
                                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <Building2 size={80} />
                                 </div>
-                                <h4 className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                                <h4 className="text-xs font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                                     Floor 27 - City Tower
                                 </h4>
                                 <div className="space-y-4 relative z-10">
@@ -116,8 +117,8 @@ const InstructionPanel = () => {
                                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <MapPin size={80} />
                                 </div>
-                                <h4 className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <h4 className="text-xs font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                                     Floor 26 - Gesit Resources
                                 </h4>
                                 <div className="space-y-4 relative z-10">
@@ -155,21 +156,17 @@ const ExtensionCard: React.FC<{
     const is27 = ext.floor === 27;
 
     const theme = is27 ? {
-        border: 'border-slate-100 dark:border-slate-800',
-        wrapper: 'hover:shadow-indigo-500/20',
+        border: 'border-indigo-100/50 dark:border-indigo-900/30',
         activeRing: 'ring-indigo-500/30',
-        leftBg: 'bg-white dark:bg-slate-900',
-        rightBg: 'group-hover:bg-indigo-600 bg-indigo-50 dark:bg-slate-800',
+        rightBg: 'group-hover:bg-indigo-600',
         rightText: 'text-indigo-600 dark:text-indigo-400 group-hover:text-white',
-        badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
+        badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
     } : {
-        border: 'border-slate-100 dark:border-slate-800',
-        wrapper: 'hover:shadow-emerald-500/20',
+        border: 'border-emerald-100/50 dark:border-emerald-900/30',
         activeRing: 'ring-emerald-500/30',
-        leftBg: 'bg-white dark:bg-slate-900',
-        rightBg: 'group-hover:bg-emerald-600 bg-emerald-50 dark:bg-slate-800',
+        rightBg: 'group-hover:bg-emerald-600',
         rightText: 'text-emerald-600 dark:text-emerald-400 group-hover:text-white',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
     };
 
     const handleCopy = () => {
@@ -186,75 +183,91 @@ const ExtensionCard: React.FC<{
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: delay / 1000, duration: 0.3 }}
             className={`
-                group relative flex w-full h-28 rounded-[1.5rem] overflow-hidden border transition-all duration-300
-                hover:-translate-y-1 hover:shadow-2xl ${theme.wrapper} ${theme.border}
-                ${isFocused ? `ring-2 ${theme.activeRing} shadow-lg` : 'shadow-sm'}
+                group relative flex w-full h-28 rounded-[1.75rem] overflow-hidden border transition-all duration-500
+                hover:-translate-y-1.5 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-none
+                ${theme.border} bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
+                ${isFocused ? `ring-2 ${theme.activeRing} shadow-lg scale-105` : 'shadow-sm'}
             `}
         >
+            {/* Background Accent */}
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-16 -mt-16 transition-transform duration-700 group-hover:scale-150`} />
+
             {/* Left Side: Info */}
-            <div className={`flex-1 p-4 flex flex-col justify-between ${theme.leftBg} relative z-10`}>
+            <div className={`flex-1 p-4 pr-2 flex flex-col justify-between relative z-10`}>
                 <div className="flex items-start gap-3">
                     <UserAvatar
                         name={ext.name}
                         url={ext.photo_url}
                         size="md"
-                        className="shadow-sm ring-2 ring-white dark:ring-slate-800 shrink-0"
+                        className="shadow-sm ring-2 ring-white/50 dark:ring-slate-800/50 shrink-0"
                     />
-                    <div className="min-w-0 pr-1">
-                        <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight truncate leading-tight mb-0.5" title={ext.name}>
+                    <div className="min-w-0 pr-1 flex flex-col pt-1">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
                             {ext.name}
                         </h3>
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate leading-tight" title={ext.dept}>
-                            {ext.dept}
-                        </p>
-                        {ext.role && (
-                            <p className="text-[9px] text-slate-400 dark:text-slate-500 italic truncate mt-0.5">
-                                {ext.role}
+                        <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 truncate uppercase tracking-widest opacity-80" title={ext.dept}>
+                                {ext.dept}
                             </p>
-                        )}
+                            {ext.role && (
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate">
+                                    {ext.role}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-end justify-between mt-2">
-                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${theme.badge}`}>
-                        Floor {ext.floor}
+                <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100/50 dark:border-slate-800/50">
+                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${theme.badge} ring-1 ring-black/5 dark:ring-white/5`}>
+                        {ext.floor}F Registry
                     </span>
 
-                    {/* Admin Actions (Small, Bottom Left/Center) */}
+                    {/* Admin Actions */}
                     {canEdit && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <button onClick={(e) => { e.stopPropagation(); onEdit?.(ext); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"><Pencil size={12} /></button>
-                            {isAdmin && <button onClick={(e) => { e.stopPropagation(); onDelete?.(ext.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"><Trash2 size={12} /></button>}
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                            <button onClick={(e) => { e.stopPropagation(); onEdit?.(ext); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 transition-all active:scale-90"><Pencil size={11} /></button>
+                            {isAdmin && <button onClick={(e) => { e.stopPropagation(); onDelete?.(ext.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 transition-all active:scale-90"><Trash2 size={11} /></button>}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Right Side: Extension Action Button */}
+            {/* Right Side: Modern Glass Badge */}
             <button
                 onClick={(e) => { e.stopPropagation(); handleCopy(); }}
                 className={`
-                    w-24 group/btn relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300
-                    ${theme.rightBg} ${theme.rightText} border-l border-slate-100 dark:border-slate-800
+                    w-20 group/btn relative flex flex-col items-center justify-center cursor-pointer transition-all duration-500
+                    border-l border-slate-200/30 dark:border-slate-800/30 overflow-hidden
                 `}
-                title="Click to copy"
+                title="Click to copy extension"
             >
-                <div className="relative z-10 flex flex-col items-center">
-                    <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-0.5 group-hover/btn:text-white/80">
+                {/* Active Hover Background */}
+                <div className={`absolute inset-0 transition-opacity duration-500 opacity-0 group-hover/btn:opacity-100 ${theme.rightBg}`} />
+
+                <div className="relative z-10 flex flex-col items-center scale-110">
+                    <span className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 transition-colors duration-300 ${copied ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover/btn:text-white/70'}`}>
                         {copied ? 'Copied' : 'Ext'}
                     </span>
-                    <span className="text-3xl font-black tracking-tighter transition-transform duration-300 group-hover/btn:scale-110 group-active/btn:scale-95">
+                    <span className={`text-3xl font-black tracking-tighter tabular-nums transition-all duration-300 ${copied ? 'text-white scale-110' : `group-hover/btn:text-white group-active/btn:scale-95 ${theme.rightText}`}`}>
                         {ext.ext}
                     </span>
                 </div>
 
-                {/* Background Icon Decoration */}
-                <Phone className="absolute -bottom-4 -right-4 w-20 h-20 opacity-5 group-hover/btn:opacity-20 transition-opacity rotate-12" />
-
-                {/* Copied Overlay Feedback */}
-                <div className={`absolute inset-0 flex items-center justify-center bg-emerald-500 transition-all duration-300 ${copied ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <Check className="text-white w-8 h-8 animate-in zoom-in duration-300" strokeWidth={4} />
+                {/* Decorative Icon */}
+                <div className="absolute -bottom-2 -right-2 opacity-5 scale-150 transition-all duration-700 group-hover/btn:rotate-45 group-hover/btn:opacity-20 translate-y-2 group-hover/btn:translate-y-0">
+                    <Phone className={`w-12 h-12 ${theme.rightText} group-hover/btn:text-white`} />
                 </div>
+
+                {/* Copied Overlay */}
+                <motion.div
+                    className="absolute inset-0 bg-emerald-500 flex items-center justify-center z-20"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: copied ? 1 : 0, opacity: copied ? 1 : 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                    <Check className="text-white w-8 h-8" strokeWidth={4} />
+                </motion.div>
             </button>
         </motion.div>
     );
@@ -702,32 +715,32 @@ export const ExtensionDirectory = ({
     }, [extensions]);
 
     const handleExportExcel = () => {
-        try {
-            const exportData = extensions.map(ext => ({
+        if (filteredExtensions.length === 0) return;
+
+        const dataToExport = filteredExtensions.map(ext => {
+            const row: any = {
                 'Name': ext.name,
                 'Extension': ext.ext,
                 'Floor': `${ext.floor}th Floor`,
                 'Department': ext.dept,
                 'Role': ext.role || '-'
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Extensions");
-            XLSX.writeFile(wb, "DIRECTORY_EXTENSIONS.xlsx");
-
-            if (currentUser) {
-                trackActivity(
-                    currentUser.fullName,
-                    currentUser.role,
-                    'Export Excel',
-                    'Directory',
-                    `Exported ${extensions.length} extensions to Excel`
-                );
+            };
+            if (isAdmin) {
+                row['PIN'] = ext.pin || '-';
             }
-        } catch (error) {
-            console.error("Export failed:", error);
-            alert("Export failed. Please try again.");
+            return row;
+        });
+
+        exportToExcel(dataToExport, `GESIT-EXTENSIONS-${new Date().toISOString().split('T')[0]}`);
+
+        if (currentUser) {
+            trackActivity(
+                currentUser.fullName,
+                currentUser.role,
+                'Export Excel',
+                'Directory',
+                `Exported ${filteredExtensions.length} extensions to Excel`
+            );
         }
     };
 
@@ -737,11 +750,16 @@ export const ExtensionDirectory = ({
             {variant === 'standalone' && (
                 <div className="mb-10 pt-4">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 px-2">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">
-                                Directory <span style={{ color: 'var(--primary)' }}>Extensions</span>
-                            </h1>
-                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">The City Tower & Infrastructure Registry</p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                                <Users size={24} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">
+                                    Directory <span className="text-blue-600">Extensions</span>
+                                </h1>
+                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">The City Tower & Infrastructure Registry</p>
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -798,26 +816,32 @@ export const ExtensionDirectory = ({
             {/* List Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
                 <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600" />
-                    <h2 className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-2 h-7 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600" />
+                    <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
                         Directory Registry
                     </h2>
                 </div>
 
-                <div className="flex items-center gap-4 flex-1 md:flex-initial bg-white dark:bg-slate-900 p-2 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-50/50 dark:bg-slate-800/50 rounded-[1.5rem] border border-slate-200/50 dark:border-slate-800/50 shadow-inner flex-1 md:flex-initial">
                     {/* Search Bar */}
-                    {variant === 'standalone' && (
-                        <div className="relative flex-1 md:w-64">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search extensions..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent focus:border-indigo-500/20 focus:bg-white dark:focus:bg-slate-900 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-200 transition-all outline-none"
-                            />
-                        </div>
-                    )}
+                    <div className="relative flex-1 md:w-72 group">
+                        <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${searchTerm ? 'text-indigo-500' : 'text-slate-400 opacity-50'}`} />
+                        <input
+                            type="text"
+                            placeholder="Search directory..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl text-xs font-black text-slate-900 dark:text-slate-200 placeholder:text-slate-400/70 placeholder:font-bold focus:ring-0 outline-none transition-all"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                            >
+                                <X size={12} strokeWidth={3} />
+                            </button>
+                        )}
+                    </div>
 
                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
 

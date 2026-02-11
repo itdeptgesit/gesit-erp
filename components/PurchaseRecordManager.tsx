@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
-    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye, Tag, PieChart
+    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye, Tag, PieChart, Calendar, Building2
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Area
@@ -17,6 +17,7 @@ import { useLanguage } from '../translations';
 import { StatCard } from './StatCard';
 import { FinancialHealthSummary } from './FinancialHealthSummary';
 import { TopVendorsWidget } from './TopVendorsWidget';
+import { exportToExcel } from '../lib/excelExport';
 
 export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }> = ({ currentUser }) => {
     const { t } = useLanguage();
@@ -138,6 +139,38 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             return matchesSearch && matchesStatus && matchesProject && matchesDate;
         });
     }, [records, searchTerm, statusFilter, projectFilter, yearFilter, quarterFilter, startDate, endDate]);
+    const handleExportExcel = () => {
+        if (filteredRecords.length === 0) return;
+
+        const dataToExport = filteredRecords.map(r => ({
+            "Transaction ID": r.transactionId,
+            "Description": r.description,
+            "Date": r.purchaseDate || "-",
+            "Vendor": r.vendor || "-",
+            "Category": r.category || "-",
+            "Company": r.company,
+            "Department": r.department || "-",
+            "User": r.user || "-",
+            "Project": r.projectName || "-",
+            "Status": r.status,
+            "Payment Method": r.paymentMethod || "-",
+            "Payment Date": r.paymentDate || "-",
+            "Price": r.price,
+            "Qty": r.qty,
+            "Subtotal": r.subtotal,
+            "VAT": r.vat,
+            "Delivery": r.deliveryFee,
+            "Insurance": r.insurance,
+            "App Fee": r.appFee,
+            "Other": r.otherCost,
+            "Total VA": r.totalVa,
+            "Platform": r.platform || "-",
+            "Evidence": r.evidenceLink || "-",
+            "Remarks": r.remarks || ""
+        }));
+
+        exportToExcel(dataToExport, `GESIT-PURCHASE-${new Date().toISOString().split('T')[0]}`);
+    };
 
     // Reset to page 1 when filters change
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, projectFilter, yearFilter, quarterFilter, startDate, endDate]);
@@ -297,19 +330,6 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             .sort((a, b) => b.total - a.total);
     }, [filteredRecords]);
 
-    const handleExport = () => {
-        const headers = ["TR-ID", "Description", "Project", "Qty", "Subtotal", "Company", "Vendor", "Platform", "Date", "Status"];
-        const csvData = filteredRecords.map(r => [
-            r.transactionId, r.description, r.projectName, r.qty, r.subtotal, r.company, r.vendor, r.platform, r.purchaseDate, r.status
-        ]);
-        const csvContent = [headers.join(","), ...csvData.map(e => e.join(","))].join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Purchase-Records-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-    };
 
     const formatIDR = (num: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
@@ -318,22 +338,33 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header & Financial Health */}
-            <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Financial Control Dashboard</h1>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Enterprise Resource Planning & Audit</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <div className="hidden md:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                            <button onClick={() => setYearFilter('2026')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${yearFilter === '2026' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>2026</button>
-                            <button onClick={() => setYearFilter('2025')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${yearFilter === '2025' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>2025</button>
+            <div className="space-y-8 mb-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+                    <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                            <Wallet size={24} strokeWidth={2.5} />
                         </div>
-                        <button onClick={handleExport} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20">
-                            <FileSpreadsheet size={16} /> Export CSV
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Financial <span className="text-blue-600">Control</span></h1>
+                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise Ledger & Fiscal Audit</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="hidden lg:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+                            <button onClick={() => setYearFilter('2026')} className={`px-5 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${yearFilter === '2026' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2026</button>
+                            <button onClick={() => setYearFilter('2025')} className={`px-5 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${yearFilter === '2025' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2025</button>
+                        </div>
+                        <button
+                            onClick={handleExportExcel}
+                            className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
+                        >
+                            <FileSpreadsheet size={16} /> Export Excel
                         </button>
-                        <button onClick={() => { setEditingRecord(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20">
-                            <Plus size={16} /> Add Record
+                        <button
+                            onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
+                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                        >
+                            <Plus size={16} /> New Entry
                         </button>
                     </div>
                 </div>
@@ -347,25 +378,25 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             </div>
 
             {/* Advanced Filters Bar */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-6">
                 <div className="relative flex-1 w-full">
-                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Search transaction ID, description or vendor..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-500/5 dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                    <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search by TR-ID, description, or vendor name..." className="w-full pl-14 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/5 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                 </div>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                    <select className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 min-w-[100px]" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
+                <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 shrink-0">
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
                         <option value="All">All Years</option>
                         {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
-                    <select className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 min-w-[100px]" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
                         <option value="All">All Quarters</option>
                         <option value="Q1">Q1 (Jan-Mar)</option>
                         <option value="Q2">Q2 (Apr-Jun)</option>
                         <option value="Q3">Q3 (Jul-Sep)</option>
                         <option value="Q4">Q4 (Oct-Dec)</option>
                     </select>
-                    <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase flex items-center gap-2 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent'}`}>
-                        <Clock size={14} /> Range
+                    <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-100'}`}>
+                        <Clock size={16} /> Date Range
                     </button>
                 </div>
             </div>
@@ -383,214 +414,237 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 </div>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                <StatCard label="Total Disbursed" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Paid" icon={CheckCircle2} color="emerald" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                <StatCard label="Disbursed Funds" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Settled" icon={CheckCircle2} color="emerald" />
                 <StatCard
                     label="Liability Exposure"
                     value={formatIDR(financialHealth.liability)}
-                    subValue={`${financialHealth.pendingCount} invoices pending`}
+                    subValue={`${financialHealth.pendingCount} Pending Approval`}
                     icon={Clock}
                     color={financialHealth.riskLevel === 'High' ? 'rose' : financialHealth.riskLevel === 'Medium' ? 'amber' : 'blue'}
                 />
                 <StatCard
-                    label="Budget Utilization"
+                    label="Budget Efficiency"
                     value={`${Math.min(100, Math.round((financialHealth.totalDisbursed / (financialHealth.totalDisbursed * 1.25 || 1)) * 100))}%`}
-                    subValue="Of allocated budget"
+                    subValue="Utilization Rate"
                     icon={PieChart}
                     color="violet"
                 />
-                <StatCard label="Fiscal Volume" value={formatIDR(financialHealth.fiscalVolume)} subValue="Total Transaction Value" icon={Wallet} color="indigo" />
+                <StatCard label="Fiscal Volume" value={formatIDR(financialHealth.fiscalVolume)} subValue="Gross Transaction Value" icon={Wallet} color="indigo" />
             </div>
 
-            {/* Row 3: Charts & Breakdowns */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Trend Chart - Spans 2 cols */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                            <BarChart3 size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-sm">Fiscal Trend Analysis</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Disbursement velocity & volume</p>
+            {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}
+            <div className="flex flex-col gap-6">
+                {/* Row 3.1: Main Chart Full Width but Slimmer */}
+                <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shadow-inner">
+                                <BarChart3 size={16} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm leading-none">Fiscal Trend</h3>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Audit volume track</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[160px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', padding: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                                    itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                                    labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}
-                                    formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'Volume']}
+                                    cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+                                    itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
+                                    labelStyle={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                    formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'AUDIT VALUE']}
                                 />
-                                <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} />
-                                <Bar dataKey="total" barSize={20} radius={[4, 4, 0, 0]} fill="#3b82f6" opacity={0.2} />
+                                <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
+                                <Bar dataKey="total" barSize={30} radius={[6, 6, 0, 0]} fill="#3b82f6" opacity={0.1} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Top Vendors Widget */}
-                <div className="lg:col-span-1">
+                {/* Row 3.2: 3-Column Bento Details */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    {/* Top Vendors - Now integrated in bottom tier */}
                     <TopVendorsWidget vendors={vendorData} />
+
+                    {/* Department Allocation */}
+                    <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5 flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                                <Briefcase size={16} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Departmental</h3>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Utilization track</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3 flex-1">
+                            {deptData.length === 0 ? (
+                                <p className="text-center py-5 text-slate-300 text-[9px] font-bold uppercase tracking-widest">No data</p>
+                            ) : deptData.slice(0, 5).map((dept, idx) => (
+                                <div key={dept.name} className="space-y-1">
+                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                            <span className="text-slate-500 truncate max-w-[120px]">{dept.name}</span>
+                                        </div>
+                                        <div className="text-right flex items-center gap-1.5">
+                                            <span className="text-slate-900 dark:text-slate-300">{formatIDR(dept.total)}</span>
+                                            <span className="text-emerald-500 text-[8px] w-6">{dept.percentage}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                                            style={{ width: `${dept.percentage}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Category Distribution */}
+                    <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5 flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                                <Tag size={16} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Classified</h3>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Cost breakdown</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3 flex-1">
+                            {categoryData.length === 0 ? (
+                                <p className="text-center py-5 text-slate-300 text-[9px] font-bold uppercase tracking-widest">No data</p>
+                            ) : categoryData.slice(0, 5).map((cat, idx) => (
+                                <div key={cat.name} className="space-y-1">
+                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                                            <span className="text-slate-500 truncate max-w-[120px]">{cat.name}</span>
+                                        </div>
+                                        <div className="text-right flex items-center gap-1.5">
+                                            <span className="text-slate-900 dark:text-slate-300">{formatIDR(cat.total)}</span>
+                                            <span className="text-indigo-500 text-[8px] w-6">{cat.percentage}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                            style={{ width: `${cat.percentage}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Row 4: Category & Department Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                            <Briefcase size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-sm">Department Allocation</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Budget utilization by unit</p>
-                        </div>
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+                <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">General Transaction Ledger</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        <span className="text-[10px] font-bold text-slate-500">{filteredRecords.length} Records Found</span>
                     </div>
-                    <div className="space-y-5">
-                        {deptData.length === 0 ? (
-                            <p className="text-center py-10 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data available</p>
-                        ) : deptData.map((dept, idx) => (
-                            <div key={dept.name} className="space-y-2">
-                                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
-                                        <span className="text-slate-500 truncate max-w-[150px]">{dept.name}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-slate-900 dark:text-slate-300 block">{formatIDR(dept.total)}</span>
-                                        <span className="text-emerald-500 text-[9px]">{dept.percentage}%</span>
-                                    </div>
-                                </div>
-                                <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
-                                        style={{ width: `${dept.percentage}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm p-8">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                            <Tag size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-sm">Category Distribution</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Spending by classification</p>
-                        </div>
-                    </div>
-                    <div className="space-y-5">
-                        {categoryData.length === 0 ? (
-                            <p className="text-center py-10 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data available</p>
-                        ) : categoryData.map((cat, idx) => (
-                            <div key={cat.name} className="space-y-2">
-                                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
-                                        <span className="text-slate-500 truncate max-w-[150px]">{cat.name}</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-slate-900 dark:text-slate-300 block">{formatIDR(cat.total)}</span>
-                                        <span className="text-indigo-500 text-[9px]">{cat.percentage}%</span>
-                                    </div>
-                                </div>
-                                <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
-                                        style={{ width: `${cat.percentage}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-                {/* Table Header Removed - Filters are now main */}
-                <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">General Ledger</h3>
                 </div>
 
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white dark:bg-slate-900 text-slate-400 font-bold uppercase tracking-[0.2em] text-[9px] border-b border-slate-100 dark:border-slate-800">
-                                <th className="px-6 py-4">Identity</th>
-                                <th className="px-6 py-4">Transaction Details</th>
-                                <th className="px-6 py-4 text-right">Value (IDR)</th>
-                                <th className="px-6 py-4">Entity</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-center">Docs</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
+                            <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                                <th className="px-8 py-5">Audit Identity</th>
+                                <th className="px-8 py-5">Item & Procurement Details</th>
+                                <th className="px-8 py-5 text-right">Fiscal Value</th>
+                                <th className="px-8 py-5">Corporate entity</th>
+                                <th className="px-8 py-5">Ledger Status</th>
+                                <th className="px-8 py-5 text-center">Audit Docs</th>
+                                <th className="px-8 py-5 text-center">Control</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                             {isLoading ? (
-                                <tr><td colSpan={7} className="py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                                <tr><td colSpan={7} className="py-24 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={32} /></td></tr>
                             ) : filteredRecords.length === 0 ? (
-                                <tr><td colSpan={7} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest">No transaction records found.</td></tr>
+                                <tr><td colSpan={7} className="py-32 text-center text-slate-300 dark:text-slate-700 font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</td></tr>
                             ) : paginatedRecords.map(record => (
-                                <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/50 w-fit">{record.transactionId}</span>
-                                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-1.5">{record.purchaseDate}</span>
+                                <tr key={record.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-all group border-b border-transparent">
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[11px] font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-900/30 w-fit tracking-tighter shadow-sm">{record.transactionId}</span>
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                                                <Calendar size={12} className="opacity-50" />
+                                                {record.purchaseDate}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col max-w-xs">
-                                            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight leading-none truncate">{record.description}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate uppercase">{record.vendor} • {record.platform} • {record.paymentMethod || 'N/A'}</p>
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col gap-1 max-w-sm">
+                                            <p className="font-bold text-slate-900 dark:text-slate-100 text-sm tracking-tight leading-tight truncate-2-lines group-hover:text-blue-600 transition-colors">{record.description}</p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{record.vendor}</span>
+                                                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{record.paymentMethod || 'N/A'}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <p className="font-mono font-black text-xs text-slate-900 dark:text-slate-100">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
+                                    <td className="px-8 py-6 text-right">
+                                        <p className="font-mono font-black text-sm text-slate-900 dark:text-slate-100 tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
+                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Gross total</span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">{record.company}</p>
-                                            <p className="text-[9px] text-slate-400 font-medium uppercase">{record.department}</p>
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">{record.company}</p>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase">
+                                                <Building2 size={10} className="text-blue-500 opacity-60" />
+                                                {record.department}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border ${record.status === 'Paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100' :
-                                            record.status === 'Pending' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-100' :
-                                                'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100'}`}>
+                                    <td className="px-8 py-6">
+                                        <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-flex items-center gap-2 shadow-sm ${record.status === 'Paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/40' :
+                                            record.status === 'Pending' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-100 dark:border-amber-900/40' :
+                                                'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100 dark:border-rose-900/40'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
                                             {record.status}
-                                        </span>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex justify-center gap-1">
+                                    <td className="px-8 py-6 text-center">
+                                        <div className="flex justify-center">
                                             {Object.values(record.docs).filter(v => v).length > 0 ? (
-                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black border border-emerald-100">
-                                                    {Object.values(record.docs).filter(v => v).length}/7
-                                                </span>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-black shadow-sm shadow-emerald-500/20">
+                                                        {Object.values(record.docs).filter(v => v).length}/7
+                                                    </span>
+                                                    <span className="text-[8px] font-bold text-emerald-600 uppercase">Verified</span>
+                                                </div>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-slate-50 text-slate-300 rounded text-[9px] font-black border border-slate-100">0/7</span>
+                                                <div className="flex flex-col items-center gap-1 opacity-40">
+                                                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-lg text-[10px] font-black">0/7</span>
+                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Missing Docs</span>
+                                                </div>
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all" title="View Detail"><Eye size={14} /></button>
-                                            <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-amber-600 transition-all"><Pencil size={14} /></button>
-                                            <button onClick={() => setDeleteRecord(record)} className="p-2 text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
+                                    <td className="px-8 py-6">
+                                        <div className="flex justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
+                                            <button onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 transition-all shadow-sm" title="View Detail"><Eye size={16} /></button>
+                                            <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-amber-600 hover:border-amber-200 dark:hover:border-amber-800 transition-all shadow-sm"><Pencil size={16} /></button>
+                                            <button onClick={() => setDeleteRecord(record)} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-rose-600 hover:border-rose-200 dark:hover:border-rose-800 transition-all shadow-sm"><Trash2 size={16} /></button>
                                         </div>
                                     </td>
                                 </tr>

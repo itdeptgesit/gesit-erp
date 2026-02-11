@@ -422,7 +422,6 @@ const InternalApp: React.FC = () => {
                     <ExtensionDirectory
                       currentUser={currentUser}
                       variant="integrated"
-                      externalSearchTerm={globalSearchTerm}
                       externalFloorFilter={globalFloorFilter}
                     />
                   </PublicLayout>

@@ -133,15 +133,15 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <User size={12} className="text-blue-500" /> Requester & Entity
                                 </h3>
                                 <div className="space-y-1">
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase italic">{record.user}</p>
-                                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 flex items-center gap-1.5 uppercase tracking-tighter">
-                                        <Briefcase size={10} /> {record.department}
+                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase italic tracking-tight">{record.user}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1.5 uppercase tracking-tighter">
+                                        <Briefcase size={10} className="text-blue-500 opacity-60" /> {record.department}
                                     </p>
-                                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-widest pt-1">
+                                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-widest pt-1 border-t border-slate-100 mt-1">
                                         <Building2 size={10} /> {record.company}
                                     </p>
-                                    <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                                        <Tag size={10} className="text-blue-500" /> {record.category || 'Uncategorized'}
+                                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-lg text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest shadow-sm">
+                                        <Tag size={10} /> {record.category || 'Standard Procurement'}
                                     </div>
                                 </div>
                             </div>
@@ -246,13 +246,17 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Financial Summary</h3>
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
-                                <div className="p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                                    <h4 className="text-[9px] font-black text-slate-400 uppercase mb-3">Document Compliance</h4>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <ShieldCheck size={12} className="text-emerald-500" /> Audit Compliance Trace
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                                         {Object.entries(record.docs || {}).map(([key, value]) => (
-                                            <div key={key} className="flex items-center gap-1.5">
-                                                {value ? <CheckCircle2 size={10} className="text-emerald-500" /> : <XCircle size={10} className="text-slate-300" />}
-                                                <span className={`text-[9px] font-bold uppercase tracking-tighter ${value ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300'}`}>
+                                            <div key={key} className="flex items-center gap-2">
+                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${value ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-300'}`}>
+                                                    {value ? <CheckCircle2 size={10} /> : <X size={8} />}
+                                                </div>
+                                                <span className={`text-[9px] font-black uppercase tracking-tight ${value ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 opacity-50'}`}>
                                                     {key.replace(/([A-Z])/g, ' $1')}
                                                 </span>
                                             </div>
@@ -261,44 +265,37 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900 dark:bg-slate-950 p-6 rounded-3xl text-white shadow-xl flex flex-col justify-center relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-5">
-                                    <Receipt size={120} />
+                            <div className="bg-slate-900 dark:bg-slate-950 p-8 rounded-[2.5rem] text-white shadow-2xl flex flex-col justify-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-10 opacity-5">
+                                    <Receipt size={140} />
                                 </div>
-                                <div className="space-y-2 relative">
-                                    <div className="flex justify-between items-center text-[10px] font-medium opacity-60 border-b border-white/5 pb-1">
-                                        <span>Base Amount</span>
-                                        <span>{formatFullIDR(record.subtotal - (record.vat || 0) - (record.otherCost || 0))}</span>
+                                <div className="space-y-3 relative">
+                                    <div className="flex justify-between items-center text-[11px] font-bold opacity-50 border-b border-white/10 pb-2">
+                                        <span className="uppercase tracking-[0.1em]">Principal Amount</span>
+                                        <span className="font-mono">{formatFullIDR(record.subtotal - (record.vat || 0) - (record.otherCost || 0))}</span>
                                     </div>
                                     {(record.vat || 0) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-medium opacity-60 border-b border-white/5 pb-1">
-                                            <span>VAT (PPN)</span>
-                                            <span>{formatFullIDR(record.vat)}</span>
+                                        <div className="flex justify-between items-center text-[11px] font-bold opacity-50 border-b border-white/10 pb-2">
+                                            <span className="uppercase tracking-[0.1em]">Value Added Tax (PPN)</span>
+                                            <span className="font-mono">{formatFullIDR(record.vat)}</span>
                                         </div>
                                     )}
-                                    {(record.deliveryFee || 0) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-medium opacity-60 border-b border-white/5 pb-1">
-                                            <span>Delivery Fee</span>
-                                            <span>{formatFullIDR(record.deliveryFee)}</span>
+                                    {(record.otherCost || 0) > 0 && (
+                                        <div className="flex justify-between items-center text-[11px] font-bold opacity-50 border-b border-white/10 pb-2">
+                                            <span className="uppercase tracking-[0.1em]">Other Applied Charges</span>
+                                            <span className="font-mono">{formatFullIDR(record.otherCost)}</span>
                                         </div>
                                     )}
-                                    {(record.insurance || 0) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-medium opacity-60 border-b border-white/5 pb-1">
-                                            <span>Insurance</span>
-                                            <span>{formatFullIDR(record.insurance)}</span>
+                                    <div className="flex justify-between items-end pt-4">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 block mb-1">Audit Ledger Total</span>
+                                            <span className="text-3xl font-mono font-black tracking-tighter">{formatFullIDR(record.subtotal)}</span>
                                         </div>
-                                    )}
-                                    {(record.appFee || 0) > 0 && (
-                                        <div className="flex justify-between items-center text-[10px] font-medium opacity-60 border-b border-white/5 pb-1">
-                                            <span>Platform Fee</span>
-                                            <span>{formatFullIDR(record.appFee)}</span>
+                                        <div className="text-right">
+                                            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-[9px] font-black uppercase border border-blue-500/30">Cleared</span>
                                         </div>
-                                    )}
-                                    <div className="flex justify-between items-center text-blue-400 pt-3">
-                                        <span className="text-xs font-black uppercase tracking-[0.2em]">Total Billing</span>
-                                        <span className="text-2xl font-mono font-black">{formatFullIDR(record.subtotal)}</span>
                                     </div>
-                                    <p className="text-[8px] font-bold text-white/30 uppercase tracking-tight pt-2">Amounts are net tax and include all reported surcharges</p>
+                                    <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest pt-4 border-t border-white/5">Digital signature and ledger trace embedded in QR/Hash</p>
                                 </div>
                             </div>
                         </div>

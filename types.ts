@@ -206,6 +206,7 @@ export interface ITAssetLoan {
   borrowerPhone?: string;
   loanDate: string;
   expectedReturnDate: string;
+  actualReturnDate?: string;
   status: 'Active' | 'Returned' | 'Overdue';
   remarks?: string;
   itPersonnel?: string;

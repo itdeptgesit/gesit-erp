@@ -13,6 +13,8 @@ import { ActivityLog } from '../types';
 import { ActivityFormModal } from './ActivityFormModal'; // Import form modal
 import { UserAvatar } from './UserAvatar';
 import { StatCard } from './StatCard';
+import { exportToExcel } from '../lib/excelExport';
+import { FileSpreadsheet } from 'lucide-react';
 
 const ActivityDetailModal = ({ isOpen, onClose, activity }: { isOpen: boolean; onClose: () => void; activity: ActivityLog | null }) => {
     if (!isOpen || !activity) return null;
@@ -263,6 +265,27 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
         return matchesSearch && matchesStatus && matchesDate;
     });
+
+    const handleExportExcel = () => {
+        if (filteredActivities.length === 0) return;
+
+        const dataToExport = filteredActivities.map(act => ({
+            "Activity Name": act.activityName,
+            "Category": act.category,
+            "Requester": act.requester,
+            "Department": act.department,
+            "IT Personnel": act.itPersonnel,
+            "Priority": act.type,
+            "Status": act.status,
+            "Duration": act.duration || "-",
+            "Location": act.location,
+            "Remarks": act.remarks || "-",
+            "Created At": act.createdAt ? new Date(act.createdAt).toLocaleString() : "-",
+            "Completed At": act.completedAt ? new Date(act.completedAt).toLocaleString() : "-"
+        }));
+
+        exportToExcel(dataToExport, `GESIT-ACTIVITY-${new Date().toISOString().split('T')[0]}`);
+    };
 
     // Presentation Mode State
     const [isPresenting, setIsPresenting] = useState(false);
@@ -543,26 +566,37 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
             {renderSlideshowOverlay()}
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Activity Log</h1>
-                    <p className="text-slate-500 text-sm">Record of activities</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                        <FileText size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Activity <span className="text-blue-600">Log</span></h1>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">System audit trail</p>
+                    </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => { setIsPresenting(true); toggleFullScreen(); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                        className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-sm active:scale-95 group"
                     >
-                        <Presentation size={16} />
-                        PRESENT RESULTS
+                        <Presentation size={14} className="group-hover:scale-110 transition-transform" />
+                        Present
+                    </button>
+                    <button
+                        onClick={handleExportExcel}
+                        className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
+                    >
+                        <FileSpreadsheet size={16} /> Export Excel
                     </button>
                     {canManage && (
                         <button
                             onClick={() => { setSelectedActivity(null); setIsFormOpen(true); }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                         >
-                            <Plus size={16} />
-                            New Log
+                            <Plus size={14} />
+                            Register
                         </button>
                     )}
                 </div>
@@ -661,13 +695,13 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold text-[11px] border-b border-slate-100 dark:border-slate-800">
-                                <th className="px-6 py-4">Task Identity</th>
-                                <th className="px-6 py-4">Originator</th>
-                                <th className="px-6 py-4">Severity</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Timeline</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
+                            <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                                <th className="px-6 py-5">Task Identity</th>
+                                <th className="px-6 py-5">Originator</th>
+                                <th className="px-6 py-5">Severity</th>
+                                <th className="px-6 py-5">Status</th>
+                                <th className="px-6 py-5">Timeline</th>
+                                <th className="px-6 py-5 text-center">Protocol</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">

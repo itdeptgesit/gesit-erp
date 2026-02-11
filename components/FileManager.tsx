@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Search, LayoutGrid, List, Plus, RefreshCcw, Trash2, Cloud, FileSpreadsheet, FileType, ExternalLink, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Search, LayoutGrid, List, Plus, RefreshCcw, Trash2, Cloud, FileSpreadsheet, FileType, ExternalLink, Pencil, ChevronLeft, ChevronRight, Library } from 'lucide-react';
+import { exportToExcel } from '../lib/excelExport';
 import { FileFormModal } from './FileFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
@@ -59,9 +60,52 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
+    const handleExportExcel = () => {
+        if (filteredFiles.length === 0) return;
+
+        const dataToExport = filteredFiles.map(f => ({
+            "File Name": f.name,
+            "Type": f.type,
+            "Category": f.category || "-",
+            "Google Drive URL": f.gdriveUrl,
+            "Last Updated": f.updatedAt
+        }));
+
+        exportToExcel(dataToExport, `GESIT-FILES-${new Date().toISOString().split('T')[0]}`);
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-            <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Library Manager</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage your company's library</p></div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                        <Library size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Library <span className="text-blue-600">Manager</span></h1>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
+                            Shared resource database
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleExportExcel}
+                        className="flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+                    >
+                        <FileSpreadsheet size={16} /> Export Excel
+                    </button>
+                    {canManage && (
+                        <button
+                            onClick={() => { setEditingFile(null); setIsModalOpen(true); }}
+                            className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                        >
+                            <Plus size={16} /> Register Document
+                        </button>
+                    )}
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <StatCard label="CLOUD REPOSITORY" value={files.length} subValue="Total entries" icon={Cloud} color="blue" />
                 <StatCard label="DOCUMENTS" value={files.filter(f => f.type === 'pdf' || f.type === 'doc').length} subValue="Guides & Manuals" icon={FileType} color="rose" />
@@ -71,7 +115,7 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 <div className="relative flex-1 w-full"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" /><input type="text" placeholder="Filter library items..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/5 transition-all font-bold dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="flex gap-2 w-full md:w-auto">
                     {canManage && (
-                        <button onClick={() => { setEditingFile(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
+                        <button onClick={() => { setEditingFile(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/10 whitespace-nowrap">
                             <Plus size={14} /> Upload Link
                         </button>
                     )}

@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect, useTransition } from 'react';
 import {
     Server, RefreshCcw, Layout, Search, GitBranch, Plus,
-    Loader2, Pencil, Trash2, Save, Cable
+    Loader2, Pencil, Trash2, Save, Cable, Activity
 } from 'lucide-react';
 import { NetworkSwitch, SwitchPort, PortStatus, UserAccount, DeviceType } from '../types';
 import { SwitchVisualizer } from './SwitchVisualizer';
@@ -15,6 +15,8 @@ import { TopologyDiagram } from './TopologyDiagram';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { exportToExcel } from '../lib/excelExport';
+import { FileSpreadsheet } from 'lucide-react';
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -339,21 +341,88 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         return switches.filter(sw => !sw.id.startsWith('port-device-')).filter(sw => sw.name.toLowerCase().includes(searchTerm.toLowerCase()) || sw.ip.toLowerCase().includes(searchTerm.toLowerCase()) || sw.model.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [switches, searchTerm]);
 
+    const handleExportSwitches = () => {
+        const physicalSwitches = switches.filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet');
+        if (physicalSwitches.length === 0) return;
+
+        const dataToExport = physicalSwitches.map(sw => ({
+            "Device Name": sw.name,
+            "Model": sw.model,
+            "IP Address": sw.ip,
+            "Serial Number": sw.serialNumber || "-",
+            "Location": sw.location,
+            "Rack": sw.rack,
+            "Total Ports": sw.totalPorts,
+            "Status": sw.uptime
+        }));
+
+        exportToExcel(dataToExport, `GESIT-NETWORK-NODES-${new Date().toISOString().split('T')[0]}`);
+    };
+
+    const handleExportWiring = () => {
+        const physicalSwitches = switches.filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet');
+        const allPorts: any[] = [];
+
+        physicalSwitches.forEach(sw => {
+            sw.ports.forEach(p => {
+                allPorts.push({
+                    "Switch": sw.name,
+                    "Port": p.portNumber,
+                    "Status": p.status,
+                    "Connected Device": p.deviceConnected || "-",
+                    "Device Type": p.deviceType,
+                    "IP Address": p.ipAddress || "-",
+                    "MAC Address": p.macAddress || "-",
+                    "VLAN": p.vlan || "-",
+                    "Cable Type": p.cableType || "-",
+                    "Patch Panel": p.patchPanelPort || "-"
+                });
+            });
+        });
+
+        if (allPorts.length === 0) return;
+        exportToExcel(allPorts, `GESIT-WIRING-SCHEDULE-${new Date().toISOString().split('T')[0]}`);
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Infrastructure Engine</h1>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">Topology mapping and device configuration</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                        <Activity size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Infrastructure <span className="text-blue-600">Engine</span></h1>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
+                            Real-time network intelligence
+                        </p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3 min-h-[44px] justify-end">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <button
+                            onClick={handleExportSwitches}
+                            className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            title="Export Nodes"
+                        >
+                            <FileSpreadsheet size={18} />
+                        </button>
+                        <button
+                            onClick={handleExportWiring}
+                            className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            title="Export Wiring"
+                        >
+                            <Server size={18} />
+                        </button>
+                    </div>
                     {canManage && (
-                        <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
+                        <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
                             <Plus size={14} /> Provision Node
                         </button>
                     )}
                     {hasUnsavedChanges && activeTab === 'topology' && canManage && (
-                        <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce whitespace-nowrap">
+                        <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce whitespace-nowrap">
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Layout
                         </button>
                     )}

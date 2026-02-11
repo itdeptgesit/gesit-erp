@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Trash2, Pencil, RefreshCcw, ShieldCheck, Target, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Trash2, Pencil, RefreshCcw, ShieldCheck, Target, Clock, ChevronLeft, ChevronRight, Users, Activity, FileSpreadsheet } from 'lucide-react';
+import { exportToExcel } from '../lib/excelExport';
 import { UserAccount, UserGroup } from '../types';
 import { UserFormModal } from './UserFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
@@ -100,20 +101,50 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
 
   useEffect(() => { setCurrentPage(1); }, [searchTerm, roleFilter]);
 
+  const handleExportExcel = () => {
+    if (filteredUsers.length === 0) return;
+
+    const dataToExport = filteredUsers.map(u => ({
+      "Username": u.username,
+      "Full Name": u.fullName,
+      "Email": u.email,
+      "Role": u.role,
+      "Department": u.department,
+      "Status": u.status,
+      "Last Login": u.lastLogin || "-",
+      "Company": u.company || "-"
+    }));
+
+    exportToExcel(dataToExport, `GESIT-USERS-${new Date().toISOString().split('T')[0]}`);
+  };
+
   const handleAddUser = () => { setEditingUser(null); setIsModalOpen(true); };
   const handleEditUser = (user: UserAccount) => { setEditingUser(user); setIsModalOpen(true); };
 
+  // Assuming isAdmin is derived from currentUser or another context
+  const isAdmin = currentUser?.role === 'Admin';
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">User Management</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage your company's users</p></div>
-        <div className="flex gap-2">
-          <button onClick={fetchData} className="p-2 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-600 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-all">
-            <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+            <Users size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">System <span className="text-blue-600">Administration</span></h1>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">User access control</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={handleExportExcel} className="flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+            <FileSpreadsheet size={16} /> Export Excel
           </button>
-          <button onClick={handleAddUser} className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-black dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg">
-            <Plus size={14} /> Register Node
-          </button>
+          {isAdmin && (
+            <button onClick={() => { setEditingUser(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20 whitespace-nowrap">
+              <Plus size={14} /> Register Identity
+            </button>
+          )}
         </div>
       </div>
 
@@ -133,14 +164,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.15em] text-[9px] border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-4 w-12 text-center">Status</th>
-                <th className="px-6 py-4">Full Identity</th>
-                <th className="px-6 py-4">Organization</th>
-                <th className="px-6 py-4">Auth</th>
-                <th className="px-6 py-4">Hierarchy</th>
-                <th className="px-6 py-4">Last Activity</th>
-                <th className="px-6 py-4 text-center">Actions</th>
+              <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                <th className="px-6 py-5">User Identity</th>
+                <th className="px-6 py-5">Security Role</th>
+                <th className="px-6 py-5">Communication</th>
+                <th className="px-6 py-5 text-center">Protocol</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
