@@ -451,8 +451,8 @@ export const HelpdeskPublic: React.FC = () => {
         };
     }, [searchResult?.id]);
 
-    const inputClass = "w-full h-11 pl-12 pr-5 rounded-xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-[13px] dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]";
-    const labelClass = "text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display ml-1";
+    const inputClass = "w-full h-11 pl-12 pr-5 rounded-xl border-2 border-transparent bg-white/60 dark:bg-white/5 backdrop-blur-xl focus:bg-white/80 dark:focus:bg-white/10 focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all duration-300 outline-none text-sm dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm focus:shadow-lg focus:shadow-primary/5 focus:scale-[1.01]";
+    const labelClass = "text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-display ml-1";
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
@@ -553,7 +553,7 @@ export const HelpdeskPublic: React.FC = () => {
                                         className="inline-flex items-center gap-4 px-6 py-3 bg-white/5 backdrop-blur-2xl rounded-full border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] ring-1 ring-white/10"
                                     >
                                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.8)]"></div>
-                                        <span className="text-[10px] font-black text-white uppercase tracking-[0.4em] font-display">
+                                        <span className="text-[11px] font-black text-white uppercase tracking-[0.4em] font-display">
                                             Integrated Technical Support Node
                                         </span>
                                     </motion.div>
@@ -569,7 +569,7 @@ export const HelpdeskPublic: React.FC = () => {
                                     >
                                         <div className="relative flex-1 group">
                                             <input
-                                                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-14 text-[13px] font-black text-white placeholder:text-white/20 focus:ring-4 focus:ring-primary/20 focus:border-white/30 transition-all font-mono uppercase tracking-[0.4em] backdrop-blur-md"
+                                                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-14 text-sm font-black text-white placeholder:text-white/20 focus:ring-4 focus:ring-primary/20 focus:border-white/30 transition-all font-mono uppercase tracking-[0.4em] backdrop-blur-md"
                                                 placeholder="TKT-XXXX"
                                                 value={searchId}
                                                 onChange={e => setSearchId(e.target.value)}
@@ -593,7 +593,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
                                                 exit={{ opacity: 0, height: 0 }}
-                                                className="mt-4 text-rose-300 text-[10px] font-black uppercase tracking-widest px-2 flex items-center gap-2"
+                                                className="mt-4 text-rose-300 text-xs font-black uppercase tracking-widest px-2 flex items-center gap-2"
                                             >
                                                 <AlertCircle size={14} /> {error}
                                             </motion.p>
@@ -617,7 +617,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                 {item.icon}
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-1.5 font-display">{item.label}</p>
+                                                <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em] mb-1.5 font-display">{item.label}</p>
                                                 <p className="text-white font-black text-sm tracking-widest uppercase">{item.value}</p>
                                             </div>
                                         </motion.div>
@@ -639,10 +639,10 @@ export const HelpdeskPublic: React.FC = () => {
                                 <div className="w-2 h-2 rounded-full bg-white/10"></div>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.6em] font-display">
+                                <p className="text-[11px] font-black text-white/30 uppercase tracking-[0.6em] font-display">
                                     © 2026 THE GESIT COMPANIES
                                 </p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
+                                <p className="text-[11px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
                                     SYSTEM {appSettings.name} v3.0.1 — PUBLIC PORTAL
                                 </p>
                             </div>
@@ -666,7 +666,7 @@ export const HelpdeskPublic: React.FC = () => {
                                     window.location.href = '/';
                                 }
                             }}
-                            className="flex items-center gap-3 text-slate-400 hover:text-primary dark:hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] group font-display w-fit"
+                            className="flex items-center gap-3 text-slate-400 hover:text-primary dark:hover:text-white transition-all text-[11px] font-black uppercase tracking-[0.2em] group font-display w-fit"
                         >
                             <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                                 <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
@@ -703,7 +703,7 @@ export const HelpdeskPublic: React.FC = () => {
                                         </p>
                                     </div>
                                     <div className="bg-slate-900/5 dark:bg-white/5 p-12 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-inner group">
-                                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4 font-display">Voucher Identity</p>
+                                        <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] mb-4 font-display">Voucher Identity</p>
                                         <p className="text-6xl font-black text-primary dark:text-white font-mono tracking-tighter group-hover:scale-105 transition-transform duration-500">{ticketId}</p>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
@@ -741,7 +741,7 @@ export const HelpdeskPublic: React.FC = () => {
                                 >
                                     {!searchResult && (
                                         <div className="mb-14 text-center space-y-4">
-                                            <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] font-display">
+                                            <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] font-display">
                                                 {activeTab === 'report' ? 'New Manifest Requisition' : 'Track Existing Requisition'}
                                             </h4>
                                             <div className="w-16 h-[1.5px] bg-primary/20 mx-auto rounded-full"></div>
@@ -753,13 +753,13 @@ export const HelpdeskPublic: React.FC = () => {
                                         <div className="flex p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl mb-12 lg:hidden">
                                             <button
                                                 onClick={() => { setActiveTab('report'); setSearchId(''); setError(null); }}
-                                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'report' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                                className={`flex-1 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'report' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                             >
                                                 New Request
                                             </button>
                                             <button
                                                 onClick={() => { setActiveTab('check'); setSearchId(''); setError(null); }}
-                                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'check' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                                className={`flex-1 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300 ${activeTab === 'check' ? 'bg-white dark:bg-white/10 text-primary dark:text-white shadow-xl' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                             >
                                                 Track Ticket
                                             </button>
@@ -780,7 +780,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                         <Hash size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                                                     </div>
                                                 </div>
-                                                <button type="submit" disabled={isSubmitting} className="w-full h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]">
+                                                <button type="submit" disabled={isSubmitting} className="w-full h-14 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98]">
                                                     {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Search size={20} /> Lookup Record</>}
                                                 </button>
                                             </form>
@@ -827,7 +827,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                 whileTap={{ scale: 0.98 }}
                                                 type="submit"
                                                 disabled={isSubmitting}
-                                                className="group relative w-full h-16 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl disabled:opacity-50 overflow-hidden"
+                                                className="group relative w-full h-16 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl disabled:opacity-50 overflow-hidden"
                                                 style={{
                                                     backgroundColor: appSettings.primaryColor,
                                                     boxShadow: `0 20px 40px -10px ${appSettings.primaryColor}66`
@@ -861,18 +861,18 @@ export const HelpdeskPublic: React.FC = () => {
                                                                     <h5 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Support Agent</h5>
                                                                     <div className="flex items-center gap-2 mt-0.5">
                                                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">Online</span>
+                                                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">Online</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${searchResult.status === 'Resolved' || searchResult.status === 'Closed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                                            <div className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${searchResult.status === 'Resolved' || searchResult.status === 'Closed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
                                                                 {searchResult.status}
                                                             </div>
                                                         </div>
 
                                                         <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-10">
                                                             <div className="flex justify-center mb-12">
-                                                                <div className="px-8 py-3 bg-white/10 dark:bg-white/[0.02] backdrop-blur-xl rounded-full text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] border border-white/10 shadow-sm">
+                                                                <div className="px-8 py-3 bg-white/10 dark:bg-white/[0.02] backdrop-blur-xl rounded-full text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] border border-white/10 shadow-sm">
                                                                     Session Synced • {new Date(searchResult.created_at).toLocaleDateString()}
                                                                 </div>
                                                             </div>
@@ -890,27 +890,28 @@ export const HelpdeskPublic: React.FC = () => {
                                                                         className={`flex gap-4 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'flex-row'}`}
                                                                     >
                                                                         <div className="flex-shrink-0 mt-1">
-                                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border overflow-hidden ${isUser
+                                                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border overflow-hidden ${isUser
                                                                                 ? 'bg-white dark:bg-slate-800 text-blue-600 border-slate-200 dark:border-slate-700 shadow-sm'
                                                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                                                                                 }`}>
-                                                                                {isUser ? initials : <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />}
+                                                                                {isUser ? initials : <img src="/image/avatar-it.png" alt="IT" className="w-full h-full object-cover" />
+                                                                                }
                                                                             </div>
                                                                         </div>
 
                                                                         <div className={`flex flex-col gap-1.5 ${isUser ? 'items-end' : 'items-start'}`}>
                                                                             <div className={`flex items-center gap-2 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
-                                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                                                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                                                     {msg.sender_name}
                                                                                 </span>
-                                                                                <span className="text-[9px] font-medium text-slate-300 tabular-nums">
+                                                                                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
                                                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
                                                                             </div>
                                                                             <div className={`${isUser
                                                                                 ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
                                                                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-slate-700'
-                                                                                } px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed break-words`}>
+                                                                                } px-5 py-3 rounded-2xl text-[15px] font-medium leading-relaxed break-words`}>
                                                                                 {(() => {
                                                                                     const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
                                                                                     if (imageMatch) {
@@ -946,7 +947,7 @@ export const HelpdeskPublic: React.FC = () => {
 
                                                         {(searchResult.status === 'Resolved' || searchResult.status === 'Closed') && (
                                                             <div className="px-10 py-6 bg-emerald-500/10 border-t border-emerald-500/20 text-center backdrop-blur-md">
-                                                                <p className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em]">Encrypted Channel Closed</p>
+                                                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em]">Encrypted Channel Closed</p>
                                                             </div>
                                                         )}
 
@@ -1035,7 +1036,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                     <div className="w-full lg:w-[420px] flex flex-col gap-8 lg:sticky lg:top-8">
                                                         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-8 shadow-sm">
                                                             <div>
-                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-3">
+                                                                <h6 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-6 flex items-center gap-3">
                                                                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                                                                     Ticket Details
                                                                 </h6>
@@ -1049,8 +1050,8 @@ export const HelpdeskPublic: React.FC = () => {
                                                                                 {item.icon}
                                                                             </div>
                                                                             <div>
-                                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
-                                                                                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{item.value}</p>
+                                                                                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
+                                                                                <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">{item.value}</p>
                                                                             </div>
                                                                         </div>
                                                                     ))}
@@ -1060,7 +1061,7 @@ export const HelpdeskPublic: React.FC = () => {
                                                             <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
 
                                                             <div>
-                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-3">
+                                                                <h6 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-6 flex items-center gap-3">
                                                                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                                                                     Requester
                                                                 </h6>
@@ -1075,8 +1076,8 @@ export const HelpdeskPublic: React.FC = () => {
                                                                                     {item.icon}
                                                                                 </div>
                                                                                 <div className="min-w-0">
-                                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
-                                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">{item.value}</p>
+                                                                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none mb-1">{item.label}</p>
+                                                                                    <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">{item.value}</p>
                                                                                 </div>
                                                                             </div>
                                                                         ))}
@@ -1088,10 +1089,10 @@ export const HelpdeskPublic: React.FC = () => {
                                                                 <div className="absolute top-0 right-0 p-6 opacity-[0.03]">
                                                                     <MessageCircle size={80} strokeWidth={1} />
                                                                 </div>
-                                                                <h6 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 relative z-10">Initial Request</h6>
+                                                                <h6 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 relative z-10">Initial Request</h6>
                                                                 <div className="relative z-10 pl-6 border-l-2 border-blue-500/30">
-                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white mb-2 leading-tight">{searchResult.subject}</p>
-                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                                                    <p className="text-base font-bold text-slate-900 dark:text-white mb-2 leading-tight">{searchResult.subject}</p>
+                                                                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                                                         "{searchResult.description}"
                                                                     </p>
                                                                 </div>
@@ -1110,9 +1111,9 @@ export const HelpdeskPublic: React.FC = () => {
                                                                         <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40">
                                                                             <CheckCircle2 size={24} strokeWidth={3} />
                                                                         </div>
-                                                                        <h6 className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] font-display">Resolution Success</h6>
+                                                                        <h6 className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] font-display">Resolution Success</h6>
                                                                     </div>
-                                                                    <p className="text-[13px] text-emerald-800/70 dark:text-emerald-400/70 font-medium leading-relaxed relative z-10">
+                                                                    <p className="text-sm text-emerald-800/70 dark:text-emerald-400/70 font-medium leading-relaxed relative z-10">
                                                                         This requisition has been successfully synchronized and marked as resolved. No further intervention required.
                                                                     </p>
                                                                 </motion.div>
@@ -1121,9 +1122,11 @@ export const HelpdeskPublic: React.FC = () => {
                                                     </div>
                                                 </div>
                                             )}
-                                        </motion.div>
+                                        </div>
                                     )}
-                                </AnimatePresence>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </main>

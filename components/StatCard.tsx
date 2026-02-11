@@ -89,7 +89,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
                     <div className="flex justify-between items-start mb-4">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{label}</span>
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">{label}</span>
                         <div className={`p-2.5 rounded-xl border transition-all duration-500 ${finalColorClass} shadow-sm`}>
                             <Icon size={18} strokeWidth={2.5} />
                         </div>
@@ -124,7 +124,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
                     {/* Comparison Period Label */}
                     {comparisonPeriod && calculatedChange !== undefined && (
-                        <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
                             {comparisonPeriod}
                         </div>
                     )}
@@ -145,7 +145,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     {/* Target Progress Bar */}
                     {target && progressPercentage !== undefined && (
                         <div className="mt-3 space-y-1">
-                            <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                 <span>Target Progress</span>
                                 <span>{progressPercentage.toFixed(0)}%</span>
                             </div>
@@ -167,7 +167,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                 </div>
 
                 <div className="mt-2">
-                    {finalSubText && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{finalSubText}</span>}
+                    {finalSubText && <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{finalSubText}</span>}
                     {children}
                 </div>
             </div>

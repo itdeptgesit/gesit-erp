@@ -346,23 +346,23 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Financial <span className="text-blue-600">Control</span></h1>
-                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise Ledger & Fiscal Audit</p>
+                            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise Ledger & Fiscal Audit</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="hidden lg:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
-                            <button onClick={() => setYearFilter('2026')} className={`px-5 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${yearFilter === '2026' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2026</button>
-                            <button onClick={() => setYearFilter('2025')} className={`px-5 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all ${yearFilter === '2025' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2025</button>
+                            <button onClick={() => setYearFilter('2026')} className={`px-5 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${yearFilter === '2026' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2026</button>
+                            <button onClick={() => setYearFilter('2025')} className={`px-5 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${yearFilter === '2025' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2025</button>
                         </div>
                         <button
                             onClick={handleExportExcel}
-                            className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
+                            className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
                         >
                             <FileSpreadsheet size={16} /> Export Excel
                         </button>
                         <button
                             onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
-                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
                         >
                             <Plus size={16} /> New Entry
                         </button>
@@ -384,18 +384,18 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                     <input type="text" placeholder="Search by TR-ID, description, or vendor name..." className="w-full pl-14 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/5 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                 </div>
                 <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 shrink-0">
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
                         <option value="All">All Years</option>
                         {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
                         <option value="All">All Quarters</option>
                         <option value="Q1">Q1 (Jan-Mar)</option>
                         <option value="Q2">Q2 (Apr-Jun)</option>
                         <option value="Q3">Q3 (Jul-Sep)</option>
                         <option value="Q4">Q4 (Oct-Dec)</option>
                     </select>
-                    <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-100'}`}>
+                    <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-100'}`}>
                         <Clock size={16} /> Date Range
                     </button>
                 </div>
@@ -404,11 +404,11 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             {showDatePicker && (
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex gap-4 animate-in slide-in-from-top-2">
                     <div className="space-y-1">
-                        <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">Start Date</label>
+                        <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">Start Date</label>
                         <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={startDate} onChange={e => setStartDate(e.target.value)} />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[9px] font-bold uppercase text-slate-400 ml-1">End Date</label>
+                        <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">End Date</label>
                         <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                 </div>
@@ -444,7 +444,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                             </div>
                             <div>
                                 <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm leading-none">Fiscal Trend</h3>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Audit volume track</p>
+                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Audit volume track</p>
                             </div>
                         </div>
                     </div>
@@ -458,13 +458,13 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
                                 <Tooltip
                                     cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
                                     contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
                                     itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
-                                    labelStyle={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                    labelStyle={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                                     formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'AUDIT VALUE']}
                                 />
                                 <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
@@ -487,22 +487,22 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                             </div>
                             <div>
                                 <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Departmental</h3>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Utilization track</p>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Utilization track</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
                             {deptData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[9px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 text-[11px] font-bold uppercase tracking-widest">No data</p>
                             ) : deptData.slice(0, 5).map((dept, idx) => (
                                 <div key={dept.name} className="space-y-1">
-                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
+                                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
                                             <span className="text-slate-500 truncate max-w-[120px]">{dept.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
                                             <span className="text-slate-900 dark:text-slate-300">{formatIDR(dept.total)}</span>
-                                            <span className="text-emerald-500 text-[8px] w-6">{dept.percentage}%</span>
+                                            <span className="text-emerald-500 text-[11px] w-6">{dept.percentage}%</span>
                                         </div>
                                     </div>
                                     <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -524,22 +524,22 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                             </div>
                             <div>
                                 <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Classified</h3>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Cost breakdown</p>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Cost breakdown</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
                             {categoryData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[9px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 text-[11px] font-bold uppercase tracking-widest">No data</p>
                             ) : categoryData.slice(0, 5).map((cat, idx) => (
                                 <div key={cat.name} className="space-y-1">
-                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
+                                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
                                             <span className="text-slate-500 truncate max-w-[120px]">{cat.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
                                             <span className="text-slate-900 dark:text-slate-300">{formatIDR(cat.total)}</span>
-                                            <span className="text-indigo-500 text-[8px] w-6">{cat.percentage}%</span>
+                                            <span className="text-indigo-500 text-[11px] w-6">{cat.percentage}%</span>
                                         </div>
                                     </div>
                                     <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -557,17 +557,17 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
 
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
                 <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">General Transaction Ledger</h3>
+                    <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">General Transaction Ledger</h3>
                     <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                        <span className="text-[10px] font-bold text-slate-500">{filteredRecords.length} Records Found</span>
+                        <span className="text-[11px] font-bold text-slate-500">{filteredRecords.length} Records Found</span>
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                            <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[11px] border-b border-slate-100 dark:border-slate-800">
                                 <th className="px-8 py-5">Audit Identity</th>
                                 <th className="px-8 py-5">Item & Procurement Details</th>
                                 <th className="px-8 py-5 text-right">Fiscal Value</th>
@@ -587,7 +587,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col gap-1.5">
                                             <span className="text-[11px] font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-900/30 w-fit tracking-tighter shadow-sm">{record.transactionId}</span>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-tight">
                                                 <Calendar size={12} className="opacity-50" />
                                                 {record.purchaseDate}
                                             </div>
@@ -597,26 +597,26 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                         <div className="flex flex-col gap-1 max-w-sm">
                                             <p className="font-bold text-slate-900 dark:text-slate-100 text-sm tracking-tight leading-tight truncate-2-lines group-hover:text-blue-600 transition-colors">{record.description}</p>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{record.vendor}</span>
-                                                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{record.paymentMethod || 'N/A'}</span>
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{record.vendor}</span>
+                                                <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{record.paymentMethod || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6 text-right">
                                         <p className="font-mono font-black text-sm text-slate-900 dark:text-slate-100 tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
-                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Gross total</span>
+                                        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Gross total</span>
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col gap-0.5">
                                             <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">{record.company}</p>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase">
+                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase">
                                                 <Building2 size={10} className="text-blue-500 opacity-60" />
                                                 {record.department}
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
-                                        <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-flex items-center gap-2 shadow-sm ${record.status === 'Paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/40' :
+                                        <div className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] border inline-flex items-center gap-2 shadow-sm ${record.status === 'Paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/40' :
                                             record.status === 'Pending' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-100 dark:border-amber-900/40' :
                                                 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100 dark:border-rose-900/40'}`}>
                                             <div className={`w-1.5 h-1.5 rounded-full ${record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
@@ -627,15 +627,15 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                         <div className="flex justify-center">
                                             {Object.values(record.docs).filter(v => v).length > 0 ? (
                                                 <div className="flex flex-col items-center gap-1">
-                                                    <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-black shadow-sm shadow-emerald-500/20">
+                                                    <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black shadow-sm shadow-emerald-500/20">
                                                         {Object.values(record.docs).filter(v => v).length}/7
                                                     </span>
-                                                    <span className="text-[8px] font-bold text-emerald-600 uppercase">Verified</span>
+                                                    <span className="text-[10px] font-bold text-emerald-600 uppercase">Verified</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-center gap-1 opacity-40">
-                                                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-lg text-[10px] font-black">0/7</span>
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Missing Docs</span>
+                                                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-lg text-[11px] font-black">0/7</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Missing Docs</span>
                                                 </div>
                                             )}
                                         </div>
@@ -656,14 +656,14 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 {/* Pagination Controls */}
                 {filteredRecords.length > 0 && (
                     <div className="px-6 py-4 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900/50">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                             Showing <span className="text-slate-900 dark:text-slate-200">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-200">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span> of <span className="text-slate-900 dark:text-slate-200">{filteredRecords.length}</span> entries
                         </div>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
                                 Prev
                             </button>
@@ -676,7 +676,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                                         <button
                                             key={page}
                                             onClick={() => setCurrentPage(page)}
-                                            className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all ${currentPage === page
+                                            className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${currentPage === page
                                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                                                 : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                                                 }`}
@@ -693,7 +693,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
                                 Next
                             </button>

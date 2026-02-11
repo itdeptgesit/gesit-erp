@@ -29,7 +29,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                 </div>
                 <div>
                     <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-base leading-none">Key Suppliers</h3>
-                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Top Entities</p>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Top Entities</p>
                 </div>
             </div>
 
@@ -37,7 +37,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                 {vendors.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-slate-300">
                         <Store size={32} className="mb-2 opacity-20" />
-                        <p className="text-[10px] font-bold uppercase tracking-widest">No vendor data</p>
+                        <p className="text-xs font-bold uppercase tracking-widest">No vendor data</p>
                     </div>
                 ) : (
                     vendors.slice(0, 5).map((vendor, idx) => (
@@ -51,7 +51,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                             <div className="flex justify-between items-center z-10 relative p-2 -mx-1 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
                                 <div className="flex items-center gap-4">
                                     <div className={`
-                                        w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shadow-sm border
+                                        w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shadow-sm border
                                         ${idx === 0 ? 'bg-amber-100 text-amber-600 border-amber-200' :
                                             idx === 1 ? 'bg-slate-100 text-slate-600 border-slate-200' :
                                                 idx === 2 ? 'bg-orange-100 text-orange-600 border-orange-200' :
@@ -64,7 +64,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                                             {vendor.name === 'Unknown' || !vendor.name ? 'General Supplier' : vendor.name}
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-slate-100/50 dark:bg-slate-800 text-slate-500 uppercase tracking-wider">
+                                            <span className="text-[11px] font-bold px-1 py-0.5 rounded bg-slate-100/50 dark:bg-slate-800 text-slate-500 uppercase tracking-wider">
                                                 {vendor.transactionCount} Txns
                                             </span>
                                         </div>
@@ -74,7 +74,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                                     <p className="text-xs font-black text-slate-900 dark:text-white font-mono leading-none">
                                         {formatIDR(vendor.total).replace('Rp', '')}
                                     </p>
-                                    <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-tight mt-0.5">
+                                    <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-tight mt-0.5">
                                         Active
                                     </p>
                                 </div>
@@ -85,7 +85,7 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
             </div>
             {vendors.length > 3 && (
                 <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-center relative z-10">
-                    <button className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors uppercase tracking-widest group/btn">
+                    <button className="inline-flex items-center gap-2 text-[11px] font-black text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors uppercase tracking-widest group/btn">
                         View All Vendors
                         <ArrowRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
                     </button>
