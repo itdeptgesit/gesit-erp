@@ -8,12 +8,14 @@ import { GroupFormModal } from './GroupFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
+import { useToast } from './ToastProvider';
 
 interface MasterGroupProps {
     currentUser: UserAccount | null;
 }
 
 export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
+    const { showToast } = useToast();
     const [groups, setGroups] = useState<UserGroup[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,7 +73,7 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
             await fetchGroups();
             setDeleteGroup(null);
         } catch (err: any) {
-            alert("Failed to delete group: " + err.message);
+            showToast("Failed to delete group: " + err.message, 'error');
         } finally {
             setIsProcessing(false);
         }

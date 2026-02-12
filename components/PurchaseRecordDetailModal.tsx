@@ -5,9 +5,12 @@ import {
     X, Calendar, ShieldCheck, FileText,
     Receipt, Fingerprint, Download,
     Building2, User, CheckCircle2, XCircle, Clock, ShieldAlert, Award, Briefcase,
-    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag
+    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag, RefreshCcw, FileSpreadsheet
 } from 'lucide-react';
 import { PurchaseRecord } from '../types';
+import { sendToGoogleSheet } from '../lib/googleSheets';
+import { useState } from 'react';
+import { useToast } from './ToastProvider';
 
 interface PurchaseRecordDetailModalProps {
     isOpen: boolean;
@@ -16,6 +19,8 @@ interface PurchaseRecordDetailModalProps {
 }
 
 export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps> = ({ isOpen, onClose, record }) => {
+    const [isSyncing, setIsSyncing] = useState(false);
+    const { showToast } = useToast();
     if (!isOpen || !record) return null;
 
     const formatFullIDR = (num: number) => {
@@ -348,6 +353,19 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                         className="px-6 py-2.5 text-slate-500 font-bold text-[10px] uppercase tracking-widest hover:text-slate-800 transition-all border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900"
                     >
                         Close Trace
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setIsSyncing(true);
+                            await sendToGoogleSheet(record);
+                            setIsSyncing(false);
+                            showToast('Synced to Google Sheets!');
+                        }}
+                        disabled={isSyncing}
+                        className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isSyncing ? <RefreshCcw className="animate-spin" size={16} /> : <FileSpreadsheet size={16} />}
+                        {isSyncing ? 'Syncing...' : 'Sync to Sheet'}
                     </button>
                     <button
                         onClick={handlePrint}

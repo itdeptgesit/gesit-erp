@@ -9,6 +9,7 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
 import { UserAccount } from '../types';
+import { useToast } from './ToastProvider';
 
 interface MasterDepartmentProps {
     currentUser: UserAccount | null;
@@ -23,6 +24,7 @@ interface Department {
 }
 
 export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser }) => {
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -142,7 +144,7 @@ export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser 
 
             fetchDepartments();
         } catch (err: any) {
-            alert("Failed to save department: " + err.message);
+            showToast("Failed to save department: " + err.message, 'error');
         }
     };
 

@@ -5,6 +5,7 @@ import { X, Calendar, Tag, Shield, Building2, User, MapPin, Hash, Briefcase, Inf
 import { ITAsset, AssetCategory } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { useToast } from './ToastProvider';
 
 interface AssetFormModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface AssetFormModalProps {
 
 export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const [formData, setFormData] = useState<Partial<ITAsset>>({});
     const [specs, setSpecs] = useState({ storage: '', ram: '', vga: '', processor: '' });
     const [companyList, setCompanyList] = useState<{ id: number, name: string, code: string }[]>([]);
@@ -229,11 +231,11 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                                                         setFormData({ ...formData, image_url: json.secure_url });
                                                     } else if (json.error) {
                                                         console.error("Cloudinary error:", json.error);
-                                                        alert(`Upload failed: ${json.error.message}`);
+                                                        showToast(`Upload failed: ${json.error.message}`, 'error');
                                                     }
                                                 } catch (err) {
                                                     console.error("Upload failed", err);
-                                                    alert("Failed to upload image. Protocol interrupted.");
+                                                    showToast("Failed to upload image. Protocol interrupted.", 'error');
                                                 }
                                             }}
                                         />

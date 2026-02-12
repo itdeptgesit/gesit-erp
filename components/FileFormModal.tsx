@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { X, Link, FileText, Folder, Type } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useToast } from './ToastProvider';
 
 interface FileFormModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface FileFormModalProps {
 }
 
 export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, onSubmit, folders, initialData }) => {
+    const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -62,7 +64,7 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
             onClose();
             setFormData({ name: '', category: '', gdriveUrl: '', type: 'pdf' });
         } catch (err: any) {
-            alert("Upload failed: " + err.message);
+            showToast("Upload failed: " + err.message, 'error');
         } finally {
             setIsSubmitting(false);
         }

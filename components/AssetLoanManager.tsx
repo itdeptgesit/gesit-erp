@@ -193,6 +193,15 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                         <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Temporary equipment borrowing</p>
                     </div>
                 </div>
+                {/* <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                        <ArrowUpRight size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Asset <span className="text-blue-600">Loans</span></h1>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Temporary equipment borrowing</p>
+                    </div>
+                </div> */}
                 <div className="flex items-center gap-3">
                     <button onClick={handleExportExcel} className="flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap">
                         <FileSpreadsheet size={16} />

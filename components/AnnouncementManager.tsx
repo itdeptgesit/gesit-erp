@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Plus, Trash2, Save, Send, Clock, Calendar, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useToast } from './ToastProvider';
 
 interface Announcement {
     id?: number;
@@ -15,6 +16,7 @@ interface Announcement {
 }
 
 export const AnnouncementManager: React.FC = () => {
+    const { showToast } = useToast();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +73,7 @@ export const AnnouncementManager: React.FC = () => {
             if (error) throw error;
             fetchData();
         } catch (err) {
-            alert("Failed to update status");
+            showToast("Failed to update status", "error");
         }
     };
 
@@ -82,7 +84,7 @@ export const AnnouncementManager: React.FC = () => {
             if (error) throw error;
             fetchData();
         } catch (err) {
-            alert("Failed to delete record");
+            showToast("Failed to delete record", "error");
         }
     };
 
@@ -177,9 +179,9 @@ export const AnnouncementManager: React.FC = () => {
                         <div>
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${ann.type === 'info' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                                        ann.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                            ann.type === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                                                'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                    ann.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                        ann.type === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                                            'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                     }`}>
                                     {ann.type} Signal
                                 </div>

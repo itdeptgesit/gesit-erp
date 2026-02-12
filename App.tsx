@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
 import { TopNavigation } from './components/TopNavigation';
 import { Footer } from './components/Footer';
+import { ToastProvider } from './components/ToastProvider';
 
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
@@ -500,7 +501,11 @@ const InternalApp: React.FC = () => {
 
 // Wrapper Component to provide Router Context
 const App: React.FC = () => {
-  return <InternalApp />;
+  return (
+    <ToastProvider>
+      <InternalApp />
+    </ToastProvider>
+  );
 };
 
 export default App;

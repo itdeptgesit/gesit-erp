@@ -8,12 +8,14 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { Company, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
+import { useToast } from './ToastProvider';
 
 interface MasterCompanyProps {
     currentUser: UserAccount | null;
 }
 
 export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => {
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -69,7 +71,7 @@ export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => 
             await fetchCompanies();
             setDeleteCompany(null);
         } catch (err: any) {
-            alert("Failed to delete record: " + err.message);
+            showToast("Failed to delete record: " + err.message, 'error');
         } finally {
             setIsProcessing(false);
         }

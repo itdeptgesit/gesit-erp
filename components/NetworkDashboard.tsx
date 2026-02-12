@@ -17,6 +17,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
+import { useToast } from './ToastProvider';
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -25,6 +26,7 @@ interface NetworkDashboardProps {
 
 export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, currentUser }) => {
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const [switches, setSwitches] = useState<NetworkSwitch[]>([]);
     const [internetPos, setInternetPos] = useState({ x: 1070, y: 120 });
     const [selectedPort, setSelectedPort] = useState<SwitchPort | null>(null);
@@ -200,7 +202,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             setHasUnsavedChanges(false);
         } catch (err: any) {
             console.error("Save error:", err);
-            alert("Error saving layout: " + err.message);
+            showToast("Error saving layout: " + err.message, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -234,7 +236,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             setSelectedPort(null);
             await fetchNetworkData();
         } catch (err: any) {
-            alert("Failed to update port: " + err.message);
+            showToast("Failed to update port: " + err.message, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -315,7 +317,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             setIsAddDeviceOpen(false);
             await fetchNetworkData();
         } catch (err: any) {
-            alert("Failed to save node: " + err.message);
+            showToast("Failed to save node: " + err.message, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -331,7 +333,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             setDeleteDevice(null);
             await fetchNetworkData();
         } catch (err: any) {
-            alert("Failed to delete node: " + err.message);
+            showToast("Failed to delete node: " + err.message, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -393,10 +395,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Infrastructure <span className="text-blue-600">Engine</span></h1>
-                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
-                            Real-time network intelligence
-                        </p>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Real-time network intelligence</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 min-h-[44px] justify-end">

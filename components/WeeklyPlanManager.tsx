@@ -10,6 +10,7 @@ import { WeeklyTaskModal } from './WeeklyTaskModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { useToast } from './ToastProvider';
 
 const INDONESIAN_HOLIDAYS: { [key: string]: string } = {
     // 2025
@@ -64,6 +65,7 @@ interface WeeklyPlanManagerProps {
 
 export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUser }) => {
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const [tasks, setTasks] = useState<WeeklyPlan[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -126,7 +128,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
             await fetchTasks();
             setDeleteTask(null);
         } catch (err: any) {
-            alert("Delete failed: " + (err.message || "Unknown error"));
+            showToast("Delete failed: " + (err.message || "Unknown error"), 'error');
         } finally {
             setIsActionLoading(false);
         }
@@ -356,7 +358,8 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                     if (editingTask) { await supabase.from('weekly_plans').update(payload).eq('id', editingTask.id); }
                     else { await supabase.from('weekly_plans').insert([payload]); }
                     setIsModalOpen(false); setEditingTask(null); await fetchTasks();
-                } catch (err: any) { alert("Commencing failed:\n" + (err.message || "Database synchronization error")); }
+                    showToast(editingTask ? "Task updated successfully" : "Task created successfully", "success");
+                } catch (err: any) { showToast("Commencing failed:\n" + (err.message || "Database synchronization error"), "error"); }
             }} currentUserName={currentUser?.fullName} />
 
             <DangerConfirmModal isOpen={!!deleteTask} onClose={() => setDeleteTask(null)} onConfirm={executeDelete} title="Purge Task Node" message={`Are you sure you want to delete "${deleteTask?.task}"?`} isLoading={isActionLoading} />

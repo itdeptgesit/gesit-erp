@@ -8,12 +8,14 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { AssetCategory, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
+import { useToast } from './ToastProvider';
 
 interface MasterCategoryProps {
     currentUser: UserAccount | null;
 }
 
 export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) => {
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
@@ -68,7 +70,7 @@ export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) =
             await fetchCategories();
             setDeleteCategory(null);
         } catch (err: any) {
-            alert("Failed to delete record: " + err.message);
+            showToast("Failed to delete record: " + err.message, 'error');
         } finally {
             setIsProcessing(false);
         }

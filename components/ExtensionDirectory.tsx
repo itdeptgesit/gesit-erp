@@ -42,6 +42,7 @@ import { useLanguage } from "../translations";
 import { UserAvatar } from "./UserAvatar";
 import { StatCard } from "./StatCard";
 import { exportToExcel } from "../lib/excelExport";
+import { useToast } from "./ToastProvider";
 
 /* ===========================
    Components
@@ -386,6 +387,7 @@ export const ExtensionDirectory = ({
     externalSearchTerm?: string;
     externalFloorFilter?: 'All' | 26 | 27;
 }) => {
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [floorFilter, setFloorFilter] = useState<'All' | 26 | 27>('All');
     const [extensions, setExtensions] = useState<PhoneExtension[]>([]);
@@ -534,7 +536,7 @@ export const ExtensionDirectory = ({
             setFormData({ ...formData, photo_url: data.secure_url });
         } catch (error) {
             console.error('Error uploading image:', error);
-            alert('Failed to upload image. Please try again or use a URL.');
+            showToast('Failed to upload image. Please try again or use a URL.', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -675,11 +677,11 @@ export const ExtensionDirectory = ({
         try {
             const { error } = await supabase.from('phone_extensions').insert(INITIAL_DATA);
             if (error) throw error;
-            alert('Data seeded successfully!');
+            showToast('Data seeded successfully!', 'success');
             fetchExtensions();
         } catch (error) {
             console.error('Error seeding data:', error);
-            alert('Error seeding data. Check console.');
+            showToast('Error seeding data. Check console.', 'error');
         }
     };
 

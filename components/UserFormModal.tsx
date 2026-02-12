@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Shield, Users, Building2, UserCheck, Layers, Briefcase, MapPin, Loader2, Image as ImageIcon, Camera } from 'lucide-react';
 import { UserAccount, UserGroup, Company } from '../types';
 import { supabase } from '../lib/supabaseClient';
+import { useToast } from './ToastProvider';
 
 interface UserFormModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface UserFormModalProps {
 }
 
 export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, availableGroups }) => {
+    const { showToast } = useToast();
     const [formData, setFormData] = useState<Partial<UserAccount>>({});
     const [userOptions, setUserOptions] = useState<{ id: string, name: string }[]>([]);
     const [companyList, setCompanyList] = useState<Company[]>([]);
@@ -79,7 +81,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
             }
         } catch (error) {
             console.error('Upload Error:', error);
-            alert('Upload failed');
+            showToast('Upload failed', 'error');
         } finally {
             setIsUploading(false);
         }

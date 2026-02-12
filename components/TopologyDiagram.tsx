@@ -5,6 +5,7 @@ import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate } from 'lucide-react';
 import { NetworkSwitch, PortStatus, DeviceType } from '../types';
 import * as htmlToImage from 'html-to-image';
+import { useToast } from './ToastProvider';
 
 interface NodeProps {
     switchData: NetworkSwitch;
@@ -270,6 +271,7 @@ interface TopologyDiagramProps {
 }
 
 export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, internetPos, onUpdateSwitches, searchTerm = '' }) => {
+    const { showToast } = useToast();
     const diagramRef = useRef<HTMLDivElement>(null);
     const [relinkingSwitch, setRelinkingSwitch] = useState<NetworkSwitch | null>(null);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -370,7 +372,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
         try {
             const dataUrl = await htmlToImage.toPng(diagramRef.current, { backgroundColor: '#080c14', quality: 1, pixelRatio: 2, width: totalWidth, height: totalHeight });
             const link = document.createElement('a'); link.download = `TOPOLOGY-${Date.now()}.png`; link.href = dataUrl; link.click();
-        } catch (error) { alert('Export failed.'); } finally { diagramRef.current.style.transform = originalTransform; }
+        } catch (error) { showToast('Export failed.', 'error'); } finally { diagramRef.current.style.transform = originalTransform; }
     };
 
     const handleAutoLayout = useCallback(() => {

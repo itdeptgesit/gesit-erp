@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
 import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
+import { useToast } from './ToastProvider';
 
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
@@ -24,6 +25,7 @@ interface PurchasePlanManagerProps {
 type ProcurementTab = 'registry' | 'approvals' | 'analytics';
 
 export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ currentUser }) => {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<ProcurementTab>('registry');
     const [plans, setPlans] = useState<PurchasePlan[]>([]);
     const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
@@ -149,7 +151,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             const { error } = await supabase.from('purchase_plans').update({ status: nextStatus }).eq('id', plan.id);
             if (error) throw error;
             await fetchData();
-        } catch (err: any) { alert("Authorization failed: " + err.message); } finally { setIsActionLoading(false); }
+        } catch (err: any) { showToast("Authorization failed: " + err.message, 'error'); } finally { setIsActionLoading(false); }
     };
 
     const submitReject = async (reason: string) => {
@@ -160,7 +162,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             if (error) throw error;
             setRejectTarget(null);
             await fetchData();
-        } catch (err: any) { alert("Denial failed: " + err.message); } finally { setIsActionLoading(false); }
+        } catch (err: any) { showToast("Denial failed: " + err.message, 'error'); } finally { setIsActionLoading(false); }
     };
 
     const getStatusDisplay = (plan: PurchasePlan) => {
@@ -261,7 +263,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0"><p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Page {currentPage} of {totalPages || 1} • {filteredPlans.length} records</p><div className="flex items-center gap-2"><button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-20 transition-all active:scale-90"><ChevronLeft size={16} /></button><button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-20 transition-all active:scale-90"><ChevronRight size={16} /></button></div></div>
             </div>
 
-            <PurchaseRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={async (formData) => { try { const payload = { item: formData.item, specs: formData.specs, quantity: formData.quantity, unit_price: formData.unitPrice, total_price: formData.totalPrice, vendor: formData.vendor, status: formData.status || 'Pending Approval', requester: currentUser?.username || formData.requester, request_date: formData.requestDate, justification: formData.justification }; const { error } = await supabase.from('purchase_plans').insert([payload]); if (error) throw error; setIsModalOpen(false); fetchData(); } catch (err: any) { alert("Submission failed: " + err.message); } }} currentUserName={currentUser?.fullName} currentUser={currentUser} />
+            <PurchaseRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={async (formData) => { try { const payload = { item: formData.item, specs: formData.specs, quantity: formData.quantity, unit_price: formData.unitPrice, total_price: formData.totalPrice, vendor: formData.vendor, status: formData.status || 'Pending Approval', requester: currentUser?.username || formData.requester, request_date: formData.requestDate, justification: formData.justification }; const { error } = await supabase.from('purchase_plans').insert([payload]); if (error) throw error; setIsModalOpen(false); showToast("Request submitted successfully", "success"); fetchData(); } catch (err: any) { showToast("Submission failed: " + err.message, "error"); } }} currentUserName={currentUser?.fullName} currentUser={currentUser} />
             <PurchaseDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} plan={selectedPlan} spvName={approverNames.spv} managerName={approverNames.manager} requesterProfile={selectedRequesterProfile} />
             <RejectReasonModal isOpen={!!rejectTarget} onClose={() => setRejectTarget(null)} onSubmit={submitReject} itemName={rejectTarget?.item} />
             <DangerConfirmModal isOpen={!!deletePlan} onClose={() => setDeletePlan(null)} onConfirm={async () => { if (!deletePlan) return; await supabase.from('purchase_plans').delete().eq('id', deletePlan.id); setDeletePlan(null); fetchData(); }} title="Purge registry node" message={`Remove procurement request for "${deletePlan?.item}" permanently?`} />

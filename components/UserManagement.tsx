@@ -8,6 +8,7 @@ import { UserFormModal } from './UserFormModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
+import { useToast } from './ToastProvider';
 
 interface UserManagementProps {
   onUpdateSuccess?: () => void;
@@ -15,6 +16,7 @@ interface UserManagementProps {
 }
 
 export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess, currentUser }) => {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -268,10 +270,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
               'UserManagement',
               `${editingUser ? 'Updated' : 'Created'} user ${payload.email} (${payload.full_name})`
             );
-
             fetchData();
+            showToast(editingUser ? "User updated successfully" : "User created successfully", "success");
           } catch (err: any) {
-            alert("Failed to save user: " + err.message);
+            showToast("Failed to save user: " + err.message, "error");
           }
         }}
         initialData={editingUser}
@@ -296,9 +298,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
             );
 
             await fetchData();
+            showToast("User deleted successfully", "success");
             setDeleteUser(null);
           } catch (err: any) {
-            alert("Failed to delete user: " + err.message);
+            showToast("Failed to delete user: " + err.message, "error");
           } finally {
             setIsProcessing(false);
           }

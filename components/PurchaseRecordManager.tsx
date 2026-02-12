@@ -18,9 +18,12 @@ import { StatCard } from './StatCard';
 import { FinancialHealthSummary } from './FinancialHealthSummary';
 import { TopVendorsWidget } from './TopVendorsWidget';
 import { exportToExcel } from '../lib/excelExport';
+import { sendToGoogleSheet } from '../lib/googleSheets';
+import { useToast } from './ToastProvider';
 
-export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }> = ({ currentUser }) => {
+export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const [records, setRecords] = useState<PurchaseRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +33,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
     // Advanced Filters
     const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
     const [quarterFilter, setQuarterFilter] = useState('All');
+    const [monthFilter, setMonthFilter] = useState('All');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -40,6 +44,7 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
     const [selectedDetail, setSelectedDetail] = useState<PurchaseRecord | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isSyncingAll, setIsSyncingAll] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
@@ -109,7 +114,21 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
             setIsModalOpen(false);
             setEditingRecord(null);
             await fetchRecords();
-        } catch (err) { alert('Save failed'); } finally { setIsActionLoading(false); }
+
+            // Auto-export to Google Sheets (Fire and forget)
+            const dateObj = payload.purchase_date ? new Date(payload.purchase_date) : new Date();
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            sendToGoogleSheet({
+                ...payload,
+                id: editingRecord ? editingRecord.id : 'NEW',
+                monthName: months[dateObj.getMonth()],
+                year: dateObj.getFullYear()
+            });
+            showToast(editingRecord ? 'Record updated successfully!' : 'New entry saved successfully!');
+        } catch (err) {
+            showToast('Failed to save record', 'error');
+        } finally { setIsActionLoading(false); }
     };
 
     const filteredRecords = useMemo(() => {
@@ -131,6 +150,12 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                     if (`Q${q}` !== quarterFilter) matchesDate = false;
                 }
 
+                // Month Filter
+                if (monthFilter !== 'All') {
+                    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    if (months[d.getMonth()] !== monthFilter) matchesDate = false;
+                }
+
                 // Custom Range
                 if (startDate && d < new Date(startDate)) matchesDate = false;
                 if (endDate && d > new Date(endDate)) matchesDate = false;
@@ -142,38 +167,107 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
     const handleExportExcel = () => {
         if (filteredRecords.length === 0) return;
 
-        const dataToExport = filteredRecords.map(r => ({
-            "Transaction ID": r.transactionId,
-            "Description": r.description,
-            "Date": r.purchaseDate || "-",
-            "Vendor": r.vendor || "-",
-            "Category": r.category || "-",
-            "Company": r.company,
-            "Department": r.department || "-",
-            "User": r.user || "-",
-            "Project": r.projectName || "-",
-            "Status": r.status,
-            "Payment Method": r.paymentMethod || "-",
-            "Payment Date": r.paymentDate || "-",
-            "Price": r.price,
-            "Qty": r.qty,
-            "Subtotal": r.subtotal,
-            "VAT": r.vat,
-            "Delivery": r.deliveryFee,
-            "Insurance": r.insurance,
-            "App Fee": r.appFee,
-            "Other": r.otherCost,
-            "Total VA": r.totalVa,
-            "Platform": r.platform || "-",
-            "Evidence": r.evidenceLink || "-",
-            "Remarks": r.remarks || ""
-        }));
+        const sortedForExcel = [...filteredRecords].sort((a, b) => {
+            const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
+            const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
+            return dateA - dateB;
+        });
+
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        const dataToExport = sortedForExcel.map(r => {
+            const dateObj = r.purchaseDate ? new Date(r.purchaseDate) : new Date();
+            return {
+                "Transaction ID": r.transactionId,
+                "Description": r.description,
+                "Date": r.purchaseDate || "-",
+                "Vendor": r.vendor || "-",
+                "Category": r.category || "-",
+                "Company": r.company,
+                "Department": r.department || "-",
+                "User": r.user || "-",
+                "Project": r.projectName || "-",
+                "Status": r.status,
+                "Payment Method": r.paymentMethod || "-",
+                "Payment Date": r.paymentDate || "-",
+                "Price": r.price,
+                "Qty": r.qty,
+                "Subtotal": r.subtotal,
+                "VAT": r.vat,
+                "Delivery": r.deliveryFee,
+                "Insurance": r.insurance,
+                "App Fee": r.appFee,
+                "Other": r.otherCost,
+                "Total VA": r.totalVa,
+                "Platform": r.platform || "-",
+                "Evidence": r.evidenceLink || "-",
+                "Remarks": r.remarks || "",
+                "Month": months[dateObj.getMonth()],
+                "Year": dateObj.getFullYear()
+            };
+        });
 
         exportToExcel(dataToExport, `GESIT-PURCHASE-${new Date().toISOString().split('T')[0]}`);
     };
 
+    const handleSyncAllToSheet = async () => {
+        if (filteredRecords.length === 0) return;
+        setIsSyncingAll(true);
+        try {
+            // Sort by date ASC for syncing so they append correctly at the end of the sheet
+            const sortedForSync = [...filteredRecords].sort((a, b) => {
+                const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
+                const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
+                return dateA - dateB;
+            });
+
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            for (const record of sortedForSync) {
+                const dateObj = record.purchaseDate ? new Date(record.purchaseDate) : new Date();
+
+                const payload = {
+                    transaction_id: record.transactionId,
+                    description: record.description,
+                    qty: record.qty,
+                    price: record.price,
+                    vat: record.vat,
+                    delivery_fee: record.deliveryFee,
+                    insurance: record.insurance,
+                    app_fee: record.appFee,
+                    other_cost: record.otherCost,
+                    subtotal: record.subtotal,
+                    total_va: record.totalVa,
+                    project_name: record.projectName,
+                    user_name: record.user,
+                    department: record.department,
+                    company: record.company,
+                    status: record.status,
+                    purchase_date: record.purchaseDate,
+                    payment_date: record.paymentDate,
+                    vendor: record.vendor,
+                    platform: record.platform,
+                    payment_method: record.paymentMethod,
+                    category: record.category,
+                    evidence_link: record.evidenceLink,
+                    input_by: record.inputBy,
+                    remarks: record.remarks,
+                    monthName: months[dateObj.getMonth()],
+                    year: dateObj.getFullYear()
+                };
+                await sendToGoogleSheet(payload);
+            }
+            showToast(`Successfully synced ${filteredRecords.length} records to Google Sheets!`, 'success');
+        } catch (error) {
+            console.error(error);
+            showToast('Batch sync encountered an error.', 'error');
+        } finally {
+            setIsSyncingAll(false);
+        }
+    };
+
     // Reset to page 1 when filters change
-    useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, projectFilter, yearFilter, quarterFilter, startDate, endDate]);
+    useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, projectFilter, yearFilter, quarterFilter, monthFilter, startDate, endDate]);
 
     const paginatedRecords = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -361,6 +455,14 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                             <FileSpreadsheet size={16} /> Export Excel
                         </button>
                         <button
+                            onClick={handleSyncAllToSheet}
+                            disabled={isSyncingAll || filteredRecords.length === 0}
+                            className="flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSyncingAll ? <RefreshCcw className="animate-spin" size={16} /> : <FileSpreadsheet size={16} />}
+                            {isSyncingAll ? 'Syncing...' : 'Sync All (Sheet)'}
+                        </button>
+                        <button
                             onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
                             className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
                         >
@@ -388,12 +490,18 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                         <option value="All">All Years</option>
                         {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[145px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
                         <option value="All">All Quarters</option>
                         <option value="Q1">Q1 (Jan-Mar)</option>
                         <option value="Q2">Q2 (Apr-Jun)</option>
                         <option value="Q3">Q3 (Jul-Sep)</option>
                         <option value="Q4">Q4 (Oct-Dec)</option>
+                    </select>
+                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[145px] cursor-pointer" value={monthFilter} onChange={e => setMonthFilter(e.target.value)}>
+                        <option value="All">All Months</option>
+                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
                     </select>
                     <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-100'}`}>
                         <Clock size={16} /> Date Range
@@ -401,18 +509,20 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 </div>
             </div>
 
-            {showDatePicker && (
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex gap-4 animate-in slide-in-from-top-2">
-                    <div className="space-y-1">
-                        <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">Start Date</label>
-                        <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            {
+                showDatePicker && (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex gap-4 animate-in slide-in-from-top-2">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">Start Date</label>
+                            <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">End Date</label>
+                            <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">End Date</label>
-                        <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <StatCard label="Disbursed Funds" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Settled" icon={CheckCircle2} color="emerald" />
@@ -714,6 +824,6 @@ export const PurchaseRecordManager: React.FC<{ currentUser: UserAccount | null }
                 title="Delete Record" message={`Purge transaction record "${deleteRecord?.transactionId}"?`}
                 isLoading={isActionLoading}
             />
-        </div>
+        </div >
     );
 };
