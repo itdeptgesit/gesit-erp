@@ -88,8 +88,13 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
     const handleUserSelect = (user: UserOption) => {
         // Try to match the user's department to one in our master list
         const matchedDept = departments.find(d => d.toLowerCase() === user.department.toLowerCase()) || user.department;
-        setFormData(prev => ({ ...prev, requester: user.name, department: matchedDept }));
+        setFormData(prev => ({ ...prev, requester: user.name, department: matchedDept || prev.department }));
         setUserSearch(user.name);
+        setShowUserDropdown(false);
+    };
+
+    const handleManualEntry = () => {
+        setFormData(prev => ({ ...prev, requester: userSearch }));
         setShowUserDropdown(false);
     };
 
@@ -175,9 +180,9 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                                     <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" />
 
                                     {/* Dropdown */}
-                                    {showUserDropdown && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 max-h-48 overflow-y-auto z-50 custom-scrollbar animate-in fade-in slide-in-from-top-2">
-                                            {filteredUsers.length > 0 ? filteredUsers.map((user, idx) => (
+                                    {showUserDropdown && (userSearch.trim().length > 0 || filteredUsers.length > 0) && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 max-h-60 overflow-y-auto z-50 custom-scrollbar animate-in fade-in slide-in-from-top-2">
+                                            {filteredUsers.map((user, idx) => (
                                                 <button
                                                     key={idx}
                                                     type="button"
@@ -192,8 +197,27 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({ isOpen, on
                                                         <p className="text-[10px] text-slate-400 font-semibold uppercase">{user.department}</p>
                                                     </div>
                                                 </button>
-                                            )) : (
-                                                <div className="p-4 text-center text-xs text-slate-400 font-medium italic">No users found.</div>
+                                            ))}
+
+                                            {/* Manual Entry Option */}
+                                            {userSearch.trim() && !filteredUsers.some(u => u.name.toLowerCase() === userSearch.toLowerCase()) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleManualEntry}
+                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-3 transition-colors border-t border-slate-100 dark:border-slate-800"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                        <User size={14} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">Use Custom: "{userSearch}"</p>
+                                                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Manual Entry</p>
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {filteredUsers.length === 0 && !userSearch.trim() && (
+                                                <div className="p-4 text-center text-xs text-slate-400 font-medium italic">Type to search or enter name...</div>
                                             )}
                                         </div>
                                     )}
