@@ -6,7 +6,7 @@ import { UserAccount } from '../types';
 import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle, MessageSquare, X, Loader2, Send, ClipboardList,
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
-    Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Settings, Check,
+    Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Check,
     ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download, Inbox, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,7 +42,6 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const emojiTriggerRef = useRef<HTMLButtonElement>(null);
     const [detailTab, setDetailTab] = useState<'chat' | 'info'>('chat');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const role = currentUser?.role?.toLowerCase() || '';
     const groups = currentUser?.groups || [];
     const isAdmin = role.includes('admin');
@@ -1036,11 +1035,6 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                         <button onClick={fetchTickets} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
                             <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
                         </button>
-                        {isAdmin && (
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm">
-                                <Settings size={18} />
-                            </button>
-                        )}
                     </div>
                 </div>
             )}
