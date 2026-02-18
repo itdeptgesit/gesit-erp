@@ -203,7 +203,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
                                         className="text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter mb-8 uppercase"
                                     >
-                                        <span className="block opacity-60 text-2xl tracking-[0.3em] font-light mb-2">OPERATIONAL</span>
+                                        <span className="block opacity-60 text-2xl tracking-[0.3em] font-light mb-2">WELCOME TO</span>
                                         <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/40 drop-shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
                                             {appName}
                                         </span>
@@ -216,7 +216,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     >
                                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.8)]"></div>
                                         <span className="text-[10px] font-black text-white uppercase tracking-[0.4em] font-display">
-                                            Enterprise Multi-Node Platform
+                                            Integrated Business Ecosystem
                                         </span>
                                     </motion.div>
                                 </div>
@@ -227,13 +227,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     transition={{ duration: 1, delay: 0.7 }}
                                     className="text-white text-base leading-relaxed font-medium max-w-lg drop-shadow-lg"
                                 >
-                                    Unified intelligence for corporate infrastructure, financial oversight, and rapid technical deployment — engineered for high-stakes environments.
+                                    Empowering your professional workflow with integrated management tools — designed for growth and operational excellence.
                                 </motion.p>
 
                                 <div className="flex gap-8">
                                     {[
-                                        { emoji: '⚡', label: 'Engine', value: 'High Performance' },
-                                        { emoji: '🛡️', label: 'Security', value: 'Classified Grade' }
+                                        { emoji: '⚡', label: 'Performance', value: 'High Speed' },
+                                        { emoji: '🛡️', label: 'Protection', value: 'Safe & Secure' }
                                     ].map((badge, i) => (
                                         <motion.div
                                             key={i}
@@ -272,7 +272,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     © 2026 THE GESIT COMPANIES
                                 </p>
                                 <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
-                                    SYSTEM {appName} v3.0.1 — SECURE BROADCASTING
+                                    {appName} v3.0.1 — CLOUD INFRASTRUCTURE
                                 </p>
                             </div>
                         </motion.div>
@@ -280,7 +280,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
 
                 {/* Right Login Side */}
-                <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-slate-50 dark:bg-slate-950 relative overflow-hidden transition-all duration-500">
                     {/* Animated Background Orbs */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
                         <motion.div
@@ -307,12 +307,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         whileTap={{ scale: 0.9 }}
                         onClick={toggleTheme}
                         aria-label="Toggle Theme"
-                        className="absolute top-8 right-8 p-3 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-3xl border border-slate-200/50 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-all duration-300 shadow-xl z-50"
+                        className="absolute top-4 right-4 sm:top-8 sm:right-8 p-3 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-3xl border border-slate-200/50 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-all duration-300 shadow-xl z-50 hover:scale-110 active:scale-95"
                     >
-                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                        {isDark ? <Sun size={18} /> : <Moon size={18} />}
                     </motion.button>
 
-                    <div className="w-full max-w-[440px] relative z-10 transition-all duration-700">
+                    <div className="w-full max-w-[440px] relative z-10 transition-all duration-700 mx-auto">
                         <AnimatePresence mode="wait">
                             {resetSent ? (
                                 <motion.div
@@ -326,14 +326,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         <CheckCircle2 size={48} className="animate-in zoom-in duration-500 delay-200" />
                                     </div>
                                     <div className="space-y-3">
-                                        <h4 className="text-3xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">Transmission Sent</h4>
-                                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed px-4">The recovery protocol has been initiated. Please check your secure terminal.</p>
+                                        <h4 className="text-3xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">Email Sent</h4>
+                                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed px-4">A recovery link has been sent to your inbox. Please check your email.</p>
                                     </div>
                                     <button
                                         onClick={() => { setResetSent(false); setIsResetMode(false); }}
                                         className="w-full h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl active:scale-95"
                                     >
-                                        RETURN TO ACCESS CONTROL
+                                        RETURN TO LOGIN PAGE
                                     </button>
                                 </motion.div>
                             ) : (
@@ -343,17 +343,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.4, ease: "easeOut" }}
-                                    className="bg-white/40 dark:bg-white/[0.02] backdrop-blur-3xl p-10 md:p-12 rounded-[3rem] border border-white/20 dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]"
+                                    className="bg-white/40 dark:bg-white/[0.02] backdrop-blur-3xl p-6 sm:p-10 md:p-12 rounded-[2.5rem] sm:rounded-[3rem] border border-white/20 dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] w-full"
                                 >
+                                    {/* Mobile/Tablet Logo (Hidden on Large screens where it's already in the hero) */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="lg:hidden mb-10 flex flex-col items-center text-center gap-4"
+                                    >
+                                        <div className="w-20 h-20 p-2 bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-xl flex items-center justify-center">
+                                            <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{appName}</h2>
+                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Workspace Member</p>
+                                        </div>
+                                    </motion.div>
                                     <div className="mb-12">
                                         <h3 className="text-3xl font-black tracking-tighter font-display mb-3 flex items-center gap-3">
                                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 dark:from-white dark:via-white dark:to-slate-400">
-                                                {isResetMode ? 'Recover Access' : 'Sign In'}
+                                                {isResetMode ? 'Forgot Password' : 'Sign In'}
                                             </span>
                                             {!isResetMode && <div className="w-2 h-2 rounded-full bg-primary animate-ping"></div>}
                                         </h3>
                                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                            {isResetMode ? 'Enter your credentials to reset security node' : 'Authorized personnel only. Access logging active.'}
+                                            {isResetMode ? 'Enter your details to reset your password' : 'Welcome back! Please enter your details to login.'}
                                         </p>
                                     </div>
 
@@ -370,14 +384,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                                     <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-8">
                                         <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] font-display ml-1">Terminal Identity</label>
+                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] font-display ml-1">Account Login</label>
                                             <div className="relative group">
                                                 <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110 z-10 pointer-events-none">
                                                     <Mail size={20} strokeWidth={2.5} />
                                                 </div>
                                                 <input
                                                     className="w-full h-14 pl-14 pr-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] focus:bg-white dark:focus:bg-white/10 focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all duration-500 outline-none text-slate-950 dark:text-white font-bold placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm focus:shadow-xl focus:shadow-primary/5 text-sm"
-                                                    placeholder="Username or email"
+                                                    placeholder="Enter email or username"
                                                     type="text"
                                                     value={identifier}
                                                     onChange={(e) => setIdentifier(e.target.value)}
@@ -389,7 +403,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         {!isResetMode && (
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center ml-1">
-                                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] font-display">Security Key</label>
+                                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] font-display">Member Password</label>
                                                 </div>
                                                 <div className="relative group">
                                                     <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all duration-500 group-focus-within:scale-110 z-10 pointer-events-none">
@@ -420,7 +434,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 whileTap={{ scale: 0.98 }}
                                                 type="submit"
                                                 disabled={isLoading}
-                                                className="group relative w-full h-16 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl disabled:opacity-50 overflow-hidden"
+                                                className="group relative w-full h-14 sm:h-16 text-white rounded-2xl font-black text-[11px] sm:text-xs uppercase tracking-[0.3em] transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl disabled:opacity-50 overflow-hidden"
                                                 style={{
                                                     backgroundColor: primaryColor,
                                                     boxShadow: `0 20px 40px -10px ${primaryColor}66`
@@ -429,10 +443,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                                                 <span className="relative z-10 flex items-center gap-3">
                                                     {isLoading ? (
-                                                        <Loader2 className="animate-spin" size={20} />
+                                                        <Loader2 className="animate-spin" size={18} />
                                                     ) : (
                                                         <>
-                                                            {isResetMode ? 'SEND RECOVERY LINK' : 'AUTHORIZE ACCESS'}
+                                                            {isResetMode ? 'SEND RESET LINK' : 'LOG IN TO DASHBOARD'}
                                                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                                         </>
                                                     )}
@@ -446,7 +460,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                     className="text-[10px] font-black uppercase tracking-[0.2em] font-display transition-all duration-300 hover:scale-105 active:scale-95"
                                                     style={{ color: primaryColor }}
                                                 >
-                                                    {isResetMode ? 'BACK TO SECURE LOGIN' : 'RECOVER SECURITY KEY'}
+                                                    {isResetMode ? 'BACK TO LOGIN PAGE' : 'FORGOT PASSWORD?'}
                                                 </button>
 
                                                 <div className="flex items-center gap-4 my-2">
@@ -461,7 +475,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                     type="button"
                                                     onClick={handleGoogleLogin}
                                                     disabled={isLoading}
-                                                    className="w-full h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:shadow-xl hover:border-primary/30 group disabled:opacity-50"
+                                                    className="w-full h-12 sm:h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:shadow-xl hover:border-primary/30 group disabled:opacity-50"
                                                 >
                                                     <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 24 24">
                                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -469,29 +483,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                         <path d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" fill="#FBBC05" />
                                                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 6.18l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                                     </svg>
-                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{t('googleSignIn')}</span>
+                                                    <span className="text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{t('googleSignIn')}</span>
                                                 </motion.button>
                                             </div>
 
-                                            <div className="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 text-center space-y-6">
+                                            <div className="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 text-center">
                                                 <div className="flex flex-col gap-3">
-                                                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em] font-display">Technical Barrier?</span>
+                                                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em] font-display">Need assistance?</span>
                                                     <button
                                                         type="button"
+                                                        onClick={() => window.location.href = 'mailto:it@gesit.co.id?subject=Support Assistance Needed - ' + appName}
                                                         className="text-[10px] font-black hover:text-primary uppercase tracking-[0.2em] font-display transition-all duration-300"
                                                     >
-                                                        Contact Node Administrator
-                                                    </button>
-                                                </div>
-
-                                                <div className="pt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => window.location.href = '/helpdesk-public'}
-                                                        className="w-full py-5 bg-slate-50 dark:bg-white/[0.03] hover:bg-white dark:hover:bg-white/[0.08] text-slate-600 dark:text-slate-400 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-300 flex items-center justify-center gap-3 font-display border border-slate-200/50 dark:border-white/5 shadow-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-                                                    >
-                                                        <LifeBuoy size={18} className="text-primary" />
-                                                        Portal Helpdesk
+                                                        Contact Support Team
                                                     </button>
                                                 </div>
                                             </div>

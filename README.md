@@ -32,12 +32,14 @@ Complete lifecycle management for IT and organizational assets.
 - **QR Code Integration:** Generate QRs for instant mobile access to asset details.
 - **Public View:** External-facing pages for verifying asset ownership and status.
 
-### 🎫 Helpdesk System
-A centralized ticketing system for IT support.
-- **Ticket Management:** Create, assign, and track support requests.
-- **SLA Tracking:** Monitor priority levels (*Critical, High, Medium, Low*).
-- **Interactive Communication:** Comment threads between requesters and IT staff.
-- **Resolution Knowledge Base:** Archive solutions for future reference.
+### 🎫 Advanced Helpdesk System
+A centralized ticketing and communication hub for enterprise support.
+- **Internal Notes:** Private communication channel for IT Staff to discuss technical details without visibility to the client.
+- **Real-time Progress:** Live file upload tracking with circular progress indicators for attachments.
+- **Ticket Archive:** Full history pagination for users to browse and manage their historical support records.
+- **Feedback Loop:** Built-in rating and feedback system for clients to evaluate IT support quality.
+- **Operational Metrics:** Automatic tracking of resolution timestamps (`resolved_at`) and performance analytical data.
+- **Responsive Chat:** Modern, real-time message interface with emoji support and media previews.
 
 ### 💰 Procurement & Finance
 Streamlined purchasing workflows.
@@ -53,10 +55,10 @@ Visual tools for network administrators.
 - **Wiring Schedules:** Document structured cabling and patch panel connections.
 
 ### 🛡️ Administration & Security
+- **Modern Login Experience:** Completely overhauled, responsive login interface with universal language for better user experience.
 - **RBAC (Role-Based Access Control):** Granular permissions for Admins, Staff, and Users.
 - **Audit Logging:** Comprehensive trails of all user actions for compliance.
-- **System Maintenance:** Tools for data sanitation and system resets (*Nucleus Wipe*).
-- **Dynamic Theming:** Customizable branding (Logo, Colors, Fonts) via System Settings.
+- **Dynamic Theming:** Dark/Light mode support and customizable branding (Logo, Colors, Fonts).
 
 ---
 
@@ -68,18 +70,18 @@ Visual tools for network administrators.
 - **Routing:** [React Router v7](https://reactrouter.com/)
 - **State Management:** React Hooks & Context API
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components:** [Lucide React](https://lucide.dev/) (Icons), [Framer Motion](https://www.framer.com/motion/) (Animations)
+- **Animations:** [Framer Motion](https://www.framer.com/motion/)
+- **Icons:** [Lucide React](https://lucide.dev/)
 
-### Backend & Data
-- **Platform:** [Supabase](https://supabase.com/) (BaaS)
-- **Database:** PostgreSQL
-- **Authentication:** Supabase Auth (Email/Password)
-- **Storage:** Supabase Storage (for Assets/Documents)
-- **Security:** Row Level Security (RLS) policies acting as the authorization layer.
+### Backend & Media
+- **Database/Auth:** [Supabase](https://supabase.com/) (PostgreSQL + Auth)
+- **Media Uploads:** [Cloudinary](https://cloudinary.com/) (Used for Helpdesk attachments with progress tracking)
+- **Deployment:** [Vercel](https://vercel.com/)
+- **Language Support:** Multi-language translation engine integrated.
 
 ---
 
-## � Installation & Setup
+## 🏗️ Installation & Setup
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -99,12 +101,13 @@ Visual tools for network administrators.
     ```
 
 3.  **Environment Configuration**
-    Create a `.env` file in the root directory. You can copy the structure from `.env.example` if available.
+    Create a `.env` file in the root directory:
     ```env
     VITE_SUPABASE_URL=your_supabase_project_url
     VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+    VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
     ```
-    *Note: The application also supports runtime environment injection via `window.process.env` in `index.html` for specific deployment scenarios.*
 
 4.  **Run Development Server**
     ```bash
@@ -120,35 +123,11 @@ Visual tools for network administrators.
 The application allows dynamic configuration without redeployment via the **System Settings** module (Admin only).
 - **Branding:** Change App Name, Logo, Favicon.
 - **Appearance:** Set Primary Color, Font Family (Inter, Roboto, etc.).
-- **Security:** Configure Session Timeout, Max Login Attempts.
 
 ### Database Migrations
-SQL migrations are stored in the root directory (e.g., `migration.sql`, `nucleus_wipe_migration.sql`).
-To apply migrations:
+SQL migrations are stored in the root directory. To apply migrations (including the new `is_internal` field):
 1.  Go to Supabase Dashboard -> SQL Editor.
-2.  Copy/Paste the content of the SQL file.
-3.  Run the query.
-
----
-
-## 🚀 Deployment
-
-The project is optimized for deployment on **Vercel**.
-
-1.  Push your code to a Git repository (GitHub/GitLab).
-2.  Import the project into Vercel.
-3.  Add the Environment Variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the Vercel Project Settings.
-4.  Deploy.
-
-*A `vercel.json` file is included to handle client-side routing rewrites.*
-
----
-
-## 🤝 Contributing
-
-1.  **Branching:** Use descriptive branch names (e.g., `feature/add-dark-mode`, `fix/login-bug`).
-2.  **Commits:** Follow conventional commit messages.
-3.  **Pull Requests:** Submit PRs for review before merging to `main`.
+2.  Apply the relevant `.sql` files to maintain schema parity.
 
 ---
 

@@ -7,7 +7,7 @@ import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle, MessageSquare, X, Loader2, Send, ClipboardList,
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
     Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Settings, Check,
-    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download
+    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download, Inbox, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StatCard } from './StatCard';
@@ -33,9 +33,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const [isSolveConfirmOpen, setIsSolveConfirmOpen] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isInternal, setIsInternal] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emojiTriggerRef = useRef<HTMLButtonElement>(null);
     const [detailTab, setDetailTab] = useState<'chat' | 'info'>('chat');
@@ -47,7 +49,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const isITStaff = role.includes('admin') || role.includes('staff') || groups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
 
     // Client-side UI states from HelpdeskPublic
-    const [viewMode, setViewMode] = useState<'list' | 'form' | 'success'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'form' | 'success' | 'archive'>('list');
+    const [archivePage, setArchivePage] = useState(1);
+    const ARCHIVE_PER_PAGE = 5;
+    const [recentFilter, setRecentFilter] = useState<'Active' | 'Resolved'>('Active');
     const [searchId, setSearchId] = useState('');
     const [isSuccessMode, setIsSuccessMode] = useState(false);
     const [lastCreatedTicketId, setLastCreatedTicketId] = useState('');
@@ -138,6 +143,51 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         );
     };
 
+    const RichContentRenderer = ({ text, isSelf = false }: { text: string; isSelf?: boolean }) => {
+        if (!text) return null;
+        const lines = text.split('\n');
+        return (
+            <div className="space-y-1">
+                {lines.map((line, idx) => {
+                    const imageMatch = line.match(/!\[image\]\((.*?)\)/);
+                    const fileMatch = line.match(/\[Attached (File|PDF)\]\((.*?)\)/);
+
+                    const isUrlPdf = (match: string) =>
+                        match.toLowerCase().includes('.pdf') ||
+                        match.toLowerCase().includes('raw/upload') ||
+                        match.toLowerCase().includes('resource_type:raw');
+
+                    if (imageMatch && !isUrlPdf(imageMatch[1])) {
+                        const imageUrl = imageMatch[1];
+                        return (
+                            <div key={idx} onClick={() => setPreviewImage(imageUrl)} className="block cursor-zoom-in group/img relative overflow-hidden rounded-xl border border-black/5 dark:border-white/5 mt-2 transition-transform active:scale-[0.98] w-full max-w-lg">
+                                <img src={imageUrl} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-slate-800 rounded-lg shadow-sm" loading="lazy" />
+                            </div>
+                        );
+                    }
+                    if (fileMatch || (imageMatch && isUrlPdf(imageMatch[1]))) {
+                        const fileUrl = fileMatch ? fileMatch[2] : imageMatch![1];
+                        const isPdf = (fileMatch && fileMatch[1] === 'PDF') || isUrlPdf(fileUrl);
+                        return (
+                            <div key={idx} onClick={() => isPdf ? setPreviewImage(fileUrl) : window.open(fileUrl, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                                <div className={`p-2 rounded-lg ${isSelf ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'}`}>
+                                    <FileText size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0 text-left">
+                                    <p className={`text-xs font-bold truncate ${isSelf ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{isPdf ? 'Attached PDF' : 'Attached Document'}</p>
+                                    <p className={`text-[10px] truncate ${isSelf ? 'text-white/70' : 'text-slate-500'}`}>Click to {isPdf ? 'preview' : 'view'}</p>
+                                </div>
+                                <ExternalLink size={14} className={isSelf ? 'text-white/60' : 'text-slate-400'} />
+                            </div>
+                        );
+                    }
+                    if (line.trim() === '' && lines.length > 1) return <div key={idx} className="h-1" />;
+                    return <div key={idx} className="leading-relaxed"><EmojiRenderer text={line} /></div>;
+                })}
+            </div>
+        );
+    };
+
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -182,7 +232,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         assignedToEmail: t.assigned_to_email,
         resolution: t.resolution,
         rating: t.rating,
-        feedback: t.feedback
+        feedback: t.feedback,
+        attachments: t.attachments || [],
+        resolvedAt: t.resolved_at
     });
 
     const fetchTickets = async () => {
@@ -202,7 +254,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 }
             }
 
-            const { data, error } = await query.order('created_at', { ascending: false });
+            const { data, error } = await query.order('updated_at', { ascending: false });
             if (error) throw error;
             if (data) {
                 setTickets(data.map(mapTicket));
@@ -223,7 +275,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 .eq('ticket_id', ticketId)
                 .order('created_at', { ascending: true });
             if (error) throw error;
-            setMessages(data || []);
+
+            // Filter out internal messages for non-IT staff
+            const filteredMessages = isITStaff
+                ? data
+                : (data || []).filter((m: any) => !m.is_internal);
+
+            setMessages(filteredMessages || []);
         } catch (err: any) {
             console.error('Error fetching messages:', err);
         }
@@ -381,6 +439,43 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     }, [selectedTicket?.id]);
 
+    const performUpload = (file: File, resourceType: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
+            const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+
+            const xhr = new XMLHttpRequest();
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+
+            xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    setUploadProgress(percentComplete);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200 || xhr.status === 201) {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response.secure_url);
+                } else {
+                    try {
+                        const error = JSON.parse(xhr.responseText);
+                        reject(new Error(error.error?.message || 'Upload failed'));
+                    } catch (e) {
+                        reject(new Error('Upload failed'));
+                    }
+                }
+            };
+
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(formData);
+        });
+    };
     const uploadFileToChat = async (file: File) => {
         if (!selectedTicket) return;
 
@@ -398,18 +493,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         const resourceType = isImage ? 'image' : 'raw';
 
         try {
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
-                method: 'POST',
-                body: uploadData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || 'Upload failed');
-            }
-
-            const data = await response.json();
-            const publicUrl = data.secure_url;
+            setUploadProgress(0);
+            const publicUrl = await performUpload(file, resourceType);
 
             const senderRole = isITStaff ? 'IT' : 'User';
             const { error: msgError } = await supabase.from('helpdesk_ticket_messages').insert([{
@@ -575,7 +660,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         try {
             const senderRole = isITStaff ? 'IT' : 'User';
             const updatePayload: any = {};
-            if (isITStaff) {
+            if (isITStaff && !isInternal) {
                 updatePayload.resolution = resolutionNote;
                 if (!selectedTicket.assignedTo) {
                     updatePayload.assigned_to = currentUser?.fullName || 'IT Staff';
@@ -594,7 +679,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 ticket_id: selectedTicket.id,
                 sender_name: currentUser?.fullName || 'User',
                 sender_role: senderRole,
-                message: resolutionNote
+                message: resolutionNote,
+                is_internal: isInternal && isITStaff
             }]);
             if (msgError) throw msgError;
 
@@ -644,21 +730,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         uploadData.append('upload_preset', uploadPreset);
 
         const isImage = file.type.startsWith('image/');
-        const resourceType = isImage ? 'image' : 'auto';
+        const isPdf = file.type === 'application/pdf';
+        const resourceType = isImage ? 'image' : (isPdf ? 'raw' : 'auto');
 
         try {
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
-                method: 'POST',
-                body: uploadData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || 'Upload failed');
-            }
-
-            const data = await response.json();
-            const publicUrl = data.secure_url;
+            setUploadProgress(0);
+            const publicUrl = await performUpload(file, resourceType);
 
             setNewTicketData(prev => ({
                 ...prev,
@@ -684,7 +761,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             const ticketId = `TKT-${Math.floor(1000 + Math.random() * 9000)}`;
             let finalDescription = newTicketData.description;
             if (newTicketData.attachments.length > 0) {
-                finalDescription += "\n\n**Attachments:**\n" + newTicketData.attachments.map(url => `![image](${url})`).join('\n');
+                finalDescription += "\n\n**Attachments:**\n" + newTicketData.attachments.map(url => {
+                    const isPdf = url.toLowerCase().includes('.pdf');
+                    return isPdf ? `[Attached PDF](${url})` : `![image](${url})`;
+                }).join('\n');
             }
 
             const { error: dbError } = await supabase.from('helpdesk_tickets').insert([{
@@ -696,6 +776,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 description: finalDescription,
                 priority: newTicketData.priority,
                 status: 'Open',
+                attachments: newTicketData.attachments,
                 created_at: new Date().toISOString()
             }]);
 
@@ -808,12 +889,20 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             console.log(`[HelpdeskUpdate] EXECUTION START - Ticket:${ticketId} Status:${nextStatus}`);
             console.log(`[HelpdeskUpdate] Auth Session: ${session ? 'Active (' + userEmail + ')' : 'None'}`);
 
-            const payload = {
+            const payload: any = {
                 status: nextStatus,
                 resolution: finalResolution,
                 assigned_to: currentUser?.fullName || 'IT Support',
-                assigned_to_email: userEmail
+                assigned_to_email: userEmail,
+                updated_at: new Date().toISOString()
             };
+
+            if (nextStatus === 'Resolved') {
+                payload.resolved_at = new Date().toISOString();
+            } else if (['Open', 'In Progress', 'Pending'].includes(nextStatus)) {
+                // If reopened, clear the resolved_at but it's optional
+                // payload.resolved_at = null; 
+            }
 
             console.log(`[HelpdeskUpdate] Payload:`, payload);
 
@@ -977,49 +1066,39 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
                     {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
                     <div className={`w-full lg:w-96 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-3 bg-white dark:bg-slate-900 shrink-0">
+                        <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 flex flex-col gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shrink-0 z-10 sticky top-0">
                             <div className="relative group">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                                 <input
                                     type="text"
-                                    placeholder="Search repository..."
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all dark:text-white placeholder:text-slate-400"
+                                    placeholder="Search tickets..."
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <div className="flex-1 flex bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
-                                    {['All', 'Open', 'In Progress', 'Resolved'].map(st => {
-                                        const isActive = statusFilter === st;
-                                        let label = st;
-                                        if (st === 'In Progress') label = 'Active';
-                                        if (st === 'Resolved') label = 'Done';
+                                <div className="flex-1 flex bg-slate-50 dark:bg-slate-800 p-0.5 rounded-lg relative overflow-hidden">
+                                    {['All', 'Open', 'Active', 'Done'].map(st => {
+                                        const isActive = statusFilter === (st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st));
+                                        const actualStatus = st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st);
 
                                         return (
                                             <button
                                                 key={st}
-                                                onClick={() => setStatusFilter(st)}
-                                                className={`flex-1 py-1 rounded-md text-[10px] font-bold uppercase transition-all duration-300 relative z-10 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                onClick={() => setStatusFilter(actualStatus)}
+                                                className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 relative z-10 ${isActive ? 'text-indigo-600 dark:text-indigo-400 shadow-sm bg-white dark:bg-slate-700' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                             >
-                                                {label}
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="status-tab-helpdesk"
-                                                        className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-md -z-10"
-                                                        initial={false}
-                                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                                    />
-                                                )}
+                                                {st}
                                             </button>
                                         );
                                     })}
                                 </div>
                                 <div className="flex gap-1">
-                                    <button onClick={handleExportExcel} className="p-2 text-emerald-500 hover:text-emerald-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Export Excel"><FileSpreadsheet size={14} strokeWidth={2.5} /></button>
-                                    <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Reset"><RotateCcw size={14} strokeWidth={2.5} /></button>
-                                    <button onClick={fetchTickets} className="p-2 text-slate-400 hover:text-indigo-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Refresh"><RefreshCcw size={14} strokeWidth={2.5} className={isLoading ? 'animate-spin' : ''} /></button>
+                                    <button onClick={handleExportExcel} className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all" title="Export Excel"><FileSpreadsheet size={16} strokeWidth={2} /></button>
+                                    <button onClick={resetFilters} className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/30 rounded-lg transition-all" title="Reset"><RotateCcw size={16} strokeWidth={2} /></button>
+                                    <button onClick={fetchTickets} className="p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 rounded-lg transition-all" title="Refresh"><RefreshCcw size={16} strokeWidth={2} className={isLoading ? 'animate-spin' : ''} /></button>
                                 </div>
                             </div>
                         </div>
@@ -1030,50 +1109,67 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                             ) : paginatedTickets.length === 0 ? (
                                 <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
                             ) : (
-                                <div className="divide-y divide-slate-100/30 dark:divide-slate-800/30">
+                                <div className="space-y-1 p-2">
                                     {paginatedTickets.map(ticket => {
                                         const isSelected = selectedTicket?.id === ticket.id;
                                         const statusColors: any = {
-                                            'Open': 'bg-rose-500',
-                                            'Resolved': 'bg-emerald-500',
-                                            'In Progress': 'bg-indigo-500',
-                                            'Pending': 'bg-amber-500'
+                                            'Open': 'bg-rose-500 shadow-rose-500/20',
+                                            'Resolved': 'bg-emerald-500 shadow-emerald-500/20',
+                                            'In Progress': 'bg-blue-500 shadow-blue-500/20',
+                                            'Pending': 'bg-amber-500 shadow-amber-500/20'
                                         };
                                         const dotColor = statusColors[ticket.status] || 'bg-slate-400';
+
+                                        const priorityColors: any = {
+                                            'Critical': 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
+                                            'High': 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+                                            'Medium': 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+                                            'Low': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                        };
 
                                         return (
                                             <div
                                                 key={ticket.id}
                                                 onClick={() => setSelectedTicket(ticket)}
                                                 className={`
-                                                p-5 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group relative
-                                                ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : ''}
+                                                p-3 rounded-xl flex items-center justify-between transition-all cursor-pointer group relative border
+                                                ${isSelected
+                                                        ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800/50 shadow-sm'
+                                                        : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-100 dark:hover:border-slate-800'}
                                             `}
                                             >
-                                                {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />}
-                                                <div className="flex items-center gap-4 min-w-0 pr-2">
-                                                    <div className="relative shrink-0">
-                                                        <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ${ticket.status === 'Open' ? 'animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]' : ''}`} />
-                                                        {ticket.status === 'Open' && <div className="absolute inset-0 rounded-full bg-rose-500 animate-ping opacity-20 scale-150" />}
-                                                    </div>
+                                                <div className="flex items-center gap-3 min-w-0 pr-2">
+                                                    <div className={`w-2 h-2 rounded-full ${dotColor} shadow-lg shrink-0`} />
                                                     <div className="min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight shrink-0">{ticket.ticketId}</span>
-                                                            <h4 className={`text-xs font-black truncate transition-colors ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`}>
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                <span className={`text-[9px] font-bold font-mono tracking-tight ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>{ticket.ticketId}</span>
+                                                                <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tight ${priorityColors[ticket.priority] || priorityColors.Medium}`}>
+                                                                    {ticket.priority}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className={`text-xs font-bold truncate transition-colors ${isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
                                                                 {ticket.subject}
                                                             </h4>
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
-                                                            <span className="truncate max-w-[100px]">{ticket.requesterName}</span>
-                                                            <span className="opacity-30">â€¢</span>
-                                                            <span className="truncate">{ticket.department}</span>
+                                                        <div className="flex items-center gap-1.5 text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide leading-none">
+                                                            <span className="truncate max-w-[80px]">{ticket.requesterName.split(' ')[0]}</span>
+                                                            <span className="opacity-30">•</span>
+                                                            <span className="truncate">{ticket.status}</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-1 shrink-0">
-                                                    <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600">
-                                                        {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                    <span className={`text-[9px] font-bold ${isSelected ? 'text-indigo-400' : 'text-slate-300 dark:text-slate-600'}`}>
+                                                        {new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                                     </span>
+                                                    {ticket.assignedTo && (
+                                                        <div className="flex items-center -space-x-1" title={`Assigned to ${ticket.assignedTo}`}>
+                                                            <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 border border-white dark:border-slate-800 flex items-center justify-center text-[8px] font-bold text-indigo-600 dark:text-indigo-300">
+                                                                {ticket.assignedTo.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -1121,24 +1217,22 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                             {selectedTicket ? (
                                 <>
                                     {/* Chat Header - Only show full version on Desktop */}
-                                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hidden lg:flex items-center justify-between shrink-0">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
-                                                <MessageSquare size={20} />
+                                    {/* Chat Header - Modern Minimalist */}
+                                    <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hidden lg:flex items-center justify-between shrink-0 z-10 sticky top-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 flex items-center justify-center shadow-sm">
+                                                <MessageSquare size={18} />
                                             </div>
                                             <div>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{selectedTicket.subject}</h3>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-semibold text-indigo-600 font-mono">#{selectedTicket.ticketId}</span>
-                                                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                                    <div className="flex items-center text-xs text-slate-500">
-                                                        {getStatusIcon(selectedTicket.status)}
-                                                        <span className="ml-1">{selectedTicket.status}</span>
-                                                    </div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{selectedTicket.subject}</h3>
+                                                <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
+                                                    <span className="font-mono text-indigo-500">#{selectedTicket.ticketId}</span>
+                                                    <span className="w-0.5 h-0.5 bg-slate-300 rounded-full"></span>
+                                                    <span>{selectedTicket.status}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
+                                        <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
                                             <X size={18} />
                                         </button>
                                     </div>
@@ -1146,14 +1240,15 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                     {/* Chat Messages */}
                                     <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20 p-6 space-y-6">
                                         <div className="space-y-6 max-w-3xl mx-auto">
-                                            <div className="flex flex-col gap-2 items-start max-w-[95%]">
-                                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm relative group/report">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                                        <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Initial System Report</p>
+                                            <div className="flex flex-col gap-2 items-center w-full my-4">
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800/50 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-sm relative group/report max-w-[90%] text-center">
+                                                    <div className="flex items-center justify-center gap-2 mb-2 opacity-70">
+                                                        <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest">Initial System Report</p>
+                                                        <div className="w-1 h-1 rounded-full bg-indigo-500" />
                                                     </div>
-                                                    <div className="font-medium whitespace-pre-wrap">
-                                                        <EmojiRenderer text={selectedTicket.description} />
+                                                    <div className="font-medium whitespace-pre-wrap text-xs text-left">
+                                                        <RichContentRenderer text={selectedTicket.description} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1161,15 +1256,24 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                             <AnimatePresence mode="popLayout">
                                                 {messages.map((msg, idx) => {
                                                     const isSelf = msg.sender_role === 'IT';
+                                                    const isInternalMsg = msg.is_internal;
+
+                                                    // High security: do not render if internal and user is not staff
+                                                    if (isInternalMsg && !isITStaff) return null;
+
                                                     return (
-                                                        <div key={idx} className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-4`}>
-                                                            <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white'}`}>
+                                                        <div key={idx} className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-2`}>
+                                                            <div className={`p-3.5 px-5 max-w-[85%] text-sm leading-relaxed shadow-sm relative group ${isInternalMsg ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 rounded-[20px]' : (!isSelf ? 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-[20px] rounded-bl-sm border border-slate-100 dark:border-slate-700' : 'bg-indigo-600 text-white rounded-[20px] rounded-br-sm shadow-indigo-500/20')}`}>
                                                                 <div className={`flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide ${isSelf ? 'justify-end' : ''}`}>
+                                                                    {isInternalMsg && (
+                                                                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-800/50 px-1.5 py-0.5 rounded mr-1">
+                                                                            <Shield size={10} /> Internal
+                                                                        </span>
+                                                                    )}
                                                                     <span>{msg.sender_name}</span>
                                                                     <span>•</span>
                                                                     <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                </div>
-                                                                {(() => {
+                                                                </div>                                       {(() => {
                                                                     const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
                                                                     const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
 
@@ -1252,18 +1356,29 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                         onClick={() => fileInputRef.current?.click()}
                                                         disabled={isUploading}
                                                         className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
-                                                        title="Upload Image"
+                                                        title="Attach File"
                                                     >
-                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <ImageIcon size={20} />}
+                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Paperclip size={20} />}
                                                     </button>
-                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                                                    {isITStaff && (
+                                                        <button
+                                                            onClick={() => setIsInternal(!isInternal)}
+                                                            className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all shrink-0 ${isInternal ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}`}
+                                                            title={isInternal ? "Switch to Public Reply" : "Switch to Internal Note"}
+                                                        >
+                                                            <Shield size={18} />
+                                                        </button>
+                                                    )}
+
+                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
 
                                                     {/* Input Area */}
-                                                    <div className="flex-1 min-h-[40px] flex items-center pt-1">
+                                                    <div className="flex-1 min-h-[44px] flex items-center">
                                                         <textarea
                                                             rows={1}
-                                                            className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-2"
-                                                            placeholder={`Message to ${selectedTicket.requesterName.split(' ')[0]}...`}
+                                                            className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-3 px-2"
+                                                            placeholder={isInternal ? "Type a private internal note..." : `Message to ${selectedTicket.requesterName.split(' ')[0]}...`}
                                                             value={resolutionNote}
                                                             onChange={e => {
                                                                 setResolutionNote(e.target.value);
@@ -1327,19 +1442,26 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                         <button
                                                             onClick={handleSendReply}
                                                             disabled={isActionLoading || !resolutionNote.trim()}
-                                                            className="h-10 px-4 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm"
+                                                            className={`h-10 px-4 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm ${isInternal ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
                                                         >
-                                                            <span>Send</span>
-                                                            {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                            <span>{isInternal ? 'Post Note' : 'Send'}</span>
+                                                            {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : (isInternal ? <Shield size={14} /> : <Send size={14} />)}
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="max-w-xl mx-auto py-2">
-                                                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-xl flex items-center justify-center gap-3 text-emerald-700 dark:text-emerald-400">
-                                                    <CheckCircle2 size={16} className="text-emerald-500" />
-                                                    <span className="text-xs font-bold uppercase tracking-wide">Incident Resolved</span>
+                                                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-xl flex flex-col items-center justify-center gap-1 text-emerald-700 dark:text-emerald-400">
+                                                    <div className="flex items-center gap-2">
+                                                        <CheckCircle2 size={16} className="text-emerald-500" />
+                                                        <span className="text-xs font-black uppercase tracking-widest">Incident Resolved</span>
+                                                    </div>
+                                                    {selectedTicket.resolvedAt && (
+                                                        <p className="text-[10px] font-bold opacity-60">
+                                                            {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric' })} at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -1358,33 +1480,91 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                         {/* RIGHT COLUMN: Ticket Info & Actions - ONLY FOR IT STAFF */}
                         {selectedTicket && (
                             <div className={`w-full lg:w-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
-                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 overflow-hidden">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 text-center">Ticket Details</h4>
-                                    <div className="flex flex-col items-center text-center">
-                                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3 border border-slate-200 dark:border-slate-700">
-                                            <User size={28} />
-                                        </div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{selectedTicket.requesterName}</p>
-                                        <p className="text-xs text-slate-500">{selectedTicket.requesterEmail}</p>
+                                <div className="p-6 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden text-center">
+                                    <div className="w-20 h-20 mx-auto rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 mb-4 shadow-inner">
+                                        <User size={32} />
                                     </div>
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">{selectedTicket.requesterName}</h4>
+                                    <p className="text-xs font-medium text-slate-400">{selectedTicket.requesterEmail}</p>
+                                    {selectedTicket.requesterPhone && <p className="text-xs text-slate-400 mt-1">{selectedTicket.requesterPhone}</p>}
                                 </div>
 
                                 <div className="p-6 flex-1 overflow-y-auto space-y-8 custom-scrollbar bg-white dark:bg-slate-900">
                                     {isITStaff && (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department</p>
-                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                                    <Building2 size={14} className="text-slate-400" />
+                                        <div className="space-y-6">
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Department</p>
+                                                <div className="px-1 text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                                    <Building2 size={16} className="text-slate-400" />
                                                     {selectedTicket.department}
                                                 </div>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Created</p>
-                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                                    {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Created On</p>
+                                                <div className="px-1 text-sm font-bold text-slate-700 dark:text-slate-200">
+                                                    {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
                                                 </div>
                                             </div>
+
+                                            {selectedTicket.resolvedAt && (
+                                                <>
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest pl-1">Resolved On</p>
+                                                        <div className="px-1 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                                                            {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric' })}
+                                                            <span className="ml-2 opacity-60 font-medium text-xs">at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Calculation of Duration */}
+                                                    {(() => {
+                                                        const start = new Date(selectedTicket.createdAt).getTime();
+                                                        const end = new Date(selectedTicket.resolvedAt).getTime();
+                                                        const diff = end - start;
+                                                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                        const days = Math.floor(hours / 24);
+
+                                                        let durationText = "";
+                                                        if (days > 0) durationText = `${days}d ${hours % 24}h`;
+                                                        else if (hours > 0) durationText = `${hours}h ${minutes}m`;
+                                                        else durationText = `${minutes}m`;
+
+                                                        return (
+                                                            <div className="flex flex-col gap-1 bg-emerald-50/50 dark:bg-emerald-900/10 p-2 rounded-lg border border-emerald-100/50 dark:border-emerald-800/50">
+                                                                <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest pl-1">Time to Solve</p>
+                                                                <div className="px-1 text-xs font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                                                                    <Clock size={12} />
+                                                                    {durationText}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </>
+                                            )}
+
+                                            {(selectedTicket.rating || selectedTicket.feedback) && (
+                                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest pl-1 mb-2">User Experience</p>
+                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                                                        {selectedTicket.rating && (
+                                                            <div className="flex gap-1 mb-2">
+                                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                                    <Star
+                                                                        key={star}
+                                                                        size={12}
+                                                                        className={`${selectedTicket.rating! >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {selectedTicket.feedback && (
+                                                            <p className="text-[11px] text-slate-600 dark:text-slate-300 italic leading-relaxed">
+                                                                "{selectedTicket.feedback}"
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -1474,18 +1654,26 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                                                             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Description</div>
                                                             <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                                                                <EmojiRenderer text={selectedTicket.description} />
+                                                                <RichContentRenderer text={selectedTicket.description} />
                                                             </div>
                                                         </div>
 
                                                         {/* Chat Messages */}
                                                         <div className="space-y-6 pb-6">
                                                             {messages.map((msg, i) => {
+                                                                const isInternalMsg = msg.is_internal;
+                                                                if (isInternalMsg && !isITStaff) return null;
+
                                                                 const isSelf = (isITStaff && msg.sender_role === 'IT') || (!isITStaff && msg.sender_role !== 'IT');
                                                                 return (
                                                                     <div key={i} className={`flex ${!isSelf ? 'justify-start' : 'justify-end'}`}>
-                                                                        <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white'}`}>
+                                                                        <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${isInternalMsg ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 text-amber-900 dark:text-amber-200' : (!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white')}`}>
                                                                             <div className="flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide">
+                                                                                {isInternalMsg && (
+                                                                                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-800/50 px-1.5 py-0.5 rounded">
+                                                                                        <Shield size={10} /> Private Note
+                                                                                    </span>
+                                                                                )}
                                                                                 <span>{msg.sender_name}</span>
                                                                                 <span>•</span>
                                                                                 <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1572,6 +1760,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                                     <CheckCircle2 size={24} />
                                                                 </div>
                                                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ticket Resolved</h3>
+                                                                {selectedTicket.resolvedAt && (
+                                                                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full mb-1">
+                                                                        Resolved on {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })} at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </div>
+                                                                )}
                                                                 <p className="text-slate-500 text-sm">How was your experience with our support?</p>
                                                             </div>
 
@@ -1633,11 +1826,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                                 onClick={() => fileInputRef.current?.click()}
                                                                 disabled={isUploading}
                                                                 className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
-                                                                title="Upload Image"
+                                                                title="Attach File"
                                                             >
-                                                                {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <ImageIcon size={20} />}
+                                                                {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Paperclip size={20} />}
                                                             </button>
-                                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+                                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
 
                                                             {/* Input Area */}
                                                             <div className="flex-1 min-h-[40px] flex items-center pt-1">
@@ -1717,6 +1910,123 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                     </div>
                                                 )}
                                             </div>
+                                        ) : viewMode === 'archive' ? (
+                                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px] animate-in slide-in-from-bottom-4 duration-500">
+                                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+                                                    <div>
+                                                        <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Ticket Archive</h2>
+                                                        <p className="text-xs text-slate-500 font-medium">Browse all your previous support requests</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setViewMode('list')}
+                                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95"
+                                                    >
+                                                        <PlusCircle size={14} />
+                                                        Submit New
+                                                    </button>
+                                                </div>
+
+                                                <div className="overflow-x-auto flex-1">
+                                                    {tickets.length === 0 ? (
+                                                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                                                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                                                                <Inbox size={32} />
+                                                            </div>
+                                                            <p className="text-sm font-bold text-slate-400">No tickets found in your history.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <table className="w-full text-left border-separate border-spacing-0">
+                                                            <thead>
+                                                                <tr className="bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10">
+                                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Reference</th>
+                                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Subject</th>
+                                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Status</th>
+                                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Date</th>
+                                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                                {(() => {
+                                                                    const startIdx = (archivePage - 1) * ARCHIVE_PER_PAGE;
+                                                                    const pageTickets = tickets.slice(startIdx, startIdx + ARCHIVE_PER_PAGE);
+
+                                                                    return pageTickets.map((t) => (
+                                                                        <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
+                                                                            <td className="px-6 py-4">
+                                                                                <span className="text-[11px] font-bold text-indigo-600 font-mono bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded">#{t.ticketId}</span>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{t.subject}</div>
+                                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.department}</div>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <div className={`w-1.5 h-1.5 rounded-full ${t.status === 'Resolved' ? 'bg-emerald-500' :
+                                                                                        t.status === 'Open' ? 'bg-blue-500' :
+                                                                                            t.status === 'Pending' ? 'bg-amber-500' : 'bg-indigo-500'
+                                                                                        }`} />
+                                                                                    <span className={`text-[10px] font-black uppercase tracking-wider ${t.status === 'Resolved' ? 'text-emerald-600' :
+                                                                                        t.status === 'Open' ? 'text-blue-600' :
+                                                                                            'text-slate-500'
+                                                                                        }`}>{t.status}</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="px-6 py-4">
+                                                                                <div className="text-xs text-slate-600 dark:text-slate-400 font-bold">{new Date(t.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                                                            </td>
+                                                                            <td className="px-6 py-4 text-right">
+                                                                                <button
+                                                                                    onClick={() => setSelectedTicket(t)}
+                                                                                    className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 text-slate-400 rounded-xl transition-all shadow-sm active:scale-90"
+                                                                                >
+                                                                                    <ArrowRight size={16} />
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ));
+                                                                })()}
+                                                            </tbody>
+                                                        </table>
+                                                    )}
+                                                </div>
+
+                                                {/* Archive Pagination */}
+                                                {tickets.length > ARCHIVE_PER_PAGE && (
+                                                    <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/30">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                            Showing {Math.min(tickets.length, (archivePage - 1) * ARCHIVE_PER_PAGE + 1)}-{Math.min(tickets.length, archivePage * ARCHIVE_PER_PAGE)} of {tickets.length}
+                                                        </p>
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                disabled={archivePage === 1}
+                                                                onClick={() => setArchivePage(prev => prev - 1)}
+                                                                className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                                                            >
+                                                                <ChevronLeft size={16} />
+                                                            </button>
+                                                            {(() => {
+                                                                const totalPages = Math.ceil(tickets.length / ARCHIVE_PER_PAGE);
+                                                                return Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                                                    <button
+                                                                        key={p}
+                                                                        onClick={() => setArchivePage(p)}
+                                                                        className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${archivePage === p ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-600'}`}
+                                                                    >
+                                                                        {p}
+                                                                    </button>
+                                                                ));
+                                                            })()}
+                                                            <button
+                                                                disabled={archivePage >= Math.ceil(tickets.length / ARCHIVE_PER_PAGE)}
+                                                                onClick={() => setArchivePage(prev => prev + 1)}
+                                                                className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                                                            >
+                                                                <ChevronRight size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ) : viewMode === 'success' ? (
                                             <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg mx-auto mt-12">
                                                 <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500"><CheckCircle2 size={40} /></div>
@@ -1784,11 +2094,33 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                             onClick={() => newTicketFileInputRef.current?.click()}
                                                             className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-all group"
                                                         >
-                                                            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-3">
-                                                                <CloudUpload size={24} />
+                                                            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-3 relative">
+                                                                {isUploading ? (
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <svg className="w-full h-full transform -rotate-90">
+                                                                            <circle
+                                                                                cx="24" cy="24" r="20"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="3"
+                                                                                fill="transparent"
+                                                                                className="text-slate-200 dark:text-slate-700"
+                                                                            />
+                                                                            <circle
+                                                                                cx="24" cy="24" r="20"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="3"
+                                                                                fill="transparent"
+                                                                                strokeDasharray={125.6}
+                                                                                strokeDashoffset={125.6 - (125.6 * uploadProgress) / 100}
+                                                                                className="text-indigo-500 transition-all duration-300"
+                                                                            />
+                                                                        </svg>
+                                                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 absolute">{uploadProgress}%</span>
+                                                                    </div>
+                                                                ) : <CloudUpload size={24} />}
                                                             </div>
                                                             <p className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 transition-colors">Click to upload or drag and drop</p>
-                                                            <p className="text-xs text-slate-400 mt-1">SVG, PNG, JPG or GIF (max. 10MB)</p>
+                                                            <p className="text-xs text-slate-400 mt-1">Images, PDF or Documents (max. 10MB)</p>
                                                             <input
                                                                 type="file"
                                                                 ref={newTicketFileInputRef}
@@ -1845,39 +2177,71 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                 <div className="space-y-6">
                                     {/* Recent Tickets Card */}
                                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h3 className="font-bold text-slate-800 dark:text-white">My Recent Tickets</h3>
-                                            <button onClick={fetchTickets} className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:underline">Refresh</button>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Recent Tickets</h3>
+                                            <button onClick={fetchTickets} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-blue-600">
+                                                <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
+                                            </button>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            {tickets.length === 0 ? (
-                                                <div className="text-center py-8 text-slate-400 text-xs italic">No tickets found.</div>
-                                            ) : (
-                                                tickets.slice(0, 5).map((ticket) => (
+                                        {/* Mini Tabs */}
+                                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
+                                            {(['Active', 'Resolved'] as const).map((tab) => (
+                                                <button
+                                                    key={tab}
+                                                    onClick={() => setRecentFilter(tab)}
+                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${recentFilter === tab ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {tab}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                                            {(() => {
+                                                const filtered = tickets.filter(t =>
+                                                    recentFilter === 'Resolved' ? (t.status === 'Resolved' || t.status === 'Closed') : (t.status !== 'Resolved' && t.status !== 'Closed')
+                                                );
+
+                                                if (filtered.length === 0) {
+                                                    return <div className="text-center py-12">
+                                                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-300">
+                                                            <Inbox size={20} />
+                                                        </div>
+                                                        <p className="text-[10px] font-medium text-slate-400">No {recentFilter.toLowerCase()} tickets</p>
+                                                    </div>;
+                                                }
+
+                                                return filtered.map((ticket) => (
                                                     <div
                                                         key={ticket.id}
                                                         onClick={() => setSelectedTicket(ticket)}
-                                                        className="group cursor-pointer p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all"
+                                                        className="group cursor-pointer p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md"
                                                     >
                                                         <div className="flex items-center justify-between mb-2">
-                                                            <span className="text-[10px] font-bold text-slate-400 font-mono">#{ticket.ticketId}</span>
-                                                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
-                                                                ticket.status === 'Open' ? 'bg-blue-100 text-blue-700' :
-                                                                    'bg-amber-100 text-amber-700'
-                                                                }`}>
-                                                                {ticket.status}
-                                                            </span>
+                                                            <span className="text-[10px] font-black text-slate-400 font-mono">#{ticket.ticketId}</span>
+                                                            <div className={`w-2 h-2 rounded-full ${ticket.status === 'Resolved' ? 'bg-emerald-500' :
+                                                                ticket.status === 'Open' ? 'bg-blue-500' :
+                                                                    ticket.status === 'Pending' ? 'bg-amber-500' : 'bg-indigo-500'
+                                                                }`} />
                                                         </div>
-                                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{ticket.subject}</h4>
-                                                        <p className="text-[11px] text-slate-500">Updated {new Date(ticket.updatedAt).toLocaleDateString()}</p>
+                                                        <h4 className="text-xs font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">{ticket.subject}</h4>
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(ticket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+                                                            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Open Ticket</span>
+                                                        </div>
                                                     </div>
-                                                ))
-                                            )}
+                                                ));
+                                            })()}
                                         </div>
 
                                         <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                                            <button className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors">View All Archive</button>
+                                            <button
+                                                onClick={() => setViewMode('archive')}
+                                                className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                                            >
+                                                View All Archive
+                                            </button>
                                         </div>
                                     </div>
 
@@ -1978,11 +2342,23 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
                     <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                         {previewImage.toLowerCase().includes('.pdf') ? (
-                            <iframe
-                                src={previewImage}
-                                className="w-full h-full max-w-5xl bg-white rounded-2xl shadow-2xl"
-                                title="Preview"
-                            />
+                            <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
+                                <iframe
+                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`}
+                                    className="w-full h-full bg-white rounded-2xl shadow-2xl"
+                                    title="PDF Preview"
+                                />
+                                <div className="absolute bottom-4 right-4 animate-pulse">
+                                    <a
+                                        href={previewImage}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"
+                                    >
+                                        <ExternalLink size={12} /> Open Original PDF
+                                    </a>
+                                </div>
+                            </div>
                         ) : (
                             <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
                         )}

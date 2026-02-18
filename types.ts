@@ -45,6 +45,11 @@ export interface HelpdeskTicket {
   createdAt: string;
   assignedTo?: string;
   resolution?: string;
+  attachments?: string[];
+  updatedAt?: string;
+  resolvedAt?: string;
+  rating?: number;
+  feedback?: string;
 }
 
 export interface PurchaseRecord {
