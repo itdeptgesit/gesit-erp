@@ -12,7 +12,7 @@ import {
     ResponsiveContainer, LineChart, Line, AreaChart, Area, Cell, PieChart as RePieChart, Pie
 } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
-import { ActivityLog, PortStatus, Announcement } from '../types';
+import { ActivityLog, PortStatus, Announcement, UserAccount } from '../types';
 import { StatCard } from './StatCard';
 
 // --- Types ---
@@ -62,6 +62,7 @@ interface MainDashboardProps {
     onNavigate: (view: string) => void;
     userName?: string;
     userRole?: string;
+    currentUser?: UserAccount | null;
 }
 
 // --- Helper Components ---
@@ -96,7 +97,7 @@ type DashboardMode = 'All' | 'Finance' | 'Technical';
 
 // --- Main Component ---
 
-export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User' }) => {
+export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User', currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeMode, setActiveMode] = useState<DashboardMode>('All');
     const [stats, setStats] = useState<DashboardStats>({
@@ -136,13 +137,13 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 { data: announcements }
             ] = await Promise.all([
                 supabase.from('it_assets').select('status, category'),
-                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open'),
-                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']),
+                isAdmin ? supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open') : supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open').eq('requester_email', currentUser?.email),
+                isAdmin ? supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']) : supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']).eq('requester_email', currentUser?.email),
                 supabase.from('weekly_plans').select('status'),
                 supabase.from('switch_ports').select('status'),
                 supabase.from('purchase_plans').select('status, total_price'),
                 supabase.from('purchase_records').select('total_va, purchase_date, status, department'),
-                supabase.from('helpdesk_tickets').select('priority, status'),
+                isAdmin ? supabase.from('helpdesk_tickets').select('priority, status') : supabase.from('helpdesk_tickets').select('priority, status').eq('requester_email', currentUser?.email),
                 supabase.from('user_accounts').select('*', { count: 'exact', head: true }),
                 supabase.from('departments').select('*', { count: 'exact', head: true }),
                 supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
@@ -664,8 +665,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         />
                         <StatCard
                             label="Support Tickets"
-                            value={0}
-                            subValue="Reported issues"
+                            value={stats.openTickets}
+                            subValue={`${stats.resolvedTickets} resolved`}
                             icon={LifeBuoy}
                             color="rose"
                             onClick={() => onNavigate('helpdesk')}

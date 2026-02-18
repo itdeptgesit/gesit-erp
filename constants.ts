@@ -7,12 +7,12 @@ export const CURRENT_USER_GROUPS = ['admin'];
 export const MOCK_GROUPS = [
     { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'admin', 'users', 'system-settings', 'tracking-log', 'announcements', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance'] },
     { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'assets', 'asset-loan', 'network', 'files', 'extension-directory', 'purchase-record'] },
-    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'purchase', 'purchase-record'] }
+    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'extension-directory', 'asset-loan', 'helpdesk'] }
 ];
 
 export const APP_MENU_STRUCTURE = [
     { id: 'dashboard', label: 'Overview', iconName: 'LayoutDashboard' },
-    { id: 'helpdesk', label: 'Service Desk', iconName: 'LifeBuoy' },
+    { id: 'helpdesk', label: 'Helpdesk', iconName: 'LifeBuoy' },
     { id: 'activity', label: 'Activity Log', iconName: 'Activity' },
     { id: 'weekly', label: 'Weekly Plan', iconName: 'Calendar' },
     { id: 'purchase', label: 'Purchase Plan', iconName: 'ShoppingCart' },

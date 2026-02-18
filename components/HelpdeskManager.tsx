@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
@@ -6,7 +6,8 @@ import { UserAccount } from '../types';
 import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle, MessageSquare, X, Loader2, Send, ClipboardList,
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
-    Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Settings, Check
+    Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Settings, Check,
+    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StatCard } from './StatCard';
@@ -14,6 +15,7 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { FluentEmoji } from '@lobehub/fluent-emoji';
 import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
+
 
 interface HelpdeskManagerProps {
     currentUser: UserAccount | null;
@@ -39,7 +41,31 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const [detailTab, setDetailTab] = useState<'chat' | 'info'>('chat');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const isAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'Super Admin';
+    const role = currentUser?.role?.toLowerCase() || '';
+    const groups = currentUser?.groups || [];
+    const isAdmin = role.includes('admin');
+    const isITStaff = role.includes('admin') || role.includes('staff') || groups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
+
+    // Client-side UI states from HelpdeskPublic
+    const [viewMode, setViewMode] = useState<'list' | 'form' | 'success'>('list');
+    const [searchId, setSearchId] = useState('');
+    const [isSuccessMode, setIsSuccessMode] = useState(false);
+    const [lastCreatedTicketId, setLastCreatedTicketId] = useState('');
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+    const [newTicketData, setNewTicketData] = useState({
+        subject: '',
+        description: '',
+        priority: 'Medium' as any,
+        department: currentUser?.department || 'Other',
+        attachments: [] as string[]
+    });
+    const newTicketFileInputRef = useRef<HTMLInputElement>(null);
+    const [infoModal, setInfoModal] = useState<{ title: string; content: string } | null>(null);
+
+    // Feedback State
+    const [feedbackRating, setFeedbackRating] = useState(0);
+    const [feedbackComment, setFeedbackComment] = useState('');
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -51,9 +77,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             icon: <Smile size={16} />,
             emojis: [
                 '😊', '😂', '🤣', '❤️', '😍', '😒', '😭', '😘', '😔', '😩',
-                '😁', '😉', '😌', '😎', '😅', '😋', '😶', '😏', '😑', '😐',
-                '😯', '😮', '😲', '😴', '😫', '😪', '🙌', '👏', '👋', '👍',
-                '👊', '✊', '✌️', '👌', '✋', '👐', '💪', '🙏', '🤝', '💅'
+                '😏', '😉', '😌', '😎', '😅', '😋', '😶', '😱', '😐', '😣',
+                '😯', '😮', '😲', '😴', '😫', '😪', '🙌', '👍', '👋', '👏',
+                '👊', '✊', '✌️', '👌', '✋', '👎', '💪', '🙏', '🤝', '💅'
             ]
         },
         {
@@ -61,19 +87,19 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             icon: <Globe size={16} />,
             emojis: [
                 '🐱', '🐶', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
-                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
-                '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
-                '🐌', '🐞', '🐜', '🦟', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙'
+                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦅',
+                '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌',
+                '🐞', '🐜', '🦟', '🦗', '🕷', '🕸', '🦂', '🐢', '🐍', '🦎'
             ]
         },
         {
             name: 'Tech',
             icon: <Zap size={16} />,
             emojis: [
-                '💻', '📱', '📧', '💡', '📌', '📎', '📅', '⏰', '🛠️', '🔧',
-                '🔒', '🔑', '💎', '📦', '🎁', '📁', '📂', '📜', '📄', '📒',
+                '💻', '📱', '📧', '💡', '📌', '📎', '📅', '⌚', '🛍️', '🔧',
+                '🔒', '🔑', '💎', '📦', '🎁', '🎈', '📂', '📜', '📄', '📓',
                 '📊', '📈', '📉', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '📼',
-                '🔋', '🔌', '📡', '🛰️', '传真', '电视', '收音机', '麦克风', '滑块', '旋钮'
+                '🔋', '🔌', '📡', '🛰️', '📠', '📺', '📻', '🎤', '🎚️', '🎛️'
             ]
         },
         {
@@ -81,9 +107,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             icon: <Hash size={16} />,
             emojis: [
                 '✅', '❌', '⚠️', '⭐', '🔥', '✨', '⚡', '💯', '🎉', '🆘',
-                '🚫', '⚠️', '💎', '💠', '🌀', '💤', '💥', '💢', '💦', '💨',
-                '💫', '💬', '🗯️', '💭', '🕳️', '💣', '🔇', '🔈', '🔉', '🔊',
-                '🎵', '🎶', '➕', '➖', '✖️', '➗', '❓', '❔', '❕', '❗'
+                '🚫', '☢️', '💍', '💎', '🌀', '💤', '💥', '💢', '💦', '💨',
+                '💫', '💬', '🗨️', '💭', '🗯️', '🔕', '🔈', '🔉', '🔊', '🎵',
+                '🎶', '➕', '➖', '✖️', '➗', '❓', '❔', '❕', '❗'
+
             ]
         }
     ];
@@ -150,20 +177,34 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         priority: t.priority,
         status: t.status,
         createdAt: t.created_at,
+        updatedAt: t.updated_at || t.created_at,
         assignedTo: t.assigned_to,
         assignedToEmail: t.assigned_to_email,
-        resolution: t.resolution
+        resolution: t.resolution,
+        rating: t.rating,
+        feedback: t.feedback
     });
 
     const fetchTickets = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.from('helpdesk_tickets').select('*').order('created_at', { ascending: false });
+            let query = supabase.from('helpdesk_tickets').select('*');
+
+            // SECURITY: If not IT Staff/Admin, only fetch their own tickets (Case-Insensitive)
+            if (!isITStaff) {
+                if (currentUser?.email) {
+                    query = query.ilike('requester_email', currentUser.email);
+                } else {
+                    // If profile not yet loaded and not IT staff, return empty to prevent leak
+                    setTickets([]);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false });
             if (error) throw error;
             if (data) {
-                if (data.length > 0) {
-                    console.log("[HelpdeskInit] Data structure sample (Ticket 0):", Object.keys(data[0]));
-                }
                 setTickets(data.map(mapTicket));
             }
         } catch (err: any) {
@@ -191,6 +232,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     useEffect(() => {
         fetchTickets();
 
+        const fetchDepts = async () => {
+            const { data } = await supabase.from('departments').select('name').order('name');
+            if (data) setDepartments(data.map(d => d.name));
+        };
+        fetchDepts();
+
         // Request notification permission
         if (Notification.permission === 'default') {
             Notification.requestPermission();
@@ -216,10 +263,14 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                         priority: payload.new.priority,
                         status: payload.new.status,
                         createdAt: payload.new.created_at,
+                        updatedAt: payload.new.updated_at || payload.new.created_at,
                         assignedTo: payload.new.assigned_to,
                         assignedToEmail: payload.new.assigned_to_email,
-                        resolution: payload.new.resolution
+                        resolution: payload.new.resolution,
+                        rating: payload.new.rating,
+                        feedback: payload.new.feedback
                     };
+                    if (!isITStaff && newTicket.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) return;
                     setTickets(prev => [newTicket, ...prev]);
                     showToast(`New Ticket: ${newTicket.subject}`, 'success');
                     playNotificationSound();
@@ -237,10 +288,19 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                         priority: payload.new.priority,
                         status: payload.new.status,
                         createdAt: payload.new.created_at,
+                        updatedAt: payload.new.updated_at || payload.new.created_at,
                         assignedTo: payload.new.assigned_to,
                         assignedToEmail: payload.new.assigned_to_email,
-                        resolution: payload.new.resolution
+                        resolution: payload.new.resolution,
+                        rating: payload.new.rating,
+                        feedback: payload.new.feedback
                     };
+
+                    if (!isITStaff && updatedTicket.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
+                        setTickets(prev => prev.filter(t => t.id !== updatedTicket.id));
+                        return;
+                    }
+
                     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
 
                     // Update selected ticket if it's the one being modified
@@ -290,11 +350,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
             supabase.removeChannel(channel);
             supabase.removeChannel(msgChannel);
         };
-    }, []);
+    }, [currentUser?.email, isITStaff]);
 
     useEffect(() => {
         if (selectedTicket) {
             setResolutionNote(selectedTicket.resolution || '');
+            setFeedbackRating(selectedTicket.rating || 0);
+            setFeedbackComment(selectedTicket.feedback || '');
             fetchMessages(selectedTicket.id);
 
             // Subscribe to new messages for this ticket
@@ -319,40 +381,73 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     }, [selectedTicket?.id]);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !selectedTicket) return;
-        if (!file.type.startsWith('image/')) {
-            showToast("Please upload an image file.", 'error');
-            return;
-        }
+    const uploadFileToChat = async (file: File) => {
+        if (!selectedTicket) return;
+
         setIsUploading(true);
+        const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
+        const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('upload_preset', uploadPreset);
+
+        // Determine resource type
+        const isImage = file.type.startsWith('image/');
+        const isPdf = file.type === 'application/pdf';
+        const resourceType = isImage ? 'image' : 'raw';
+
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${selectedTicket.ticketId}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-            const filePath = `chat_attachments/${fileName}`;
-            const { error: uploadError } = await supabase.storage.from('helpdesk-attachments').upload(filePath, file);
-            if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage.from('helpdesk-attachments').getPublicUrl(filePath);
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+                method: 'POST',
+                body: uploadData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Upload failed');
+            }
+
+            const data = await response.json();
+            const publicUrl = data.secure_url;
+
+            const senderRole = isITStaff ? 'IT' : 'User';
             const { error: msgError } = await supabase.from('helpdesk_ticket_messages').insert([{
                 ticket_id: selectedTicket.id,
                 sender_name: currentUser?.fullName || 'IT Support',
-                sender_role: 'IT',
-                message: `![image](${publicUrl})`
+                sender_role: senderRole,
+                message: isImage ? `![image](${publicUrl})` : isPdf ? `[Attached PDF](${publicUrl})` : `[Attached File](${publicUrl})`
             }]);
+
             if (msgError) throw msgError;
-            console.log("Image message inserted successfully with URL:", publicUrl);
-            showToast("Image uploaded successfully.");
+            showToast("File uploaded successfully.");
         } catch (err: any) {
             console.error('Upload Error Details:', err);
-            let userMsg = "Upload failed.";
-            if (err.message?.includes('bucket')) userMsg = "Storage bucket 'helpdesk-attachments' not found.";
-            else if (err.status === 403) userMsg = "Permission denied. Check RLS policies.";
-
-            showToast(userMsg, 'error');
+            showToast(err.message || "Upload failed.", 'error');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            await uploadFileToChat(file);
+        }
+    };
+
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    e.preventDefault();
+                    await uploadFileToChat(file);
+                    return;
+                }
+            }
         }
     };
 
@@ -363,13 +458,18 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
 
     const filteredTickets = useMemo(() => {
         return tickets.filter(t => {
+            // High-Security Filter (Defense in Depth)
+            if (!isITStaff && t.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
+                return false;
+            }
+
             const matchesSearch = (t.requesterName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.ticketId || '').toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'All' ? true : t.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
-    }, [tickets, searchTerm, statusFilter]);
+    }, [tickets, searchTerm, statusFilter, isITStaff, currentUser?.email]);
 
     const handleExportExcel = () => {
         if (filteredTickets.length === 0) return;
@@ -436,32 +536,72 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         return !['Open', 'In Progress', 'Pending', 'New', 'Process', 'Hold'].includes(s);
     }, [selectedTicket]);
 
+    const isRequester = useMemo(() => {
+        if (!selectedTicket || !currentUser) return false;
+        return selectedTicket.requesterEmail?.toLowerCase() === currentUser.email?.toLowerCase();
+    }, [selectedTicket, currentUser]);
+
+    const handleSubmitFeedback = async () => {
+        if (!selectedTicket || isActionLoading || !feedbackRating) return;
+        setIsActionLoading(true);
+        try {
+            const { error } = await supabase
+                .from('helpdesk_tickets')
+                .update({
+                    rating: feedbackRating,
+                    feedback: feedbackComment
+                })
+                .eq('id', selectedTicket.id);
+
+            if (error) throw error;
+
+            showToast('Thank you for your feedback!', 'success');
+
+            // Update local state
+            const updatedTicket = { ...selectedTicket, rating: feedbackRating, feedback: feedbackComment };
+            setSelectedTicket(updatedTicket);
+            setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
+
+        } catch (err: any) {
+            showToast(err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     const handleSendReply = async () => {
         if (!selectedTicket || isActionLoading || isSolved || !resolutionNote.trim()) return;
         setIsActionLoading(true);
         try {
-            const updatePayload: any = { resolution: resolutionNote };
-            if (!selectedTicket.assignedTo) {
-                updatePayload.assigned_to = currentUser?.fullName || 'IT Staff';
-                updatePayload.assigned_to_email = currentUser?.email;
+            const senderRole = isITStaff ? 'IT' : 'User';
+            const updatePayload: any = {};
+            if (isITStaff) {
+                updatePayload.resolution = resolutionNote;
+                if (!selectedTicket.assignedTo) {
+                    updatePayload.assigned_to = currentUser?.fullName || 'IT Staff';
+                    updatePayload.assigned_to_email = currentUser?.email;
+                }
             }
-            // Update ticket summary
-            const { error: ticketError } = await supabase.from('helpdesk_tickets').update(updatePayload).eq('id', selectedTicket.id);
-            if (ticketError) throw ticketError;
+
+            // Update ticket if IT is resolving, otherwise just a reply
+            if (Object.keys(updatePayload).length > 0) {
+                const { error: ticketError } = await supabase.from('helpdesk_tickets').update(updatePayload).eq('id', selectedTicket.id);
+                if (ticketError) throw ticketError;
+            }
 
             // Insert into messages history
             const { error: msgError } = await supabase.from('helpdesk_ticket_messages').insert([{
                 ticket_id: selectedTicket.id,
-                sender_name: currentUser?.fullName || 'IT Support',
-                sender_role: 'IT',
+                sender_name: currentUser?.fullName || 'User',
+                sender_role: senderRole,
                 message: resolutionNote
             }]);
             if (msgError) throw msgError;
 
             showToast('Reply sent successfully');
 
-            // Notify Requester
-            if (selectedTicket.requesterEmail) {
+            // Notifications logic...
+            if (isITStaff && selectedTicket.requesterEmail) {
                 await supabase.from('notifications').insert([{
                     user_email: selectedTicket.requesterEmail,
                     title: 'Support Response',
@@ -469,9 +609,123 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     type: 'Success',
                     link: 'helpdesk'
                 }]);
+            } else if (!isITStaff) {
+                // Notify IT or Admin if user replies
+                const targetEmail = selectedTicket.assignedToEmail;
+                if (targetEmail) {
+                    await supabase.from('notifications').insert([{
+                        user_email: targetEmail,
+                        title: 'User Response',
+                        message: `${currentUser?.fullName} replied to: ${selectedTicket.subject}`,
+                        type: 'Info',
+                        link: 'helpdesk'
+                    }]);
+                }
             }
 
             setResolutionNote('');
+        } catch (err: any) {
+            showToast(err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleNewTicketFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
+        const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('upload_preset', uploadPreset);
+
+        const isImage = file.type.startsWith('image/');
+        const resourceType = isImage ? 'image' : 'auto';
+
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+                method: 'POST',
+                body: uploadData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Upload failed');
+            }
+
+            const data = await response.json();
+            const publicUrl = data.secure_url;
+
+            setNewTicketData(prev => ({
+                ...prev,
+                attachments: [...prev.attachments, publicUrl]
+            }));
+            showToast("File attached.");
+        } catch (err: any) {
+            console.error('Upload Error:', err);
+            showToast(err.message || "Upload failed.", 'error');
+        } finally {
+            setIsUploading(false);
+            if (newTicketFileInputRef.current) newTicketFileInputRef.current.value = '';
+        }
+    };
+
+    const handleCreateTicket = async () => {
+        if (!newTicketData.subject || !newTicketData.description) {
+            showToast('Please fill in all required fields.', 'error');
+            return;
+        }
+        setIsActionLoading(true);
+        try {
+            const ticketId = `TKT-${Math.floor(1000 + Math.random() * 9000)}`;
+            let finalDescription = newTicketData.description;
+            if (newTicketData.attachments.length > 0) {
+                finalDescription += "\n\n**Attachments:**\n" + newTicketData.attachments.map(url => `![image](${url})`).join('\n');
+            }
+
+            const { error: dbError } = await supabase.from('helpdesk_tickets').insert([{
+                ticket_id: ticketId,
+                requester_name: currentUser?.fullName,
+                requester_email: currentUser?.email,
+                department: newTicketData.department,
+                subject: newTicketData.subject,
+                description: finalDescription,
+                priority: newTicketData.priority,
+                status: 'Open',
+                created_at: new Date().toISOString()
+            }]);
+
+            if (dbError) throw dbError;
+
+            // Notify Admins
+            const { data: admins } = await supabase.from('user_accounts').select('email').eq('role', 'Admin');
+            if (admins) {
+                const notifications = admins.map(a => ({
+                    user_email: a.email,
+                    title: 'New Service Ticket',
+                    message: `${currentUser?.fullName} reported: ${newTicketData.subject}`,
+                    type: 'Info',
+                    link: 'helpdesk'
+                }));
+                await supabase.from('notifications').insert(notifications);
+            }
+
+            showToast(`Ticket ${ticketId} established.`);
+            setIsNewTicketModalOpen(false);
+            setLastCreatedTicketId(ticketId);
+            setViewMode('success');
+            setNewTicketData({
+                subject: '',
+                description: '',
+                priority: 'Medium',
+                department: currentUser?.department || 'Other',
+                attachments: []
+            });
+            fetchTickets();
         } catch (err: any) {
             showToast(err.message, 'error');
         } finally {
@@ -631,29 +885,58 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         resolved: tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length
     }), [tickets]);
 
+    // Perform Search for Client View
+    const performSearch = async (id: string) => {
+        if (!id) return;
+        setIsLoading(true);
+        try {
+            const { data, error: dbError } = await supabase
+                .from('helpdesk_tickets')
+                .select('*')
+                .eq('ticket_id', id.toUpperCase().trim())
+                .maybeSingle();
+
+            if (dbError) throw dbError;
+            if (!data) throw new Error('Ticket ID not found.');
+
+            // Verify access if not IT Staff
+            if (!isITStaff && data.requester_email?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
+                throw new Error('You do not have permission to view this ticket.');
+            }
+
+            setSelectedTicket(mapTicket(data));
+        } catch (err: any) {
+            showToast(err.message, 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-12">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                        <LifeBuoy size={24} strokeWidth={2.5} />
+            {isITStaff && (
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
+                            <LifeBuoy size={24} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Helpdesk <span className="text-blue-600">Manager</span></h1>
+                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise support lifecycle</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Helpdesk <span className="text-blue-600">Manager</span></h1>
-                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise support lifecycle</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button onClick={fetchTickets} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
-                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                    </button>
-                    {isAdmin && (
-                        <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm">
-                            <Settings size={18} />
+                    <div className="flex items-center gap-3">
+                        <button onClick={fetchTickets} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
+                            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
                         </button>
-                    )}
+                        {isAdmin && (
+                            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm">
+                                <Settings size={18} />
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {toast && (
                 <div className={`fixed top-24 right-8 z-[2000] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl border animate-in slide-in-from-right-2 duration-300 ${toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
@@ -662,521 +945,1039 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Requests" value={stats.total} icon={MessageSquare} color="blue" />
-                <StatCard label="Awaiting Action" value={stats.open} icon={CircleDot} color="rose" />
-                <StatCard label="Active Sessions" value={stats.inProgress} icon={Clock} color="indigo" />
-                <StatCard label="Resolved Incidents" value={stats.resolved} icon={CheckCircle2} color="emerald" />
-            </div>
+            {isITStaff && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard label="Total Requests" value={stats.total} icon={MessageSquare} color="blue" />
+                    <StatCard label="Awaiting Action" value={stats.open} icon={CircleDot} color="rose" />
+                    <StatCard label="Active Sessions" value={stats.inProgress} icon={Clock} color="indigo" />
+                    <StatCard label="Resolved Incidents" value={stats.resolved} icon={CheckCircle2} color="emerald" />
+                </div>
+            )}
 
-            <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
-                {/* LEFT COLUMN: Support Queue */}
-                <div className={`w-full lg:w-96 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-500 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                    <div className="p-5 border-b border-slate-100/50 dark:border-slate-800/50 flex flex-col gap-4 bg-slate-50/20 dark:bg-slate-800/10 shrink-0">
-                        <div className="relative group">
-                            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search repository..."
-                                className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400/70"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
+            {/* MAIN CONTENT AREA */}
+            {isITStaff ? (
+                <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
+                    {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
+                    <div className={`w-full lg:w-96 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-3 bg-white dark:bg-slate-900 shrink-0">
+                            <div className="relative group">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search repository..."
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all dark:text-white placeholder:text-slate-400"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 flex bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
+                                    {['All', 'Open', 'In Progress', 'Resolved'].map(st => {
+                                        const isActive = statusFilter === st;
+                                        let label = st;
+                                        if (st === 'In Progress') label = 'Active';
+                                        if (st === 'Resolved') label = 'Done';
+
+                                        return (
+                                            <button
+                                                key={st}
+                                                onClick={() => setStatusFilter(st)}
+                                                className={`flex-1 py-1 rounded-md text-[10px] font-bold uppercase transition-all duration-300 relative z-10 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            >
+                                                {label}
+                                                {isActive && (
+                                                    <motion.div
+                                                        layoutId="status-tab-helpdesk"
+                                                        className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-md -z-10"
+                                                        initial={false}
+                                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                    />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex gap-1">
+                                    <button onClick={handleExportExcel} className="p-2 text-emerald-500 hover:text-emerald-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Export Excel"><FileSpreadsheet size={14} strokeWidth={2.5} /></button>
+                                    <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Reset"><RotateCcw size={14} strokeWidth={2.5} /></button>
+                                    <button onClick={fetchTickets} className="p-2 text-slate-400 hover:text-indigo-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Refresh"><RefreshCcw size={14} strokeWidth={2.5} className={isLoading ? 'animate-spin' : ''} /></button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <div className="flex-1 flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
-                                {['All', 'Open', 'In Progress', 'Resolved'].map(st => {
-                                    const isActive = statusFilter === st;
-                                    const label = st === 'In Progress' ? 'Process' : st === 'Resolved' ? 'Solved' : st;
-                                    return (
-                                        <button
-                                            key={st}
-                                            onClick={() => setStatusFilter(st)}
-                                            className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all duration-300 relative z-10 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'}`}
-                                        >
-                                            {label}
-                                            {isActive && (
-                                                <motion.div
-                                                    layoutId="status-tab-helpdesk"
-                                                    className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-xl -z-10"
-                                                    initial={false}
-                                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                                />
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="flex gap-1">
-                                <button onClick={handleExportExcel} className="p-2 text-emerald-500 hover:text-emerald-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Export Excel"><FileSpreadsheet size={14} strokeWidth={2.5} /></button>
-                                <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Reset"><RotateCcw size={14} strokeWidth={2.5} /></button>
-                                <button onClick={fetchTickets} className="p-2 text-slate-400 hover:text-indigo-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm hover:shadow-lg active:scale-90" title="Refresh"><RefreshCcw size={14} strokeWidth={2.5} className={isLoading ? 'animate-spin' : ''} /></button>
-                            </div>
-                        </div>
-                    </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            {isLoading ? (
+                                <div className="p-10 text-center flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-blue-500" /><p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
+                            ) : paginatedTickets.length === 0 ? (
+                                <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
+                            ) : (
+                                <div className="divide-y divide-slate-100/30 dark:divide-slate-800/30">
+                                    {paginatedTickets.map(ticket => {
+                                        const isSelected = selectedTicket?.id === ticket.id;
+                                        const statusColors: any = {
+                                            'Open': 'bg-rose-500',
+                                            'Resolved': 'bg-emerald-500',
+                                            'In Progress': 'bg-indigo-500',
+                                            'Pending': 'bg-amber-500'
+                                        };
+                                        const dotColor = statusColors[ticket.status] || 'bg-slate-400';
 
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        {isLoading ? (
-                            <div className="p-10 text-center flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-blue-500" /><p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
-                        ) : paginatedTickets.length === 0 ? (
-                            <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
-                        ) : (
-                            <div className="divide-y divide-slate-100/30 dark:divide-slate-800/30">
-                                {paginatedTickets.map(ticket => {
-                                    const isSelected = selectedTicket?.id === ticket.id;
-                                    const statusColors: any = {
-                                        'Open': 'bg-rose-500',
-                                        'Resolved': 'bg-emerald-500',
-                                        'In Progress': 'bg-indigo-500',
-                                        'Pending': 'bg-amber-500'
-                                    };
-                                    const dotColor = statusColors[ticket.status] || 'bg-slate-400';
-
-                                    return (
-                                        <div
-                                            key={ticket.id}
-                                            onClick={() => setSelectedTicket(ticket)}
-                                            className={`
+                                        return (
+                                            <div
+                                                key={ticket.id}
+                                                onClick={() => setSelectedTicket(ticket)}
+                                                className={`
                                                 p-5 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group relative
                                                 ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : ''}
                                             `}
-                                        >
-                                            {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />}
-                                            <div className="flex items-center gap-4 min-w-0 pr-2">
-                                                <div className="relative shrink-0">
-                                                    <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ${ticket.status === 'Open' ? 'animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]' : ''}`} />
-                                                    {ticket.status === 'Open' && <div className="absolute inset-0 rounded-full bg-rose-500 animate-ping opacity-20 scale-150" />}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight shrink-0">{ticket.ticketId}</span>
-                                                        <h4 className={`text-xs font-black truncate transition-colors ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`}>
-                                                            {ticket.subject}
-                                                        </h4>
+                                            >
+                                                {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />}
+                                                <div className="flex items-center gap-4 min-w-0 pr-2">
+                                                    <div className="relative shrink-0">
+                                                        <div className={`w-2.5 h-2.5 rounded-full ${dotColor} ${ticket.status === 'Open' ? 'animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]' : ''}`} />
+                                                        {ticket.status === 'Open' && <div className="absolute inset-0 rounded-full bg-rose-500 animate-ping opacity-20 scale-150" />}
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
-                                                        <span className="truncate max-w-[100px]">{ticket.requesterName}</span>
-                                                        <span className="opacity-30">•</span>
-                                                        <span className="truncate">{ticket.department}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1 shrink-0">
-                                                <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600">
-                                                    {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="px-4 py-3 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">P. {currentPage}/{totalPages || 1}</p>
-                        <div className="flex items-center gap-1">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={12} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={12} /></button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* SHARED MOBILE DETAIL HEADER */}
-                {selectedTicket && (
-                    <div className="lg:hidden flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm mb-4 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
-                        <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight leading-tight line-clamp-1">{selectedTicket.subject}</h3>
-                                    <span className="text-[9px] font-bold text-blue-500 font-mono uppercase tracking-wider">{selectedTicket.ticketId}</span>
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <div className="p-2 bg-slate-50 dark:bg-slate-800/50 flex border-b border-slate-100 dark:border-slate-800 gap-2">
-                            <button
-                                onClick={() => setDetailTab('chat')}
-                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'chat' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Discussion
-                            </button>
-                            <button
-                                onClick={() => setDetailTab('info')}
-                                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${detailTab === 'info' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Info & Manage
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* CENTER COLUMN: Chat Interface */}
-                <div className={`flex-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-500 ${!selectedTicket ? 'hidden lg:flex' : (detailTab === 'chat' ? 'flex' : 'hidden lg:flex')}`}>
-                    {selectedTicket ? (
-                        <>
-                            {/* Chat Header - Only show full version on Desktop */}
-                            <div className="p-6 border-b border-slate-100/50 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 hidden lg:flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-indigo-100 dark:ring-indigo-800/50">
-                                        <MessageSquare size={24} strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight mb-1">{selectedTicket.subject}</h3>
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-1.5 font-mono text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-100/50 dark:border-indigo-500/20">
-                                                <Hash size={10} strokeWidth={3} />
-                                                {selectedTicket.ticketId}
-                                            </div>
-                                            <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></span>
-                                            <div className="flex items-center">
-                                                {getStatusIcon(selectedTicket.status)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button onClick={() => setSelectedTicket(null)} className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 hover:text-rose-500 active:scale-95 shadow-sm hover:shadow-md">
-                                    <X size={20} strokeWidth={2.5} />
-                                </button>
-                            </div>
-
-
-
-                            {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 dark:bg-slate-950/20 p-8 pt-6 space-y-8">
-                                <div className="space-y-6 max-w-3xl mx-auto">
-                                    <div className="flex flex-col gap-2 items-start max-w-[95%]">
-                                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 rounded-[2rem] rounded-tl-none border border-slate-200/50 dark:border-slate-800/50 text-sm text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm relative group/report">
-                                            <div className="absolute -left-2 top-0 w-2 h-4 bg-white/80 dark:bg-slate-800/80 border-l border-t border-slate-200/50 dark:border-slate-800/50" style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className="w-1.5 h-4 rounded-full bg-indigo-500" />
-                                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">Initial System Report</p>
-                                            </div>
-                                            <div className="font-medium whitespace-pre-wrap">
-                                                <EmojiRenderer text={selectedTicket.description} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <AnimatePresence mode="popLayout">
-                                        {messages.map((msg, idx) => {
-                                            const isIT = msg.sender_role === 'IT';
-                                            return (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                    transition={{ duration: 0.3 }}
-                                                    key={idx}
-                                                    className={`flex flex-col gap-1.5 max-w-[90%] ${isIT ? 'ml-auto items-end' : 'items-start'}`}
-                                                >
-                                                    <div className={`
-                                                        ${isIT
-                                                            ? 'bg-indigo-600 dark:bg-indigo-500 text-white rounded-[1.75rem] rounded-tr-none shadow-lg shadow-indigo-500/10'
-                                                            : 'bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 rounded-[1.75rem] rounded-tl-none border border-slate-200/50 dark:border-slate-800/50 shadow-sm'}
-                                                        p-5 text-[13px] font-medium leading-relaxed relative
-                                                    `}>
-                                                        <div className={`text-[9px] font-black uppercase mb-2 opacity-50 flex items-center gap-2 tracking-widest ${isIT ? 'justify-end' : ''}`}>
-                                                            {msg.sender_name} <span className="opacity-30">•</span> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight shrink-0">{ticket.ticketId}</span>
+                                                            <h4 className={`text-xs font-black truncate transition-colors ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`}>
+                                                                {ticket.subject}
+                                                            </h4>
                                                         </div>
-                                                        <div className="relative z-10">
-                                                            {(() => {
-                                                                const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
-                                                                if (imageMatch) {
-                                                                    const imageUrl = imageMatch[1];
-                                                                    return (
-                                                                        <div
-                                                                            onClick={() => setPreviewImage(imageUrl)}
-                                                                            className="block cursor-zoom-in group/img relative overflow-hidden rounded-xl border border-white/20"
-                                                                        >
-                                                                            <img
-                                                                                src={imageUrl}
-                                                                                alt="Attachment"
-                                                                                className="max-w-full hover:scale-105 transition-transform duration-500"
-                                                                                loading="lazy"
-                                                                            />
-                                                                            <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
-                                                                                <div className="opacity-0 group-hover/img:opacity-100 transition-opacity bg-white/20 backdrop-blur-md p-2 rounded-full text-white border border-white/30">
-                                                                                    <Search size={16} strokeWidth={3} />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                }
-                                                                return <EmojiRenderer text={msg.message} />;
-                                                            })()}
+                                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                                                            <span className="truncate max-w-[100px]">{ticket.requesterName}</span>
+                                                            <span className="opacity-30">â€¢</span>
+                                                            <span className="truncate">{ticket.department}</span>
                                                         </div>
                                                     </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </AnimatePresence>
-                                    <div ref={messagesEndRef} />
-                                </div>
-                            </div>
-
-                            {/* Chat Input */}
-                            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                                {!isSolved ? (
-                                    <div className="max-w-4xl mx-auto py-2">
-                                        <div className="flex items-end gap-4 p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-[3rem] border border-slate-200/50 dark:border-slate-800/50 shadow-2xl shadow-indigo-500/10 ring-1 ring-white/10 px-4">
-                                            {/* Upload Trigger */}
-                                            <button
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={isUploading}
-                                                className="w-12 h-12 flex items-center justify-center bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 rounded-2xl hover:bg-shadow-indigo-50 dark:hover:bg-indigo-950/30 hover:text-indigo-600 transition-all active:scale-95 shrink-0 border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800"
-                                                title="Upload Image"
-                                            >
-                                                {isUploading ? <Loader2 size={20} className="animate-spin text-indigo-500" /> : <ImageIcon size={22} strokeWidth={2.5} />}
-                                            </button>
-                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
-
-                                            {/* Input Area */}
-                                            <div className="flex-1 min-h-[48px] flex items-center pt-1">
-                                                <textarea
-                                                    rows={1}
-                                                    className="w-full bg-transparent border-none text-[14px] font-black outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-800 dark:text-white resize-none max-h-40 py-2.5 custom-scrollbar"
-                                                    placeholder={`Message to ${selectedTicket.requesterName.split(' ')[0]}...`}
-                                                    value={resolutionNote}
-                                                    onChange={e => {
-                                                        setResolutionNote(e.target.value);
-                                                        e.target.style.height = 'auto';
-                                                        e.target.style.height = `${e.target.scrollHeight}px`;
-                                                    }}
-                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
-                                                />
-                                            </div>
-
-                                            {/* Emoji Picker / Send Group */}
-                                            <div className="flex items-center gap-2 pb-0.5">
-                                                <div className="relative shrink-0 flex items-center">
-                                                    <button
-                                                        ref={emojiTriggerRef}
-                                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                        className={`w-11 h-11 flex items-center justify-center transition-all rounded-xl ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 shadow-inner' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20'}`}
-                                                        title="Add Emoji"
-                                                    >
-                                                        <Smile size={22} strokeWidth={2.5} />
-                                                    </button>
-                                                    <AnimatePresence>
-                                                        {showEmojiPicker && (
-                                                            <motion.div
-                                                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                className="absolute bottom-full right-0 mb-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 shadow-[0_20px_60px_rgba(0,0,0,0.15)] z-[100] w-[320px] overflow-hidden"
-                                                            >
-                                                                <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                                                                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                                                                        {EMOJI_CATEGORIES.map((cat, idx) => (
-                                                                            <button
-                                                                                key={cat.name}
-                                                                                onClick={() => setActiveEmojiCategory(idx)}
-                                                                                className={`p-2 rounded-xl transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                                                            >
-                                                                                {cat.icon}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="p-3 grid grid-cols-7 gap-1 h-[220px] overflow-y-auto custom-scrollbar">
-                                                                    {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
-                                                                        <button
-                                                                            key={emoji}
-                                                                            onClick={() => addEmoji(emoji)}
-                                                                            className="w-9 h-9 flex items-center justify-center hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-xl transition-all hover:scale-125 active:scale-90"
-                                                                        >
-                                                                            <FluentEmoji emoji={emoji} size={18} />
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
                                                 </div>
-
-                                                <button
-                                                    onClick={handleSendReply}
-                                                    disabled={isActionLoading || !resolutionNote.trim()}
-                                                    className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-30 disabled:scale-95 disabled:shadow-none shrink-0 group/send"
-                                                >
-                                                    {isActionLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} strokeWidth={2.5} className="group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 transition-transform" />}
-                                                </button>
+                                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                                    <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600">
+                                                        {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="max-w-xl mx-auto py-2">
-                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl flex items-center justify-center gap-3 text-emerald-700 dark:text-emerald-400">
-                                            <CheckCircle2 size={16} className="text-emerald-500" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.1em]">Incident Resolved</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-30">
-                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
-                                <MessageSquare size={24} className="text-slate-300 dark:text-slate-600" />
-                            </div>
-                            <p className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">Select an active session</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* RIGHT COLUMN: Ticket Info & Actions */}
-                {selectedTicket && (
-                    <div className={`w-full lg:w-96 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
-                        <div className="p-6 border-b border-slate-100/50 dark:border-slate-800/50 bg-slate-50/20 dark:bg-slate-800/10 hidden lg:block text-center relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Management Terminal</h4>
-
-                            <div className="space-y-5">
-                                <div className="p-5 rounded-[2rem] bg-white/50 dark:bg-slate-800/50 border border-slate-200/40 dark:border-slate-700/40 shadow-sm group/req transition-all hover:bg-white dark:hover:bg-slate-800">
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white mb-3 shadow-lg shadow-indigo-500/20 group-hover/req:scale-110 transition-transform">
-                                            <User size={32} strokeWidth={2} />
-                                        </div>
-                                        <p className="text-sm font-black text-slate-900 dark:text-white leading-none mb-1.5">{selectedTicket.requesterName}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate max-w-full italic">{selectedTicket.requesterEmail || 'support@gesit-erp.com'}</p>
-                                    </div>
-                                </div>
-
-                                <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800/50 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
-                                        <Building2 size={20} />
-                                    </div>
-                                    <div className="text-left min-w-0">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Affiliation</p>
-                                        <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 truncate">{selectedTicket.department}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 flex-1 overflow-y-auto space-y-8 custom-scrollbar">
-                            <div>
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Metadata</h4>
-                                <div className="bg-white/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm flex items-center justify-between">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Established</p>
-                                    <p className="text-xs font-black text-slate-800 dark:text-slate-200">{new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                                </div>
-                            </div>
-
-                            {!isSolved ? (
-                                <div>
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Operations Control</h4>
-                                    <div className="space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button
-                                                disabled={isActionLoading || !isOwner}
-                                                onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')}
-                                                className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-500/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-500/50 hover:text-indigo-600'}`}
-                                            >
-                                                Process
-                                            </button>
-                                            <button
-                                                disabled={isActionLoading || !isOwner}
-                                                onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')}
-                                                className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-500/50 hover:text-amber-600'}`}
-                                            >
-                                                On Hold
-                                            </button>
-                                        </div>
-                                        <button
-                                            disabled={isActionLoading || !isOwner}
-                                            onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                                            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2 group/btn"
-                                        >
-                                            <CheckCircle2 size={16} strokeWidth={3} className="group-hover/btn:scale-110 transition-transform" />
-                                            Execute Resolution
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    <div className="p-6 rounded-[2rem] bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 relative overflow-hidden group/final">
-                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/final:opacity-10 transition-opacity">
-                                            <CheckCircle2 size={60} />
-                                        </div>
-                                        <p className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-3">Post-Incident Report</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 italic font-medium leading-relaxed mb-4">
-                                            "{selectedTicket.resolution?.split('\n\n')[0] || 'System finalized without additional notation'}"
-                                        </p>
-                                        <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest bg-emerald-100/50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-xl w-fit">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                            Case Finalized
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={handleConvertToActivity}
-                                        disabled={isActionLoading}
-                                        className="w-full h-12 bg-white dark:bg-slate-800 hover:bg-indigo-600 dark:hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-[1.25rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-indigo-500/20 active:scale-95 border border-indigo-100 dark:border-indigo-900/30 group/conv"
-                                    >
-                                        {isActionLoading ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} strokeWidth={2.5} className="group-hover/conv:scale-110 transition-transform" />}
-                                        Log to IT Assets
-                                    </button>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
 
-                        <div className="p-5 bg-slate-900 dark:bg-black text-white flex flex-col items-center justify-center gap-1.5 shrink-0 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-transparent to-purple-500/10" />
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.5em] relative z-10">GESIT MISSION CONTROL</p>
-                            <div className="flex items-center gap-2 relative z-10">
-                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                                <p className="text-[8px] text-slate-500 font-mono tracking-widest lowercase">system.stable.v4.1.2</p>
+                        <div className="px-4 py-3 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">P. {currentPage}/{totalPages || 1}</p>
+                            <div className="flex items-center gap-1">
+                                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={12} /></button>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Image Preview Modal */}
-            {
-                previewImage && (
-                    <div
-                        className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300"
-                        onClick={() => setPreviewImage(null)}
-                    >
-                        <button
-                            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all hover:scale-110 active:scale-90"
-                            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
-                        >
-                            <X size={24} />
-                        </button>
 
-                        <div
-                            className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center animate-in zoom-in-95 duration-300"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <img
-                                src={previewImage}
-                                alt="Preview"
-                                className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl border border-white/10"
-                            />
-                            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4">
-                                <a
-                                    href={previewImage}
-                                    download
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10 backdrop-blur-md"
-                                >
-                                    Download Original
-                                </a>
-                            </div>
+                    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+
+
+                        {/* SHARED MOBILE DETAIL HEADER - ONLY FOR IT STAFF */}
+                        {
+                            isITStaff && selectedTicket && (
+                                <div className="lg:hidden flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm mb-4 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
+                                    <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                                <ChevronLeft size={20} />
+                                            </button>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight leading-tight line-clamp-1">{selectedTicket.subject}</h3>
+                                                <span className="text-[9px] font-bold text-blue-500 font-mono uppercase tracking-wider">{selectedTicket.ticketId}</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                        {/* CENTER COLUMN */}
+                        <div className={`flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-500 ${!selectedTicket ? 'hidden lg:flex' : (detailTab === 'chat' ? 'flex' : 'hidden lg:flex')}`}>
+                            {selectedTicket ? (
+                                <>
+                                    {/* Chat Header - Only show full version on Desktop */}
+                                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hidden lg:flex items-center justify-between shrink-0">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+                                                <MessageSquare size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{selectedTicket.subject}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-semibold text-indigo-600 font-mono">#{selectedTicket.ticketId}</span>
+                                                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                                    <div className="flex items-center text-xs text-slate-500">
+                                                        {getStatusIcon(selectedTicket.status)}
+                                                        <span className="ml-1">{selectedTicket.status}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+
+                                    {/* Chat Messages */}
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20 p-6 space-y-6">
+                                        <div className="space-y-6 max-w-3xl mx-auto">
+                                            <div className="flex flex-col gap-2 items-start max-w-[95%]">
+                                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm relative group/report">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                                        <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Initial System Report</p>
+                                                    </div>
+                                                    <div className="font-medium whitespace-pre-wrap">
+                                                        <EmojiRenderer text={selectedTicket.description} />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <AnimatePresence mode="popLayout">
+                                                {messages.map((msg, idx) => {
+                                                    const isSelf = msg.sender_role === 'IT';
+                                                    return (
+                                                        <div key={idx} className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-4`}>
+                                                            <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white'}`}>
+                                                                <div className={`flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide ${isSelf ? 'justify-end' : ''}`}>
+                                                                    <span>{msg.sender_name}</span>
+                                                                    <span>•</span>
+                                                                    <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                </div>
+                                                                {(() => {
+                                                                    const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
+                                                                    const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
+
+                                                                    if (imageMatch) {
+                                                                        const imageUrl = imageMatch[1];
+                                                                        return (
+                                                                            <div
+                                                                                onClick={() => setPreviewImage(imageUrl)}
+                                                                                className="block cursor-zoom-in group/img relative overflow-hidden rounded-lg border border-white/10 mt-2"
+                                                                            >
+                                                                                <img
+                                                                                    src={imageUrl}
+                                                                                    alt="Attachment"
+                                                                                    className="max-w-full hover:scale-105 transition-transform duration-500 bg-black/20"
+                                                                                    loading="lazy"
+                                                                                />
+                                                                            </div>
+                                                                        );
+                                                                    }
+
+                                                                    if (fileMatch) {
+                                                                        const fileUrl = fileMatch[2];
+                                                                        const isPdf = fileMatch[1] === 'PDF';
+
+                                                                        if (isPdf) {
+                                                                            return (
+                                                                                <div
+                                                                                    onClick={() => setPreviewImage(fileUrl)}
+                                                                                    className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors cursor-pointer ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+                                                                                >
+                                                                                    <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
+                                                                                        <FileText size={20} />
+                                                                                    </div>
+                                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                                        <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached PDF</p>
+                                                                                        <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to preview</p>
+                                                                                    </div>
+                                                                                    <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
+                                                                                </div>
+                                                                            );
+                                                                        }
+
+                                                                        return (
+                                                                            <a
+                                                                                href={fileUrl}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+                                                                            >
+                                                                                <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
+                                                                                    <FileText size={20} />
+                                                                                </div>
+                                                                                <div className="flex-1 min-w-0 text-left">
+                                                                                    <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached Document</p>
+                                                                                    <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to view</p>
+                                                                                </div>
+                                                                                <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
+                                                                            </a>
+                                                                        );
+                                                                    }
+
+                                                                    return <EmojiRenderer text={msg.message} />;
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </AnimatePresence>
+                                            <div ref={messagesEndRef} />
+                                        </div>
+                                    </div>
+
+                                    {/* Chat Input */}
+                                    <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                                        {!isSolved ? (
+                                            <div className="max-w-4xl mx-auto">
+                                                <div className="flex items-end gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 transition-shadow focus-within:ring-2 ring-indigo-500/10">
+                                                    {/* Upload Trigger */}
+                                                    <button
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploading}
+                                                        className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
+                                                        title="Upload Image"
+                                                    >
+                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <ImageIcon size={20} />}
+                                                    </button>
+                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                                                    {/* Input Area */}
+                                                    <div className="flex-1 min-h-[40px] flex items-center pt-1">
+                                                        <textarea
+                                                            rows={1}
+                                                            className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-2"
+                                                            placeholder={`Message to ${selectedTicket.requesterName.split(' ')[0]}...`}
+                                                            value={resolutionNote}
+                                                            onChange={e => {
+                                                                setResolutionNote(e.target.value);
+                                                                e.target.style.height = 'auto';
+                                                                e.target.style.height = `${e.target.scrollHeight}px`;
+                                                            }}
+                                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                                                            onPaste={handlePaste}
+                                                        />
+                                                    </div>
+
+                                                    {/* Emoji Picker / Send Group */}
+                                                    <div className="flex items-center gap-2 pb-0.5">
+                                                        <div className="relative shrink-0 flex items-center">
+                                                            <button
+                                                                ref={emojiTriggerRef}
+                                                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                className={`w-9 h-9 flex items-center justify-center transition-all rounded-lg ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50'}`}
+                                                                title="Add Emoji"
+                                                            >
+                                                                <Smile size={20} />
+                                                            </button>
+                                                            <AnimatePresence>
+                                                                {showEmojiPicker && (
+                                                                    <motion.div
+                                                                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                        className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[300px] overflow-hidden"
+                                                                    >
+                                                                        {/* Emoji Picker Content (Simplified for brevity) */}
+                                                                        <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                                                            <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                                                                                {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                                    <button
+                                                                                        key={cat.name}
+                                                                                        onClick={() => setActiveEmojiCategory(idx)}
+                                                                                        className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                                    >
+                                                                                        {cat.icon}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="p-2 grid grid-cols-7 gap-1 h-[200px] overflow-y-auto custom-scrollbar">
+                                                                            {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
+                                                                                <button
+                                                                                    key={emoji}
+                                                                                    onClick={() => addEmoji(emoji)}
+                                                                                    className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"
+                                                                                >
+                                                                                    <FluentEmoji emoji={emoji} size={18} />
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+
+                                                        <button
+                                                            onClick={handleSendReply}
+                                                            disabled={isActionLoading || !resolutionNote.trim()}
+                                                            className="h-10 px-4 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm"
+                                                        >
+                                                            <span>Send</span>
+                                                            {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="max-w-xl mx-auto py-2">
+                                                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-xl flex items-center justify-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                                    <CheckCircle2 size={16} className="text-emerald-500" />
+                                                    <span className="text-xs font-bold uppercase tracking-wide">Incident Resolved</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700">
+                                        <MessageSquare size={24} className="text-slate-300 dark:text-slate-600" />
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select a ticket to start</p>
+                                </div>
+                            )}
                         </div>
+
+                        {/* RIGHT COLUMN: Ticket Info & Actions - ONLY FOR IT STAFF */}
+                        {selectedTicket && (
+                            <div className={`w-full lg:w-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
+                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 overflow-hidden">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 text-center">Ticket Details</h4>
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3 border border-slate-200 dark:border-slate-700">
+                                            <User size={28} />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{selectedTicket.requesterName}</p>
+                                        <p className="text-xs text-slate-500">{selectedTicket.requesterEmail}</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 flex-1 overflow-y-auto space-y-8 custom-scrollbar bg-white dark:bg-slate-900">
+                                    {isITStaff && (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Department</p>
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                                    <Building2 size={14} className="text-slate-400" />
+                                                    {selectedTicket.department}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Created</p>
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                    {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!isSolved ? (
+                                        <div>
+                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Actions</h4>
+                                            <div className="space-y-2">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        disabled={isActionLoading || !isOwner}
+                                                        onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')}
+                                                        className={`h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                                    >
+                                                        Process
+                                                    </button>
+                                                    <button
+                                                        disabled={isActionLoading || !isOwner}
+                                                        onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')}
+                                                        className={`h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600'}`}
+                                                    >
+                                                        Hold
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    disabled={isActionLoading || !isOwner}
+                                                    onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
+                                                    className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                                >
+                                                    <CheckCircle2 size={16} /> Mark Resolved
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 text-center">
+                                                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 mb-2">
+                                                    <CheckCircle2 size={20} />
+                                                </div>
+                                                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide mb-1">Resolved</p>
+                                                <p className="text-[10px] text-slate-500 italic">Ticket finalized</p>
+                                            </div>
+                                            <button
+                                                onClick={handleConvertToActivity}
+                                                disabled={isActionLoading}
+                                                className="w-full h-10 bg-white dark:bg-slate-800 hover:bg-indigo-50 border border-slate-200 dark:border-slate-700 text-indigo-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                                            >
+                                                {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+                                                Log to Assets
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )
-            }
-            <DangerConfirmModal isOpen={isSolveConfirmOpen} onClose={() => setIsSolveConfirmOpen(false)} onConfirm={() => executeStatusUpdate(selectedTicket.id, 'Resolved', resolutionNote)} title="Confirm Resolution" message="Are you sure you want to mark this as Solved? This action is permanent and the ticket node will be finalized." isLoading={isActionLoading} />
-        </div >
+                </div>
+            ) : (
+                <>
+                    <div className="flex-1 -mx-8 -mt-8 bg-slate-50/50 dark:bg-slate-950/50">
+                        <div className="max-w-7xl mx-auto p-8 pt-12">
+                            {/* Header */}
+                            <div className="mb-8">
+                                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Helpdesk Center</h1>
+                                <p className="text-slate-500 font-medium">Submit a request or track your existing tickets.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* LEFT COLUMN: Submit Ticket Form */}
+                                <div className="lg:col-span-2 space-y-8">
+                                    <AnimatePresence mode="wait">
+                                        {selectedTicket ? (
+                                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px]">
+                                                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4 bg-white dark:bg-slate-900 sticky top-0 z-10">
+                                                    <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500"><ArrowLeft size={18} /></button>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <span className="text-xs font-bold text-indigo-600 font-mono bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">#{selectedTicket.ticketId}</span>
+                                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${selectedTicket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{selectedTicket.status}</span>
+                                                        </div>
+                                                        <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">{selectedTicket.subject}</h3>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-950/50">
+                                                    <div className="max-w-3xl mx-auto space-y-6">
+                                                        {/* Ticket Description */}
+                                                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Description</div>
+                                                            <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                                                                <EmojiRenderer text={selectedTicket.description} />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Chat Messages */}
+                                                        <div className="space-y-6 pb-6">
+                                                            {messages.map((msg, i) => {
+                                                                const isSelf = (isITStaff && msg.sender_role === 'IT') || (!isITStaff && msg.sender_role !== 'IT');
+                                                                return (
+                                                                    <div key={i} className={`flex ${!isSelf ? 'justify-start' : 'justify-end'}`}>
+                                                                        <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white'}`}>
+                                                                            <div className="flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide">
+                                                                                <span>{msg.sender_name}</span>
+                                                                                <span>•</span>
+                                                                                <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                            </div>
+                                                                            {(() => {
+                                                                                const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
+                                                                                const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
+
+                                                                                if (imageMatch) {
+                                                                                    const imageUrl = imageMatch[1];
+                                                                                    return (
+                                                                                        <div
+                                                                                            onClick={() => setPreviewImage(imageUrl)}
+                                                                                            className="block cursor-zoom-in group/img relative overflow-hidden rounded-lg border border-white/10 mt-2"
+                                                                                        >
+                                                                                            <img
+                                                                                                src={imageUrl}
+                                                                                                alt="Attachment"
+                                                                                                className="max-w-full max-h-[300px] object-contain hover:scale-105 transition-transform duration-500 bg-black/20"
+                                                                                                loading="lazy"
+                                                                                            />
+                                                                                        </div>
+                                                                                    );
+                                                                                }
+
+                                                                                if (fileMatch) {
+                                                                                    const fileUrl = fileMatch[2];
+                                                                                    const isPdf = fileMatch[1] === 'PDF';
+
+                                                                                    if (isPdf) {
+                                                                                        return (
+                                                                                            <div
+                                                                                                onClick={() => setPreviewImage(fileUrl)}
+                                                                                                className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors cursor-pointer ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+                                                                                            >
+                                                                                                <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
+                                                                                                    <FileText size={20} />
+                                                                                                </div>
+                                                                                                <div className="flex-1 min-w-0 text-left">
+                                                                                                    <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached PDF</p>
+                                                                                                    <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to preview</p>
+                                                                                                </div>
+                                                                                                <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
+                                                                                            </div>
+                                                                                        );
+                                                                                    }
+
+                                                                                    return (
+                                                                                        <a
+                                                                                            href={fileUrl}
+                                                                                            target="_blank"
+                                                                                            rel="noopener noreferrer"
+                                                                                            className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+                                                                                        >
+                                                                                            <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
+                                                                                                <FileText size={20} />
+                                                                                            </div>
+                                                                                            <div className="flex-1 min-w-0 text-left">
+                                                                                                <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached Document</p>
+                                                                                                <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to view</p>
+                                                                                            </div>
+                                                                                            <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
+                                                                                        </a>
+                                                                                    );
+                                                                                }
+
+                                                                                return <EmojiRenderer text={msg.message} />;
+                                                                            })()}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                            <div ref={messagesEndRef} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Feedback / Reply Input */}
+                                                {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') ? (
+                                                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                                        <div className="max-w-2xl mx-auto text-center space-y-4">
+                                                            <div className="flex flex-col items-center gap-2">
+                                                                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-2">
+                                                                    <CheckCircle2 size={24} />
+                                                                </div>
+                                                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ticket Resolved</h3>
+                                                                <p className="text-slate-500 text-sm">How was your experience with our support?</p>
+                                                            </div>
+
+                                                            {selectedTicket.rating || !isRequester ? (
+                                                                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
+                                                                    <div className="flex gap-2 justify-center mb-4">
+                                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                                            <Star
+                                                                                key={star}
+                                                                                size={24}
+                                                                                className={`${(selectedTicket.rating || 0) >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}
+                                                                            />
+                                                                        ))}
+                                                                    </div>
+                                                                    {selectedTicket.feedback ? (
+                                                                        <p className="text-slate-700 dark:text-slate-300 italic">"{selectedTicket.feedback}"</p>
+                                                                    ) : (
+                                                                        <p className="text-slate-400 text-xs italic">No additional comments provided.</p>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-4 bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
+                                                                    <div className="flex gap-2 justify-center">
+                                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                                            <button
+                                                                                key={star}
+                                                                                onClick={() => setFeedbackRating(star)}
+                                                                                className="transition-transform hover:scale-110 focus:outline-none"
+                                                                            >
+                                                                                <Star
+                                                                                    size={32}
+                                                                                    className={`${feedbackRating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'}`}
+                                                                                />
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                    <textarea
+                                                                        className="w-full h-24 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
+                                                                        placeholder="Share your experience (optional)..."
+                                                                        value={feedbackComment}
+                                                                        onChange={(e) => setFeedbackComment(e.target.value)}
+                                                                    />
+                                                                    <button
+                                                                        onClick={handleSubmitFeedback}
+                                                                        disabled={isActionLoading || feedbackRating === 0}
+                                                                        className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        {isActionLoading ? <Loader2 size={16} className="animate-spin inline mr-2" /> : null}
+                                                                        Submit Feedback
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                                        <div className="flex items-end gap-3 max-w-4xl mx-auto">
+                                                            <button
+                                                                onClick={() => fileInputRef.current?.click()}
+                                                                disabled={isUploading}
+                                                                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
+                                                                title="Upload Image"
+                                                            >
+                                                                {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <ImageIcon size={20} />}
+                                                            </button>
+                                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                                                            {/* Input Area */}
+                                                            <div className="flex-1 min-h-[40px] flex items-center pt-1">
+                                                                <textarea
+                                                                    rows={1}
+                                                                    className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-2"
+                                                                    placeholder="Type a reply..."
+                                                                    value={resolutionNote}
+                                                                    onChange={e => {
+                                                                        setResolutionNote(e.target.value);
+                                                                        e.target.style.height = 'auto';
+                                                                        e.target.style.height = `${e.target.scrollHeight}px`;
+                                                                    }}
+                                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                                                                    onPaste={handlePaste}
+                                                                />
+                                                            </div>
+
+                                                            {/* Emoji Picker / Send Group */}
+                                                            <div className="flex items-center gap-2 pb-0.5">
+                                                                <div className="relative shrink-0 flex items-center">
+                                                                    <button
+                                                                        ref={emojiTriggerRef}
+                                                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                                                        className={`w-9 h-9 flex items-center justify-center transition-all rounded-lg ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50'}`}
+                                                                        title="Add Emoji"
+                                                                    >
+                                                                        <Smile size={20} />
+                                                                    </button>
+                                                                    <AnimatePresence>
+                                                                        {showEmojiPicker && (
+                                                                            <motion.div
+                                                                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                                                className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[300px] overflow-hidden"
+                                                                            >
+                                                                                <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                                                                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                                                                                        {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                                            <button
+                                                                                                key={cat.name}
+                                                                                                onClick={() => setActiveEmojiCategory(idx)}
+                                                                                                className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                                                            >
+                                                                                                {cat.icon}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="p-2 grid grid-cols-7 gap-1 h-[200px] overflow-y-auto custom-scrollbar">
+                                                                                    {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
+                                                                                        <button
+                                                                                            key={emoji}
+                                                                                            onClick={() => addEmoji(emoji)}
+                                                                                            className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"
+                                                                                        >
+                                                                                            <FluentEmoji emoji={emoji} size={18} />
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </motion.div>
+                                                                        )}
+                                                                    </AnimatePresence>
+                                                                </div>
+
+                                                                <button
+                                                                    onClick={handleSendReply}
+                                                                    disabled={isActionLoading || !resolutionNote.trim()}
+                                                                    className="h-10 px-4 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm"
+                                                                >
+                                                                    <span>Send</span>
+                                                                    {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : viewMode === 'success' ? (
+                                            <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg mx-auto mt-12">
+                                                <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500"><CheckCircle2 size={40} /></div>
+                                                <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Request Submitted!</h2>
+                                                <p className="text-slate-500 text-sm mb-8 font-medium">Your ticket has been successfully created. Our support team will review it shortly.</p>
+
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 rounded-xl border border-slate-100 dark:border-slate-800 inline-block mb-8">
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ticket Reference</div>
+                                                    <span className="text-2xl font-black text-indigo-600 font-mono tracking-tight">#{lastCreatedTicketId}</span>
+                                                </div>
+
+                                                <div>
+                                                    <button onClick={() => setViewMode('list')} className="w-full h-12 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-800 dark:hover:bg-slate-700 transition-all shadow-lg active:scale-95">Return to Dashboard</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
+                                                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Submit a Support Ticket</h2>
+                                                <p className="text-slate-500 text-sm mb-8">Fill out the details below and our team will get back to you.</p>
+
+                                                <div className="space-y-6">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Subject</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
+                                                                placeholder="Briefly describe the issue"
+                                                                value={newTicketData.subject}
+                                                                onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Category</label>
+                                                            <div className="relative">
+                                                                <select
+                                                                    className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm appearance-none cursor-pointer"
+                                                                    value={newTicketData.department || 'General Inquiry'}
+                                                                    onChange={e => setNewTicketData({ ...newTicketData, department: e.target.value })}
+                                                                >
+                                                                    <option value="General Inquiry">General Inquiry</option>
+                                                                    <option value="Technical Support">Technical Support</option>
+                                                                    <option value="Hardware Issue">Hardware Issue</option>
+                                                                    <option value="Network Access">Network Access</option>
+                                                                    <option value="Software License">Software License</option>
+                                                                </select>
+                                                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={16} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Detailed Description</label>
+                                                        <textarea
+                                                            className="w-full min-h-[150px] p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400 resize-none leading-relaxed"
+                                                            placeholder="Please provide as much detail as possible..."
+                                                            value={newTicketData.description}
+                                                            onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
+                                                        />
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Attachments (Optional)</label>
+                                                        <div
+                                                            onClick={() => newTicketFileInputRef.current?.click()}
+                                                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-all group"
+                                                        >
+                                                            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-3">
+                                                                <CloudUpload size={24} />
+                                                            </div>
+                                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 transition-colors">Click to upload or drag and drop</p>
+                                                            <p className="text-xs text-slate-400 mt-1">SVG, PNG, JPG or GIF (max. 10MB)</p>
+                                                            <input
+                                                                type="file"
+                                                                ref={newTicketFileInputRef}
+                                                                onChange={handleNewTicketFileUpload}
+                                                                className="hidden"
+                                                                accept="*/*"
+                                                            />
+                                                        </div>
+
+                                                        {newTicketData.attachments.length > 0 && (
+                                                            <div className="flex flex-wrap gap-3 mt-4">
+                                                                {newTicketData.attachments.map((url, idx) => {
+                                                                    const isImage = url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+                                                                    return (
+                                                                        <div key={idx} className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm bg-white dark:bg-slate-800">
+                                                                            {isImage ? (
+                                                                                <img src={url} alt="Attachment" className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                                                    <FileText size={20} />
+                                                                                    <span className="text-[8px] font-bold mt-1">FILE</span>
+                                                                                </div>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={() => setNewTicketData(prev => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== idx) }))}
+                                                                                className="absolute top-1 right-1 p-1 bg-slate-900/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                            >
+                                                                                <X size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="pt-4 flex items-center justify-end gap-3">
+                                                        <button onClick={() => setNewTicketData({ subject: '', description: '', priority: 'Medium', attachments: [], department: 'General Inquiry' })} className="px-6 h-12 text-slate-500 hover:text-slate-800 font-bold text-sm transition-colors">Cancel</button>
+                                                        <button
+                                                            onClick={handleCreateTicket}
+                                                            disabled={isActionLoading || !newTicketData.subject || !newTicketData.description}
+                                                            className="px-8 h-12 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                                                        >
+                                                            {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Submit Ticket'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* RIGHT COLUMN: Sidebar */}
+                                <div className="space-y-6">
+                                    {/* Recent Tickets Card */}
+                                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="font-bold text-slate-800 dark:text-white">My Recent Tickets</h3>
+                                            <button onClick={fetchTickets} className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:underline">Refresh</button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {tickets.length === 0 ? (
+                                                <div className="text-center py-8 text-slate-400 text-xs italic">No tickets found.</div>
+                                            ) : (
+                                                tickets.slice(0, 5).map((ticket) => (
+                                                    <div
+                                                        key={ticket.id}
+                                                        onClick={() => setSelectedTicket(ticket)}
+                                                        className="group cursor-pointer p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-[10px] font-bold text-slate-400 font-mono">#{ticket.ticketId}</span>
+                                                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                                                ticket.status === 'Open' ? 'bg-blue-100 text-blue-700' :
+                                                                    'bg-amber-100 text-amber-700'
+                                                                }`}>
+                                                                {ticket.status}
+                                                            </span>
+                                                        </div>
+                                                        <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{ticket.subject}</h4>
+                                                        <p className="text-[11px] text-slate-500">Updated {new Date(ticket.updatedAt).toLocaleDateString()}</p>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+
+                                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+                                            <button className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors">View All Archive</button>
+                                        </div>
+                                    </div>
+
+                                    {/* Operational Hours Card */}
+                                    <div className="bg-indigo-50 dark:bg-slate-800/50 rounded-2xl border border-indigo-100 dark:border-slate-700 p-6">
+                                        <h3 className="font-bold text-slate-800 dark:text-white mb-4">Operational Hours</h3>
+                                        <div className="space-y-3">
+                                            {[
+                                                {
+                                                    label: '08.00 - 17:00',
+                                                    icon: Clock,
+                                                    title: 'Jam Operasional IT',
+                                                    detail: 'Layanan Helpdesk tersedia setiap hari kerja (Senin - Jumat) dari pukul 08.00 hingga 17.00 WIB. Permintaan di luar jam operasional akan diproses pada hari kerja berikutnya.'
+                                                },
+                                                {
+                                                    label: 'Ext Call 196',
+                                                    icon: Phone,
+                                                    title: 'Panggilan Ekstensi IT',
+                                                    detail: 'Untuk bantuan teknis segera di area kantor, silakan hubungi ekstensi 196. Kami siap membantu menangani masalah perangkat keras, jaringan, dan aplikasi internal Anda.'
+                                                }
+                                            ].map((item, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setInfoModal({ title: item.title, content: item.detail })}
+                                                    className="flex items-center gap-4 w-full p-3 text-left bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 rounded-xl border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all group"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                                        <item.icon size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.label}</h4>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Click for details</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div >
+                    </div >
+
+                    {/* Info Modal */}
+                    <AnimatePresence>
+                        {
+                            infoModal && (
+                                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                        className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full relative"
+                                    >
+                                        <button
+                                            onClick={() => setInfoModal(null)}
+                                            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
+                                        >
+                                            <X size={20} />
+                                        </button>
+
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center">
+                                                <Info size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Information Guide</h3>
+                                                <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{infoModal.title}</h2>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                                                {infoModal.content}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setInfoModal(null)}
+                                            className="w-full mt-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-black/10 dark:shadow-white/5"
+                                        >
+                                            Understood
+                                        </button>
+                                    </motion.div>
+                                </div>
+                            )
+                        }
+                    </AnimatePresence >
+
+                    {/* Image Preview Modal (Keep existing logic) */}
+                    {
+                        previewImage && (
+                            <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setPreviewImage(null)}>
+                                <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
+                                <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                                    {previewImage.toLowerCase().includes('.pdf') ? (
+                                        <iframe
+                                            src={previewImage}
+                                            className="w-full h-full max-w-5xl bg-white rounded-2xl shadow-2xl"
+                                            title="Preview"
+                                        />
+                                    ) : (
+                                        <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    }
+                </>
+            )}
+
+            <DangerConfirmModal
+                isOpen={isSolveConfirmOpen}
+                onClose={() => setIsSolveConfirmOpen(false)}
+                onConfirm={() => selectedTicket && executeStatusUpdate(selectedTicket.id, 'Resolved')}
+                title="Mark as Resolved?"
+                message="This will close the ticket and notify the requester. Please ensure the issue is completely resolved before proceeding."
+                isLoading={isActionLoading}
+            />
+        </div>
     );
 };

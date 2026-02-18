@@ -216,6 +216,16 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                         </div>
                     </NavLink>
 
+                    <div className="flex items-center gap-6 ml-8">
+                        <NavLink
+                            to="/helpdesk"
+                            className={({ isActive }) => `flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                        >
+                            <LifeBuoy size={16} />
+                            Helpdesk
+                        </NavLink>
+                    </div>
+
                     <div className="flex-1" />
 
                     {/* Right Controls */}

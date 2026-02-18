@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate } from 'lucide-react';
+import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Minimize, Info, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate } from 'lucide-react';
 import { NetworkSwitch, PortStatus, DeviceType } from '../types';
 import * as htmlToImage from 'html-to-image';
 import { useToast } from './ToastProvider';
@@ -20,6 +20,7 @@ interface NodeProps {
     onRelink?: (sw: any) => void;
     isInternet?: boolean;
     searchTerm?: string;
+    tier?: string;
 }
 
 // Minimalist Dimensions
@@ -27,7 +28,7 @@ const NODE_WIDTH = 80;
 const NODE_HEIGHT = 80;
 const GRID_SIZE = 20;
 
-const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '' }) => {
+const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '', tier }) => {
     const [dragging, setDragging] = useState(false);
     const [localPos, setLocalPos] = useState({ x, y });
     const startMousePos = useRef({ x: 0, y: 0 });
@@ -46,30 +47,23 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
     const usagePercent = (activePorts / (switchData.totalPorts || 1)) * 100;
 
     const getIconInfo = () => {
-        if (isInternet) return { icon: Globe, color: 'text-emerald-500', isWireless: false };
+        if (isInternet) return { icon: Globe, color: 'text-emerald-400', isWireless: false };
 
         const m = (switchData.model || '').toLowerCase();
         const n = (switchData.name || '').toLowerCase();
-        const id = (switchData.id || '');
+
+        // Exact Type Mapping
+        const type = switchData.model as DeviceType;
 
         // Comprehensive Mapping for All Devices
-        const isPC = m.includes('pc') || m.includes('computer') || m.includes('laptop') || m === DeviceType.PC.toLowerCase();
-        const isServer = m.includes('server') || m === DeviceType.SERVER.toLowerCase();
-        const isPrinter = m.includes('printer') || m === DeviceType.PRINTER.toLowerCase();
-        const isCCTV = m.includes('cctv') || m.includes('camera') || m.includes('nvr') || m.includes('dvr') || m === DeviceType.CCTV.toLowerCase();
-        const isPhone = m.includes('phone') || m.includes('voip') || m === DeviceType.IP_PHONE.toLowerCase();
-        const isWireless = m.includes('access point') || n.includes('ap-') ||
-            m.includes('wifi') || m.includes('unifi') ||
-            m.includes('eap') || m === DeviceType.AP.toLowerCase();
-
-        if (m.includes('mikrotik') || n.includes('router') || n.includes('core')) return { icon: Router, color: 'text-blue-500', isWireless: false };
-        if (isWireless) return { icon: Wifi, color: 'text-cyan-400', isWireless: true };
-        if (isCCTV) return { icon: Video, color: 'text-purple-500', isWireless: false };
-        if (isServer) return { icon: Server, color: 'text-indigo-500', isWireless: false };
-        if (isPC) return { icon: Monitor, color: 'text-blue-400', isWireless: false };
-        if (isPrinter) return { icon: Printer, color: 'text-orange-500', isWireless: false };
-        if (isPhone) return { icon: Phone, color: 'text-emerald-500', isWireless: false };
-        if (m.includes('storage') || m.includes('nas')) return { icon: HardDrive, color: 'text-amber-500', isWireless: false };
+        if (type === DeviceType.ROUTER || m.includes('mikrotik') || n.includes('router') || n.includes('core')) return { icon: Router, color: 'text-blue-400', isWireless: false };
+        if (type === DeviceType.AP || m.includes('access point') || n.includes('ap-') || m.includes('wifi') || m.includes('unifi')) return { icon: Wifi, color: 'text-cyan-400', isWireless: true };
+        if (type === DeviceType.CCTV || type === DeviceType.NVR || type === DeviceType.DVR || m.includes('cctv') || m.includes('camera')) return { icon: Video, color: 'text-purple-400', isWireless: false };
+        if (type === DeviceType.SERVER || m.includes('server')) return { icon: Server, color: 'text-indigo-400', isWireless: false };
+        if (type === DeviceType.PC || m.includes('pc') || m.includes('laptop')) return { icon: Monitor, color: 'text-sky-400', isWireless: false };
+        if (type === DeviceType.PRINTER || m.includes('printer')) return { icon: Printer, color: 'text-orange-400', isWireless: false };
+        if (type === DeviceType.IP_PHONE || type === DeviceType.ANALOG_PHONE || m.includes('phone') || m.includes('voip')) return { icon: Phone, color: 'text-emerald-400', isWireless: false };
+        if (m.includes('storage') || m.includes('nas')) return { icon: HardDrive, color: 'text-amber-400', isWireless: false };
 
         return { icon: Server, color: 'text-slate-400', isWireless: false };
     };
@@ -143,11 +137,13 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
             style={{ left: localPos.x, top: localPos.y, width: NODE_WIDTH, height: NODE_HEIGHT }}
         >
             <div
-                className={`relative w-full h-full flex items-center justify-center rounded-2xl transition-all border-2 cursor-pointer group ${isSelected ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
-                    isInternet ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
+                className={`relative w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-500 group ${isSelected ? 'bg-blue-600 border-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-110 z-50' :
+                    isInternet ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] z-10' : 'border-white/10 bg-slate-900/60 hover:border-blue-500/50 hover:bg-slate-800/80 z-10'
                     }`}
                 onMouseDown={handleMouseDown}
             >
+                {/* Node Glow Backdrop */}
+                <div className={`absolute inset-0 rounded-2xl blur-xl opacity-20 transition-all ${isSelected ? 'bg-blue-500' : isInternet ? 'bg-emerald-500' : 'bg-transparent'}`} />
                 {!isInternet && !isInternetNode && (
                     <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
                         <circle
@@ -180,6 +176,12 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-950"></div>
                 )}
 
+                {(switchData as any).isGroup && (
+                    <div className="absolute -top-4 -right-4 w-9 h-9 bg-blue-600 rounded-full border-4 border-slate-950 flex items-center justify-center shadow-2xl z-20 group-hover:scale-110 transition-transform">
+                        <span className="text-xs font-black text-white">{(switchData as any).totalPorts}</span>
+                    </div>
+                )}
+
                 {!isInternet && !isInternetNode && !isLocked && isSelected && !isChild && (
                     <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRelink?.(switchData); }}
@@ -190,15 +192,18 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                 )}
             </div>
 
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-center pointer-events-none w-max max-w-[140px] flex flex-col items-center gap-1">
-                <span className={`text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border backdrop-blur-md transition-all shadow-sm ${isSelected
-                    ? 'text-blue-400 bg-blue-500/10 border-blue-500/30'
-                    : 'text-slate-400 bg-slate-950/80 border-white/5'
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-center pointer-events-none w-max max-w-[140px] flex flex-col items-center gap-0.5">
+                {tier && (
+                    <span className="text-[6px] font-black uppercase tracking-[0.2em] text-blue-500/80 mb-0.5">{tier}</span>
+                )}
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md backdrop-blur-sm transition-all shadow-sm ${isSelected
+                    ? 'text-blue-300 bg-blue-500/20 border border-blue-400/40'
+                    : 'text-slate-300 bg-slate-900/60 border border-slate-700/50'
                     }`}>
                     {switchData.name}
                 </span>
                 {switchData.ip && switchData.ip !== '-' && (
-                    <span className="text-[7px] font-mono font-bold text-slate-500 bg-slate-900/40 px-1.5 py-0.5 rounded border border-white/5 backdrop-blur-sm">
+                    <span className="text-[7px] font-mono font-semibold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700/30 backdrop-blur-sm">
                         {switchData.ip}
                     </span>
                 )}
@@ -210,6 +215,7 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
 DiagramNode.displayName = 'DiagramNode';
 
 const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds, searchTerm, matchesSearch }: any) => {
+    const [isHovered, setIsHovered] = useState(false);
     let startX, startY;
     const isInternetLink = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root';
     if (isInternetLink) {
@@ -218,7 +224,6 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
     } else {
         const parent = switches.find((p: any) => p.id === sw.uplinkId);
         if (!parent || parent.posX === undefined || parent.posY === undefined) return null;
-        if (Math.abs(parent.posX - sw.posX) < 5 && Math.abs(parent.posY - sw.posY) < 5) return null;
         startX = parent.posX + NODE_WIDTH / 2;
         startY = parent.posY + NODE_HEIGHT / 2;
     }
@@ -227,7 +232,9 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
 
     if (Math.abs(startX - endX) < 1 && Math.abs(startY - endY) < 1) return null;
 
-    const pathData = `M ${startX} ${startY} C ${startX} ${startY + (endY - startY) * 0.5}, ${endX} ${endY - (endY - startY) * 0.5}, ${endX} ${endY}`;
+    // Organic "Smooth S" Bezier Curve
+    const midY = startY + (endY - startY) * 0.45;
+    const pathData = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${startY + (endY - startY) * 0.55}, ${endX} ${endY}`;
 
     let color = isInternetLink ? '#10b981' : '#3b82f6';
     if (sw.vlan) {
@@ -236,22 +243,42 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
         else if (sw.vlan === 30) color = '#f472b6';
         else if (sw.vlan > 50) color = '#a78bfa';
     }
-    const isPathActive = activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId));
+    const isPathActive = (activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId))) || isHovered;
 
-    const strokeWidth = isInternetLink ? 1.5 : (isPathActive ? 2.5 : 1);
-    const opacity = isInternetLink ? 'opacity-60' : (isPathActive ? 'opacity-40' : 'opacity-10');
-    const dashedOpacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-40');
+    const strokeWidth = isInternetLink ? 2 : (isPathActive ? 3 : 1.5);
+    const opacity = isInternetLink ? 'opacity-70' : (isPathActive ? 'opacity-100' : 'opacity-50');
+    const pulseScale = isPathActive ? 1.5 : 1;
 
     return (
-        <g className={searchTerm && !matchesSearch(sw) ? 'opacity-10' : 'opacity-100'}>
-            <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className={opacity} />
-            <path d={pathData} stroke={color} strokeWidth={strokeWidth} strokeDasharray={isPathActive ? '10,10' : '4,12'} fill="none" className={dashedOpacity} filter="url(#link-glow-fx)">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur={isPathActive ? '3s' : '6s'} repeatCount="indefinite" />
+        <g
+            className={`transition-all duration-300 ${searchTerm && !matchesSearch(sw) ? 'opacity-10' : 'opacity-100'}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* Hit Area for Hover */}
+            <path d={pathData} stroke="transparent" strokeWidth="20" fill="none" className="cursor-pointer" />
+
+            {/* Base Connection Path */}
+            <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className={`${opacity} transition-all duration-300`} />
+
+            {/* Glowing Dotted Path */}
+            <path d={pathData} stroke={color} strokeWidth={strokeWidth} strokeDasharray={isPathActive ? '12,12' : '4,16'} fill="none" className="opacity-100" filter="url(#link-glow-fx)">
+                <animate attributeName="stroke-dashoffset" from="200" to="0" dur={isPathActive ? '4s' : '8s'} repeatCount="indefinite" />
             </path>
+
+            {/* Travel Pulse (Data Packet Animation) */}
+            <circle r={2 * pulseScale} fill={color} filter="url(#link-glow-fx)">
+                <animateMotion path={pathData} dur={isPathActive ? '2s' : '4s'} repeatCount="indefinite" />
+            </circle>
+            <circle r={3 * pulseScale} fill={color} className="opacity-20">
+                <animateMotion path={pathData} dur={isPathActive ? '2s' : '4s'} repeatCount="indefinite" />
+            </circle>
+
+            {/* Label Badge */}
             {sw.uplinkPort && (
-                <g transform={`translate(${(startX + endX) / 2}, ${(startY + endY) / 2})`}>
-                    <rect x="-15" y="-8" width="30" height="16" rx="4" className="fill-slate-900/90 stroke-white/10" />
-                    <text y="3" textAnchor="middle" className="text-[8px] font-bold fill-slate-300 pointer-events-none uppercase tracking-tighter">
+                <g transform={`translate(${(startX + endX) / 2}, ${(startY + endY) / 2})`} className={`transition-all duration-300 ${isPathActive ? 'scale-110' : 'scale-90 opacity-60'}`}>
+                    <rect x="-18" y="-9" width="36" height="18" rx="6" className="fill-slate-900/90 stroke-white/20 backdrop-blur-xl" />
+                    <text y="4" textAnchor="middle" className="text-[9px] font-black fill-white pointer-events-none uppercase tracking-tighter">
                         P{sw.uplinkPort}
                     </text>
                 </g>
@@ -268,20 +295,87 @@ interface TopologyDiagramProps {
     onUpdateSwitches: (sws: NetworkSwitch[], internet?: { x: number, y: number }) => void;
     canManage?: boolean;
     searchTerm?: string;
+    isLocked?: boolean;
+    selectedNodeId: string | null;
+    setSelectedNodeId: (id: string | null) => void;
+    onViewProfile?: (device: NetworkSwitch) => void;
+    centeringTrigger?: number;
+    coreNodeId?: string;
 }
 
-export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, internetPos, onUpdateSwitches, searchTerm = '' }) => {
+export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
+    switches,
+    internetPos,
+    onUpdateSwitches,
+    searchTerm = '',
+    isLocked = false,
+    selectedNodeId,
+    setSelectedNodeId,
+    onViewProfile,
+    centeringTrigger = 0,
+    coreNodeId
+}) => {
     const { showToast } = useToast();
     const diagramRef = useRef<HTMLDivElement>(null);
     const [relinkingSwitch, setRelinkingSwitch] = useState<NetworkSwitch | null>(null);
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    // Removed local selectedNodeId state as it's now a prop
 
     const [scale, setScale] = useState(0.85);
     const [offset, setOffset] = useState({ x: 100, y: 100 });
     const [isPanning, setIsPanning] = useState(false);
-    const [isLocked, setIsLocked] = useState(false);
+    const [isUiLocked, setIsUiLocked] = useState(isLocked);
     const [snapToGrid, setSnapToGrid] = useState(true);
+    const [viewMode, setViewMode] = useState<'simplified' | 'detailed'>('simplified');
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
     const lastMousePos = useRef({ x: 0, y: 0 });
+
+    const centerView = useCallback(() => {
+        if (!diagramRef.current || !diagramRef.current.parentElement) return;
+
+        const viewport = diagramRef.current.parentElement;
+        const vRect = viewport.getBoundingClientRect();
+        if (vRect.width === 0 || vRect.height === 0) return;
+
+        // Calculate bounding box
+        let minX = internetPos.x, minY = internetPos.y, maxX = internetPos.x + NODE_WIDTH, maxY = internetPos.y + NODE_HEIGHT;
+        switches.forEach(sw => {
+            minX = Math.min(minX, sw.posX || 0);
+            minY = Math.min(minY, sw.posY || 0);
+            maxX = Math.max(maxX, (sw.posX || 0) + NODE_WIDTH);
+            maxY = Math.max(maxY, (sw.posY || 0) + NODE_HEIGHT);
+        });
+
+        const padding = 60;
+        const boxWidth = maxX - minX;
+        const boxHeight = maxY - minY;
+
+        // Calculate optimal scale to fit box with padding
+        const scaleX = (vRect.width - padding * 2) / boxWidth;
+        const scaleY = (vRect.height - padding * 2) / boxHeight;
+        const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.4), 1.1); // Range [0.4, 1.1]
+
+        // Calculate offset to center the box
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const newOffsetX = vRect.width / 2 - (centerX * newScale);
+        const newOffsetY = vRect.height / 2 - (centerY * newScale);
+
+        setScale(newScale);
+        setOffset({ x: newOffsetX, y: newOffsetY });
+    }, [switches, internetPos]);
+
+    // Handle centering trigger
+    useEffect(() => {
+        if (centeringTrigger > 0) {
+            centerView();
+        }
+    }, [centeringTrigger, centerView]);
+
+    // Initial centering
+    useEffect(() => {
+        const timer = setTimeout(centerView, 500);
+        return () => clearTimeout(timer);
+    }, [centerView]);
 
     // Path Highlighting Logic
     const activePathNodeIds = useMemo(() => {
@@ -296,6 +390,22 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
         if (currentId === 'internet') path.add('internet');
         return path;
     }, [selectedNodeId, switches]);
+
+    const nodeTiers = useMemo(() => {
+        const tiers = new Map<string, string>();
+        switches.forEach(sw => {
+            if (sw.id === 'internet') {
+                tiers.set(sw.id, 'Core Gateway');
+            } else if (sw.uplinkId === 'internet' || (coreNodeId && sw.id.toString() === coreNodeId.toString())) {
+                tiers.set(sw.id, 'Infrastructure');
+            } else if (sw.id.startsWith('port-device-')) {
+                tiers.set(sw.id, 'Endpoint');
+            } else {
+                tiers.set(sw.id, 'Distribution');
+            }
+        });
+        return tiers;
+    }, [switches, coreNodeId]);
 
     const matchesSearch = useCallback((sw: NetworkSwitch) => {
         if (!searchTerm) return true;
@@ -455,15 +565,89 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
         setScale(0.8);
     }, [switches, internetPos, onUpdateSwitches]);
 
+    const processedData = useMemo(() => {
+        if (viewMode === 'detailed') return { displaySwitches: switches, displayLinks: switches };
+
+        const groups: Record<string, { type: string, count: number, parentId: string, nodes: any[] }> = {};
+        const standalone: any[] = [];
+        const links: any[] = [];
+
+        switches.forEach(sw => {
+            // Only group devices that are explicitly marked as port devices or typical leaf devices
+            const isLeaf = sw.id.toString().startsWith('port-device-') ||
+                ['CCTV', 'PC', 'Printer', 'Phone', 'Access Point'].includes(sw.model);
+
+            if (isLeaf && sw.uplinkId && !expandedGroups.has(sw.uplinkId + '-' + sw.model)) {
+                const groupKey = `${sw.uplinkId}-${sw.model}`;
+                if (!groups[groupKey]) {
+                    groups[groupKey] = { type: sw.model, count: 0, parentId: sw.uplinkId, nodes: [] };
+                }
+                groups[groupKey].count++;
+                groups[groupKey].nodes.push(sw);
+            } else {
+                standalone.push(sw);
+            }
+        });
+
+        // Convert groups to pseudo-nodes
+        const groupedNodes = Object.entries(groups).map(([key, group]: [string, any]) => {
+            const avgX = group.nodes.reduce((sum: number, n: any) => sum + (n.posX || 0), 0) / group.count;
+            const avgY = group.nodes.reduce((sum: number, n: any) => sum + (n.posY || 0), 0) / group.count;
+
+            return {
+                id: `group-${key}`,
+                name: `${group.count} ${group.type}s`,
+                model: group.type,
+                posX: avgX,
+                posY: avgY,
+                uplinkId: group.parentId,
+                isGroup: true,
+                groupKey: key,
+                ports: [],
+                totalPorts: group.count
+            };
+        });
+
+        return {
+            displaySwitches: [...standalone, ...groupedNodes],
+            displayLinks: [...standalone, ...groupedNodes],
+            activeGroups: groups
+        };
+    }, [switches, viewMode, expandedGroups]);
+
     return (
         <div
-            className="w-full h-full relative overflow-hidden bg-[#080c14] rounded-lg border border-slate-800 shadow-2xl select-none flex"
+            className={`w-full h-full relative cursor-${isPanning ? 'grabbing' : (isUiLocked || isLocked ? 'default' : 'grab')} overflow-hidden bg-[#080c14] rounded-lg border border-slate-800 shadow-2xl select-none flex`}
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
         >
-            <div className="absolute top-0 left-0 w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none"></div>
-            <div className="absolute bottom-0 right-0 w-[40%] h-[40%] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+            {/* Cinematic Background Layer */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute inset-0 bg-[#030712]" />
+                {/* Nebula Gradients */}
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/10 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+                <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-600/5 blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
 
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(17,24,39,0.5),rgba(3,7,18,1))]" />
+                <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`, opacity: 0.03 }} />
+
+                {[...Array(30)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="absolute bg-white rounded-full opacity-20"
+                        style={{
+                            width: `${Math.random() * 2 + 1} px`,
+                            height: `${Math.random() * 2 + 1} px`,
+                            left: `${Math.random() * 100}% `,
+                            top: `${Math.random() * 100}% `,
+                            boxShadow: `0 0 ${Math.random() * 10 + 5}px rgba(255, 255, 255, 0.4)`
+                        }}
+                    />
+                ))}
+            </div>
+
+            {/* Floating Control Hub */}
             <div className="absolute bottom-6 left-6 right-6 md:right-auto z-[100] flex flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-4">
                 <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
                     <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 hover:bg-white/10 rounded-xl text-slate-400 transition-all active:scale-90"><Minus size={18} /></button>
@@ -472,14 +656,44 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
                 </div>
 
                 <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
-                    <button onClick={() => setIsLocked(!isLocked)} className={`p-3 rounded-xl transition-all active:scale-90 ${isLocked ? 'bg-amber-500/20 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
-                        {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
+                    <button onClick={() => setIsUiLocked(!isUiLocked)} className={`p-3 rounded-xl transition-all active:scale-90 ${isUiLocked ? 'bg-amber-500/20 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
+                        {isUiLocked ? <Lock size={18} /> : <Unlock size={18} />}
                     </button>
                     <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
                     <button onClick={() => setSnapToGrid(!snapToGrid)} className={`p-3 rounded-xl transition-all active:scale-90 ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
                         <Grid3X3 size={18} />
                     </button>
                 </div>
+
+                <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
+
+                <button
+                    onClick={() => {
+                        setViewMode(viewMode === 'simplified' ? 'detailed' : 'simplified');
+                        setExpandedGroups(new Set());
+                        showToast(`Switched to ${viewMode === 'simplified' ? 'Detailed' : 'Simplified'} View`, 'info');
+                    }}
+                    className={`group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 border border-white/10 ${viewMode === 'simplified' ? 'text-blue-400 border-blue-500/50 shadow-[0_0_20px_rgba(37,99,235,0.2)]' : 'text-slate-300 hover:text-white hover:border-blue-500/50'}`}
+                >
+                    {viewMode === 'simplified' ? <Maximize size={16} className="group-hover:scale-110 transition-transform" /> : <LayoutTemplate size={16} className="group-hover:scale-110 transition-transform" />}
+                    <span>{viewMode === 'simplified' ? 'Detailed View' : 'Simplified View'}</span>
+                </button>
+
+                {viewMode === 'simplified' && expandedGroups.size > 0 && (
+                    <>
+                        <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
+                        <button
+                            onClick={() => {
+                                setExpandedGroups(new Set());
+                                showToast('All groups collapsed', 'info');
+                            }}
+                            className="group flex items-center gap-3 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-500/30 transition-all shadow-2xl active:scale-95"
+                        >
+                            <Minimize size={16} className="group-hover:scale-110 transition-transform" />
+                            <span>Collapse All</span>
+                        </button>
+                    </>
+                )}
 
                 <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
 
@@ -547,9 +761,13 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
                                 <span className="text-slate-500 uppercase tracking-widest">Uplink Target</span>
                                 <span className="text-amber-500 uppercase">{selectedNode.uplinkId === 'internet' ? 'Internet Core Hub' : (switches.find(s => s.id === selectedNode.uplinkId)?.name || 'None/Internet')}</span>
                             </div>
+                            <div className="flex justify-between items-center text-[10px] font-bold">
+                                <span className="text-slate-500 uppercase tracking-widest">Global Tier</span>
+                                <span className="text-blue-500 uppercase">{nodeTiers.get(selectedNode.id)}</span>
+                            </div>
                         </div>
 
-                        <div className="h-24 w-full bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className="h-24 w-full bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden mb-6">
                             <div className="flex items-center gap-1.5 opacity-40 mb-3">
                                 {[3, 7, 4, 9, 5, 11, 6].map((h, i) => (
                                     <div key={i} className="w-1.5 bg-blue-500 rounded-full animate-pulse" style={{ height: `${h * 4}px`, animationDelay: `${i * 0.1}s` }}></div>
@@ -557,6 +775,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
                             </div>
                             <span className="text-[8px] font-mono font-black text-blue-500/60 uppercase tracking-[0.4em]">Monitoring Logical stream...</span>
                         </div>
+
+                        <button
+                            onClick={() => onViewProfile && onViewProfile(selectedNode)}
+                            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/20"
+                        >
+                            <Info size={16} />
+                            View Full Profile
+                        </button>
                     </div>
                 </div>
             )}
@@ -568,20 +794,84 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
             >
                 <div
                     className="min-w-[5000px] min-h-[5000px] p-[1000px] relative"
-                    style={{ backgroundImage: `radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)`, backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }}
+                    style={{
+                        backgroundImage: scale > 0.6 ? `radial-gradient(rgba(59,130,246,0.15) 1.5px, transparent 1.5px)` : 'none',
+                        backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                        backgroundPosition: '1000px 1000px'
+                    }}
                 >
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                    {/* Layer Tier Labels */}
+                    <div className="absolute left-[850px] top-[1000px] flex flex-col pointer-events-none space-y-[150px] opacity-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-[1px] bg-emerald-500" />
+                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.5em]">L1 Core Gateway</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-[1px] bg-blue-500" />
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">L2 Core Switching</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-[1px] bg-indigo-500" />
+                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.5em]">L3 Access Layer</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-[1px] bg-slate-500" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">Terminal Assets</span>
+                        </div>
+                    </div>
+                    <DiagramNode
+                        switchData={switches.find(s => coreNodeId && s.id.toString() === coreNodeId.toString()) || { id: 'internet', name: 'ISP CORE HUB', model: 'Gateway', ip: 'Public Static', totalPorts: 1, ports: [{ id: 'internet-p1', portNumber: 1, status: PortStatus.ACTIVE }], uptime: 'Online', location: 'External', rack: 'Core' } as NetworkSwitch}
+                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet' || (coreNodeId && selectedNodeId === coreNodeId)} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={setSelectedNodeId} isInternet searchTerm={searchTerm} tier={nodeTiers.get('internet') || 'Main Hub'}
+                    />
+
+                    {processedData.displaySwitches.map((sw: any) => {
+                        if (sw.id === 'internet' || (coreNodeId && sw.id.toString() === coreNodeId.toString())) return null;
+                        return (
+                            <DiagramNode
+                                key={sw.id}
+                                switchData={sw}
+                                x={sw.posX || 0}
+                                y={sw.posY || 0}
+                                scale={scale}
+                                isSelected={selectedNodeId === sw.id}
+                                isLocked={isLocked}
+                                snapToGrid={snapToGrid}
+                                onDragEnd={handleNodeDragEnd}
+                                onSelect={(id) => {
+                                    if (id.startsWith('group-')) {
+                                        const groupKey = sw.groupKey;
+                                        setExpandedGroups(prev => {
+                                            const next = new Set(prev);
+                                            if (next.has(groupKey)) {
+                                                next.delete(groupKey);
+                                                showToast(`Collapsing ${sw.name}`, 'info');
+                                            } else {
+                                                next.add(groupKey);
+                                                showToast(`Expanding ${sw.name}`, 'info');
+                                            }
+                                            return next;
+                                        });
+                                    } else {
+                                        setSelectedNodeId(id);
+                                    }
+                                }}
+                                onRelink={setRelinkingSwitch}
+                                searchTerm={searchTerm}
+                                tier={nodeTiers.get(sw.id)}
+                            />
+                        );
+                    })}
+
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-30">
                         <defs>
                             <filter id="link-glow-fx" x="-50%" y="-50%" width="200%" height="200%">
                                 <feGaussianBlur stdDeviation="3" result="blur" />
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
                             </filter>
                         </defs>
-                        {switches.map(sw => {
-                            if (sw.id === 'internet') return null;
+                        {processedData.displayLinks.map((sw: any) => {
+                            if (sw.id === 'internet' || (coreNodeId && sw.id.toString() === coreNodeId.toString())) return null;
                             if (!sw.uplinkId || sw.posX === undefined || sw.posY === undefined) return null;
-
-                            // Memoize individual link components inside the map to prevent full SVG re-render
                             return <TopologyLink
                                 key={`link-${sw.id}`}
                                 sw={sw}
@@ -593,30 +883,56 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ switches, inte
                             />;
                         })}
                     </svg>
-
-                    <DiagramNode
-                        switchData={{ id: 'internet', name: 'ISP CORE HUB', model: 'Gateway', ip: 'Public Static', totalPorts: 1, ports: [{ id: 'internet-p1', portNumber: 1, status: PortStatus.ACTIVE }], uptime: 'Online', location: 'External', rack: 'Core' } as NetworkSwitch}
-                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet'} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={setSelectedNodeId} isInternet searchTerm={searchTerm}
-                    />
-
-                    {switches.map(sw => (
-                        <DiagramNode
-                            key={sw.id}
-                            switchData={sw}
-                            x={sw.posX || 0}
-                            y={sw.posY || 0}
-                            scale={scale}
-                            isSelected={selectedNodeId === sw.id}
-                            isLocked={isLocked}
-                            snapToGrid={snapToGrid}
-                            onDragEnd={handleNodeDragEnd}
-                            onSelect={setSelectedNodeId}
-                            onRelink={setRelinkingSwitch}
-                            searchTerm={searchTerm}
-                        />
-                    ))}
                 </div>
             </div>
+
+            {/* Minimap Overlay */}
+            <div className="absolute bottom-6 right-6 hidden md:block z-[100]">
+                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl overflow-hidden w-48 h-32 relative">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.3)_0%,transparent_70%)]" />
+                    <div className="w-full h-full relative" style={{ transform: `scale(0.04)`, transformOrigin: 'top left' }}>
+                        <div
+                            className="bg-emerald-500 rounded-full w-[NODE_WIDTH] h-[NODE_HEIGHT] absolute"
+                            style={{ left: internetPos.x, top: internetPos.y }}
+                        />
+                        {switches.map(sw => (
+                            <div
+                                key={sw.id}
+                                className="bg-blue-500 rounded-full w-[NODE_WIDTH] h-[NODE_HEIGHT] absolute"
+                                style={{ left: sw.posX, top: sw.posY }}
+                            />
+                        ))}
+                    </div>
+                    {/* Viewport Indicator */}
+                    <div
+                        className="absolute border-2 border-blue-500/50 bg-blue-500/5 rounded pointer-events-none"
+                        style={{
+                            left: (-offset.x / scale) * 0.04 + 10,
+                            top: (-offset.y / scale) * 0.04 + 10,
+                            width: (window.innerWidth / scale) * 0.04,
+                            height: (window.innerHeight / scale) * 0.04
+                        }}
+                    />
+                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-slate-950/80 text-[8px] font-black text-slate-500 uppercase tracking-widest border border-white/5">Radar View</div>
+                </div>
+            </div>
+
+            {/* Empty State */}
+            {switches.length === 0 && !searchTerm && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[50]">
+                    <div className="relative mb-8">
+                        <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full" />
+                        <div className="relative bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/10 shadow-2xl flex flex-col items-center">
+                            <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-xl group">
+                                <Radio size={40} className="text-blue-500 animate-pulse group-hover:scale-110 transition-transform" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Nexus Empty</h3>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest max-w-[200px] text-center opacity-60">No active infrastructure nodes detected in the current sector.</p>
+                            <button onClick={handleAutoLayout} className="mt-8 px-8 py-3 bg-blue-600/90 hover:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95">Re-scan Area</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {relinkingSwitch && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">

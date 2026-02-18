@@ -9,7 +9,7 @@ import { ToastProvider } from './components/ToastProvider';
 
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
-import { MOCK_GROUPS } from './constants';
+import { MOCK_GROUPS, APP_MENU_STRUCTURE } from './constants';
 import { Language, translations, LanguageContext } from './translations';
 import {
   LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
@@ -42,7 +42,6 @@ const AuditLogManager = React.lazy(() => import('./components/AuditLogManager').
 const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
 const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
-const HelpdeskPublic = React.lazy(() => import('./components/HelpdeskPublic').then(m => ({ default: m.HelpdeskPublic })));
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 
 const PublicLayout: React.FC<{
@@ -191,7 +190,28 @@ const InternalApp: React.FC = () => {
     }, 5000);
 
     checkSession();
-    return () => clearTimeout(timeout);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("App.tsx: Auth state changed:", _event, !!session);
+      if (session?.user?.email) {
+        // Enforce internal domain restriction
+        if (!session.user.email.endsWith('@gesit.co.id')) {
+          console.warn("App.tsx: Access denied for non-internal email:", session.user.email);
+          await supabase.auth.signOut();
+          showToast('Access restricted to gesit.co.id domain.', 'error');
+          return;
+        }
+        handleLogin(session.user.email);
+      } else if (_event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -251,9 +271,10 @@ const InternalApp: React.FC = () => {
         .from('user_accounts')
         .select('*')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
       if (data) {
         const userProfile: UserAccount = {
           id: data.id,
@@ -274,9 +295,53 @@ const InternalApp: React.FC = () => {
         };
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
+      } else {
+        // Auto-registration for missing internal accounts
+        console.log("App.tsx: User not found in database, creating new account for", email);
+        const { data: { session } } = await supabase.auth.getSession();
+        const fullName = session?.user?.user_metadata?.full_name || email.split('@')[0];
+
+        const { data: newUser, error: createError } = await supabase
+          .from('user_accounts')
+          .insert([{
+            email: email,
+            username: email.split('@')[0],
+            full_name: fullName,
+            role: 'User',
+            groups: ['user'],
+            status: 'Active',
+            department: 'Other',
+            company: 'GESIT'
+          }])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        if (newUser) {
+          const userProfile: UserAccount = {
+            id: newUser.id,
+            email: newUser.email,
+            username: newUser.username,
+            fullName: newUser.full_name,
+            role: newUser.role,
+            groups: newUser.groups || [],
+            status: newUser.status,
+            department: newUser.department,
+            phone: newUser.phone,
+            address: newUser.address,
+            jobTitle: newUser.job_title,
+            avatarUrl: newUser.avatar_url,
+            company: newUser.company
+          };
+          setCurrentUser(userProfile);
+          setIsAuthenticated(true);
+          showToast('Welcome! Your account has been automatically created.', 'success');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
+      showToast('Login failed. Please contact administrator.', 'error');
     }
   };
 
@@ -401,11 +466,6 @@ const InternalApp: React.FC = () => {
           >
             <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
               <Routes location={location} key={location.pathname}>
-                <Route path="/helpdesk-public" element={
-                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                    <HelpdeskPublic />
-                  </motion.div>
-                } />
                 <Route path="/directory" element={
                   <PublicLayout
                     onLogout={() => setIsLogoutModalOpen(true)}
@@ -441,7 +501,7 @@ const InternalApp: React.FC = () => {
                   </motion.div>
                 } />
 
-                <Route path="/helpdesk" element={!isAuthenticated ? <Navigate to="/helpdesk-public" /> : <ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
+                <Route path="/helpdesk" element={<ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
 
                 <Route path="/*" element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -534,7 +594,58 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const role = currentUser?.role?.toLowerCase() || '';
+  const groups = currentUser?.groups || [];
   const currentView = location.pathname.substring(1) || 'dashboard';
+  const isITStaff = role.includes('admin') || role.includes('staff') || groups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
+
+  // Strict Access Control Logic
+  const allowedMenuIds = React.useMemo(() => {
+    const allowed = new Set<string>();
+    const role = currentUser?.role?.toLowerCase() || '';
+
+    // Admin/Super Admin bypass
+    if (role.includes('admin')) {
+      return null; // Null means all access
+    }
+
+    const userGroups = currentUser?.groups || [];
+    if (!userGroups || userGroups.length === 0) {
+      allowed.add('dashboard');
+      allowed.add('helpdesk');
+      allowed.add('extension-directory');
+      allowed.add('profile');
+      return allowed;
+    }
+
+    userGroups.forEach(groupId => {
+      const groupConfig = groupDefinitions?.find(g => g.id === groupId);
+      if (groupConfig && Array.isArray(groupConfig.allowedMenus)) {
+        groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
+      }
+    });
+
+    // Ensure parents are allowed if children are
+    const allMenus = APP_MENU_STRUCTURE || [];
+    allMenus.forEach(menu => {
+      if (menu.parentId && allowed.has(menu.id)) {
+        allowed.add(menu.parentId);
+      }
+    });
+
+    return allowed;
+  }, [currentUser, groupDefinitions]);
+
+  // Effect to handle redirection for unauthorized access
+  React.useEffect(() => {
+    // Only handle unauthorized routes (not home or profile)
+    if (allowedMenuIds && currentView !== 'dashboard' && currentView !== 'profile') {
+      if (!allowedMenuIds.has(currentView)) {
+        console.warn(`Unauthorized access attempt to: /${currentView}. Redirecting to Dashboard.`);
+        navigate('/', { replace: true });
+      }
+    }
+  }, [allowedMenuIds, currentView, navigate]);
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
@@ -581,7 +692,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
             <div className="max-w-[1800px] mx-auto h-full">
               {children ? children : (
                 <Routes>
-                  <Route index element={<MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} />} />
+                  <Route index element={isITStaff ? <MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} /> : <Navigate to="/helpdesk" replace />} />
                   <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
                   <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
                   <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />

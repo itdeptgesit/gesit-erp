@@ -18,6 +18,8 @@ import { useLanguage } from '../translations';
 import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
 import { useToast } from './ToastProvider';
+import { DeviceProfileDrawer } from './DeviceProfileDrawer';
+import { NetworkSummaryBar } from './NetworkSummaryBar';
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -40,6 +42,9 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'topology' | 'status' | 'wiring' | 'devices'>('topology');
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [profileDevice, setProfileDevice] = useState<NetworkSwitch | null>(null);
+    const [centeringTrigger, setCenteringTrigger] = useState(0);
     const [isPending, startTransition] = useTransition();
 
     // RBAC Logic
@@ -51,10 +56,29 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const fetchNetworkData = async () => {
         setIsLoading(true);
         try {
-            const { data: switchData } = await supabase.from('network_switches').select('*').order('display_order', { ascending: true });
+            const { data: switchData } = await supabase
+                .from('network_switches')
+                .select(`
+                    *,
+                    creator:created_by(full_name),
+                    updater:updated_by(full_name)
+                `)
+                .order('display_order', { ascending: true });
             const { data: portData } = await supabase.from('switch_ports').select('*');
 
             if (switchData) {
+                // Find Core Node first
+                const coreNode = switchData.find(sw => sw.uplink_id === null) ||
+                    switchData.find(sw => sw.id === 'internet') ||
+                    switchData.find(sw => sw.name.toLowerCase().includes('core hub')) ||
+                    switchData.find(sw => (sw.name || '').toLowerCase().includes('mikrotik')) ||
+                    switchData.find(sw => (sw.name || '').toLowerCase().includes('gateway'));
+
+                if (coreNode) {
+                    setInternetPos({ x: coreNode.pos_x ?? 1070, y: coreNode.pos_y ?? 120 });
+                    setCoreNodeId(coreNode.id);
+                }
+
                 // 1. Process Physical Switches
                 const mappedSwitches: NetworkSwitch[] = switchData.map(sw => {
                     const switchPorts = portData?.filter(p => p.switch_id === sw.id).map(p => ({
@@ -73,11 +97,6 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         uplinkDeviceId: p.uplink_device_id?.toString()
                     })) || [];
 
-                    if (sw.id === 'internet' || sw.name.toLowerCase().includes('core hub') || sw.name.toLowerCase().includes('mikrotik') || sw.name.toLowerCase().includes('gateway')) {
-                        setInternetPos({ x: sw.pos_x || 1070, y: sw.pos_y || 120 });
-                        setCoreNodeId(sw.id);
-                    }
-
                     return {
                         id: sw.id.toString(),
                         name: sw.name || 'Unnamed Device',
@@ -88,10 +107,16 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         serialNumber: sw.serial_number,
                         totalPorts: sw.total_ports || 0,
                         uptime: sw.uptime || 'Stable',
-                        posX: sw.pos_x || 1200,
-                        posY: sw.pos_y || 400,
+                        posX: sw.pos_x ?? 1200,
+                        posY: sw.pos_y ?? 400,
                         uplinkId: sw.uplink_id?.toString() || 'internet',
-                        ports: switchPorts.sort((a, b) => a.portNumber - b.portNumber)
+                        ports: switchPorts.sort((a, b) => a.portNumber - b.portNumber),
+                        status: sw.status || 'active',
+                        notes: sw.notes,
+                        createdBy: sw.creator?.full_name || sw.created_by,
+                        createdAt: sw.created_at,
+                        updatedBy: sw.updater?.full_name || sw.updated_by,
+                        updatedAt: sw.updated_at
                     };
                 });
 
@@ -166,6 +191,14 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     : sw
             );
             setInternetPos(newInternetPos);
+        } else {
+            // Fix: If a node matching coreNodeId was moved, sync the internetPos state too
+            const movedCore = updatedSwitches.find(sw => coreNodeId && sw.id.toString() === coreNodeId.toString());
+            if (movedCore && movedCore.posX !== undefined && movedCore.posY !== undefined) {
+                if (movedCore.posX !== internetPos.x || movedCore.posY !== internetPos.y) {
+                    setInternetPos({ x: movedCore.posX, y: movedCore.posY });
+                }
+            }
         }
         setSwitches(finalSwitches);
         setHasUnsavedChanges(true);
@@ -175,31 +208,41 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         if (!canManage) return;
         setIsSaving(true);
         try {
-            // 1. Update all physical switches positions
+            const updates = [];
+
+            // 1. Prepare updates for all physical switches positions
             for (const sw of switches) {
-                // Skip leaf nodes, hardcoded UI ID, and the explicit database core node ID
                 if (!sw.id.startsWith('port-device-') && sw.id !== 'internet' && sw.id.toString() !== coreNodeId?.toString()) {
-                    await supabase.from('network_switches').update({
-                        pos_x: Math.round(sw.posX || 1200),
-                        pos_y: Math.round(sw.posY || 400),
-                        uplink_id: sw.uplinkId === 'internet' ? null : sw.uplinkId
-                    }).eq('id', sw.id);
+                    updates.push(
+                        supabase.from('network_switches').update({
+                            pos_x: Math.round(sw.posX ?? 1200),
+                            pos_y: Math.round(sw.posY ?? 400),
+                            uplink_id: sw.uplinkId === 'internet' ? null : sw.uplinkId
+                        }).eq('id', sw.id)
+                    );
                 }
             }
 
             // 2. Explicitly update the Internet/Core node position in the database by its stored ID
             if (coreNodeId) {
-                const { error: coreError } = await supabase.from('network_switches')
-                    .update({
-                        pos_x: Math.round(internetPos.x),
-                        pos_y: Math.round(internetPos.y)
-                    })
-                    .eq('id', coreNodeId);
-
-                if (coreError) throw coreError;
+                updates.push(
+                    supabase.from('network_switches')
+                        .update({
+                            pos_x: Math.round(internetPos.x),
+                            pos_y: Math.round(internetPos.y)
+                        })
+                        .eq('id', coreNodeId)
+                );
             }
 
+            const results = await Promise.all(updates);
+            const errors = results.filter(r => r.error).map(r => r.error);
+            if (errors.length > 0) throw errors[0];
+
             setHasUnsavedChanges(false);
+            setCenteringTrigger(prev => prev + 1);
+            showToast("Circuit architecture synchronized successfully.", 'success');
+            await fetchNetworkData();
         } catch (err: any) {
             console.error("Save error:", err);
             showToast("Error saving layout: " + err.message, 'error');
@@ -246,7 +289,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         if (!canManage) return;
         setIsSaving(true);
         try {
-            const payload = {
+            const payload: any = {
                 name: deviceData.name,
                 location: deviceData.location,
                 rack: deviceData.rack,
@@ -255,7 +298,11 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 serial_number: deviceData.serialNumber,
                 display_order: deviceData.displayOrder,
                 total_ports: deviceData.totalPorts,
-                uplink_id: deviceData.uplinkId === 'internet' ? null : deviceData.uplinkId
+                uplink_id: deviceData.uplinkId === 'internet' ? null : deviceData.uplinkId,
+                status: deviceData.status,
+                notes: deviceData.notes,
+                updated_by: currentUser?.id,
+                updated_at: new Date().toISOString()
             };
 
             if (editingDevice) {
@@ -294,7 +341,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             } else {
                 const { data: newSwitch, error: switchError } = await supabase
                     .from('network_switches')
-                    .insert([{ ...payload, pos_x: 1200, pos_y: 400 }])
+                    .insert([{ ...payload, created_by: currentUser?.id, created_at: new Date().toISOString(), pos_x: 1200, pos_y: 400 }])
                     .select()
                     .single();
 
@@ -355,7 +402,8 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             "Location": sw.location,
             "Rack": sw.rack,
             "Total Ports": sw.totalPorts,
-            "Status": sw.uptime
+            "Governance Status": sw.status || "active",
+            "Technical Notes": sw.notes || "-"
         }));
 
         exportToExcel(dataToExport, `GESIT-NETWORK-NODES-${new Date().toISOString().split('T')[0]}`);
@@ -386,9 +434,14 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         exportToExcel(allPorts, `GESIT-WIRING-SCHEDULE-${new Date().toISOString().split('T')[0]}`);
     };
 
+    const handleViewProfile = (device: NetworkSwitch) => {
+        setProfileDevice(device);
+        setIsProfileOpen(true);
+    };
+
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
                         <Activity size={24} strokeWidth={2.5} />
@@ -428,6 +481,9 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 </div>
             </div>
 
+            {/* Summary Bar */}
+            <NetworkSummaryBar switches={switches.filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet')} />
+
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 w-full md:w-auto overflow-x-auto">
@@ -437,11 +493,27 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     </div>
                     <div className="relative flex-1 md:w-64"><input type="text" placeholder="Filter nodes..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-slate-800 dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>
                 </div>
-                <div className="p-0 flex-1 min-h-[550px]">
+                <div className="p-0 flex-1 min-h-[600px] relative">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-[650px] gap-4 transition-all duration-300"><RefreshCcw className="animate-spin text-blue-500" size={24} /><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning Infrastructure...</p></div>
                     ) : activeTab === 'topology' ? (
-                        <div className="h-[650px]"><TopologyDiagram switches={switches} onUpdateSwitches={handleUpdateSwitches} internetPos={internetPos} canManage={canManage} /></div>
+                        <div className="h-[750px] w-full relative overflow-hidden">
+                            <TopologyDiagram
+                                switches={switches}
+                                internetPos={internetPos}
+                                onUpdateSwitches={handleUpdateSwitches}
+                                selectedNodeId={selectedSwitch?.id || null}
+                                setSelectedNodeId={(id) => {
+                                    const sw = switches.find(s => s.id === id);
+                                    setSelectedSwitch(sw || null);
+                                }}
+                                searchTerm={searchTerm}
+                                isLocked={!canManage}
+                                onViewProfile={handleViewProfile}
+                                centeringTrigger={centeringTrigger}
+                                coreNodeId={coreNodeId?.toString()}
+                            />
+                        </div>
                     ) : (
                         <div className="p-6 md:p-8">
                             {activeTab === 'status' ? (
@@ -470,6 +542,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     )}
                 </div>
             </div>
+
             <PortDetailModal
                 port={selectedPort}
                 onClose={() => setSelectedPort(null)}
@@ -478,8 +551,25 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 onSave={handleSavePort}
                 availableSwitches={switches}
             />
-            <SwitchFormModal isOpen={isAddDeviceOpen} onClose={() => setIsAddDeviceOpen(false)} onSubmit={handleSaveDevice} initialData={editingDevice} />
-            <DangerConfirmModal isOpen={!!deleteDevice} onClose={() => setDeleteDevice(null)} onConfirm={executeDeleteDevice} title="Purge Hardware Node" message={`Are you sure you want to permanently erase ${deleteDevice?.name} and its associated circuit maps?`} isLoading={isSaving} />
+            <SwitchFormModal
+                isOpen={isAddDeviceOpen}
+                onClose={() => setIsAddDeviceOpen(false)}
+                onSubmit={handleSaveDevice}
+                initialData={editingDevice}
+            />
+            <DangerConfirmModal
+                isOpen={!!deleteDevice}
+                onClose={() => setDeleteDevice(null)}
+                onConfirm={executeDeleteDevice}
+                title="Purge Hardware Node"
+                message={`Are you sure you want to permanently erase ${deleteDevice?.name} and its associated circuit maps?`}
+                isLoading={isSaving}
+            />
+            <DeviceProfileDrawer
+                device={profileDevice}
+                isOpen={isProfileOpen}
+                onClose={() => setIsProfileOpen(false)}
+            />
         </div>
     );
 };

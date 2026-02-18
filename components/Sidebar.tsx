@@ -70,6 +70,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         if (!userGroups || !Array.isArray(userGroups) || userGroups.length === 0) {
             allowed.add('dashboard');
+            allowed.add('helpdesk');
+            allowed.add('extension-directory');
+            allowed.add('profile');
             return allowed;
         }
         userGroups.forEach(groupId => {
@@ -96,6 +99,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (!allowedMenuIds.has(parent.id)) return null;
             const children = allMenus.filter(m => m.parentId === parent.id);
             const allowedChildren = children.filter(child => allowedMenuIds.has(child.id));
+
+            // If dashboard has children, add a "Summary" link to the parent itself (only for IT Staff)
+            const finalChildren = [...allowedChildren];
+            const roleStr = userRole?.toLowerCase() || '';
+            const isITorAdmin = roleStr.includes('admin') || roleStr.includes('staff') || userGroups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
+
+            if (parent.id === 'dashboard' && allowedChildren.length > 0 && isITorAdmin) {
+                finalChildren.unshift({ id: 'dashboard', label: 'Summary', iconName: 'LayoutGrid' });
+            }
+
             const getLabel = (id: string) => {
                 const key = id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any;
                 return t(key) || parent.label;
@@ -104,9 +117,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 id: parent.id,
                 label: getLabel(parent.id),
                 icon: ICON_MAP[parent.iconName] || LayoutGrid,
-                subItems: allowedChildren.length > 0 ? allowedChildren.map(c => ({
+                subItems: finalChildren.length > 0 ? finalChildren.map(c => ({
                     id: c.id,
-                    label: getLabel(c.id),
+                    label: c.label === parent.label && c.id === parent.id ? 'Summary' : getLabel(c.id),
                     icon: ICON_MAP[c.iconName]
                 })) : undefined
             };
@@ -151,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {item.subItems?.map((sub: any) => (
                                 <NavLink
                                     key={sub.id}
-                                    to={`/${sub.id}`}
+                                    to={sub.id === 'dashboard' ? '/' : `/${sub.id}`}
                                     onClick={onClose}
                                     className={({ isActive }) => `w-full text-left pl-6 pr-4 py-2 rounded-lg text-xs font-semibold transition-all ${isActive
                                         ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50'

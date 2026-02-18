@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Cpu, Server, PhoneCall, Video, Radio, Database, HardDrive, Hash, Layers, Save, Cable, MapPin, ListOrdered, Shield, Link2 } from 'lucide-react';
-import { NetworkSwitch, SwitchPort, PortStatus, DeviceType } from '../types';
+import { NetworkSwitch, SwitchPort, PortStatus, DeviceType, DeviceStatus } from '../types';
 import { supabase } from '../lib/supabaseClient';
 
 interface SwitchFormModalProps {
@@ -30,7 +30,9 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
         extRange: '100-199',
         pairs: '50',
         cableType: 'Cat6' as any,
-        uplinkId: 'internet'
+        uplinkId: 'internet',
+        status: 'active' as DeviceStatus,
+        notes: ''
     });
 
     useEffect(() => {
@@ -56,7 +58,9 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                     extRange: '100-199',
                     pairs: (initialData.totalPorts || 0).toString(),
                     cableType: initialData.ports?.[0]?.cableType || 'Cat6',
-                    uplinkId: initialData.uplinkId || 'internet'
+                    uplinkId: initialData.uplinkId || 'internet',
+                    status: (initialData.status as DeviceStatus) || DeviceStatus.ACTIVE,
+                    notes: initialData.notes || ''
                 });
 
                 const modelLower = (initialData.model || '').toLowerCase();
@@ -68,7 +72,9 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                 setFormData({
                     name: '', location: '', rack: '', model: '', ip: '', serialNumber: '', displayOrder: 1, totalPorts: 24,
                     vlanDefault: '10', storage: '4TB', channels: '16', extRange: '100-199', pairs: '50',
-                    cableType: 'Cat6', uplinkId: 'internet'
+                    cableType: 'Cat6', uplinkId: 'internet',
+                    status: DeviceStatus.ACTIVE,
+                    notes: ''
                 });
                 setCategory('Network');
             }
@@ -117,6 +123,8 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                 displayOrder: Number(formData.displayOrder),
                 totalPorts: targetPorts,
                 uplinkId: formData.uplinkId,
+                status: formData.status,
+                notes: formData.notes,
                 ports: currentPorts
             };
             onSubmit(updatedDevice);
@@ -163,6 +171,8 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                 uptime: 'Stable',
                 ports: newPorts,
                 uplinkId: formData.uplinkId,
+                status: formData.status,
+                notes: formData.notes,
                 posX: 1200, // Safe default position
                 posY: 400
             };
@@ -317,6 +327,19 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                     <option value="Fiber">Fiber Optic</option>
                                     <option value="Coaxial">Coaxial</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Governance Status</label>
+                                <select required className={inputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as DeviceStatus })}>
+                                    <option value={DeviceStatus.ACTIVE}>Active / Online</option>
+                                    <option value={DeviceStatus.SPARE}>Spare / Inventory</option>
+                                    <option value={DeviceStatus.MAINTENANCE}>Under Maintenance</option>
+                                    <option value={DeviceStatus.DECOMMISSIONED}>Decommissioned</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className={labelClass}>Documentation Notes</label>
+                                <textarea className={`${inputClass} h-24 resize-none`} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Add technical notes, port assignment rules, or maintenance history..." />
                             </div>
                         </div>
                     </section>
