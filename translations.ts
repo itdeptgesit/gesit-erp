@@ -87,6 +87,7 @@ export const translations = {
     resetBtn: 'Reset',
     backToLogin: 'Back',
     resetSuccess: 'Sent.',
+    googleSignIn: 'Sign in with Google',
 
     // Modals & Confirmation
     confirmDestruction: 'Confirm',
@@ -262,6 +263,7 @@ export const translations = {
     resetBtn: 'Kirim',
     backToLogin: 'Kembali',
     resetSuccess: 'Terkirim.',
+    googleSignIn: 'Masuk dengan Google',
 
     // Modals & Confirmation
     confirmDestruction: 'Konfirmasi',
@@ -359,7 +361,7 @@ export const translations = {
 export interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: keyof typeof translations.en) => string;
+  t: (key: keyof typeof translations.en) => string; // ensures type safety based on 'en' keys
 }
 
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);

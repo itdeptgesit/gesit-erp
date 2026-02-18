@@ -26,6 +26,13 @@ export enum DeviceType {
   FACEPLATE = 'Faceplate Outlet'
 }
 
+export enum DeviceStatus {
+  ACTIVE = 'active',
+  SPARE = 'spare',
+  MAINTENANCE = 'maintenance',
+  DECOMMISSIONED = 'decommissioned'
+}
+
 export interface HelpdeskTicket {
   id: number;
   ticketId: string;
@@ -123,6 +130,14 @@ export interface NetworkSwitch {
   uplinkId?: string;
   uplinkPort?: number;
   vlan?: number;
+  status?: DeviceStatus | string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+  isGroup?: boolean;
+  groupKey?: string;
 }
 
 export interface DashboardStat {

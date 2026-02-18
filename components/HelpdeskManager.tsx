@@ -7,7 +7,7 @@ import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle, MessageSquare, X, Loader2, Send, ClipboardList,
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, CircleDot, RotateCcw,
     Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Settings, Check,
-    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star
+    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StatCard } from './StatCard';
@@ -912,6 +912,24 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     };
 
+    const handleDownloadImage = async (url: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = url.split('/').pop()?.split('?')[0] || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank');
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-12">
             {isITStaff && (
@@ -1165,7 +1183,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                                                 <img
                                                                                     src={imageUrl}
                                                                                     alt="Attachment"
-                                                                                    className="max-w-full hover:scale-105 transition-transform duration-500 bg-black/20"
+                                                                                    className="max-w-full max-h-[300px] object-contain hover:scale-105 transition-transform duration-500 bg-black/20"
                                                                                     loading="lazy"
                                                                                 />
                                                                             </div>
@@ -1949,25 +1967,27 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     </AnimatePresence >
 
                     {/* Image Preview Modal (Keep existing logic) */}
-                    {
-                        previewImage && (
-                            <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setPreviewImage(null)}>
-                                <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
-                                <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                                    {previewImage.toLowerCase().includes('.pdf') ? (
-                                        <iframe
-                                            src={previewImage}
-                                            className="w-full h-full max-w-5xl bg-white rounded-2xl shadow-2xl"
-                                            title="Preview"
-                                        />
-                                    ) : (
-                                        <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    }
+
                 </>
+            )}
+
+            {/* Image Preview Modal (Now available for both views) */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setPreviewImage(null)}>
+                    <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
+                    <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
+                    <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                        {previewImage.toLowerCase().includes('.pdf') ? (
+                            <iframe
+                                src={previewImage}
+                                className="w-full h-full max-w-5xl bg-white rounded-2xl shadow-2xl"
+                                title="Preview"
+                            />
+                        ) : (
+                            <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+                        )}
+                    </div>
+                </div>
             )}
 
             <DangerConfirmModal
