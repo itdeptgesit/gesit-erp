@@ -597,7 +597,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   const role = currentUser?.role?.toLowerCase() || '';
   const groups = currentUser?.groups || [];
   const currentView = location.pathname.substring(1) || 'dashboard';
-  const isITStaff = role.includes('admin') || role.includes('staff') || groups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
+  const isITStaff = role.includes('admin') || groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support'));
 
   // Strict Access Control Logic
   const allowedMenuIds = React.useMemo(() => {

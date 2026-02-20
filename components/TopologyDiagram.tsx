@@ -144,6 +144,12 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
             >
                 {/* Node Glow Backdrop */}
                 <div className={`absolute inset-0 rounded-2xl blur-xl opacity-20 transition-all ${isSelected ? 'bg-blue-500' : isInternet ? 'bg-emerald-500' : 'bg-transparent'}`} />
+
+                {/* Search Highlight Pulse */}
+                {searchTerm && isMatched && (
+                    <div className="absolute -inset-2 border-2 border-blue-400 rounded-3xl animate-[ping_2s_infinite] opacity-40 pointer-events-none" />
+                )}
+
                 {!isInternet && !isInternetNode && (
                     <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
                         <circle
@@ -236,8 +242,19 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
     const midY = startY + (endY - startY) * 0.45;
     const pathData = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${startY + (endY - startY) * 0.55}, ${endX} ${endY}`;
 
+    // Dynamic Link Styling based on Child Usage
+    const activePorts = sw.ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
+    const totalPorts = sw.totalPorts || 1;
+    const usagePercent = (activePorts / totalPorts) * 100;
+
+    // Determine path speed based on tier/type (Hypothetical)
+    const isHighSpeed = sw.model === 'Router' || sw.model === 'Server';
+    const animationDur = isHighSpeed ? '1.5s' : (usagePercent > 70 ? '3s' : '5s');
+
     let color = isInternetLink ? '#10b981' : '#3b82f6';
-    if (sw.vlan) {
+    if (usagePercent > 85) color = '#f43f5e'; // Rose for overload
+    else if (usagePercent > 60) color = '#f59e0b'; // Amber for high cap
+    else if (sw.vlan) {
         if (sw.vlan === 10) color = '#22d3ee';
         else if (sw.vlan === 20) color = '#fbbf24';
         else if (sw.vlan === 30) color = '#f472b6';
@@ -245,9 +262,9 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
     }
     const isPathActive = (activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId))) || isHovered;
 
-    const strokeWidth = isInternetLink ? 2 : (isPathActive ? 3 : 1.5);
-    const opacity = isInternetLink ? 'opacity-70' : (isPathActive ? 'opacity-100' : 'opacity-50');
-    const pulseScale = isPathActive ? 1.5 : 1;
+    const strokeWidth = isInternetLink ? 2.5 : (isPathActive ? 4 : (usagePercent > 70 ? 2.5 : 1.5));
+    const opacity = isInternetLink ? 'opacity-80' : (isPathActive ? 'opacity-100' : 'opacity-40');
+    const pulseScale = isPathActive ? 1.8 : 1;
 
     return (
         <g
@@ -261,17 +278,15 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
             {/* Base Connection Path */}
             <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className={`${opacity} transition-all duration-300`} />
 
-            {/* Glowing Dotted Path */}
-            <path d={pathData} stroke={color} strokeWidth={strokeWidth} strokeDasharray={isPathActive ? '12,12' : '4,16'} fill="none" className="opacity-100" filter="url(#link-glow-fx)">
-                <animate attributeName="stroke-dashoffset" from="200" to="0" dur={isPathActive ? '4s' : '8s'} repeatCount="indefinite" />
-            </path>
+            {/* Glowing Solid Path */}
+            <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className="opacity-100" filter="url(#link-glow-fx)" />
 
             {/* Travel Pulse (Data Packet Animation) */}
             <circle r={2 * pulseScale} fill={color} filter="url(#link-glow-fx)">
-                <animateMotion path={pathData} dur={isPathActive ? '2s' : '4s'} repeatCount="indefinite" />
+                <animateMotion path={pathData} dur={animationDur} repeatCount="indefinite" />
             </circle>
-            <circle r={3 * pulseScale} fill={color} className="opacity-20">
-                <animateMotion path={pathData} dur={isPathActive ? '2s' : '4s'} repeatCount="indefinite" />
+            <circle r={3 * pulseScale} fill={color} className="opacity-30">
+                <animateMotion path={pathData} dur={animationDur} repeatCount="indefinite" />
             </circle>
 
             {/* Label Badge */}
@@ -787,6 +802,58 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 </div>
             )}
 
+            {/* Infrastructure Legend */}
+            <div className="absolute top-24 left-6 z-[90] bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-700 hidden lg:block">
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">Carrier Tiers</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[9px] font-bold text-slate-300">ISP Backbone</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                <span className="text-[9px] font-bold text-slate-300">Intranet Link</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">Logic Load (Heatmap)</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 opacity-60">
+                                <div className="w-3 h-0.5 rounded-full bg-slate-500" />
+                                <span className="text-[8px] font-bold text-slate-400">Normal (0-60%)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-0.5 rounded-full bg-amber-500" />
+                                <span className="text-[9px] font-bold text-amber-500/80">Heavy (60-85%)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-0.5 rounded-full bg-rose-500 animate-pulse" />
+                                <span className="text-[9px] font-bold text-rose-500">Critical ({'>'}85%)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">VLAN Segregation</span>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            {[
+                                { id: 10, name: 'MGMT', color: 'bg-cyan-400' },
+                                { id: 20, name: 'OFFICE', color: 'bg-amber-400' },
+                                { id: 30, name: 'CCTV', color: 'bg-pink-400' },
+                                { id: 60, name: 'IOT', color: 'bg-purple-400' }
+                            ].map(v => (
+                                <div key={v.id} className="flex items-center gap-2">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${v.color}`} />
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase">{v.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div
                 ref={diagramRef}
                 className="absolute inset-0 transition-transform duration-100 ease-out"
@@ -864,8 +931,8 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
 
                     <svg className="absolute inset-0 w-full h-full pointer-events-none z-30">
                         <defs>
-                            <filter id="link-glow-fx" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="3" result="blur" />
+                            <filter id="link-glow-fx" x="-5000" y="-5000" width="10000" height="10000" filterUnits="userSpaceOnUse">
+                                <feGaussianBlur stdDeviation="6" result="blur" />
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
                             </filter>
                         </defs>
