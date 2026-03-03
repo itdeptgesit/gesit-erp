@@ -3,6 +3,7 @@ import './index.css';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 console.log("Gesit ERP: index.tsx loaded. Attempting to mount...");
 
@@ -18,7 +19,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar } from './components/Sidebar';
-import { TopNavigation } from './components/TopNavigation';
+import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastProvider } from './components/ToastProvider';
 
@@ -43,6 +43,8 @@ const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
 const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
+const TaskplusDashboard = React.lazy(() => import('./components/TaskplusDashboard').then(m => ({ default: m.TaskplusDashboard })));
+const WorknestDashboard = React.lazy(() => import('./components/WorknestDashboard').then(m => ({ default: m.default })));
 
 const PublicLayout: React.FC<{
   children: React.ReactNode;
@@ -60,50 +62,58 @@ const PublicLayout: React.FC<{
   const location = useLocation();
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#020617] transition-colors duration-300">
-      <TopNavigation
-        onMenuClick={() => setIsMobileSidebarOpen(true)}
-        onLogout={onLogout}
-        userGroups={currentUser?.groups || []}
-        userRole={currentUser?.role}
-        groupDefinitions={groupDefinitions}
-        user={currentUser ? {
-          name: currentUser.fullName,
-          role: currentUser.role,
-          email: currentUser.email,
-          jobTitle: currentUser.jobTitle,
-          avatarUrl: currentUser.avatarUrl
-        } : undefined}
-        appName={appSettings.name}
-        logoUrl={appSettings.logo}
-        variant={variant}
-        searchProps={searchProps}
-        floorFilter={appSettings.floorFilter}
-        onFloorFilterChange={appSettings.onFloorFilterChange}
-        onShare={appSettings.onShare}
-      />
+    <div className="flex h-screen bg-slate-50 dark:bg-[#050d21] transition-colors duration-300 overflow-hidden relative">
+      {/* Premium Background Accents */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/5 dark:bg-blue-500/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/5 dark:bg-violet-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.06)_0%,transparent_65%)] pointer-events-none" />
 
-      <main className="flex-1 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto h-full">
-          {children}
-        </div>
-      </main>
+      {variant !== 'public' && (
+        <Sidebar
+          currentView={location.pathname.substring(1) || 'dashboard'}
+          onClose={() => setIsMobileSidebarOpen(false)}
+          isMobileOpen={isMobileSidebarOpen}
+          userGroups={currentUser?.groups || []}
+          userName={currentUser?.fullName || 'User'}
+          userRole={currentUser?.role}
+          groupDefinitions={groupDefinitions}
+          isCollapsed={false}
+          setIsCollapsed={() => { }}
+          appName={appSettings.name}
+          logoUrl={appSettings.logo}
+        />
+      )}
 
-      <Footer />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header
+          onMenuClick={variant === 'public' ? undefined : () => setIsMobileSidebarOpen(true)}
+          onLogout={onLogout}
+          onNavigate={(v) => { /* public layout navigate */ }}
+          userGroups={currentUser?.groups || []}
+          userRole={currentUser?.role}
+          groupDefinitions={groupDefinitions}
+          currentView={location.pathname.substring(1)}
+          user={currentUser ? {
+            name: currentUser.fullName,
+            role: currentUser.role,
+            email: currentUser.email,
+            jobTitle: currentUser.jobTitle,
+            avatarUrl: currentUser.avatarUrl
+          } : undefined}
+          appName={appSettings.name}
+          logoUrl={appSettings.logo}
+          forceShowLogo={variant === 'public'}
+        />
 
-      <Sidebar
-        currentView={location.pathname.substring(1) || 'dashboard'}
-        onClose={() => setIsMobileSidebarOpen(false)}
-        isMobileOpen={isMobileSidebarOpen}
-        userGroups={currentUser?.groups || []}
-        userName={currentUser?.fullName || 'User'}
-        userRole={currentUser?.role}
-        groupDefinitions={groupDefinitions}
-        isCollapsed={false}
-        setIsCollapsed={() => { }}
-        appName={appSettings.name}
-        logoUrl={appSettings.logo}
-      />
+        <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
+          <div className="flex-1 p-4 md:p-8">
+            <div className="max-w-7xl mx-auto h-full text-slate-900 dark:text-slate-100">
+              {children}
+            </div>
+          </div>
+          <Footer />
+        </main>
+      </div>
     </div>
   );
 };
@@ -114,7 +124,7 @@ const InternalApp: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [groupDefinitions, setGroupDefinitions] = useState<UserGroup[]>(MOCK_GROUPS);
   const [appSettings, setAppSettings] = useState({
-    name: 'GESIT WORK',
+    name: 'TASKPLUS',
     logo: '/image/logo.png',
     primaryColor: '#2563eb',
     fontFamily: 'Inter'
@@ -135,7 +145,7 @@ const InternalApp: React.FC = () => {
     "Initializing core modules...",
     "Calibrating technical nodes...",
     "Authenticating credentials...",
-    "Commencing Gesit Work..."
+    "Commencing GESIT..."
   ];
 
   const navigate = useNavigate();
@@ -291,7 +301,8 @@ const InternalApp: React.FC = () => {
           supervisorId: data.supervisor_id?.toString(),
           managerId: data.manager_id?.toString(),
           avatarUrl: data.avatar_url,
-          company: data.company
+          company: data.company,
+          isHelpdeskSupport: data.is_helpdesk_support
         };
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
@@ -332,7 +343,8 @@ const InternalApp: React.FC = () => {
             address: newUser.address,
             jobTitle: newUser.job_title,
             avatarUrl: newUser.avatar_url,
-            company: newUser.company
+            company: newUser.company,
+            isHelpdeskSupport: newUser.is_helpdesk_support
           };
           setCurrentUser(userProfile);
           setIsAuthenticated(true);
@@ -377,78 +389,49 @@ const InternalApp: React.FC = () => {
           <motion.div
             key="preloader"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.05, filter: "blur(20px)" }}
-            transition={{ duration: 0.8, ease: "circOut" }}
-            className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-[#020617] overflow-hidden"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-white dark:bg-slate-950"
           >
-            {/* Animated Mesh Gradient Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="relative flex flex-col items-center gap-8">
+              {/* Minimalist Logo */}
               <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 90, 180, 270, 360],
-                  x: [0, 100, 0, -100, 0],
-                  y: [0, -50, 50, -50, 0],
-                }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[120px] transform-gpu"
-              />
-              <motion.div
-                animate={{
-                  scale: [1.2, 1, 1.2],
-                  rotate: [360, 270, 180, 90, 0],
-                  x: [0, -100, 0, 100, 0],
-                  y: [0, 50, -50, 50, 0],
-                }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-blue-500/10 rounded-full blur-[100px] transform-gpu"
-              />
-            </div>
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="flex items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Zap className="text-primary-foreground" size={24} fill="currentColor" />
+                </div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  GESIT<span className="text-primary">.</span>
+                </h1>
+              </motion.div>
 
-            <div className="relative z-10 flex flex-col items-center gap-12">
-              <div className="relative w-24 h-24">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 border-2 border-blue-500/20 rounded-[2.5rem]"
-                />
-                <motion.div
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-2 border-2 border-blue-400/10 rounded-[2rem]"
-                />
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-600/40 border border-blue-400/30">
-                    <Zap className="text-white fill-white/20" size={32} />
-                  </div>
-                </motion.div>
-              </div>
-
-              <div className="flex flex-col items-center gap-6">
-                <div className="flex flex-col items-center gap-2">
-                  <h1 className="text-2xl font-black text-white tracking-[0.2em] mb-1">
-                    GESIT<span className="text-blue-500">WORK</span>
-                  </h1>
-                  <div className="h-[2px] w-48 bg-slate-800 rounded-full overflow-hidden relative">
-                    <motion.div
-                      animate={{ x: ["-100%", "100%"] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                    />
-                  </div>
+              {/* Clean Loading Indicator */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-48 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div
+                    animate={{
+                      x: ["-100%", "100%"]
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                    className="w-1/2 h-full bg-primary"
+                  />
                 </div>
 
                 <AnimatePresence mode="wait">
                   <motion.p
                     key={loadingMsgIdx}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="text-[10px] font-bold uppercase tracking-[0.4em] text-blue-400/60 text-center min-w-[300px]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
                   >
                     {LOADING_MESSAGES[loadingMsgIdx]}
                   </motion.p>
@@ -484,6 +467,7 @@ const InternalApp: React.FC = () => {
                       currentUser={currentUser}
                       variant="integrated"
                       externalFloorFilter={globalFloorFilter}
+                      onFloorFilterChange={setGlobalFloorFilter}
                     />
                   </PublicLayout>
                 } />
@@ -502,6 +486,7 @@ const InternalApp: React.FC = () => {
                 } />
 
                 <Route path="/helpdesk" element={<ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
+                <Route path="/asset-loan" element={<ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<AssetLoanManager currentUser={currentUser} />} /></ProtectedRoute>} />
 
                 <Route path="/*" element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -597,7 +582,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   const role = currentUser?.role?.toLowerCase() || '';
   const groups = currentUser?.groups || [];
   const currentView = location.pathname.substring(1) || 'dashboard';
-  const isITStaff = role.includes('admin') || groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support'));
+  const isITStaff = role.includes('admin') || groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support')) || currentUser?.isHelpdeskSupport === true;
 
   // Strict Access Control Logic
   const allowedMenuIds = React.useMemo(() => {
@@ -611,8 +596,9 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
 
     const userGroups = currentUser?.groups || [];
     if (!userGroups || userGroups.length === 0) {
-      allowed.add('dashboard');
+      // Remove 'dashboard' from default allowed for regular users
       allowed.add('helpdesk');
+      allowed.add('asset-loan');
       allowed.add('extension-directory');
       allowed.add('profile');
       return allowed;
@@ -638,17 +624,24 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
 
   // Effect to handle redirection for unauthorized access
   React.useEffect(() => {
-    // Only handle unauthorized routes (not home or profile)
+    // Redirect regular users from home to helpdesk
+    if (currentView === 'dashboard' && !isITStaff) {
+      navigate('/helpdesk', { replace: true });
+      return;
+    }
+
+    // Handle unauthorized routes
     if (allowedMenuIds && currentView !== 'dashboard' && currentView !== 'profile') {
       if (!allowedMenuIds.has(currentView)) {
-        console.warn(`Unauthorized access attempt to: /${currentView}. Redirecting to Dashboard.`);
-        navigate('/', { replace: true });
+        console.warn(`Unauthorized access attempt to: /${currentView}. Redirecting.`);
+        navigate(isITStaff ? '/' : '/helpdesk', { replace: true });
       }
     }
-  }, [allowedMenuIds, currentView, navigate]);
+  }, [allowedMenuIds, currentView, navigate, isITStaff]);
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+    <div className="flex h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-300">
+      {/* Sidebar - visible on desktop, overlay on mobile */}
       <Sidebar
         currentView={currentView}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -663,36 +656,33 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
         logoUrl={appSettings.logo}
       />
 
-      <TopNavigation
-        onMenuClick={() => setIsMobileSidebarOpen(true)}
-        onLogout={() => setIsLogoutModalOpen(true)}
-        userGroups={currentUser?.groups || []}
-        userRole={currentUser?.role}
-        groupDefinitions={groupDefinitions}
-        user={currentUser ? {
-          name: currentUser.fullName,
-          role: currentUser.role,
-          email: currentUser.email,
-          jobTitle: currentUser.jobTitle,
-          avatarUrl: currentUser.avatarUrl
-        } : undefined}
-        appName={appSettings.name}
-        logoUrl={appSettings.logo}
-        floorFilter={floorFilter}
-        onFloorFilterChange={onFloorFilterChange}
-        onShare={onShare}
-      />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
+          onLogout={() => setIsLogoutModalOpen(true)}
+          onNavigate={(v) => navigate(`/${v}`)}
+          currentView={currentView}
+          userGroups={currentUser?.groups || []}
+          userRole={currentUser?.role}
+          groupDefinitions={groupDefinitions}
+          user={currentUser ? {
+            name: currentUser.fullName,
+            role: currentUser.role,
+            email: currentUser.email,
+            jobTitle: currentUser.jobTitle,
+            avatarUrl: currentUser.avatarUrl
+          } : undefined}
+          appName={appSettings.name}
+          logoUrl={appSettings.logo}
+        />
 
-      <div className="flex-1 flex overflow-hidden relative">
-        <main className={`flex-1 overflow-y-auto flex flex-col custom-scrollbar`}>
-          <div className="min-h-[40px] md:min-h-[36px] bg-transparent">
-            {/* Announcement Banner placeholder or similar */}
-          </div>
-          <div className="flex-1 p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-slate-50 dark:bg-slate-950">
+          <div className="flex-1 p-3 md:p-6 lg:p-8">
             <div className="max-w-[1800px] mx-auto h-full">
               {children ? children : (
                 <Routes>
-                  <Route index element={isITStaff ? <MainDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} /> : <Navigate to="/helpdesk" replace />} />
+                  <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
                   <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
                   <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
                   <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
@@ -702,7 +692,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
                   <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
                   <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
                   <Route path="files" element={<FileManager currentUser={currentUser} />} />
-                  <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={floorFilter} />} />
+                  <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={floorFilter} onFloorFilterChange={onFloorFilterChange} />} />
                   <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
                   <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
                   <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />

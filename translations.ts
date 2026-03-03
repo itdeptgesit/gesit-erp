@@ -45,8 +45,8 @@ export const translations = {
     masterDepartment: 'Departments',
     masterCategory: 'Asset Categories',
     masterGroup: 'Permissions',
-    extensionDirectory: 'TGC Directory',
-    helpdesk: 'Helpdesk',
+    extensionDirectory: 'Phone Directory',
+    helpdesk: 'Ticketing',
     announcements: 'News & Feed',
     maintenance: 'Nucleus Wipe',
 
@@ -178,7 +178,33 @@ export const translations = {
     privacy: 'Policy',
     auditLogs: 'Audit Logs',
     masterData: 'Master Data',
-    permissions: 'Permissions'
+    permissions: 'Permissions',
+
+    // Helpdesk / Ticketing
+    ticketingCenter: 'Ticketing Center',
+    ticketingManager: 'Ticketing Manager',
+    ticketingSubtitle: 'Technical Support & Digital Assistance',
+    submitTicket: 'Submit Ticket',
+    myTickets: 'My Tickets',
+    archive: 'Archive',
+    totalRequests: 'Total Requests',
+    awaitingAction: 'Awaiting Action',
+    activeSessions: 'Active Sessions',
+    resolvedIncidents: 'Resolved Incidents',
+    reportSent: 'Report Sent!',
+    reportSuccessDesc: 'Your help request has been successfully created. Our team will review it shortly.',
+    returnToTicketing: 'Return to Ticketing',
+    submitSupportTicket: 'Submit Support Ticket',
+    supportTeamBackSoon: 'Our assistance team will get back to you as soon as possible.',
+    subject: 'Subject',
+    description: 'Description',
+    subjectPlaceholder: 'Briefly explain what\'s happening...',
+    descPlaceholder: 'Please provide all the necessary details...',
+    submitReport: 'Submit Report',
+    selectTicketTip: 'Select a ticket to view conversation',
+    centerView: 'Center View',
+    managementMode: 'Management',
+    reportId: 'Report ID'
   },
   id: {
     // General
@@ -221,8 +247,8 @@ export const translations = {
     masterDepartment: 'Departemen',
     masterCategory: 'Kategori Aset',
     masterGroup: 'Hak Akses',
-    extensionDirectory: 'Direktori TGC',
-    helpdesk: 'Bantuan',
+    extensionDirectory: 'Direktori Telepon',
+    helpdesk: 'Ticketing',
     announcements: 'Berita & Feed',
     maintenance: 'Reset Nuklir',
 
@@ -354,7 +380,33 @@ export const translations = {
     privacy: 'Kebijakan',
     auditLogs: 'Log Audit',
     masterData: 'Data Master',
-    permissions: 'Hak Akses'
+    permissions: 'Hak Akses',
+
+    // Helpdesk / Ticketing
+    ticketingCenter: 'Pusat Tiket',
+    ticketingManager: 'Manajer Tiket',
+    ticketingSubtitle: 'Dukungan Teknis & Bantuan Digital',
+    submitTicket: 'Kirim Tiket',
+    myTickets: 'Tiket Saya',
+    archive: 'Arsip',
+    totalRequests: 'Total Permintaan',
+    awaitingAction: 'Menunggu Aksi',
+    activeSessions: 'Sesi Aktif',
+    resolvedIncidents: 'Insiden Selesai',
+    reportSent: 'Laporan Terkirim!',
+    reportSuccessDesc: 'Permintaan bantuan Anda telah berhasil dibuat. Tim kami akan segera meninjaunya.',
+    returnToTicketing: 'Kembali ke Ticketing',
+    submitSupportTicket: 'Kirim Tiket Bantuan',
+    supportTeamBackSoon: 'Tim bantuan kami akan menghubungi Anda sesegera mungkin.',
+    subject: 'Subjek',
+    description: 'Deskripsi',
+    subjectPlaceholder: 'Jelaskan singkat apa yang terjadi...',
+    descPlaceholder: 'Berikan semua detail yang diperlukan...',
+    submitReport: 'Kirim Laporan',
+    selectTicketTip: 'Pilih tiket untuk melihat percakapan',
+    centerView: 'Tampilan Pusat',
+    managementMode: 'Manajemen',
+    reportId: 'ID Laporan'
   }
 };
 

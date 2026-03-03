@@ -171,6 +171,7 @@ export interface UserAccount {
   lastLogin?: string;
   avatarUrl?: string;
   company?: string;
+  isHelpdeskSupport?: boolean;
 }
 
 export interface UserGroup {
@@ -227,7 +228,7 @@ export interface ITAssetLoan {
   loanDate: string;
   expectedReturnDate: string;
   actualReturnDate?: string;
-  status: 'Active' | 'Returned' | 'Overdue';
+  status: 'Pending' | 'Active' | 'Returned' | 'Overdue' | 'Rejected';
   remarks?: string;
   itPersonnel?: string;
 }
