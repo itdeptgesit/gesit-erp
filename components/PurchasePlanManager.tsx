@@ -17,6 +17,9 @@ import { StatCard } from './StatCard';
 import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
 import { useToast } from './ToastProvider';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
@@ -193,22 +196,25 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                        <ShoppingCart size={24} strokeWidth={2.5} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Procurement <span className="text-blue-600">Center</span></h1>
-                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Managed investment & equipment</p>
-                    </div>
-                </div>
+            <PageHeader
+                title="Procurement Center"
+                description="Managed investment & equipment audit log"
+            >
                 <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
                     {[{ id: 'registry', icon: ListFilter, label: 'REGISTRY' }, { id: 'approvals', icon: UserCheck, label: `TASKS (${stats.actionsCount})` }, { id: 'analytics', icon: BarChart3, label: 'REPORTS' }].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex items-center gap-2 px-6 py-2 rounded-[0.9rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}><tab.icon size={14} /> {tab.label}</button>
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-2 rounded-[0.9rem] text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                            )}
+                        >
+                            <tab.icon size={14} /> {tab.label}
+                        </button>
                     ))}
                 </div>
-            </div>
+            </PageHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard label="Approved budget" value={formatIDR(stats.totalSpend)} icon={Wallet} color="emerald" subValue="Total verified" />

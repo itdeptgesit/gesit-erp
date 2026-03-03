@@ -3,25 +3,50 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { UserAccount } from '../types';
+import { useLanguage } from '../translations';
 import {
     Search, RefreshCcw, CheckCircle2, Clock, AlertCircle, MessageSquare, X, Loader2, Send, ClipboardList,
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, ChevronDown, CircleDot, RotateCcw,
     Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Check,
-    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download, Inbox, Shield
+    ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download, Inbox, Shield,
+    Share2, MoreHorizontal, Link, Archive, Plus, Bell, Moon, Sun, LogOut, Settings,
+    Bold, Italic, List, Code, Quote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StatCard } from './StatCard';
+import { UserAvatar } from './UserAvatar';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { FluentEmoji } from '@lobehub/fluent-emoji';
-import { exportToExcel } from '../lib/excelExport';
 import { FileSpreadsheet } from 'lucide-react';
+import { exportToExcel } from '../lib/excelExport';
 
+// SHADCN UI IMPORTS
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 interface HelpdeskManagerProps {
     currentUser: UserAccount | null;
+    onLogout?: () => void;
+    onNavigate?: (page: string) => void;
 }
 
-export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser }) => {
+export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, onLogout, onNavigate }) => {
+    const { language, setLanguage, t } = useLanguage();
     const [tickets, setTickets] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -40,18 +65,31 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const [isInternal, setIsInternal] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const emojiTriggerRef = useRef<HTMLButtonElement>(null);
-    const [detailTab, setDetailTab] = useState<'chat' | 'info'>('chat');
+    const [detailTab, setDetailTab] = useState<'chat' | 'info' | 'details'>('chat');
+    const [itStaff, setItStaff] = useState<{ name: string; email: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const role = currentUser?.role?.toLowerCase() || '';
     const groups = currentUser?.groups || [];
     const isAdmin = role.includes('admin');
 
-    // Simplified Mechanism: Support = Admin Role OR IT Group members.
+    // Profile Dropdown state
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    const handleLogout = async () => {
+        if (onLogout) {
+            onLogout();
+        } else {
+            await supabase.auth.signOut();
+            window.location.reload();
+        }
+    };
+
+    // Simplified Mechanism: Support = Admin Role OR IT Group members OR specifically authorized by Admin.
     // Requesters = Everyone else (Staff & User roles).
-    const isSupport = role.includes('admin') || groups.some(g =>
-        g.toLowerCase() === 'it' ||
-        g.toLowerCase().includes('support')
-    );
+    const isSupport = role.includes('admin') ||
+        groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support')) ||
+        currentUser?.isHelpdeskSupport === true;
 
     // Client-side UI states from HelpdeskPublic
     const [viewMode, setViewMode] = useState<'list' | 'form' | 'success' | 'archive'>('list');
@@ -60,7 +98,22 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     const [recentFilter, setRecentFilter] = useState<'Active' | 'Resolved'>('Active');
     const [supportFilter, setSupportFilter] = useState<'all' | 'assigned' | 'mine'>('all');
     const [userRoles, setUserRoles] = useState<Record<string, string>>({});
+    const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
     const [isManagementMode, setIsManagementMode] = useState(isSupport);
+
+    useEffect(() => {
+        const fetchAvatars = async () => {
+            try {
+                const { data } = await supabase.from('user_accounts').select('full_name, avatar_url');
+                if (data) {
+                    const map: Record<string, string> = {};
+                    data.forEach((u: any) => { if (u.avatar_url) map[u.full_name] = u.avatar_url; });
+                    setUserAvatars(map);
+                }
+            } catch (e) { }
+        };
+        fetchAvatars();
+    }, []);
 
     // Sync isManagementMode with isSupport when it changes, but allow manual toggle
     useEffect(() => {
@@ -87,17 +140,102 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         if (isSupport) fetchUserRoles();
     }, [isSupport]);
 
+    // Fetch IT Staff for assignment dropdown
+    useEffect(() => {
+        const fetchItStaff = async () => {
+            try {
+                // Fetch users who are Admins, in IT/Support groups, OR marked as Helpdesk Support
+                const { data } = await supabase
+                    .from('user_accounts')
+                    .select('full_name, email, groups, role, is_helpdesk_support');
+
+                if (data) {
+                    const authorizedStaff = data.filter(u =>
+                        (u.role?.toLowerCase().includes('admin')) ||
+                        (u.groups && u.groups.some((g: string) => g.toLowerCase() === 'it' || g.toLowerCase().includes('support'))) ||
+                        (u.is_helpdesk_support === true)
+                    );
+                    setItStaff(authorizedStaff.map((u: any) => ({ name: u.full_name || u.email, email: u.email })));
+                }
+            } catch (err) {
+                console.warn('Failed to fetch IT staff', err);
+            }
+        };
+        if (isSupport) fetchItStaff();
+    }, [isSupport]);
+
     const [lastCreatedTicketId, setLastCreatedTicketId] = useState('');
     const [departments, setDepartments] = useState<string[]>([]);
     const [newTicketData, setNewTicketData] = useState({
         subject: '',
         description: '',
-        priority: 'Medium' as any,
-        department: currentUser?.department || 'Other',
-        attachments: [] as string[]
+        priority: 'Medium' as any,           // Will be set by support staff
+        department: 'General' as string,     // Will be categorized by support staff
+        attachments: [] as { url: string; name: string; type: string }[]
     });
     const newTicketFileInputRef = useRef<HTMLInputElement>(null);
+    const newTicketDescriptionRef = useRef<HTMLTextAreaElement>(null);
+    const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const [infoModal, setInfoModal] = useState<{ title: string; content: string } | null>(null);
+
+    const applyFormatting = (textarea: HTMLTextAreaElement, type: string, value: string, setter: (val: string) => void) => {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selection = textarea.value.substring(start, end);
+        let replacement = '';
+        let cursorOffset = 0;
+
+        switch (type) {
+            case 'bold':
+                if (selection.startsWith('**') && selection.endsWith('**')) {
+                    replacement = selection.slice(2, -2);
+                    cursorOffset = 0;
+                } else {
+                    replacement = `**${selection || 'text'}**`;
+                    cursorOffset = 2;
+                }
+                break;
+            case 'italic':
+                if (selection.startsWith('*') && selection.endsWith('*')) {
+                    replacement = selection.slice(1, -1);
+                    cursorOffset = 0;
+                } else {
+                    replacement = `*${selection || 'text'}*`;
+                    cursorOffset = 1;
+                }
+                break;
+            case 'link': replacement = `[${selection || 'label'}](url)`; cursorOffset = 1; break;
+            case 'list': replacement = `\n- ${selection || 'item'}`; break;
+            case 'code': replacement = `\`\`\`\n${selection || 'code'}\n\`\`\``; break;
+            default: return;
+        }
+
+        const newValue = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+        setter(newValue);
+
+        setTimeout(() => {
+            textarea.focus();
+            if (selection) {
+                textarea.setSelectionRange(start, start + replacement.length);
+            } else {
+                textarea.setSelectionRange(start + cursorOffset, start + replacement.length - cursorOffset);
+            }
+        }, 0);
+    };
+
+    const applyNewTicketFormatting = (type: string) => {
+        const textarea = newTicketDescriptionRef.current;
+        if (!textarea) return;
+
+        if (type === 'image' || type === 'file') {
+            newTicketFileInputRef.current?.click();
+            return;
+        }
+
+        applyFormatting(textarea, type, newTicketData.description, (val) =>
+            setNewTicketData(prev => ({ ...prev, description: val }))
+        );
+    };
 
     // Feedback State
     const [feedbackRating, setFeedbackRating] = useState(0);
@@ -151,42 +289,78 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     ];
 
-    const EmojiRenderer = ({ text }: { text: string }) => {
-        const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
-        const emojiMatches = text.match(emojiRegex);
-        if (!emojiMatches) return <span>{text}</span>;
-        const parts = text.split(emojiRegex);
+    const MessageContent = ({ text }: { text: string }) => {
+        if (!text) return null;
+
+        // Regex for bold (**), italic (*), and emojis
+        const combinedRegex = /(\*\*.*?\*\*|\*.*?\*|[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}])/gu;
+        const parts = text.split(combinedRegex);
+
+        const emojiOnlyRegex = /^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\s]+$/u;
+        const isBigEmoji = text.length <= 6 && emojiOnlyRegex.test(text.trim());
+
         return (
-            <span className="flex flex-wrap items-center gap-x-0.5 whitespace-pre-wrap">
-                {parts.map((part, i) => (
-                    <React.Fragment key={i}>
-                        {part}
-                        {emojiMatches[i] && (
+            <span className={cn("whitespace-pre-wrap leading-relaxed", isBigEmoji && "text-4xl block my-2")}>
+                {parts.map((part, i) => {
+                    if (!part) return null;
+
+                    // Bold
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+                    }
+                    // Italic
+                    if (part.startsWith('*') && part.endsWith('*')) {
+                        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+                    }
+                    // Emoji
+                    const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
+                    if (part.length <= 4 && emojiRegex.test(part)) {
+                        return (
                             <FluentEmoji
-                                emoji={emojiMatches[i]}
-                                size={20}
-                                className="inline-block align-middle transform translate-y-[-1px] mx-0.5"
+                                key={i}
+                                emoji={part}
+                                size={isBigEmoji ? 48 : 20}
+                                className={isBigEmoji ? "inline-block transform transition-transform hover:scale-110" : "inline-block align-middle transform translate-y-[-1px] mx-0.5"}
                             />
-                        )}
-                    </React.Fragment>
-                ))}
+                        );
+                    }
+                    // Plain text
+                    return <React.Fragment key={i}>{part}</React.Fragment>;
+                })}
             </span>
         );
     };
 
-    const RichContentRenderer = ({ text, isSelf = false }: { text: string; isSelf?: boolean }) => {
-        if (!text) return null;
-        const lines = text.split('\n');
+    const EmojiRenderer = ({ text }: { text: string }) => {
+        return <MessageContent text={text} />;
+    };
+
+    const RichContentRenderer = ({ text, attachments = [], isSelf = false }: { text: string; attachments?: string[]; isSelf?: boolean }) => {
+        if (!text && (!attachments || attachments.length === 0)) return null;
+
+        const lines = text ? text.split('\n') : [];
+
+        // Track URLs already rendered via markdown to avoid duplicates
+        const renderedUrls = new Set<string>();
+        if (text) {
+            const matches = text.match(/\((https?:\/\/.*?)\)/g);
+            if (matches) {
+                matches.forEach(m => renderedUrls.add(m.slice(1, -1)));
+            }
+        }
+
+        const filteredLines = lines.filter(line => !line.includes('[Resolved on:'));
+
         return (
             <div className="space-y-1">
-                {lines.map((line, idx) => {
+                {filteredLines.map((line, idx) => {
                     const imageMatch = line.match(/!\[image\]\((.*?)\)/);
                     const fileMatch = line.match(/\[Attached (File|PDF)\]\((.*?)\)/);
 
-                    const isUrlPdf = (match: string) =>
-                        match.toLowerCase().includes('.pdf') ||
-                        match.toLowerCase().includes('raw/upload') ||
-                        match.toLowerCase().includes('resource_type:raw');
+                    const isUrlPdf = (url: string) =>
+                        url.toLowerCase().includes('.pdf') ||
+                        url.toLowerCase().includes('raw/upload') ||
+                        url.toLowerCase().includes('resource_type:raw');
 
                     if (imageMatch && !isUrlPdf(imageMatch[1])) {
                         const imageUrl = imageMatch[1];
@@ -214,6 +388,32 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     }
                     if (line.trim() === '' && lines.length > 1) return <div key={idx} className="h-1" />;
                     return <div key={idx} className="leading-relaxed"><EmojiRenderer text={line} /></div>;
+                })}
+
+                {/* Render explicit attachments if not already in text */}
+                {attachments && attachments.filter(url => !renderedUrls.has(url)).map((url, i) => {
+                    const isPdf = url.toLowerCase().includes('.pdf');
+                    const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$|^data:image/i);
+
+                    if (isImage && !isPdf) {
+                        return (
+                            <div key={`attr-${i}`} onClick={() => setPreviewImage(url)} className="block cursor-zoom-in group/img relative overflow-hidden rounded-xl border border-black/5 dark:border-white/5 mt-2 transition-transform active:scale-[0.98] w-full max-w-lg">
+                                <img src={url} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-slate-800 rounded-lg shadow-sm" loading="lazy" />
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={`attr-${i}`} onClick={() => isPdf ? setPreviewImage(url) : window.open(url, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                            <div className={`p-2 rounded-lg ${isSelf ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'}`}>
+                                <FileText size={18} />
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                                <p className={`text-xs font-bold truncate ${isSelf ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{isPdf ? 'Attached PDF' : 'Attached Document'}</p>
+                            </div>
+                            <ExternalLink size={14} className={isSelf ? 'text-white/60' : 'text-slate-400'} />
+                        </div>
+                    );
                 })}
             </div>
         );
@@ -788,9 +988,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
 
             setNewTicketData(prev => ({
                 ...prev,
-                attachments: [...prev.attachments, publicUrl]
+                attachments: [...prev.attachments, { url: publicUrl, name: file.name, type: file.type }],
             }));
-            showToast("File attached.");
+            showToast("File attached and added to content area.");
         } catch (err: any) {
             console.error('Upload Error:', err);
             showToast(err.message || "Upload failed.", 'error');
@@ -808,26 +1008,18 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         setIsActionLoading(true);
         try {
             const ticketId = `TKT-${Math.floor(1000 + Math.random() * 9000)}`;
-            let finalDescription = newTicketData.description;
-            if (newTicketData.attachments.length > 0) {
-                finalDescription += "\n\n**Attachments:**\n" + newTicketData.attachments.map(url => {
-                    const isPdf = url.toLowerCase().includes('.pdf');
-                    return isPdf ? `[Attached PDF](${url})` : `![image](${url})`;
-                }).join('\n');
-            }
-
-            const { error: dbError } = await supabase.from('helpdesk_tickets').insert([{
+            const { data: createdData, error: dbError } = await supabase.from('helpdesk_tickets').insert([{
                 ticket_id: ticketId,
                 requester_name: currentUser?.fullName,
                 requester_email: currentUser?.email,
                 department: newTicketData.department,
                 subject: newTicketData.subject,
-                description: finalDescription,
+                description: newTicketData.description,
                 priority: newTicketData.priority,
                 status: 'Open',
-                attachments: newTicketData.attachments,
+                attachments: newTicketData.attachments.map(a => a.url),
                 created_at: new Date().toISOString()
-            }]);
+            }]).select().single();
 
             if (dbError) throw dbError;
 
@@ -846,12 +1038,20 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
 
             showToast(`Ticket ${ticketId} established.`);
             setLastCreatedTicketId(ticketId);
-            setViewMode('success');
+
+            // Auto-redirect to Chat
+            if (createdData) {
+                const mapped = mapTicket(createdData);
+                setSelectedTicket(mapped);
+                setViewMode('list'); // Reset view mode to list so chat is visible in the main area
+            } else {
+                setViewMode('success');
+            }
             setNewTicketData({
                 subject: '',
                 description: '',
                 priority: 'Medium',
-                department: currentUser?.department || 'Other',
+                department: 'General',
                 attachments: []
             });
             fetchTickets();
@@ -1015,6 +1215,46 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
         }
     };
 
+    const handleUpdatePriority = async (ticketId: number, newPriority: string) => {
+        if (isActionLoading || !isOwner) return;
+        setIsActionLoading(true);
+        try {
+            const { error } = await supabase.from('helpdesk_tickets').update({
+                priority: newPriority,
+                updated_at: new Date().toISOString()
+            }).eq('id', ticketId);
+            if (error) throw error;
+            showToast(`Priority updated to ${newPriority}`);
+            setSelectedTicket((prev: any) => prev ? { ...prev, priority: newPriority } : null);
+            setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, priority: newPriority } : t));
+        } catch (err: any) {
+            showToast(err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleAssignTicket = async (ticketId: number, staffName: string) => {
+        if (isActionLoading || !isOwner) return;
+        setIsActionLoading(true);
+        try {
+            const staff = itStaff.find(s => s.name === staffName);
+            const { error } = await supabase.from('helpdesk_tickets').update({
+                assigned_to: staffName || null,
+                assigned_to_email: staff?.email || null,
+                updated_at: new Date().toISOString()
+            }).eq('id', ticketId);
+            if (error) throw error;
+            showToast(staffName ? `Assigned to ${staffName}` : 'Unassigned');
+            setSelectedTicket((prev: any) => prev ? { ...prev, assignedTo: staffName, assignedToEmail: staff?.email } : null);
+            setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assignedTo: staffName } : t));
+        } catch (err: any) {
+            showToast(err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     const stats = useMemo(() => ({
         total: tickets.length,
         open: tickets.filter(t => t.status === 'Open').length,
@@ -1068,42 +1308,59 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 pb-12">
-            {isSupport && (
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                            <LifeBuoy size={24} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Helpdesk <span className="text-blue-600">Manager</span></h1>
-                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise support lifecycle</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setIsManagementMode(!isManagementMode)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${isManagementMode ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                        >
-                            {isManagementMode ? (
-                                <><User size={14} /> Switch to Center View</>
-                            ) : (
-                                <><Shield size={14} /> Back to Management</>
-                            )}
-                        </button>
-                        <button onClick={fetchTickets} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
-                            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                        </button>
-                    </div>
-                </div>
-            )}
+        <div className="w-full space-y-6 animate-in fade-in duration-500">
 
-            {!isSupport && (
-                <div className="mb-8">
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Helpdesk Center</h1>
-                    <p className="text-slate-500 font-medium text-sm">Submit a request or track your existing tickets.</p>
-                </div>
-            )}
+            {/* Page Header */}
+            <PageHeader
+                title={isManagementMode ? t('ticketingManager') : t('ticketingCenter')}
+                description={t('ticketingSubtitle')}
+            >
+                {isSupport && (
+                    <Button
+                        variant={isManagementMode ? "outline" : "default"}
+                        size="sm"
+                        className="h-8 rounded-full text-xs font-bold shadow-sm"
+                        onClick={() => setIsManagementMode(!isManagementMode)}
+                    >
+                        {isManagementMode ? (
+                            <><User className="mr-2 h-3.5 w-3.5" /> {t('centerView')}</>
+                        ) : (
+                            <><Shield className="mr-2 h-3.5 w-3.5" /> {t('managementMode')}</>
+                        )}
+                    </Button>
+                )}
+            </PageHeader>
+
+
+            {/* Client Tabs Navigation (Now Inside Scrollable Container for Mobile) */}
+            {
+                !isManagementMode && !selectedTicket && (
+                    <div className="flex items-center gap-1 pb-4 overflow-x-auto no-scrollbar">
+                        {[
+                            { id: 'form', label: t('submitTicket'), icon: PlusCircle },
+                            { id: 'list', label: t('myTickets'), icon: Inbox },
+                            { id: 'archive', label: t('archive'), icon: Archive }
+                        ].map((tab) => {
+                            const isActive = (viewMode === tab.id && !selectedTicket) || (tab.id === 'list' && selectedTicket);
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setSelectedTicket(null);
+                                        setViewMode(tab.id as any);
+                                    }}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
+                                        ? 'bg-white dark:bg-slate-800 text-primary shadow-sm border border-border/50'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                >
+                                    <tab.icon size={14} />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )
+            }
 
             {toast && (
                 <div className={`fixed top-24 right-8 z-[2000] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl border animate-in slide-in-from-right-2 duration-300 ${toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
@@ -1112,146 +1369,170 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                 </div>
             )}
 
-            {isManagementMode && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Total Requests" value={stats.total} icon={MessageSquare} color="blue" />
-                    <StatCard label="Awaiting Action" value={stats.open} icon={CircleDot} color="rose" />
-                    <StatCard label="Active Sessions" value={stats.inProgress} icon={Clock} color="indigo" />
-                    <StatCard label="Resolved Incidents" value={stats.resolved} icon={CheckCircle2} color="emerald" />
-                </div>
-            )}
+            {
+                isManagementMode && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+                        <StatCard label={t('totalRequests')} value={stats.total} icon={MessageSquare} percentageChange={8} subValue="vs last month" color="slate" />
+                        <StatCard label={t('awaitingAction')} value={stats.open} icon={CircleDot} percentageChange={-2} subValue="vs last month" color="rose" status="at-risk" />
+                        <StatCard label={t('activeSessions')} value={stats.inProgress} icon={Clock} percentageChange={15} subValue="vs last month" color="blue" />
+                        <StatCard label={t('resolvedIncidents')} value={stats.resolved} icon={CheckCircle2} percentageChange={5} subValue="vs last month" color="emerald" status="on-track" />
+                    </div>
+                )
+            }
 
-            {/* MAIN CONTENT AREA */}
+            {/* AREA UTAMA */}
             {
                 viewMode === 'success' ? (
                     <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg mx-auto mt-12 animate-in zoom-in duration-500">
                         <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Request Submitted!</h2>
-                        <p className="text-slate-500 text-sm mb-8 font-medium">Your ticket has been successfully created. Our support team will review it shortly.</p>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">{t('reportSent')}</h2>
+                        <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{t('reportSuccessDesc')}</p>
 
                         <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 rounded-xl border border-slate-100 dark:border-slate-800 inline-block mb-8">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ticket Reference</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('reportId')}</div>
                             <span className="text-2xl font-black text-indigo-600 font-mono tracking-tight">#{lastCreatedTicketId}</span>
                         </div>
 
                         <div>
-                            <button onClick={() => setViewMode('list')} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg active:scale-95">Return to Dashboard</button>
+                            <Button
+                                size="lg"
+                                onClick={() => setViewMode('list')}
+                                className="w-full rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
+                            >
+                                {t('returnToTicketing')}
+                            </Button>
                         </div>
                     </div>
                 ) : viewMode === 'form' ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 max-w-4xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
-                        <div className="flex items-center justify-between mb-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl p-10 max-w-4xl w-full mx-auto animate-in fade-in slide-in-from-bottom-5 duration-500 overflow-hidden relative">
+                        {/* Decorative background element */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
+
+                        <div className="flex items-center justify-between mb-10">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">Submit Support Ticket</h2>
-                                <p className="text-slate-500 text-sm font-medium">Describe your request and we'll get back to you shortly.</p>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2 uppercase">{t('submitSupportTicket')}</h2>
+                                <p className="text-slate-500 text-sm font-medium">{t('supportTeamBackSoon')}</p>
                             </div>
-                            <button onClick={() => setViewMode('list')} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                <X size={20} />
+                            <button onClick={() => setViewMode('list')} className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all">
+                                <X size={24} />
                             </button>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Subject</label>
-                                    <input
-                                        type="text"
-                                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
-                                        placeholder="Briefly describe the issue"
-                                        value={newTicketData.subject}
-                                        onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Category</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm appearance-none cursor-pointer"
-                                            value={newTicketData.department || 'General Inquiry'}
-                                            onChange={e => setNewTicketData({ ...newTicketData, department: e.target.value })}
-                                        >
-                                            <option value="General Inquiry">General Inquiry</option>
-                                            <option value="Technical Support">Technical Support</option>
-                                            <option value="Hardware Issue">Hardware Issue</option>
-                                            <option value="Network Access">Network Access</option>
-                                            <option value="Software License">Software License</option>
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Detailed Description</label>
-                                <textarea
-                                    className="w-full min-h-[200px] p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400 resize-none leading-relaxed"
-                                    placeholder="Please provide as much detail as possible to help us resolve the issue faster..."
-                                    value={newTicketData.description}
-                                    onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
+                        <div className="space-y-8">
+                            {/* Subject Field */}
+                            <div className="space-y-3">
+                                <label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-widest">{t('subject')}</label>
+                                <input
+                                    type="text"
+                                    className="w-full h-16 px-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-lg placeholder:text-slate-400 shadow-sm"
+                                    placeholder={t('subjectPlaceholder')}
+                                    value={newTicketData.subject}
+                                    onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Attachments (Optional)</label>
-                                <div
-                                    onClick={() => newTicketFileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-all group"
-                                >
-                                    <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-4 relative shadow-sm">
-                                        {isUploading ? (
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                {/* Progress circle */}
-                                                <svg className="w-full h-full transform -rotate-90">
-                                                    <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-200 dark:text-slate-700" />
-                                                    <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={150.8} strokeDashoffset={150.8 - (150.8 * uploadProgress) / 100} className="text-indigo-500 transition-all duration-300" />
-                                                </svg>
-                                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 absolute">{uploadProgress}%</span>
-                                            </div>
-                                        ) : <CloudUpload size={28} />}
+                            {/* Deskripsi Field */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-widest">{t('description')}</label>
+                                </div>
+                                <div className="border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 transition-all shadow-sm">
+                                    {/* Rich Text Toolbar */}
+                                    <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-1 items-center">
+                                        {[
+                                            { icon: Bold, type: 'bold' },
+                                            { icon: Italic, type: 'italic' },
+                                            { icon: Link, type: 'link' },
+                                            { icon: List, type: 'list' },
+                                            { icon: ImageIcon, type: 'image' },
+                                            { icon: FileText, type: 'file' },
+                                            { icon: Code, type: 'code' }
+                                        ].map((item, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => applyNewTicketFormatting(item.type)}
+                                                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                            >
+                                                <item.icon size={16} />
+                                            </button>
+                                        ))}
+                                        {isUploading && <Loader2 size={16} className="animate-spin text-indigo-500 ml-2" />}
                                     </div>
-                                    <p className="text-base font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">Click to upload or drag and drop</p>
-                                    <p className="text-xs text-slate-400 font-medium mt-1">Images, PDF or Documents (max. 10MB)</p>
+                                    <textarea
+                                        ref={newTicketDescriptionRef}
+                                        className="w-full h-[280px] p-8 bg-white dark:bg-slate-900 border-none outline-none font-medium text-base placeholder:text-slate-400 resize-none leading-relaxed"
+                                        placeholder={t('descPlaceholder')}
+                                        value={newTicketData.description}
+                                        onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
+                                        onKeyDown={e => {
+                                            if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
+                                                e.preventDefault();
+                                                applyNewTicketFormatting(e.key === 'b' ? 'bold' : 'italic');
+                                            }
+                                        }}
+                                    />
+
+                                    {/* Email-style Attachments Section */}
+                                    {newTicketData.attachments.length > 0 && (
+                                        <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/50">
+                                            <div className="flex items-center gap-2 mb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                <Paperclip size={12} />
+                                                {newTicketData.attachments.length} Attachments
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {newTicketData.attachments.map((file, i) => (
+                                                    <div key={i} className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900 transition-all group max-w-[240px]">
+                                                        <div className={`p-2 rounded-lg shrink-0 ${file.type.startsWith('image/') ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'}`}>
+                                                            {file.type.startsWith('image/') ? <ImageIcon size={16} /> : <FileText size={16} />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{file.name}</p>
+                                                            <p className="text-[9px] text-slate-400 uppercase font-black tracking-tight">{file.type.split('/')[1] || 'FILE'}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setNewTicketData(prev => ({
+                                                                    ...prev,
+                                                                    attachments: prev.attachments.filter((_, idx) => idx !== i)
+                                                                }));
+                                                            }}
+                                                            className="p-1.5 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-slate-300"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Hidden File Input */}
                                     <input type="file" ref={newTicketFileInputRef} className="hidden" multiple onChange={handleNewTicketFileUpload} />
                                 </div>
-
-                                {newTicketData.attachments.length > 0 && (
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                                        {newTicketData.attachments.map((url, i) => (
-                                            <div key={i} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-square bg-slate-100">
-                                                <img src={url} alt="Attachment" className="w-full h-full object-cover" />
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setNewTicketData(prev => ({
-                                                            ...prev,
-                                                            attachments: prev.attachments.filter((_, idx) => idx !== i)
-                                                        }));
-                                                    }}
-                                                    className="absolute top-1 right-1 p-1.5 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <X size={12} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
-                            <div className="pt-4 flex items-center gap-4">
-                                <button
+
+                            {/* Footer Actions */}
+                            <div className="pt-6 flex items-center gap-4">
+                                <Button
+                                    variant="outline"
+                                    size="lg"
                                     onClick={() => setViewMode('list')}
-                                    className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                                    className="h-16 px-10 rounded-2xl font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all uppercase tracking-widest text-[11px]"
                                 >
-                                    Cancel
-                                </button>
-                                <button
+                                    {t('cancel')}
+                                </Button>
+                                <Button
+                                    size="lg"
                                     onClick={handleCreateTicket}
                                     disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
-                                    className="flex-[2] h-12 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 h-16 rounded-2xl font-bold shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.01] active:scale-[0.99] text-white gap-3 transition-all uppercase tracking-widest text-[11px]"
                                 >
-                                    {isActionLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} />}
-                                    <span>Dispatch Request</span>
-                                </button>
+                                    {isActionLoading ? <Loader2 size={24} className="animate-spin" /> : <Send size={20} />}
+                                    <span>{t('submitReport')}</span>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -1259,60 +1540,64 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
                         {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
                         <div className={`w-full lg:w-96 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                            <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 flex flex-col gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shrink-0 z-10 sticky top-0">
+                            <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-col gap-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                                {/* Search Bar */}
                                 <div className="relative group">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                                     <input
                                         type="text"
                                         placeholder="Search tickets..."
-                                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
                                 </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex-1 flex bg-slate-50 dark:bg-slate-800 p-0.5 rounded-lg relative overflow-hidden">
-                                        {['All', 'Open', 'Active', 'Done'].map(st => {
-                                            const isActive = statusFilter === (st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st));
-                                            const actualStatus = st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st);
+                                {/* Status Filters */}
+                                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
+                                    {['All', 'Open', 'Active', 'Done'].map(st => {
+                                        const isActive = statusFilter === (st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st));
+                                        const actualStatus = st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st);
 
-                                            return (
-                                                <button
-                                                    key={st}
-                                                    onClick={() => setStatusFilter(actualStatus)}
-                                                    className={`flex-1 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all duration-300 relative z-10 ${isActive ? 'text-indigo-600 dark:text-indigo-400 shadow-sm bg-white dark:bg-slate-700' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                                >
-                                                    {st}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
-                                        <button
-                                            onClick={() => setSupportFilter('all')}
-                                            className={`flex-1 py-1 rounded-md text-[9px] font-bold uppercase transition-all ${supportFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                        >
-                                            All
-                                        </button>
-                                        <button
-                                            onClick={() => setSupportFilter('assigned')}
-                                            className={`flex-1 py-1 rounded-md text-[9px] font-bold uppercase transition-all ${supportFilter === 'assigned' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                        >
-                                            My Tasks
-                                        </button>
-                                        <button
-                                            onClick={() => setSupportFilter('mine')}
-                                            className={`flex-1 py-1 rounded-md text-[9px] font-bold uppercase transition-all ${supportFilter === 'mine' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                        >
-                                            My Reports
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center gap-1 justify-end">
-                                        <button onClick={handleExportExcel} className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all" title="Export Excel"><FileSpreadsheet size={16} strokeWidth={2} /></button>
-                                        <button onClick={resetFilters} className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/30 rounded-lg transition-all" title="Reset"><RotateCcw size={16} strokeWidth={2} /></button>
-                                        <button onClick={fetchTickets} className="p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 rounded-lg transition-all" title="Refresh"><RefreshCcw size={16} strokeWidth={2} className={isLoading ? 'animate-spin' : ''} /></button>
-                                    </div>
+                                        return (
+                                            <button
+                                                key={st}
+                                                onClick={() => setStatusFilter(actualStatus)}
+                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
+                                            >
+                                                {st}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Role/Assignment Filters */}
+                                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setSupportFilter('all')}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                    >
+                                        All
+                                    </button>
+                                    <button
+                                        onClick={() => setSupportFilter('assigned')}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'assigned' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                    >
+                                        My Tasks
+                                    </button>
+                                    <button
+                                        onClick={() => setSupportFilter('mine')}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'mine' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                    >
+                                        My Reports
+                                    </button>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex items-center justify-end gap-1.5 pt-1">
+                                    <button onClick={handleExportExcel} className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all" title="Export Excel"><FileSpreadsheet size={16} strokeWidth={2} /></button>
+                                    <button onClick={resetFilters} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 rounded-lg transition-all" title="Reset"><RotateCcw size={16} strokeWidth={2} /></button>
+                                    <button onClick={fetchTickets} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 rounded-lg transition-all" title="Refresh"><RefreshCcw size={16} strokeWidth={2} className={isLoading ? 'animate-spin' : ''} /></button>
                                 </div>
                             </div>
 
@@ -1322,76 +1607,99 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                 ) : paginatedTickets.length === 0 ? (
                                     <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
                                 ) : (
-                                    <div className="space-y-1 p-2">
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
                                         {paginatedTickets.map(ticket => {
                                             const isSelected = selectedTicket?.id === ticket.id;
-                                            const statusColors: any = {
-                                                'Open': 'bg-rose-500 shadow-rose-500/20',
-                                                'Resolved': 'bg-emerald-500 shadow-emerald-500/20',
-                                                'In Progress': 'bg-blue-500 shadow-blue-500/20',
-                                                'Pending': 'bg-amber-500 shadow-amber-500/20'
-                                            };
-                                            const dotColor = statusColors[ticket.status] || 'bg-slate-400';
 
-                                            const priorityColors: any = {
-                                                'Critical': 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
-                                                'High': 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
-                                                'Medium': 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-                                                'Low': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                            const avatarColors: any = {
+                                                'Open': 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400',
+                                                'Resolved': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+                                                'In Progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+                                                'Pending': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
                                             };
+
+                                            const statusDot: any = {
+                                                'Open': 'bg-rose-500',
+                                                'Resolved': 'bg-emerald-500',
+                                                'In Progress': 'bg-blue-500',
+                                                'Pending': 'bg-amber-400',
+                                            };
+
+                                            const statusLabel: any = {
+                                                'Open': 'Waiting for response',
+                                                'In Progress': 'In Progress',
+                                                'Pending': 'On Hold',
+                                                'Resolved': 'Resolved',
+                                            };
+
+                                            const priorityBadge: any = {
+                                                'Critical': 'bg-rose-500 text-white',
+                                                'High': 'bg-orange-500 text-white',
+                                                'Medium': 'bg-blue-500 text-white',
+                                                'Low': 'bg-slate-300 text-slate-700',
+                                            };
+
+                                            const initials = ticket.requesterName
+                                                .split(' ')
+                                                .map((n: string) => n[0])
+                                                .join('')
+                                                .substring(0, 2)
+                                                .toUpperCase();
+
+                                            const timeAgo = (() => {
+                                                const d = new Date(ticket.updatedAt || ticket.createdAt);
+                                                const now = new Date();
+                                                const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
+                                                if (diff < 60) return 'Just now';
+                                                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                                                if (diff < 86400) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                if (diff < 604800) return d.toLocaleDateString([], { weekday: 'short' });
+                                                return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                                            })();
 
                                             return (
                                                 <div
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
-                                                    className={`
-                                                p-3 rounded-xl flex items-center justify-between transition-all cursor-pointer group relative border
-                                                ${isSelected
-                                                            ? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800/50 shadow-sm'
-                                                            : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-100 dark:hover:border-slate-800'}
-                                            `}
+                                                    className={`flex items-center gap-3 px-3 py-3 cursor-pointer transition-all duration-150 relative
+                                                        ${isSelected
+                                                            ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                        }
+                                                    `}
                                                 >
-                                                    <div className="flex items-center gap-3 min-w-0 pr-2">
-                                                        <div className={`w-2 h-2 rounded-full ${dotColor} shadow-lg shrink-0`} />
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                                    <span className={`text-[9px] font-bold font-mono tracking-tight ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}>{ticket.ticketId}</span>
-                                                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tight ${priorityColors[ticket.priority] || priorityColors.Medium}`}>
-                                                                        {ticket.priority}
-                                                                    </span>
-                                                                </div>
-                                                                <h4 className={`text-xs font-bold truncate transition-colors ${isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                    {ticket.subject}
-                                                                </h4>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide leading-none">
-                                                                <span className="truncate max-w-[80px]">{ticket.requesterName.split(' ')[0]}</span>
-                                                                <span className="opacity-30">•</span>
-                                                                <span className={`px-1.5 py-0.5 rounded ${(userRoles[ticket.requesterEmail?.toLowerCase() || ''] || 'User') === 'Staff'
-                                                                    ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800'
-                                                                    : (userRoles[ticket.requesterEmail?.toLowerCase() || ''] || 'User') === 'Admin'
-                                                                        ? 'bg-slate-900 text-white'
-                                                                        : 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-100 dark:border-slate-700'
-                                                                    }`}>
-                                                                    {userRoles[ticket.requesterEmail?.toLowerCase() || ''] || 'User'}
-                                                                </span>
-                                                                <span className="opacity-30">•</span>
-                                                                <span className="truncate">{ticket.status}</span>
-                                                            </div>
-                                                        </div>
+                                                    {/* Avatar */}
+                                                    <div className="relative shrink-0">
+                                                        <UserAvatar name={ticket.requesterName} url={userAvatars[ticket.requesterName]} size="lg" className={`border-2 ${ticket.status === 'Resolved' ? 'border-emerald-200 dark:border-emerald-900/50' : ''}`} />
+                                                        {/* Status dot */}
+                                                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${statusDot[ticket.status] || 'bg-slate-400'}`} />
                                                     </div>
-                                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                                        <span className={`text-[9px] font-bold ${isSelected ? 'text-indigo-400' : 'text-slate-300 dark:text-slate-600'}`}>
-                                                            {new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                                        </span>
-                                                        {ticket.assignedTo && (
-                                                            <div className="flex items-center -space-x-1" title={`Assigned to ${ticket.assignedTo}`}>
-                                                                <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 border border-white dark:border-slate-800 flex items-center justify-center text-[8px] font-bold text-indigo-600 dark:text-indigo-300">
-                                                                    {ticket.assignedTo.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                                                                </div>
-                                                            </div>
-                                                        )}
+
+                                                    {/* Deskripsi */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between mb-0.5">
+                                                            <span className={`text-sm font-bold truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                                {ticket.requesterName}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 ml-2">{timeAgo}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-1">
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
+                                                                <span className="font-bold text-slate-600 dark:text-slate-300">{ticket.subject}</span>
+                                                            </p>
+                                                            {ticket.priority && ticket.priority !== 'Medium' && (
+                                                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wide ${priorityBadge[ticket.priority] || ''}`}>
+                                                                    {ticket.priority}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                                            {ticket.status === 'In Progress' ? <Loader2 size={10} className="text-blue-500 animate-spin mr-1 shrink-0" /> :
+                                                                ticket.status === 'Resolved' ? <CheckCircle2 size={10} className="text-emerald-500 mr-1 shrink-0" /> :
+                                                                    <CircleDot size={10} className={`mr-1 shrink-0 ${ticket.status === 'Open' ? 'text-rose-500' : 'text-amber-500'}`} />}
+                                                            <span className="font-medium text-slate-600 dark:text-slate-300">{statusLabel[ticket.status] || ticket.status}</span>
+                                                            {ticket.assignedTo && <span className="ml-1.5 border-l border-slate-200 dark:border-slate-700 pl-1.5 opacity-80">Assigned: {ticket.assignedTo.split(' ')[0]}</span>}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -1400,445 +1708,503 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                 )}
                             </div>
 
-                            <div className="px-4 py-3 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">P. {currentPage}/{totalPages || 1}</p>
-                                <div className="flex items-center gap-1">
-                                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={12} /></button>
+                            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
+                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{filteredTickets.length} Total Tickets</span>
+                                <div className="flex items-center gap-2">
+                                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="text-[10px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-30 transition-colors">Prev</button>
+                                    <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="text-[10px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-30 transition-colors">Next</button>
                                 </div>
                             </div>
                         </div>
 
+                        {/* CENTER COLUMN */}
+                        <div className={`flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden ${!selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                            {selectedTicket ? (
+                                <>
+                                    {/* Chat Header */}
+                                    {/* Elevated Chat Header */}
+                                    <div className="px-5 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-20 sticky top-0">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors shrink-0">
+                                                <ChevronLeft size={18} />
+                                            </button>
 
-                        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                                            {/* Avatar with Status Ring */}
+                                            <div className="relative shrink-0">
+                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="md" className="ring-2 ring-slate-50 dark:ring-slate-800 shadow-sm" />
+                                                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-sm" />
+                                            </div>
 
-
-
-                            {/* SHARED MOBILE DETAIL HEADER - ONLY FOR IT STAFF */}
-                            {
-                                isSupport && selectedTicket && (
-                                    <div className="lg:hidden flex flex-col bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm mb-4 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
-                                        <div className="p-4 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                                                    <ChevronLeft size={20} />
-                                                </button>
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight leading-tight line-clamp-1">{selectedTicket.subject}</h3>
-                                                    <span className="text-[9px] font-bold text-blue-500 font-mono uppercase tracking-wider">{selectedTicket.ticketId}</span>
+                                            <div className="min-w-0 flex flex-col justify-center">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate tracking-tight">{selectedTicket.requesterName}</h3>
+                                                    {selectedTicket.priority === 'Critical' && (
+                                                        <span className="hidden sm:flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded-md shadow-sm">
+                                                            <AlertCircle size={10} /> Urgent
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">{selectedTicket.ticketId}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 opacity-60"></span>
+                                                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate tracking-wide">{selectedTicket.department}</span>
                                                 </div>
                                             </div>
-                                            <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                                                <X size={18} />
-                                            </button>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                                            {/* Status Badge */}
+                                            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all
+                                                ${selectedTicket.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' :
+                                                    selectedTicket.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400' :
+                                                        selectedTicket.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400' :
+                                                            'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400'}`}>
+                                                {selectedTicket.status === 'In Progress' ? <Loader2 size={12} className="animate-spin" /> :
+                                                    selectedTicket.status === 'Resolved' ? <CheckCircle2 size={12} /> :
+                                                        <CircleDot size={12} />}
+                                                <span>{selectedTicket.status === 'In Progress' ? 'Processing' : selectedTicket.status}</span>
+                                            </div>
+
+
                                         </div>
                                     </div>
-                                )}
 
-                            {/* CENTER COLUMN */}
-                            <div className={`flex-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in fade-in duration-500 ${!selectedTicket ? 'hidden lg:flex' : (detailTab === 'chat' ? 'flex' : 'hidden lg:flex')}`}>
-                                {selectedTicket ? (
-                                    <>
-                                        {/* Chat Header - Only show full version on Desktop */}
-                                        {/* Chat Header - Modern Minimalist */}
-                                        <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hidden lg:flex items-center justify-between shrink-0 z-10 sticky top-0">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 flex items-center justify-center shadow-sm">
-                                                    <MessageSquare size={18} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{selectedTicket.subject}</h3>
-                                                    <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
-                                                        <span className="font-mono text-indigo-500">#{selectedTicket.ticketId}</span>
-                                                        <span className="w-0.5 h-0.5 bg-slate-300 rounded-full"></span>
-                                                        <span>{selectedTicket.status}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
-                                                <X size={18} />
-                                            </button>
+                                    {/* WA-style Chat Messages */}
+                                    <div
+                                        className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-1"
+                                        style={{ background: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23e2e8f0\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M0 0h40v40H0V0zm20 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6z\'/%3E%3C/g%3E%3C/svg%3E")' }}
+                                    >
+                                        {/* Date separator */}
+                                        <div className="flex justify-center mb-3">
+                                            <span className="bg-white/80 dark:bg-slate-800/80 backdrop-blur text-[10px] font-semibold text-slate-500 px-3 py-1 rounded-full shadow-sm">
+                                                {new Date(selectedTicket.createdAt).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                                            </span>
                                         </div>
 
-                                        {/* Chat Messages */}
-                                        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/20 p-6 space-y-6">
-                                            <div className="space-y-6 max-w-3xl mx-auto">
-                                                <div className="flex flex-col gap-2 items-center w-full my-4">
-                                                    <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800/50 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-sm relative group/report max-w-[90%] text-center">
-                                                        <div className="flex items-center justify-center gap-2 mb-2 opacity-70">
-                                                            <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                                                            <p className="text-[9px] font-bold uppercase tracking-widest">Initial System Report</p>
-                                                            <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                                                        </div>
-                                                        <div className="font-medium whitespace-pre-wrap text-xs text-left">
-                                                            <RichContentRenderer text={selectedTicket.description} />
-                                                        </div>
-                                                    </div>
+                                        {/* Contact Info (WhatsApp Style) */}
+                                        <div className="flex flex-col items-center justify-center p-6 mx-auto mb-6 mt-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm max-w-sm">
+                                            <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="xl" className="w-20 h-20 text-3xl mb-3 shadow-md" />
+                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{selectedTicket.requesterPhone || selectedTicket.requesterName}</h2>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">~{selectedTicket.requesterName}</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4 text-center">{selectedTicket.department} • {selectedTicket.requesterEmail}</p>
+                                            <div className="flex flex-col items-center gap-3 mt-1 w-full">
+                                                <div className="w-full flex items-center justify-center gap-2 text-xs font-black text-indigo-700 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-900/40 px-4 py-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center shadow-sm">
+                                                    <Hash size={14} className="shrink-0" />
+                                                    <span className="truncate">{selectedTicket.subject}</span>
                                                 </div>
+                                            </div>
+                                        </div>
 
-                                                <AnimatePresence mode="popLayout">
-                                                    {messages.map((msg, idx) => {
-                                                        const isSelf = msg.sender_role === 'IT';
-                                                        const isInternalMsg = msg.is_internal;
+                                        {/* First message: ticket description (from requester) */}
+                                        <div className="flex items-end gap-2 mb-1">
+                                            <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="sm" />
+                                            <div className="max-w-[78%]">
+                                                <div className="bg-white dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm border border-slate-100 dark:border-slate-700">
+                                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-1">{selectedTicket.requesterName}</p>
+                                                    <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                                        <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} />
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-400 mt-1 text-right">{new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                        // High security: do not render if internal and user is not staff
-                                                        if (isInternalMsg && !isSupport) return null;
+                                        <AnimatePresence mode="popLayout">
+                                            {messages.map((msg, idx) => {
+                                                const isSelf = msg.sender_role === 'IT';
+                                                const isInternalMsg = msg.is_internal;
+                                                if (isInternalMsg && !isSupport) return null;
 
-                                                        return (
-                                                            <div key={idx} className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-2`}>
-                                                                <div className={`p-3.5 px-5 max-w-[85%] text-sm leading-relaxed shadow-sm relative group ${isInternalMsg ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 rounded-[20px]' : (!isSelf ? 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-[20px] rounded-bl-sm border border-slate-100 dark:border-slate-700' : 'bg-indigo-600 text-white rounded-[20px] rounded-br-sm shadow-indigo-500/20')}`}>
-                                                                    <div className={`flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide ${isSelf ? 'justify-end' : ''}`}>
-                                                                        {isInternalMsg && (
-                                                                            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-800/50 px-1.5 py-0.5 rounded mr-1">
-                                                                                <Shield size={10} /> Internal
-                                                                            </span>
-                                                                        )}
-                                                                        <span>{msg.sender_name}</span>
-                                                                        <span>•</span>
-                                                                        <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                    </div>                                       {(() => {
+                                                const senderInitials = (msg.sender_name || 'S').split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+
+                                                return (
+                                                    <motion.div
+                                                        key={idx}
+                                                        initial={{ opacity: 0, y: 6 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0 }}
+                                                        className={`flex items-end gap-2 ${isSelf ? 'flex-row-reverse' : 'flex-row'} mb-1`}
+                                                    >
+                                                        {/* Avatar — only for other side */}
+                                                        <UserAvatar name={msg.sender_name || 'S'} url={userAvatars[msg.sender_name]} size="sm" className={isSelf ? 'ring-indigo-100 dark:ring-indigo-900/50' : ''} />
+
+                                                        <div className={`max-w-[78%] ${isSelf ? 'items-end' : 'items-start'} flex flex-col`}>
+                                                            {/* Sender name for non-self */}
+                                                            {!isSelf && (
+                                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5 px-1">{msg.sender_name}</span>
+                                                            )}
+                                                            <div className={`px-4 py-2.5 shadow-sm relative ${isInternalMsg
+                                                                ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 rounded-2xl'
+                                                                : isSelf
+                                                                    ? 'bg-indigo-600 dark:bg-indigo-700 text-white rounded-2xl rounded-br-sm'
+                                                                    : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-bl-sm'
+                                                                }`}>
+                                                                {isInternalMsg && (
+                                                                    <div className="flex items-center gap-1 mb-1.5">
+                                                                        <Shield size={9} className="text-amber-500" />
+                                                                        <span className="text-[8px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Internal Note</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className={`text-sm leading-relaxed ${isSelf ? 'text-white' : isInternalMsg ? 'text-amber-900 dark:text-amber-200' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                                    {(() => {
                                                                         const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
                                                                         const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
-
-                                                                        if (imageMatch) {
-                                                                            const imageUrl = imageMatch[1];
-                                                                            return (
-                                                                                <div
-                                                                                    onClick={() => setPreviewImage(imageUrl)}
-                                                                                    className="block cursor-zoom-in group/img relative overflow-hidden rounded-lg border border-white/10 mt-2"
-                                                                                >
-                                                                                    <img
-                                                                                        src={imageUrl}
-                                                                                        alt="Attachment"
-                                                                                        className="max-w-full max-h-[300px] object-contain hover:scale-105 transition-transform duration-500 bg-black/20"
-                                                                                        loading="lazy"
-                                                                                    />
-                                                                                </div>
-                                                                            );
-                                                                        }
-
+                                                                        if (imageMatch) return (
+                                                                            <div onClick={() => setPreviewImage(imageMatch[1])} className="block cursor-zoom-in overflow-hidden rounded-xl mt-1">
+                                                                                <img src={imageMatch[1]} alt="Attachment" className="max-w-full max-h-[260px] object-contain rounded-xl hover:opacity-90 transition-opacity" loading="lazy" />
+                                                                            </div>
+                                                                        );
                                                                         if (fileMatch) {
                                                                             const fileUrl = fileMatch[2];
                                                                             const isPdf = fileMatch[1] === 'PDF';
-
-                                                                            if (isPdf) {
-                                                                                return (
-                                                                                    <div
-                                                                                        onClick={() => setPreviewImage(fileUrl)}
-                                                                                        className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors cursor-pointer ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
-                                                                                    >
-                                                                                        <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
-                                                                                            <FileText size={20} />
-                                                                                        </div>
-                                                                                        <div className="flex-1 min-w-0 text-left">
-                                                                                            <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached PDF</p>
-                                                                                            <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to preview</p>
-                                                                                        </div>
-                                                                                        <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
-                                                                                    </div>
-                                                                                );
-                                                                            }
-
+                                                                            if (isPdf) return (
+                                                                                <div onClick={() => setPreviewImage(fileUrl)} className={`flex items-center gap-3 p-2.5 rounded-xl mt-1 cursor-pointer ${isSelf ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+                                                                                    <div className="p-2 rounded-lg bg-rose-100 text-rose-600 shrink-0"><FileText size={16} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">Attached PDF</p><p className="text-[10px] opacity-70">Tap to preview</p></div>
+                                                                                    <ExternalLink size={12} className="opacity-60 shrink-0" />
+                                                                                </div>
+                                                                            );
                                                                             return (
-                                                                                <a
-                                                                                    href={fileUrl}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
-                                                                                >
-                                                                                    <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
-                                                                                        <FileText size={20} />
-                                                                                    </div>
-                                                                                    <div className="flex-1 min-w-0 text-left">
-                                                                                        <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached Document</p>
-                                                                                        <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to view</p>
-                                                                                    </div>
-                                                                                    <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
+                                                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-2.5 rounded-xl mt-1 ${isSelf ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                                                                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 shrink-0"><FileText size={16} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">Attached Document</p><p className="text-[10px] opacity-70">Click to view</p></div>
+                                                                                    <ExternalLink size={12} className="opacity-60 shrink-0" />
                                                                                 </a>
                                                                             );
                                                                         }
-
                                                                         return <EmojiRenderer text={msg.message} />;
                                                                     })()}
                                                                 </div>
+                                                                {/* Timestamp + ticks */}
+                                                                <div className={`flex items-center gap-1 mt-1 justify-end`}>
+                                                                    <span className={`text-[9px] ${isSelf ? 'text-white/70' : 'text-slate-400'}`}>
+                                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                    {isSelf && <span className="text-[11px] text-blue-300">✓✓</span>}
+                                                                </div>
                                                             </div>
-                                                        );
-                                                    })}
-                                                </AnimatePresence>
-                                                <div ref={messagesEndRef} />
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </AnimatePresence>
+                                        <div ref={messagesEndRef} />
+                                    </div>
+
+                                    {/* WA-style Input Bar */}
+                                    <div className="px-3 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                                        {!isSolved ? (
+                                            <div className="flex items-end gap-2">
+                                                {/* Left icon buttons */}
+                                                <div className="flex items-center gap-1 pb-1.5">
+                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
+                                                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="w-9 h-9 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-blue-500" /> : <Paperclip size={18} />}
+                                                    </button>
+                                                    <div className="relative">
+                                                        <button ref={emojiTriggerRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${showEmojiPicker ? 'text-blue-500 bg-blue-50' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                                                            <Smile size={18} />
+                                                        </button>
+                                                        <AnimatePresence>
+                                                            {showEmojiPicker && (
+                                                                <motion.div initial={{ opacity: 0, scale: 0.9, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 10 }} className="absolute bottom-full left-0 mb-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[280px] overflow-hidden">
+                                                                    <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                                                        <div className="flex gap-1 overflow-x-auto no-scrollbar">{EMOJI_CATEGORIES.map((cat, catIdx) => (<button key={cat.name} onClick={() => setActiveEmojiCategory(catIdx)} className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === catIdx ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>{cat.icon}</button>))}</div>
+                                                                    </div>
+                                                                    <div className="p-2 grid grid-cols-7 gap-1 h-[180px] overflow-y-auto custom-scrollbar">{EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (<button key={emoji} onClick={() => addEmoji(emoji)} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"><FluentEmoji emoji={emoji} size={18} /></button>))}</div>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </div>
+                                                    {isSupport && (
+                                                        <button
+                                                            onClick={() => setIsInternal(!isInternal)}
+                                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${isInternal ? 'bg-amber-100 text-amber-600' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                                            title={isInternal ? 'Internal Note' : 'Toggle Internal Note'}
+                                                        >
+                                                            <Shield size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Input box */}
+                                                <div className={`flex-1 min-h-[44px] max-h-36 bg-white dark:bg-slate-800 border rounded-3xl px-4 py-2.5 flex items-end shadow-sm transition-colors ${isInternal ? 'border-amber-300 dark:border-amber-600' : 'border-slate-200 dark:border-slate-700'}`}>
+                                                    <textarea
+                                                        rows={1}
+                                                        className="w-full bg-transparent border-none text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none resize-none leading-relaxed"
+                                                        placeholder={isInternal ? '🔒 Private internal note...' : 'Type a message...'}
+                                                        value={resolutionNote}
+                                                        onChange={e => {
+                                                            setResolutionNote(e.target.value);
+                                                            e.target.style.height = 'auto';
+                                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                                                        }}
+                                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                                                        onPaste={handlePaste}
+                                                    />
+                                                </div>
+
+                                                {/* Send button */}
+                                                <button
+                                                    onClick={handleSendReply}
+                                                    disabled={isActionLoading || !resolutionNote.trim()}
+                                                    className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-all active:scale-95 disabled:opacity-40 ${isInternal ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                                >
+                                                    {isActionLoading ? <Loader2 size={16} className="animate-spin text-white" /> : <Send size={16} className="text-white ml-0.5" />}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0">
+                                                <div className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+                                                    <Lock size={14} className="opacity-70" />
+                                                    This ticket is resolved. You can no longer send messages.
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                </>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4"><MessageSquare size={24} className="text-slate-300 dark:text-slate-600" /></div>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{t('selectTicketTip')}</p>
+                                </div>
+                            )}
+                        </div>
+
+
+                        {/* RIGHT COLUMN: Ticket Details */}
+                        <div className={`w-full lg:w-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex-col overflow-hidden shrink-0 transition-all duration-300 ${!selectedTicket ? 'hidden' : 'flex'}`}>
+                            {selectedTicket ? (
+                                <>
+                                    {/* Details Header */}
+                                    <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-between shrink-0 z-10 sticky top-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 flex items-center justify-center shadow-sm">
+                                                <Info size={18} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Ticket Details</h3>
+                                                <p className="text-[10px] font-medium text-slate-500">#{selectedTicket.ticketId}</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+
+                                    {/* Details Content */}
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
+                                        {/* Status & Priority */}
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</label>
+                                                <select
+                                                    value={selectedTicket.status}
+                                                    onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value)}
+                                                    disabled={isActionLoading || !isOwner}
+                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="Open">Open</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="Resolved">Resolved</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
+                                                <select
+                                                    value={selectedTicket.priority}
+                                                    onChange={(e) => handleUpdatePriority(selectedTicket.id, e.target.value)}
+                                                    disabled={isActionLoading || !isOwner}
+                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="Low">Low</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="High">High</option>
+                                                    <option value="Critical">Critical</option>
+                                                </select>
                                             </div>
                                         </div>
 
-                                        {/* Chat Input */}
-                                        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                                            {!isSolved ? (
-                                                <div className="max-w-4xl mx-auto">
-                                                    <div className="flex items-end gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 transition-shadow focus-within:ring-2 ring-indigo-500/10">
-                                                        {/* Upload Trigger */}
-                                                        <button
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            disabled={isUploading}
-                                                            className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
-                                                            title="Attach File"
-                                                        >
-                                                            {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Paperclip size={20} />}
-                                                        </button>
+                                        {/* Category — Filled by support */}
+                                        {isSupport && (
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Category</label>
+                                                <select
+                                                    value={selectedTicket.department || 'General'}
+                                                    onChange={async (e) => {
+                                                        const newDept = e.target.value;
+                                                        try {
+                                                            await supabase.from('helpdesk_tickets').update({ department: newDept, updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
+                                                            setSelectedTicket((prev: any) => prev ? { ...prev, department: newDept } : null);
+                                                            setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, department: newDept } : t));
+                                                            showToast('Category updated');
+                                                        } catch (err: any) {
+                                                            showToast(err.message, 'error');
+                                                        }
+                                                    }}
+                                                    disabled={isActionLoading || !isOwner}
+                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="General">General</option>
+                                                    <option value="General Inquiry">General Inquiry</option>
+                                                    <option value="Technical Support">Technical Support</option>
+                                                    <option value="Hardware Issue">Hardware Issue</option>
+                                                    <option value="Network Access">Network Access</option>
+                                                    <option value="Software License">Software License</option>
+                                                    <option value="Account & Access">Account & Access</option>
+                                                    <option value="Infrastructure">Infrastructure</option>
+                                                </select>
+                                            </div>
+                                        )}
 
-                                                        {isSupport && (
-                                                            <button
-                                                                onClick={() => setIsInternal(!isInternal)}
-                                                                className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all shrink-0 ${isInternal ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}`}
-                                                                title={isInternal ? "Switch to Public Reply" : "Switch to Internal Note"}
-                                                            >
-                                                                <Shield size={18} />
-                                                            </button>
-                                                        )}
+                                        {/* Assignment */}
+                                        {isSupport && (
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assign To</label>
+                                                <select
+                                                    value={selectedTicket.assignedTo || ''}
+                                                    onChange={(e) => handleAssignTicket(selectedTicket.id, e.target.value)}
+                                                    disabled={isActionLoading || !isOwner}
+                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {itStaff.map(staff => (
+                                                        <option key={staff.email} value={staff.name}>{staff.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
 
-                                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
-
-                                                        {/* Input Area */}
-                                                        <div className="flex-1 min-h-[44px] flex items-center">
-                                                            <textarea
-                                                                rows={1}
-                                                                className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-3 px-2"
-                                                                placeholder={isInternal ? "Type a private internal note..." : `Message to ${selectedTicket.requesterName.split(' ')[0]}...`}
-                                                                value={resolutionNote}
-                                                                onChange={e => {
-                                                                    setResolutionNote(e.target.value);
-                                                                    e.target.style.height = 'auto';
-                                                                    e.target.style.height = `${e.target.scrollHeight}px`;
-                                                                }}
-                                                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
-                                                                onPaste={handlePaste}
-                                                            />
-                                                        </div>
-
-                                                        {/* Emoji Picker / Send Group */}
-                                                        <div className="flex items-center gap-2 pb-0.5">
-                                                            <div className="relative shrink-0 flex items-center">
-                                                                <button
-                                                                    ref={emojiTriggerRef}
-                                                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                                    className={`w-9 h-9 flex items-center justify-center transition-all rounded-lg ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50'}`}
-                                                                    title="Add Emoji"
-                                                                >
-                                                                    <Smile size={20} />
-                                                                </button>
-                                                                <AnimatePresence>
-                                                                    {showEmojiPicker && (
-                                                                        <motion.div
-                                                                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                            className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[300px] overflow-hidden"
-                                                                        >
-                                                                            {/* Emoji Picker Content (Simplified for brevity) */}
-                                                                            <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                                                                                <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                                                                                    {EMOJI_CATEGORIES.map((cat, idx) => (
-                                                                                        <button
-                                                                                            key={cat.name}
-                                                                                            onClick={() => setActiveEmojiCategory(idx)}
-                                                                                            className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                                                                                        >
-                                                                                            {cat.icon}
-                                                                                        </button>
-                                                                                    ))}
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="p-2 grid grid-cols-7 gap-1 h-[200px] overflow-y-auto custom-scrollbar">
-                                                                                {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
-                                                                                    <button
-                                                                                        key={emoji}
-                                                                                        onClick={() => addEmoji(emoji)}
-                                                                                        className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"
-                                                                                    >
-                                                                                        <FluentEmoji emoji={emoji} size={18} />
-                                                                                    </button>
-                                                                                ))}
-                                                                            </div>
-                                                                        </motion.div>
-                                                                    )}
-                                                                </AnimatePresence>
-                                                            </div>
-
-                                                            <button
-                                                                onClick={handleSendReply}
-                                                                disabled={isActionLoading || !resolutionNote.trim()}
-                                                                className={`h-10 px-4 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm ${isInternal ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
-                                                            >
-                                                                <span>{isInternal ? 'Post Note' : 'Send'}</span>
-                                                                {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : (isInternal ? <Shield size={14} /> : <Send size={14} />)}
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                        {/* Requester Info */}
+                                        <div className="space-y-2">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Requester</label>
+                                            <div className="flex items-center gap-3">
+                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="sm" />
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{selectedTicket.requesterName}</p>
+                                                    <p className="text-xs text-slate-500">{selectedTicket.requesterEmail}</p>
                                                 </div>
-                                            ) : (
-                                                <div className="max-w-xl mx-auto py-2">
-                                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-xl flex flex-col items-center justify-center gap-1 text-emerald-700 dark:text-emerald-400">
-                                                        <div className="flex items-center gap-2">
-                                                            <CheckCircle2 size={16} className="text-emerald-500" />
-                                                            <span className="text-xs font-black uppercase tracking-widest">Incident Resolved</span>
-                                                        </div>
-                                                        {selectedTicket.resolvedAt && (
-                                                            <p className="text-[10px] font-bold opacity-60">
-                                                                {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric' })} at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            </p>
-                                                        )}
+                                            </div>
+                                        </div>
+
+                                        {/* Dates */}
+                                        <div className="space-y-3">
+                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Timestamps</label>
+
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 space-y-2.5 border border-slate-100 dark:border-slate-800">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-slate-500 dark:text-slate-400">Created</span>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                        {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} <span className="text-slate-400 font-normal ml-0.5">{new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </span>
+                                                </div>
+
+                                                {selectedTicket.updatedAt && (
+                                                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-200 dark:border-slate-700/50">
+                                                        <span className="text-slate-500 dark:text-slate-400">Activity</span>
+                                                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                            {new Date(selectedTicket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} <span className="text-slate-400 font-normal ml-0.5">{new Date(selectedTicket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {selectedTicket.resolvedAt && (
+                                                <div className="mt-2 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-xl p-3 flex flex-col items-center text-center shadow-sm">
+                                                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-1">Time Resolved</span>
+                                                    <div className="text-sm font-bold text-emerald-800 dark:text-emerald-200">
+                                                        {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                                                    </div>
+                                                    <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">
+                                                        {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">
-                                        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-700">
-                                            <MessageSquare size={24} className="text-slate-300 dark:text-slate-600" />
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select a ticket to start</p>
-                                    </div>
-                                )}
-                            </div>
 
-                            {/* RIGHT COLUMN: Ticket Info & Actions - ONLY FOR IT STAFF */}
-                            {selectedTicket && (
-                                <div className={`w-full lg:w-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-500 shrink-0 ${detailTab !== 'info' ? 'hidden lg:flex' : 'flex'}`}>
-                                    <div className="p-6 border-b border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden text-center">
-                                        <div className="w-20 h-20 mx-auto rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 mb-4 shadow-inner">
-                                            <User size={32} />
-                                        </div>
-                                        <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">{selectedTicket.requesterName}</h4>
-                                        <p className="text-xs font-medium text-slate-400">{selectedTicket.requesterEmail}</p>
-                                        {selectedTicket.requesterPhone && <p className="text-xs text-slate-400 mt-1">{selectedTicket.requesterPhone}</p>}
-                                    </div>
-
-                                    <div className="p-6 flex-1 overflow-y-auto space-y-8 custom-scrollbar bg-white dark:bg-slate-900">
-                                        {isSupport && (
-                                            <div className="space-y-6">
-                                                <div className="flex flex-col gap-1">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Department</p>
-                                                    <div className="px-1 text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                                                        <Building2 size={16} className="text-slate-400" />
-                                                        {selectedTicket.department}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Created On</p>
-                                                    <div className="px-1 text-sm font-bold text-slate-700 dark:text-slate-200">
-                                                        {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
-                                                    </div>
-                                                </div>
-
-                                                {selectedTicket.resolvedAt && (
-                                                    <>
-                                                        <div className="flex flex-col gap-1">
-                                                            <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest pl-1">Resolved On</p>
-                                                            <div className="px-1 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                                                                {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric' })}
-                                                                <span className="ml-2 opacity-60 font-medium text-xs">at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                            </div>
+                                        {/* Feedback / Rating */}
+                                        {selectedTicket.status === 'Resolved' && (
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client Feedback</label>
+                                                {selectedTicket.rating ? (
+                                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-100 dark:border-slate-700">
+                                                        <div className="flex gap-1 mb-2">
+                                                            {[1, 2, 3, 4, 5].map(star => (
+                                                                <Star key={star} size={14} className={selectedTicket.rating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'} />
+                                                            ))}
                                                         </div>
-                                                        {/* Calculation of Duration */}
-                                                        {(() => {
-                                                            const start = new Date(selectedTicket.createdAt).getTime();
-                                                            const end = new Date(selectedTicket.resolvedAt).getTime();
-                                                            const diff = end - start;
-                                                            const hours = Math.floor(diff / (1000 * 60 * 60));
-                                                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                            const days = Math.floor(hours / 24);
-
-                                                            let durationText = "";
-                                                            if (days > 0) durationText = `${days}d ${hours % 24}h`;
-                                                            else if (hours > 0) durationText = `${hours}h ${minutes}m`;
-                                                            else durationText = `${minutes}m`;
-
-                                                            return (
-                                                                <div className="flex flex-col gap-1 bg-emerald-50/50 dark:bg-emerald-900/10 p-2 rounded-lg border border-emerald-100/50 dark:border-emerald-800/50">
-                                                                    <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest pl-1">Time to Solve</p>
-                                                                    <div className="px-1 text-xs font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                                                                        <Clock size={12} />
-                                                                        {durationText}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </>
-                                                )}
-
-                                                {(selectedTicket.rating || selectedTicket.feedback) && (
-                                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                                                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest pl-1 mb-2">User Experience</p>
-                                                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                                                            {selectedTicket.rating && (
-                                                                <div className="flex gap-1 mb-2">
-                                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                                        <Star
-                                                                            key={star}
-                                                                            size={12}
-                                                                            className={`${selectedTicket.rating! >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}`}
-                                                                        />
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                            {/* Role Badge for Support to distinguish requester type */}
-                                                            {isSupport && (
-                                                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${(userRoles[selectedTicket.requesterEmail?.toLowerCase()] || 'User') === 'Staff'
-                                                                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                                                                    : (userRoles[selectedTicket.requesterEmail?.toLowerCase()] || 'User') === 'Admin'
-                                                                        ? 'bg-slate-900 text-white'
-                                                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                                    }`}>
-                                                                    {userRoles[selectedTicket.requesterEmail?.toLowerCase()] || 'User'}
-                                                                </span>
-                                                            )}
-                                                            {selectedTicket.feedback && (
-                                                                <p className="text-[11px] text-slate-600 dark:text-slate-300 italic leading-relaxed">
-                                                                    "{selectedTicket.feedback}"
-                                                                </p>
-                                                            )}
-                                                        </div>
+                                                        {selectedTicket.feedback ? (
+                                                            <p className="text-xs text-slate-600 dark:text-slate-300 italic">"{selectedTicket.feedback}"</p>
+                                                        ) : (
+                                                            <p className="text-[10px] text-slate-400 italic">No comments provided.</p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-[10px] font-medium text-slate-500 italic bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg p-2.5 text-center border border-amber-100 dark:border-amber-800/40">
+                                                        Waiting for client rating...
                                                     </div>
                                                 )}
                                             </div>
                                         )}
 
-                                        {!isSolved ? (
-                                            <div>
-                                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Actions</h4>
-                                                <div className="space-y-2">
-                                                    <div className="grid grid-cols-2 gap-2">
+                                        {/* Actions */}
+                                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                            {isSolveConfirmOpen ? (
+                                                <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800 rounded-xl p-4 space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                                                    <div className="flex items-start gap-3">
+                                                        <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
+                                                        <div>
+                                                            <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-tight">Mark as Resolved?</h4>
+                                                            <p className="text-[10px] text-rose-600/80 dark:text-rose-400/80 font-medium leading-relaxed mt-1">
+                                                                This will close the ticket and notify the requester.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
                                                         <button
-                                                            disabled={isActionLoading || !isOwner}
-                                                            onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')}
-                                                            className={`h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                                            onClick={(e) => { e.stopPropagation(); setIsSolveConfirmOpen(false); }}
+                                                            className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all"
                                                         >
-                                                            Process
+                                                            Cancel
                                                         </button>
                                                         <button
-                                                            disabled={isActionLoading || !isOwner}
-                                                            onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')}
-                                                            className={`h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600'}`}
+                                                            onClick={(e) => { e.stopPropagation(); selectedTicket && executeStatusUpdate(selectedTicket.id, 'Resolved'); }}
+                                                            disabled={isActionLoading}
+                                                            className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all"
                                                         >
-                                                            Hold
+                                                            {isActionLoading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                                                            Confirm
                                                         </button>
                                                     </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {!isSolved && (
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                disabled={isActionLoading || !isOwner}
+                                                                onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')}
+                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                                            >Process</button>
+                                                            <button
+                                                                disabled={isActionLoading || !isOwner}
+                                                                onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')}
+                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600'}`}
+                                                            >Hold</button>
+                                                        </div>
+                                                    )}
                                                     <button
-                                                        disabled={isActionLoading || !isOwner}
+                                                        disabled={isActionLoading || !isOwner || isSolved}
                                                         onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                                                        className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                                        className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm"
                                                     >
                                                         <CheckCircle2 size={16} /> Mark Resolved
                                                     </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 text-center">
-                                                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 mb-2">
-                                                        <CheckCircle2 size={20} />
-                                                    </div>
-                                                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide mb-1">Resolved</p>
-                                                    <p className="text-[10px] text-slate-500 italic">Ticket finalized</p>
-                                                </div>
+                                                </>
+                                            )}
+                                            {isSolved && (
                                                 <button
                                                     onClick={handleConvertToActivity}
                                                     disabled={isActionLoading}
@@ -1847,639 +2213,726 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                     {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
                                                     Log to Assets
                                                 </button>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
+                                </>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-40">
+                                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center mb-3"><Info size={20} className="text-slate-300 dark:text-slate-600" /></div>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">No ticket selected</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 ) : (
-                    <>
-                        <div className="flex-1 -mx-8 -mt-8 bg-slate-50/50 dark:bg-slate-950/50">
-                            <div className="max-w-7xl mx-auto p-8 pt-12">
 
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        {/* Area Utama */}
+                        <div className={`${selectedTicket ? 'lg:col-span-4' : 'lg:col-span-3'} space-y-8`}>
+                            <AnimatePresence mode="wait">
+                                {selectedTicket ? (
+                                    <motion.div
+                                        key={`chat-${selectedTicket.id}`}
+                                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 1.02, transition: { duration: 0.2 } }}
+                                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                        className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px] relative"
+                                    >
+                                        {/* WA-style Header */}
+                                        <div className="px-5 py-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-100/80 dark:border-slate-800/80 flex items-center gap-4 z-10 shrink-0 relative">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/30 to-transparent dark:from-indigo-900/10 pointer-events-none"></div>
+                                            <button onClick={() => setSelectedTicket(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 shrink-0">
+                                                <ArrowLeft size={18} />
+                                            </button>
+                                            {/* Avatar */}
+                                            <div className="relative shrink-0">
+                                                <UserAvatar name={selectedTicket.assignedTo || 'IT Support'} url={userAvatars[selectedTicket.assignedTo || 'IT Support']} size="md" />
+                                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
+                                            </div>
+                                            <div className="flex-1 min-w-0 relative z-10">
+                                                <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight truncate mb-0.5">Support Team</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] font-bold text-slate-500 font-mono tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">#{selectedTicket.ticketId}</span>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${selectedTicket.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : selectedTicket.status === 'In Progress' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : selectedTicket.status === 'Pending' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'}`}>
+                                                        {selectedTicket.status === 'In Progress' ? 'Processing' : selectedTicket.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className="text-[13px] font-bold text-slate-600 dark:text-slate-300 truncate max-w-[200px] hidden sm:block relative z-10 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700">{selectedTicket.subject}</p>
+                                        </div>
 
+                                        {/* WA-style Messages Area */}
+                                        <div
+                                            className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-1"
+                                            style={{ background: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23e2e8f0\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M0 0h40v40H0V0zm20 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6z\'/%3E%3C/g%3E%3C/svg%3E")' }}
+                                        >
+                                            {/* Date separator */}
+                                            <div className="flex justify-center mb-3">
+                                                <span className="bg-white/80 dark:bg-slate-800/80 backdrop-blur text-[10px] font-semibold text-slate-500 px-3 py-1 rounded-full shadow-sm">
+                                                    {new Date(selectedTicket.createdAt).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                                                </span>
+                                            </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    {/* LEFT COLUMN: Submit Ticket Form */}
-                                    <div className="lg:col-span-2 space-y-8">
-                                        <AnimatePresence mode="wait">
-                                            {selectedTicket ? (
-                                                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px]">
-                                                    <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4 bg-white dark:bg-slate-900 sticky top-0 z-10">
-                                                        <button onClick={() => setSelectedTicket(null)} className="p-2 -ml-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500"><ArrowLeft size={18} /></button>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <span className="text-xs font-bold text-indigo-600 font-mono bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">#{selectedTicket.ticketId}</span>
-                                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${selectedTicket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{selectedTicket.status}</span>
-                                                            </div>
-                                                            <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">{selectedTicket.subject}</h3>
-                                                        </div>
+                                            {/* Contact Info (WhatsApp Style) */}
+                                            <div className="flex flex-col items-center justify-center p-8 mx-auto mb-8 mt-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-[24px] border border-slate-100/80 dark:border-slate-800/80 shadow-sm max-w-sm relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-full blur-2xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
+                                                <UserAvatar name={selectedTicket.assignedTo || 'IT Support'} url={userAvatars[selectedTicket.assignedTo || 'IT Support']} size="xl" className="w-24 h-24 text-4xl mb-4 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 ring-4 ring-white dark:ring-slate-800" />
+                                                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5">Support Team</h2>
+                                                <p className="text-[13px] font-medium text-slate-500 dark:text-slate-400 mb-2">~{selectedTicket.assignedTo || 'IT Support'}</p>
+                                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wide uppercase mb-6 text-center">Gesit ERP Information Technology</p>
+                                                <div className="flex flex-col items-center gap-3 mt-1 w-full">
+                                                    <div className="w-full flex items-center justify-center gap-2 text-[13px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-900/40 px-5 py-3 rounded-xl border border-indigo-100/50 dark:border-indigo-800/50 text-center shadow-sm">
+                                                        <Hash size={14} className="shrink-0 opacity-70" />
+                                                        <span className="truncate">{selectedTicket.subject}</span>
                                                     </div>
+                                                </div>
+                                            </div>
 
-                                                    <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-950/50">
-                                                        <div className="max-w-3xl mx-auto space-y-6">
-                                                            {/* Ticket Description */}
-                                                            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Description</div>
-                                                                <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                                                                    <RichContentRenderer text={selectedTicket.description} />
+                                            {/* First message: ticket description (self = client sent it) */}
+                                            {(() => {
+                                                const isInitialSelf = currentUser?.email?.toLowerCase() === selectedTicket.requesterEmail?.toLowerCase();
+                                                return (
+                                                    <div className={`flex items-end gap-2.5 ${isInitialSelf ? 'flex-row-reverse' : 'flex-row'} mb-2 mt-4 px-2`}>
+                                                        <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName] || currentUser?.avatarUrl} size="sm" />
+                                                        <div className={`max-w-[75%] flex flex-col ${isInitialSelf ? 'items-end' : 'items-start'}`}>
+                                                            {!isInitialSelf && (
+                                                                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 px-1">{selectedTicket.requesterName}</span>
+                                                            )}
+                                                            <div className={`px-5 py-3 shadow-md ${isInitialSelf
+                                                                ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800 rounded-[20px] rounded-br-[4px] shadow-indigo-600/10'
+                                                                : 'bg-white dark:bg-slate-800 border-none shadow-slate-200/50 dark:shadow-none rounded-[20px] rounded-bl-[4px]'
+                                                                }`}>
+                                                                <div className={`text-[14px] leading-relaxed font-medium ${isInitialSelf ? 'text-white/95' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                                    <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} isSelf={isInitialSelf} />
                                                                 </div>
-                                                            </div>
-
-                                                            {/* Chat Messages */}
-                                                            <div className="space-y-6 pb-6">
-                                                                {messages.map((msg, i) => {
-                                                                    const isInternalMsg = msg.is_internal;
-                                                                    if (isInternalMsg && !isSupport) return null;
-
-                                                                    const isSelf = (isSupport && msg.sender_role === 'IT') || (!isSupport && msg.sender_role !== 'IT');
-                                                                    return (
-                                                                        <div key={i} className={`flex ${!isSelf ? 'justify-start' : 'justify-end'}`}>
-                                                                            <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed shadow-sm ${isInternalMsg ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 text-amber-900 dark:text-amber-200' : (!isSelf ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300' : 'bg-indigo-600 text-white')}`}>
-                                                                                <div className="flex items-center gap-2 mb-1.5 opacity-70 text-[10px] font-semibold uppercase tracking-wide">
-                                                                                    {isInternalMsg && (
-                                                                                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-800/50 px-1.5 py-0.5 rounded">
-                                                                                            <Shield size={10} /> Private Note
-                                                                                        </span>
-                                                                                    )}
-                                                                                    <span>{msg.sender_name}</span>
-                                                                                    <span>•</span>
-                                                                                    <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                                </div>
-                                                                                {(() => {
-                                                                                    const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
-                                                                                    const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
-
-                                                                                    if (imageMatch) {
-                                                                                        const imageUrl = imageMatch[1];
-                                                                                        return (
-                                                                                            <div
-                                                                                                onClick={() => setPreviewImage(imageUrl)}
-                                                                                                className="block cursor-zoom-in group/img relative overflow-hidden rounded-lg border border-white/10 mt-2"
-                                                                                            >
-                                                                                                <img
-                                                                                                    src={imageUrl}
-                                                                                                    alt="Attachment"
-                                                                                                    className="max-w-full max-h-[300px] object-contain hover:scale-105 transition-transform duration-500 bg-black/20"
-                                                                                                    loading="lazy"
-                                                                                                />
-                                                                                            </div>
-                                                                                        );
-                                                                                    }
-
-                                                                                    if (fileMatch) {
-                                                                                        const fileUrl = fileMatch[2];
-                                                                                        const isPdf = fileMatch[1] === 'PDF';
-
-                                                                                        if (isPdf) {
-                                                                                            return (
-                                                                                                <div
-                                                                                                    onClick={() => setPreviewImage(fileUrl)}
-                                                                                                    className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors cursor-pointer ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
-                                                                                                >
-                                                                                                    <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
-                                                                                                        <FileText size={20} />
-                                                                                                    </div>
-                                                                                                    <div className="flex-1 min-w-0 text-left">
-                                                                                                        <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached PDF</p>
-                                                                                                        <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to preview</p>
-                                                                                                    </div>
-                                                                                                    <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
-                                                                                                </div>
-                                                                                            );
-                                                                                        }
-
-                                                                                        return (
-                                                                                            <a
-                                                                                                href={fileUrl}
-                                                                                                target="_blank"
-                                                                                                rel="noopener noreferrer"
-                                                                                                className={`flex items-center gap-3 p-3 rounded-lg mt-2 transition-colors ${!isSelf ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700' : 'bg-white/20 hover:bg-white/30 text-white'}`}
-                                                                                            >
-                                                                                                <div className={`p-2 rounded-lg ${!isSelf ? 'bg-indigo-100 text-indigo-600' : 'bg-white/20 text-white'}`}>
-                                                                                                    <FileText size={20} />
-                                                                                                </div>
-                                                                                                <div className="flex-1 min-w-0 text-left">
-                                                                                                    <p className={`text-xs font-bold truncate ${!isSelf ? 'text-slate-700 dark:text-slate-300' : 'text-white'}`}>Attached Document</p>
-                                                                                                    <p className={`text-[10px] truncate ${!isSelf ? 'text-slate-500' : 'text-white/80'}`}>Click to view</p>
-                                                                                                </div>
-                                                                                                <ExternalLink size={14} className={!isSelf ? 'text-slate-400' : 'text-white/80'} />
-                                                                                            </a>
-                                                                                        );
-                                                                                    }
-
-                                                                                    return <EmojiRenderer text={msg.message} />;
-                                                                                })()}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                                <div ref={messagesEndRef} />
+                                                                <p className={`text-[10px] ${isInitialSelf ? 'text-indigo-200' : 'text-slate-400'} mt-2 text-right font-medium flex items-center justify-end gap-1`}>
+                                                                    {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {isInitialSelf && <span className="text-blue-300">✓✓</span>}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                );
+                                            })()}
 
-                                                    {/* Feedback / Reply Input */}
-                                                    {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') ? (
-                                                        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                                            <div className="max-w-2xl mx-auto text-center space-y-4">
-                                                                <div className="flex flex-col items-center gap-2">
-                                                                    <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                                        <CheckCircle2 size={24} />
-                                                                    </div>
-                                                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ticket Resolved</h3>
-                                                                    {selectedTicket.resolvedAt && (
-                                                                        <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full mb-1">
-                                                                            Resolved on {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })} at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                        </div>
-                                                                    )}
-                                                                    <p className="text-slate-500 text-sm">How was your experience with our support?</p>
-                                                                </div>
+                                            {/* Messages */}
+                                            {messages.map((msg, i) => {
+                                                const isInternalMsg = msg.is_internal;
+                                                if (isInternalMsg && !isSupport) return null;
 
-                                                                {selectedTicket.rating || !isRequester ? (
-                                                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-                                                                        <div className="flex gap-2 justify-center mb-4">
-                                                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                                                <Star
-                                                                                    key={star}
-                                                                                    size={24}
-                                                                                    className={`${(selectedTicket.rating || 0) >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}
-                                                                                />
-                                                                            ))}
-                                                                        </div>
-                                                                        {selectedTicket.feedback ? (
-                                                                            <p className="text-slate-700 dark:text-slate-300 italic">"{selectedTicket.feedback}"</p>
-                                                                        ) : (
-                                                                            <p className="text-slate-400 text-xs italic">No additional comments provided.</p>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="space-y-4 bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-                                                                        <div className="flex gap-2 justify-center">
-                                                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                                                <button
-                                                                                    key={star}
-                                                                                    onClick={() => setFeedbackRating(star)}
-                                                                                    className="transition-transform hover:scale-110 focus:outline-none"
-                                                                                >
-                                                                                    <Star
-                                                                                        size={32}
-                                                                                        className={`${feedbackRating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-200'}`}
-                                                                                    />
-                                                                                </button>
-                                                                            ))}
-                                                                        </div>
-                                                                        <textarea
-                                                                            className="w-full h-24 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
-                                                                            placeholder="Share your experience (optional)..."
-                                                                            value={feedbackComment}
-                                                                            onChange={(e) => setFeedbackComment(e.target.value)}
-                                                                        />
-                                                                        <button
-                                                                            onClick={handleSubmitFeedback}
-                                                                            disabled={isActionLoading || feedbackRating === 0}
-                                                                            className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                        >
-                                                                            {isActionLoading ? <Loader2 size={16} className="animate-spin inline mr-2" /> : null}
-                                                                            Submit Feedback
-                                                                        </button>
+                                                // For client: isSelf = they sent it (role !== 'IT')
+                                                const isSelf = (isSupport && msg.sender_role === 'IT') || (!isSupport && msg.sender_role !== 'IT');
+                                                const senderInitials = (msg.sender_name || 'S').split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+
+                                                return (
+                                                    <div key={i} className={`flex items-end gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} mb-2 px-2`}>
+                                                        {/* Avatar */}
+                                                        <UserAvatar name={msg.sender_name || 'S'} url={isSelf ? currentUser?.avatarUrl : userAvatars[msg.sender_name]} size="sm" />
+
+                                                        <div className={`max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
+                                                            {!isSelf && (
+                                                                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 px-1">{msg.sender_name}</span>
+                                                            )}
+                                                            <div className={`px-5 py-3 shadow-md ${isInternalMsg
+                                                                ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-700/40 rounded-[20px]'
+                                                                : isSelf
+                                                                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800 rounded-[20px] rounded-br-[4px] shadow-indigo-600/10'
+                                                                    : 'bg-white dark:bg-slate-800 border-none shadow-slate-200/50 dark:shadow-none rounded-[20px] rounded-bl-[4px]'
+                                                                }`}>
+                                                                {isInternalMsg && (
+                                                                    <div className="flex items-center gap-1.5 mb-2 bg-amber-100/50 dark:bg-amber-900/50 px-2 py-1 rounded inline-flex">
+                                                                        <Shield size={10} className="text-amber-600" />
+                                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Internal Note</span>
                                                                     </div>
                                                                 )}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                                            <div className="flex items-end gap-3 max-w-4xl mx-auto">
-                                                                <button
-                                                                    onClick={() => fileInputRef.current?.click()}
-                                                                    disabled={isUploading}
-                                                                    className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 hover:text-indigo-600 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition-all shrink-0"
-                                                                    title="Attach File"
-                                                                >
-                                                                    {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Paperclip size={20} />}
-                                                                </button>
-                                                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
-
-                                                                {/* Input Area */}
-                                                                <div className="flex-1 min-h-[40px] flex items-center pt-1">
-                                                                    <textarea
-                                                                        rows={1}
-                                                                        className="w-full bg-transparent border-none text-sm font-medium outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white resize-none max-h-32 py-2"
-                                                                        placeholder="Type a reply..."
-                                                                        value={resolutionNote}
-                                                                        onChange={e => {
-                                                                            setResolutionNote(e.target.value);
-                                                                            e.target.style.height = 'auto';
-                                                                            e.target.style.height = `${e.target.scrollHeight}px`;
-                                                                        }}
-                                                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
-                                                                        onPaste={handlePaste}
-                                                                    />
-                                                                </div>
-
-                                                                {/* Emoji Picker / Send Group */}
-                                                                <div className="flex items-center gap-2 pb-0.5">
-                                                                    <div className="relative shrink-0 flex items-center">
-                                                                        <button
-                                                                            ref={emojiTriggerRef}
-                                                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                                                            className={`w-9 h-9 flex items-center justify-center transition-all rounded-lg ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50'}`}
-                                                                            title="Add Emoji"
-                                                                        >
-                                                                            <Smile size={20} />
-                                                                        </button>
-                                                                        <AnimatePresence>
-                                                                            {showEmojiPicker && (
-                                                                                <motion.div
-                                                                                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                                                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                                                    className="absolute bottom-full right-0 mb-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[300px] overflow-hidden"
-                                                                                >
-                                                                                    <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                                                                                        <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                                                                                            {EMOJI_CATEGORIES.map((cat, idx) => (
-                                                                                                <button
-                                                                                                    key={cat.name}
-                                                                                                    onClick={() => setActiveEmojiCategory(idx)}
-                                                                                                    className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                                                                                                >
-                                                                                                    {cat.icon}
-                                                                                                </button>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div className="p-2 grid grid-cols-7 gap-1 h-[200px] overflow-y-auto custom-scrollbar">
-                                                                                        {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
-                                                                                            <button
-                                                                                                key={emoji}
-                                                                                                onClick={() => addEmoji(emoji)}
-                                                                                                className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"
-                                                                                            >
-                                                                                                <FluentEmoji emoji={emoji} size={18} />
-                                                                                            </button>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                </motion.div>
-                                                                            )}
-                                                                        </AnimatePresence>
-                                                                    </div>
-
-                                                                    <button
-                                                                        onClick={handleSendReply}
-                                                                        disabled={isActionLoading || !resolutionNote.trim()}
-                                                                        className="h-10 px-4 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-xs shadow-sm"
-                                                                    >
-                                                                        <span>Send</span>
-                                                                        {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : viewMode === 'archive' ? (
-                                                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px] animate-in slide-in-from-bottom-4 duration-500">
-                                                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-                                                        <div>
-                                                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Ticket Archive</h2>
-                                                            <p className="text-xs text-slate-500 font-medium">Browse all your previous support requests</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => setViewMode('list')}
-                                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95"
-                                                        >
-                                                            <PlusCircle size={14} />
-                                                            Submit New
-                                                        </button>
-                                                    </div>
-
-                                                    <div className="overflow-x-auto flex-1">
-                                                        {tickets.length === 0 ? (
-                                                            <div className="flex flex-col items-center justify-center py-24 text-center">
-                                                                <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 mb-4">
-                                                                    <Inbox size={32} />
-                                                                </div>
-                                                                <p className="text-sm font-bold text-slate-400">No tickets found in your history.</p>
-                                                            </div>
-                                                        ) : (
-                                                            <table className="w-full text-left border-separate border-spacing-0">
-                                                                <thead>
-                                                                    <tr className="bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10">
-                                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Reference</th>
-                                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Subject</th>
-                                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Status</th>
-                                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Date</th>
-                                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Action</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                                <div className={`text-[14px] leading-relaxed font-medium ${isSelf ? 'text-white/95' : isInternalMsg ? 'text-amber-900 dark:text-amber-200' : 'text-slate-800 dark:text-slate-200'}`}>
                                                                     {(() => {
-                                                                        const startIdx = (archivePage - 1) * ARCHIVE_PER_PAGE;
-                                                                        const pageTickets = filteredTickets.slice(startIdx, startIdx + ARCHIVE_PER_PAGE);
-
-                                                                        return pageTickets.map((t) => (
-                                                                            <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
-                                                                                <td className="px-6 py-4">
-                                                                                    <span className="text-[11px] font-bold text-indigo-600 font-mono bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded">#{t.ticketId}</span>
-                                                                                </td>
-                                                                                <td className="px-6 py-4">
-                                                                                    <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{t.subject}</div>
-                                                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.department}</div>
-                                                                                </td>
-                                                                                <td className="px-6 py-4">
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <div className={`w-1.5 h-1.5 rounded-full ${t.status === 'Resolved' ? 'bg-emerald-500' :
-                                                                                            t.status === 'Open' ? 'bg-blue-500' :
-                                                                                                t.status === 'Pending' ? 'bg-amber-500' : 'bg-indigo-500'
-                                                                                            }`} />
-                                                                                        <span className={`text-[10px] font-black uppercase tracking-wider ${t.status === 'Resolved' ? 'text-emerald-600' :
-                                                                                            t.status === 'Open' ? 'text-blue-600' :
-                                                                                                'text-slate-500'
-                                                                                            }`}>{t.status}</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td className="px-6 py-4">
-                                                                                    <div className="text-xs text-slate-600 dark:text-slate-400 font-bold">{new Date(t.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                                                                                </td>
-                                                                                <td className="px-6 py-4 text-right">
-                                                                                    <button
-                                                                                        onClick={() => setSelectedTicket(t)}
-                                                                                        className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600 text-slate-400 rounded-xl transition-all shadow-sm active:scale-90"
-                                                                                    >
-                                                                                        <ArrowRight size={16} />
-                                                                                    </button>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ));
+                                                                        const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
+                                                                        const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
+                                                                        if (imageMatch) return (
+                                                                            <div onClick={() => setPreviewImage(imageMatch[1])} className="block cursor-zoom-in overflow-hidden rounded-xl mt-1 ring-1 ring-black/5">
+                                                                                <img src={imageMatch[1]} alt="Attachment" className="max-w-full max-h-[260px] object-contain rounded-xl hover:scale-[1.02] transition-transform duration-300" loading="lazy" />
+                                                                            </div>
+                                                                        );
+                                                                        if (fileMatch) {
+                                                                            const fileUrl = fileMatch[2];
+                                                                            const isPdf = fileMatch[1] === 'PDF';
+                                                                            if (isPdf) return (
+                                                                                <div onClick={() => setPreviewImage(fileUrl)} className={`flex items-center gap-3 p-3 rounded-xl mt-2 cursor-pointer transition-colors ${isSelf ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
+                                                                                    <div className="p-2.5 rounded-xl bg-rose-100 text-rose-600 shrink-0"><FileText size={18} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-[13px] font-bold truncate">Attached PDF</p><p className="text-[11px] opacity-70">Tap to preview</p></div>
+                                                                                    <ExternalLink size={14} className="opacity-60 shrink-0" />
+                                                                                </div>
+                                                                            );
+                                                                            return (
+                                                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-xl mt-2 transition-colors ${isSelf ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
+                                                                                    <div className="p-2.5 rounded-xl bg-indigo-100 text-indigo-600 shrink-0"><FileText size={18} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-[13px] font-bold truncate">Attached Document</p><p className="text-[11px] opacity-70">Click to view</p></div>
+                                                                                    <ExternalLink size={14} className="opacity-60 shrink-0" />
+                                                                                </a>
+                                                                            );
+                                                                        }
+                                                                        return <EmojiRenderer text={msg.message} />;
                                                                     })()}
-                                                                </tbody>
-                                                            </table>
+                                                                </div>
+                                                                <div className="flex items-center gap-1 mt-1.5 justify-end">
+                                                                    <span className={`text-[10px] font-medium ${isSelf ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                    {isSelf && <span className="text-[11px] text-blue-300">✓✓</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            <div ref={messagesEndRef} />
+
+                                            {/* Final Resolution & Feedback (Integrated in Chat Flow) */}
+                                            {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="max-w-2xl mx-auto py-12 px-4 space-y-8"
+                                                >
+                                                    {/* Resolution Announcement */}
+                                                    <div className="text-center">
+                                                        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/10 ring-4 ring-white dark:ring-slate-900">
+                                                            <CheckCircle2 size={36} />
+                                                        </div>
+                                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Support Success!</h3>
+                                                        <p className="text-slate-500 font-medium text-sm mt-1">This ticket has been officially resolved.</p>
+
+                                                        {selectedTicket.resolvedAt && (
+                                                            <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded-full text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
+                                                                <Clock size={12} />
+                                                                {new Date(selectedTicket.resolvedAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })} at {new Date(selectedTicket.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
                                                         )}
                                                     </div>
 
-                                                    {/* Archive Pagination */}
-                                                    {filteredTickets.length > ARCHIVE_PER_PAGE && (
-                                                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/30">
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                                Showing {Math.min(filteredTickets.length, (archivePage - 1) * ARCHIVE_PER_PAGE + 1)}-{Math.min(filteredTickets.length, archivePage * ARCHIVE_PER_PAGE)} of {filteredTickets.length}
-                                                            </p>
-                                                            <div className="flex items-center gap-1">
-                                                                <button
-                                                                    disabled={archivePage === 1}
-                                                                    onClick={() => setArchivePage(prev => prev - 1)}
-                                                                    className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                                                                >
-                                                                    <ChevronLeft size={16} />
-                                                                </button>
-                                                                {(() => {
-                                                                    const totalPages = Math.ceil(tickets.length / ARCHIVE_PER_PAGE);
-                                                                    return Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                                                                        <button
-                                                                            key={p}
-                                                                            onClick={() => setArchivePage(p)}
-                                                                            className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${archivePage === p ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-600'}`}
-                                                                        >
-                                                                            {p}
-                                                                        </button>
-                                                                    ));
-                                                                })()}
-                                                                <button
-                                                                    disabled={archivePage >= Math.ceil(tickets.length / ARCHIVE_PER_PAGE)}
-                                                                    onClick={() => setArchivePage(prev => prev + 1)}
-                                                                    className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                                                                >
-                                                                    <ChevronRight size={16} />
-                                                                </button>
+                                                    {/* Final Resolution Note */}
+                                                    {selectedTicket.resolution && (
+                                                        <div className="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                                                            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                                                            <div className="flex items-start gap-4">
+                                                                <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0"><Check size={18} /></div>
+                                                                <div className="flex-1">
+                                                                    <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Final Resolution</h4>
+                                                                    <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+                                                                        <RichContentRenderer text={selectedTicket.resolution} />
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
-                                                </div>
-                                            ) : (
-                                                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
-                                                    <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Submit a Support Ticket</h2>
-                                                    <p className="text-slate-500 text-sm mb-8">Fill out the details below and our team will get back to you.</p>
 
-                                                    <div className="space-y-6">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Subject</label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400"
-                                                                    placeholder="Briefly describe the issue"
-                                                                    value={newTicketData.subject}
-                                                                    onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
+                                                    {/* Rating Section */}
+                                                    <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-[32px] p-8 border border-white dark:border-slate-700/50 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                                                        <h4 className="text-center text-sm font-bold text-slate-800 dark:text-slate-200 mb-6 uppercase tracking-widest leading-none">Experience Feedback</h4>
+
+                                                        {selectedTicket.rating || !isRequester ? (
+                                                            <div className="space-y-6 text-center">
+                                                                <div className="flex gap-3 justify-center mt-2">
+                                                                    {[1, 2, 3, 4, 5].map((star, idx) => (
+                                                                        <motion.div
+                                                                            key={star}
+                                                                            initial={{ opacity: 0, scale: 0.5 }}
+                                                                            animate={{ opacity: 1, scale: 1 }}
+                                                                            transition={{ delay: 0.2 + idx * 0.1, type: "spring", stiffness: 200 }}
+                                                                        >
+                                                                            <Star
+                                                                                size={36}
+                                                                                className={`${(selectedTicket.rating || 0) >= star ? 'fill-amber-400 text-amber-400 drop-shadow-xl' : 'text-slate-100 dark:text-slate-800'}`}
+                                                                            />
+                                                                        </motion.div>
+                                                                    ))}
+                                                                </div>
+                                                                {selectedTicket.feedback ? (
+                                                                    <div className="relative">
+                                                                        <Quote size={24} className="absolute -top-4 -left-2 text-slate-100 dark:text-slate-700 -z-10" />
+                                                                        <p className="text-slate-600 dark:text-slate-300 italic font-bold text-lg leading-relaxed px-4">"{selectedTicket.feedback}"</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-slate-400 text-sm italic font-medium">No additional comments provided by requester.</p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-6">
+                                                                <div className="flex gap-3 justify-center">
+                                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                                        <button
+                                                                            key={star}
+                                                                            onClick={() => setFeedbackRating(star)}
+                                                                            className="transition-all hover:scale-125 focus:outline-none group/star"
+                                                                        >
+                                                                            <Star size={40} className={`${feedbackRating >= star ? 'fill-amber-400 text-amber-400 drop-shadow-xl saturate-150' : 'text-slate-100 dark:text-slate-800 group-hover/star:text-amber-200'}`} />
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                <textarea
+                                                                    className="w-full h-[120px] p-6 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all text-sm font-medium placeholder:text-slate-400 resize-none"
+                                                                    placeholder="Tell us what you liked (or what we could improve)..."
+                                                                    value={feedbackComment}
+                                                                    onChange={(e) => setFeedbackComment(e.target.value)}
                                                                 />
+                                                                <button
+                                                                    onClick={handleSubmitFeedback}
+                                                                    disabled={isActionLoading || feedbackRating === 0}
+                                                                    className="w-full h-14 bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none group flex items-center justify-center gap-3"
+                                                                >
+                                                                    {isActionLoading ? <Loader2 size={20} className="animate-spin" /> : <><Send size={18} /> Submit Resolution Review</>}
+                                                                </button>
                                                             </div>
-                                                            <div className="space-y-2">
-                                                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Category</label>
-                                                                <div className="relative">
-                                                                    <select
-                                                                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm appearance-none cursor-pointer"
-                                                                        value={newTicketData.department || 'General Inquiry'}
-                                                                        onChange={e => setNewTicketData({ ...newTicketData, department: e.target.value })}
-                                                                    >
-                                                                        <option value="General Inquiry">General Inquiry</option>
-                                                                        <option value="Technical Support">Technical Support</option>
-                                                                        <option value="Hardware Issue">Hardware Issue</option>
-                                                                        <option value="Network Access">Network Access</option>
-                                                                        <option value="Software License">Software License</option>
-                                                                    </select>
-                                                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" size={16} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </div>
 
-                                                        <div className="space-y-2">
-                                                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Detailed Description</label>
-                                                            <textarea
-                                                                className="w-full min-h-[150px] p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm placeholder:text-slate-400 resize-none leading-relaxed"
-                                                                placeholder="Please provide as much detail as possible..."
-                                                                value={newTicketData.description}
-                                                                onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
-                                                            />
-                                                        </div>
+                                        {/* Input area replacement when closed */}
+                                        {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') ? (
+                                            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2 text-slate-400 select-none shrink-0">
+                                                <Lock size={14} className="opacity-50" />
+                                                <span className="text-[12px] font-bold uppercase tracking-[0.2em]">Conversation closed - No more replies</span>
+                                            </div>
+                                        ) : (
+                                            <div className="px-4 py-4 bg-white dark:bg-slate-900 border-t border-slate-100/80 dark:border-slate-800/80 shrink-0 relative z-10">
+                                                <div className="flex items-end gap-3 max-w-4xl mx-auto">
+                                                    {/* Left buttons */}
+                                                    <div className="flex items-center gap-1 pb-1">
+                                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
+                                                        <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" title="Attach Files">
+                                                            {isUploading ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Paperclip size={18} />}
+                                                        </button>
 
-                                                        <div className="space-y-2">
-                                                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Attachments (Optional)</label>
-                                                            <div
-                                                                onClick={() => newTicketFileInputRef.current?.click()}
-                                                                className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-800/50 transition-all group"
-                                                            >
-                                                                <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-3 relative">
-                                                                    {isUploading ? (
-                                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                                            <svg className="w-full h-full transform -rotate-90">
-                                                                                <circle
-                                                                                    cx="24" cy="24" r="20"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="3"
-                                                                                    fill="transparent"
-                                                                                    className="text-slate-200 dark:text-slate-700"
-                                                                                />
-                                                                                <circle
-                                                                                    cx="24" cy="24" r="20"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="3"
-                                                                                    fill="transparent"
-                                                                                    strokeDasharray={125.6}
-                                                                                    strokeDashoffset={125.6 - (125.6 * uploadProgress) / 100}
-                                                                                    className="text-indigo-500 transition-all duration-300"
-                                                                                />
-                                                                            </svg>
-                                                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 absolute">{uploadProgress}%</span>
-                                                                        </div>
-                                                                    ) : <CloudUpload size={24} />}
-                                                                </div>
-                                                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 transition-colors">Click to upload or drag and drop</p>
-                                                                <p className="text-xs text-slate-400 mt-1">Images, PDF or Documents (max. 10MB)</p>
-                                                                <input
-                                                                    type="file"
-                                                                    ref={newTicketFileInputRef}
-                                                                    onChange={handleNewTicketFileUpload}
-                                                                    className="hidden"
-                                                                    accept="*/*"
-                                                                />
-                                                            </div>
+                                                        {/* Formatting Buttons */}
+                                                        <button
+                                                            onClick={() => replyTextareaRef.current && applyFormatting(replyTextareaRef.current, 'bold', resolutionNote, setResolutionNote)}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                                            title="Bold (Ctrl+B)"
+                                                        >
+                                                            <Bold size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => replyTextareaRef.current && applyFormatting(replyTextareaRef.current, 'italic', resolutionNote, setResolutionNote)}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                                            title="Italic (Ctrl+I)"
+                                                        >
+                                                            <Italic size={16} />
+                                                        </button>
 
-                                                            {newTicketData.attachments.length > 0 && (
-                                                                <div className="flex flex-wrap gap-3 mt-4">
-                                                                    {newTicketData.attachments.map((url, idx) => {
-                                                                        const isImage = url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
-                                                                        return (
-                                                                            <div key={idx} className="relative group w-20 h-20 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm bg-white dark:bg-slate-800">
-                                                                                {isImage ? (
-                                                                                    <img src={url} alt="Attachment" className="w-full h-full object-cover" />
-                                                                                ) : (
-                                                                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                                                                                        <FileText size={20} />
-                                                                                        <span className="text-[8px] font-bold mt-1">FILE</span>
-                                                                                    </div>
-                                                                                )}
-                                                                                <button
-                                                                                    onClick={() => setNewTicketData(prev => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== idx) }))}
-                                                                                    className="absolute top-1 right-1 p-1 bg-slate-900/60 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                >
-                                                                                    <X size={12} />
-                                                                                </button>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="pt-4 flex items-center justify-end gap-3">
-                                                            <button onClick={() => setNewTicketData({ subject: '', description: '', priority: 'Medium', attachments: [], department: 'General Inquiry' })} className="px-6 h-12 text-slate-500 hover:text-slate-800 font-bold text-sm transition-colors">Cancel</button>
+                                                        {isSupport && (
                                                             <button
-                                                                onClick={handleCreateTicket}
-                                                                disabled={isActionLoading || !newTicketData.subject || !newTicketData.description}
-                                                                className="px-8 h-12 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                                                                onClick={() => setIsInternal(!isInternal)}
+                                                                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isInternal ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 ring-1 ring-amber-200' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                                title={isInternal ? 'Sending as Internal Note' : 'Public Reply'}
                                                             >
-                                                                {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Submit Ticket'}
+                                                                {isInternal ? <Lock size={16} /> : <Shield size={16} />}
                                                             </button>
+                                                        )}
+
+                                                        <div className="relative shrink-0">
+                                                            <button ref={emojiTriggerRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${showEmojiPicker ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'}`}>
+                                                                <Smile size={18} />
+                                                            </button>
+                                                            <AnimatePresence>
+                                                                {showEmojiPicker && (
+                                                                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 10 }} className="absolute bottom-full left-0 mb-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none z-[100] w-[320px] overflow-hidden">
+                                                                        <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50">
+                                                                            <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                                                                                {EMOJI_CATEGORIES.map((cat, idx) => (
+                                                                                    <button key={cat.name} onClick={() => setActiveEmojiCategory(idx)} className={`p-2 rounded-xl transition-all shrink-0 ${activeEmojiCategory === idx ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>{cat.icon}</button>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="p-3 grid grid-cols-7 gap-1 h-[240px] overflow-y-auto custom-scrollbar">
+                                                                            {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (
+                                                                                <button key={emoji} onClick={() => addEmoji(emoji)} className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-[20px] hover:scale-110">
+                                                                                    <FluentEmoji emoji={emoji} size={22} />
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
 
-                                    {/* RIGHT COLUMN: Sidebar */}
-                                    <div className="space-y-6">
-                                        {/* Recent Tickets Card */}
-                                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Recent Tickets</h3>
-                                                <button onClick={fetchTickets} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-blue-600">
-                                                    <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
-                                                </button>
-                                            </div>
+                                                    {/* Input pill */}
+                                                    <div className="flex-1 min-h-[50px] max-h-40 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-3xl px-5 py-3.5 flex items-end shadow-sm focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all group">
+                                                        <textarea
+                                                            ref={replyTextareaRef}
+                                                            rows={1}
+                                                            className="w-full bg-transparent border-none text-[15px] font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none resize-none leading-relaxed"
+                                                            placeholder="Type a message..."
+                                                            value={resolutionNote}
+                                                            onChange={e => {
+                                                                setResolutionNote(e.target.value);
+                                                                e.target.style.height = 'auto';
+                                                                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                                                            }}
+                                                            onKeyDown={e => {
+                                                                if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
+                                                                    e.preventDefault();
+                                                                    if (replyTextareaRef.current) {
+                                                                        applyFormatting(replyTextareaRef.current, e.key === 'b' ? 'bold' : 'italic', resolutionNote, setResolutionNote);
+                                                                    }
+                                                                } else if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    handleSendReply();
+                                                                }
+                                                            }}
+                                                            onPaste={handlePaste}
+                                                        />
+                                                    </div>
 
-                                            {/* Mini Tabs */}
-                                            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
-                                                {(['Active', 'Resolved'] as const).map((tab) => (
+                                                    {/* Send button */}
                                                     <button
-                                                        key={tab}
-                                                        onClick={() => setRecentFilter(tab)}
-                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${recentFilter === tab ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                        onClick={handleSendReply}
+                                                        disabled={isActionLoading || !resolutionNote.trim()}
+                                                        className="w-[50px] h-[50px] rounded-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.95] disabled:opacity-40 disabled:shadow-none group/send mb-0.5"
                                                     >
-                                                        {tab}
+                                                        {isActionLoading ? <Loader2 size={20} className="animate-spin text-white" /> : <Send size={18} className="text-white ml-0.5 group-disabled/send:translate-x-0 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 transition-transform" />}
                                                     </button>
-                                                ))}
+                                                </div>
                                             </div>
-
-                                            <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
-                                                {(() => {
-                                                    const filtered = tickets.filter(t =>
-                                                        recentFilter === 'Resolved' ? (t.status === 'Resolved' || t.status === 'Closed') : (t.status !== 'Resolved' && t.status !== 'Closed')
-                                                    );
-
-                                                    if (filtered.length === 0) {
-                                                        return <div className="text-center py-12">
-                                                            <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-300">
-                                                                <Inbox size={20} />
-                                                            </div>
-                                                            <p className="text-[10px] font-medium text-slate-400">No {recentFilter.toLowerCase()} tickets</p>
-                                                        </div>;
-                                                    }
-
-                                                    return filtered.map((ticket) => (
-                                                        <div
-                                                            key={ticket.id}
-                                                            onClick={() => setSelectedTicket(ticket)}
-                                                            className="group cursor-pointer p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md"
-                                                        >
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <span className="text-[10px] font-black text-slate-400 font-mono">#{ticket.ticketId}</span>
-                                                                <div className={`w-2 h-2 rounded-full ${ticket.status === 'Resolved' ? 'bg-emerald-500' :
-                                                                    ticket.status === 'Open' ? 'bg-blue-500' :
-                                                                        ticket.status === 'Pending' ? 'bg-amber-500' : 'bg-indigo-500'
-                                                                    }`} />
-                                                            </div>
-                                                            <h4 className="text-xs font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">{ticket.subject}</h4>
-                                                            <div className="flex items-center justify-between mt-2">
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase">{new Date(ticket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
-                                                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Open Ticket</span>
-                                                            </div>
-                                                        </div>
-                                                    ));
-                                                })()}
+                                        )}
+                                    </motion.div>
+                                ) : viewMode === 'archive' ? (
+                                    <motion.div
+                                        key="archive"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px] relative"
+                                    >
+                                        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-50/30 dark:bg-indigo-900/5 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
+                                        <div className="p-8 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between relative z-10">
+                                            <div>
+                                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight mb-1.5">Ticket Archive</h2>
+                                                <p className="text-sm text-slate-500 font-medium">Browse all your previous support requests</p>
                                             </div>
+                                            <button
+                                                onClick={() => setViewMode('list')}
+                                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95 hover:scale-[1.02] group"
+                                            >
+                                                <PlusCircle size={16} className="group-hover:rotate-90 transition-transform" />
+                                                Submit New
+                                            </button>
+                                        </div>
 
-                                            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedTicket(null);
-                                                        setArchivePage(1);
-                                                        setViewMode('archive');
-                                                    }}
-                                                    className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
-                                                >
-                                                    View All Archive
-                                                </button>
+                                        <div className="overflow-x-auto flex-1">
+                                            {tickets.length === 0 ? (
+                                                <div className="flex flex-col items-center justify-center py-24 text-center">
+                                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                                                        <Inbox size={32} />
+                                                    </div>
+                                                    <p className="text-sm font-bold text-slate-400">No tickets found in your history.</p>
+                                                </div>
+                                            ) : (
+                                                <table className="w-full text-left border-separate border-spacing-0">
+                                                    <thead>
+                                                        <tr className="bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10">
+                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Reference</th>
+                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Subject</th>
+                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Status</th>
+                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Date</th>
+                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                        {(() => {
+                                                            const startIdx = (archivePage - 1) * ARCHIVE_PER_PAGE;
+                                                            const pageTickets = filteredTickets.slice(startIdx, startIdx + ARCHIVE_PER_PAGE);
+
+                                                            return pageTickets.map((t) => (
+                                                                <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
+                                                                    <td className="px-6 py-5">
+                                                                        <span className="text-[11px] font-bold text-slate-500 font-mono tracking-widest bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">#{t.ticketId}</span>
+                                                                    </td>
+                                                                    <td className="px-6 py-5">
+                                                                        <div className="flex items-start gap-3">
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="text-[14px] font-bold text-slate-800 dark:text-white line-clamp-1 mb-1 flex items-center gap-2">
+                                                                                    {t.subject}
+                                                                                    {t.attachments && t.attachments.length > 0 && (
+                                                                                        <Paperclip size={12} className="text-slate-400" />
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.department}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-5">
+                                                                        {(() => {
+                                                                            const isResolved = t.status === 'Resolved' || t.status === 'Closed';
+                                                                            const isOpen = t.status === 'Open' || t.status === 'New';
+                                                                            const statusBg = isResolved ? 'bg-emerald-50 text-emerald-600' : isOpen ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600';
+                                                                            const dotColor = isResolved ? 'bg-emerald-500' : isOpen ? 'bg-rose-500' : 'bg-slate-500';
+                                                                            return (
+                                                                                <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md ${statusBg} dark:bg-slate-800`}>
+                                                                                    <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">{t.status}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
+                                                                    </td>
+                                                                    <td className="px-6 py-5">
+                                                                        <div className="text-xs text-slate-600 dark:text-slate-400 font-bold">{new Date(t.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-5 text-right">
+                                                                        <button
+                                                                            onClick={() => setSelectedTicket(t)}
+                                                                            className="p-2.5 bg-slate-50 dark:bg-slate-800 border-none hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 rounded-xl transition-all active:scale-95 inline-flex"
+                                                                        >
+                                                                            <ArrowRight size={16} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+
+                                        {/* Archive Pagination */}
+                                        {filteredTickets.length > ARCHIVE_PER_PAGE && (
+                                            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/30">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    Showing {Math.min(filteredTickets.length, (archivePage - 1) * ARCHIVE_PER_PAGE + 1)}-{Math.min(filteredTickets.length, archivePage * ARCHIVE_PER_PAGE)} of {filteredTickets.length}
+                                                </p>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        disabled={archivePage === 1}
+                                                        onClick={() => setArchivePage(prev => prev - 1)}
+                                                        className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                                                    >
+                                                        <ChevronLeft size={16} />
+                                                    </button>
+                                                    {(() => {
+                                                        const totalPages = Math.ceil(tickets.length / ARCHIVE_PER_PAGE);
+                                                        return Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                                            <button
+                                                                key={p}
+                                                                onClick={() => setArchivePage(p)}
+                                                                className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${archivePage === p ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-600'}`}
+                                                            >
+                                                                {p}
+                                                            </button>
+                                                        ));
+                                                    })()}
+                                                    <button
+                                                        disabled={archivePage >= Math.ceil(tickets.length / ARCHIVE_PER_PAGE)}
+                                                        onClick={() => setArchivePage(prev => prev + 1)}
+                                                        className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+                                                    >
+                                                        <ChevronRight size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="list-empty"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 1.05 }}
+                                        className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center min-h-[550px] relative overflow-hidden group"
+                                    >
+                                        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
+                                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50/30 dark:bg-blue-900/5 rounded-full blur-3xl -z-10 transform -translate-x-1/2 translate-y-1/2"></div>
+
+                                        <div className="relative mb-8">
+                                            <div className="w-28 h-28 bg-indigo-50 dark:bg-indigo-900/30 rounded-[32px] flex items-center justify-center text-indigo-500 transform rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-xl shadow-indigo-100 dark:shadow-none">
+                                                <LifeBuoy size={56} strokeWidth={1.5} className="animate-spin-slow" />
+                                            </div>
+                                            <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-700">
+                                                <MessageSquare size={20} className="text-indigo-600" />
                                             </div>
                                         </div>
 
-                                        {/* Operational Hours Card */}
-                                        <div className="bg-indigo-50 dark:bg-slate-800/50 rounded-2xl border border-indigo-100 dark:border-slate-700 p-6">
-                                            <h3 className="font-bold text-slate-800 dark:text-white mb-4">Operational Hours</h3>
+                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Hi {currentUser?.fullName?.split(' ')[0] || 'User'}, how can we help?</h2>
+                                        <p className="text-slate-500 font-medium text-base max-w-sm mx-auto mb-10 leading-relaxed">
+                                            Our IT support team is ready to assist you with any technical issues or service requests.
+                                        </p>
+
+                                        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                                            <Button
+                                                size="lg"
+                                                onClick={() => setViewMode('form')}
+                                                className="flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-3"
+                                            >
+                                                <PlusCircle size={20} />
+                                                Open New Ticket
+                                            </Button>
+                                            <Button
+                                                size="lg"
+                                                variant="outline"
+                                                onClick={() => setViewMode('archive')}
+                                                className="flex-1 h-14 rounded-2xl font-bold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all gap-3"
+                                            >
+                                                <Archive size={18} />
+                                                View Archive
+                                            </Button>
+                                        </div>
+
+                                        <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 w-full max-w-md flex items-center justify-center gap-6">
+                                            <div className="text-center">
+                                                <div className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length}</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active</div>
+                                            </div>
+                                            <div className="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
+                                            <div className="text-center">
+                                                <div className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length}</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Resolved</div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* RIGHT COLUMN: Sidebar - Hidden when ticket is selected for Full-Focus chat */}
+                        {
+                            !selectedTicket && (
+                                <div className="space-y-6 lg:col-span-1">
+                                    {/* Recent Tickets Card */}
+                                    <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
+                                        {/* Accent blob */}
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50/30 dark:bg-rose-900/10 rounded-full blur-2xl -z-10"></div>
+
+                                        <div className="flex items-center justify-between mb-5">
+                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Recent Tickets</h3>
+                                            <button onClick={fetchTickets} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-indigo-600">
+                                                <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
+                                            </button>
+                                        </div>
+
+                                        {/* Mini Tabs */}
+                                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
+                                            {(['Active', 'Resolved'] as const).map((tab) => (
+                                                <button
+                                                    key={tab}
+                                                    onClick={() => setRecentFilter(tab)}
+                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${recentFilter === tab ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {tab}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                                            {(() => {
+                                                const filtered = tickets.filter(t =>
+                                                    recentFilter === 'Resolved' ? (t.status === 'Resolved' || t.status === 'Closed') : (t.status !== 'Resolved' && t.status !== 'Closed')
+                                                );
+
+                                                if (filtered.length === 0) {
+                                                    return <div className="text-center py-12">
+                                                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-300">
+                                                            <Inbox size={20} />
+                                                        </div>
+                                                        <p className="text-[10px] font-medium text-slate-400">No {recentFilter.toLowerCase()} tickets</p>
+                                                    </div>;
+                                                }
+
+                                                return filtered.map((ticket) => {
+                                                    const isActive = ticket.status === 'Open' || ticket.status === 'New';
+                                                    const statusColors: Record<string, string> = {
+                                                        'Resolved': 'bg-emerald-500',
+                                                        'Closed': 'bg-emerald-500',
+                                                        'In Progress': 'bg-indigo-500',
+                                                        'Pending': 'bg-amber-500',
+                                                        'Open': 'bg-rose-500',
+                                                    };
+                                                    const colorDot = statusColors[ticket.status] || 'bg-slate-400';
+
+                                                    return (
+                                                        <div
+                                                            key={ticket.id}
+                                                            onClick={() => setSelectedTicket(ticket)}
+                                                            className="group cursor-pointer p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700 transition-all hover:shadow-sm"
+                                                        >
+                                                            <div className="flex items-center justify-between mb-2.5">
+                                                                <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">#{ticket.ticketId}</span>
+                                                                <div className={`w-2 h-2 rounded-full ${colorDot} ring-4 ring-${colorDot.replace('bg-', '')}/10`} />
+                                                            </div>
+                                                            <h4 className="text-[13px] font-bold text-slate-800 dark:text-white mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{ticket.subject}</h4>
+                                                            <div className="flex items-center justify-between mt-1">
+                                                                <p className="text-[10px] font-semibold text-slate-500">{new Date(ticket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+                                                                <span className={`text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all flex items-center gap-1 ${isActive ? 'text-rose-600' : 'text-indigo-600'}`}>
+                                                                    {isActive ? 'Awaiting Reply' : 'View Details'} <ArrowRight size={10} />
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+
+                                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedTicket(null);
+                                                    setArchivePage(1);
+                                                    setViewMode('archive');
+                                                }}
+                                                className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                                            >
+                                                View All Archive
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Operational Hours Card */}
+                                    <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-slate-800/80 dark:to-slate-900 rounded-[24px] border border-indigo-100/50 dark:border-slate-700/50 p-6 relative overflow-hidden">
+                                        <h3 className="font-bold text-slate-800 dark:text-white mb-5 tracking-tight">Operational Hours</h3>
+                                        {infoModal ? (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-indigo-100 dark:border-slate-700 shadow-sm relative animate-in fade-in slide-in-from-bottom-2"
+                                            >
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                                                            <Info size={16} />
+                                                        </div>
+                                                        <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-widest">{infoModal.title}</h4>
+                                                    </div>
+                                                    <button onClick={() => setInfoModal(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400">
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                                                    {infoModal.content}
+                                                </p>
+                                                <button
+                                                    onClick={() => setInfoModal(null)}
+                                                    className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all"
+                                                >
+                                                    Close Details
+                                                </button>
+                                            </motion.div>
+                                        ) : (
                                             <div className="space-y-3">
                                                 {[
                                                     {
                                                         label: '08.00 - 17:00',
                                                         icon: Clock,
-                                                        title: 'Jam Operasional IT',
-                                                        detail: 'Layanan Helpdesk tersedia setiap hari kerja (Senin - Jumat) dari pukul 08.00 hingga 17.00 WIB. Permintaan di luar jam operasional akan diproses pada hari kerja berikutnya.'
+                                                        title: 'Ticketing Operating Hours',
+                                                        detail: 'Our technical support team is available every business day (Monday - Friday) from 08:00 to 17:00 WIB. Requests submitted outside these hours will be prioritized on the next business day.'
                                                     },
                                                     {
                                                         label: 'Ext Call 196',
                                                         icon: Phone,
-                                                        title: 'Panggilan Ekstensi IT',
-                                                        detail: 'Untuk bantuan teknis segera di area kantor, silakan hubungi ekstensi 196. Kami siap membantu menangani masalah perangkat keras, jaringan, dan aplikasi internal Anda.'
+                                                        title: 'IT Extension Support',
+                                                        detail: 'For immediate technical assistance within the office area, please call extension 196. We are ready to help with hardware, network, and internal application issues.'
                                                     }
                                                 ].map((item, i) => (
                                                     <button
@@ -2497,105 +2950,38 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser })
                                                     </button>
                                                 ))}
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
-                            </div >
-                        </div >
+                            )
+                        }
 
-                        {/* Info Modal */}
-                        <AnimatePresence>
-                            {
-                                infoModal && (
-                                    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                            className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full relative"
-                                        >
-                                            <button
-                                                onClick={() => setInfoModal(null)}
-                                                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
-                                            >
-                                                <X size={20} />
-                                            </button>
 
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center">
-                                                    <Info size={24} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Information Guide</h3>
-                                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{infoModal.title}</h2>
+
+                        {/* Image Preview Modal */}
+                        {
+                            previewImage && (
+                                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl" onClick={() => setPreviewImage(null)}>
+                                    <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
+                                    <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
+                                    <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                                        {previewImage.toLowerCase().includes('.pdf') ? (
+                                            <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
+                                                <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
+                                                <div className="absolute bottom-4 right-4">
+                                                    <a href={previewImage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"><ExternalLink size={12} /> Open Original PDF</a>
                                                 </div>
                                             </div>
-
-                                            <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                                                    {infoModal.content}
-                                                </p>
-                                            </div>
-
-                                            <button
-                                                onClick={() => setInfoModal(null)}
-                                                className="w-full mt-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-black/10 dark:shadow-white/5"
-                                            >
-                                                Understood
-                                            </button>
-                                        </motion.div>
-                                    </div>
-                                )
-                            }
-                        </AnimatePresence >
-
-                        {/* Image Preview Modal (Keep existing logic) */}
-
-                    </>
-                )
-            }
-
-            {/* Image Preview Modal (Now available for both views) */}
-            {
-                previewImage && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setPreviewImage(null)}>
-                        <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
-                        <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
-                        <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                            {previewImage.toLowerCase().includes('.pdf') ? (
-                                <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
-                                    <iframe
-                                        src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`}
-                                        className="w-full h-full bg-white rounded-2xl shadow-2xl"
-                                        title="PDF Preview"
-                                    />
-                                    <div className="absolute bottom-4 right-4 animate-pulse">
-                                        <a
-                                            href={previewImage}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"
-                                        >
-                                            <ExternalLink size={12} /> Open Original PDF
-                                        </a>
+                                        ) : (
+                                            <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+                                        )}
                                     </div>
                                 </div>
-                            ) : (
-                                <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
-                            )}
-                        </div>
+                            )
+                        }
+
                     </div>
-                )
-            }
-
-            <DangerConfirmModal
-                isOpen={isSolveConfirmOpen}
-                onClose={() => setIsSolveConfirmOpen(false)}
-                onConfirm={() => selectedTicket && executeStatusUpdate(selectedTicket.id, 'Resolved')}
-                title="Mark as Resolved?"
-                message="This will close the ticket and notify the requester. Please ensure the issue is completely resolved before proceeding."
-                isLoading={isActionLoading}
-            />
-        </div >
+                )}
+        </div>
     );
 };

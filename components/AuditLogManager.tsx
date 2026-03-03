@@ -10,6 +10,8 @@ import {
 import { AuditLog, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface AuditLogManagerProps {
     currentUser: UserAccount | null;
@@ -106,19 +108,21 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">System Tracking Log</h1>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-widest">Audit Trail & Activity Monitor</p>
+            <PageHeader
+                title="System Tracking Log"
+                description="Audit Trail & Comprehensive Activity Monitor"
+            >
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={fetchLogs}
+                        className="h-9 px-4 text-xs font-bold border-slate-200 dark:border-slate-700 rounded-xl"
+                    >
+                        <RefreshCcw size={14} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                        Refresh Protocol
+                    </Button>
                 </div>
-                <button
-                    onClick={fetchLogs}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all shadow-sm"
-                >
-                    <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
-                    Refresh Protocol
-                </button>
-            </div>
+            </PageHeader>
 
             {isSimulation && (
                 <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border-2 border-dashed border-amber-200 dark:border-amber-800/50 rounded-3xl animate-in fade-in slide-in-from-top-4 duration-700">

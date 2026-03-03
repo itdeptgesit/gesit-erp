@@ -43,6 +43,11 @@ import { UserAvatar } from "./UserAvatar";
 import { StatCard } from "./StatCard";
 import { exportToExcel } from "../lib/excelExport";
 import { useToast } from "./ToastProvider";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/PageHeader";
+
 
 /* ===========================
    Components
@@ -63,23 +68,23 @@ const InstructionPanel = () => {
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     aria-expanded={isOpen}
-                    className={`w-full flex items-center justify-between px-6 py-3.5 transition-all duration-300 rounded-[1.25rem] border ${!isOpen ? 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-slate-200/50 dark:border-slate-800/50 shadow-sm hover:border-indigo-500/30' : 'border-transparent bg-slate-50/50 dark:bg-slate-800/50'}`}
+                    className={`w-full flex items-center justify-between px-6 py-4 transition-all duration-300 rounded-[1.25rem] border ${!isOpen ? 'bg-white dark:bg-slate-900 border-border/10 dark:border-white/[0.03] shadow-sm hover:border-primary/30' : 'border-transparent bg-slate-50 dark:bg-slate-800/50'}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className={`
-              p-2.5 rounded-xl transition-all duration-500 shadow-sm
-              ${isOpen ? 'bg-indigo-600 text-white rotate-0' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 -rotate-12'}
+              p-2.5 rounded-xl transition-all duration-500
+              ${isOpen ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}
             `}>
-                            <Info className="w-5 h-5" strokeWidth={2.5} />
+                            <PhoneOutgoing className="w-5 h-5" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col items-start leading-tight">
-                            <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isOpen ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-100">
                                 Dialing Protocol
                             </h3>
-                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">Quick Reference Guide</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">Intercom Quick Guide</p>
                         </div>
                     </div>
-                    <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-indigo-600 rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                    <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-primary rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
                         <ChevronDown className="w-4 h-4" strokeWidth={3} />
                     </div>
                 </button>
@@ -156,18 +161,12 @@ const ExtensionCard: React.FC<{
     const [copied, setCopied] = useState(false);
     const is27 = ext.floor === 27;
 
-    const theme = is27 ? {
-        border: 'border-indigo-100/50 dark:border-indigo-900/30',
-        activeRing: 'ring-indigo-500/30',
-        rightBg: 'group-hover:bg-indigo-600',
-        rightText: 'text-indigo-600 dark:text-indigo-400 group-hover:text-white',
-        badge: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-    } : {
-        border: 'border-emerald-100/50 dark:border-emerald-900/30',
-        activeRing: 'ring-emerald-500/30',
-        rightBg: 'group-hover:bg-emerald-600',
-        rightText: 'text-emerald-600 dark:text-emerald-400 group-hover:text-white',
-        badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    const theme = {
+        border: is27 ? 'border-primary/10 dark:border-primary/5' : 'border-emerald-500/10 dark:border-emerald-500/5',
+        activeRing: is27 ? 'ring-primary/20' : 'ring-emerald-500/20',
+        rightBg: is27 ? 'group-hover:bg-primary' : 'group-hover:bg-emerald-500',
+        rightText: is27 ? 'text-primary dark:text-blue-400' : 'text-emerald-500 dark:text-emerald-400',
+        badge: is27 ? 'bg-primary/5 text-primary' : 'bg-emerald-500/5 text-emerald-500'
     };
 
     const handleCopy = () => {
@@ -176,18 +175,29 @@ const ExtensionCard: React.FC<{
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const delay = Math.min(index * 30, 400);
-
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: delay / 1000, duration: 0.3 }}
+            initial="hidden"
+            animate="visible"
+            variants={{
+                hidden: { opacity: 0, scale: 0.98, y: 10 },
+                visible: {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    transition: { duration: 0.4, ease: "easeOut" }
+                }
+            }}
+            whileHover={{
+                y: -6,
+                transition: { duration: 0.3, ease: "easeOut" }
+            }}
             className={`
                 group relative flex w-full h-28 rounded-[1.75rem] overflow-hidden border transition-all duration-500
-                hover:-translate-y-1.5 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-none
-                ${theme.border} bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
-                ${isFocused ? `ring-2 ${theme.activeRing} shadow-lg scale-105` : 'shadow-sm'}
+                hover:-translate-y-1.5 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]
+                ${theme.border} bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl
+                dark:border-slate-700/50
+                ${isFocused ? `ring-2 ${theme.activeRing} shadow-lg scale-105` : 'shadow-sm dark:shadow-slate-900/50'}
             `}
         >
             {/* Background Accent */}
@@ -203,11 +213,11 @@ const ExtensionCard: React.FC<{
                         className="shadow-sm ring-2 ring-white/50 dark:ring-slate-800/50 shrink-0"
                     />
                     <div className="min-w-0 pr-1 flex flex-col pt-1">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
+                        <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight truncate leading-none mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
                             {ext.name}
                         </h3>
                         <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 truncate uppercase tracking-widest opacity-80" title={ext.dept}>
+                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-300 truncate uppercase tracking-widest opacity-80" title={ext.dept}>
                                 {ext.dept}
                             </p>
                             {ext.role && (
@@ -219,10 +229,13 @@ const ExtensionCard: React.FC<{
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100/50 dark:border-slate-800/50">
-                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${theme.badge} ring-1 ring-black/5 dark:ring-white/5`}>
-                        {ext.floor}F Registry
-                    </span>
+                <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/5">
+                    <div className="flex items-center gap-2">
+                        <MapPin size={10} className="text-primary/60" />
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest">
+                            {ext.floor}th Floor
+                        </span>
+                    </div>
 
                     {/* Admin Actions */}
                     {canEdit && (
@@ -247,10 +260,16 @@ const ExtensionCard: React.FC<{
                 <div className={`absolute inset-0 transition-opacity duration-500 opacity-0 group-hover/btn:opacity-100 ${theme.rightBg}`} />
 
                 <div className="relative z-10 flex flex-col items-center scale-110">
-                    <span className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 transition-colors duration-300 ${copied ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover/btn:text-white/70'}`}>
+                    <span className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 transition-colors duration-300 ${copied ? 'text-white' : 'text-slate-400 dark:text-slate-300 group-hover/btn:text-white/70'}`}>
                         {copied ? 'Copied' : 'Ext'}
                     </span>
-                    <span className={`text-3xl font-black tracking-tighter tabular-nums transition-all duration-300 ${copied ? 'text-white scale-110' : `group-hover/btn:text-white group-active/btn:scale-95 ${theme.rightText}`}`}>
+                    <span className={`text-3xl font-black tracking-tighter tabular-nums transition-all duration-300 ${copied
+                        ? 'text-white scale-110'
+                        : `group-hover/btn:text-white group-active/btn:scale-95 ${is27
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-emerald-500 dark:text-emerald-400'
+                        }`
+                        }`}>
                         {ext.ext}
                     </span>
                 </div>
@@ -291,83 +310,81 @@ const ExtensionTable: React.FC<{
     };
 
     return (
-        <div className="w-full overflow-hidden bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
-            <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
-                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center w-20">Identity</th>
-                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Contact Details</th>
-                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Extension Code</th>
-                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Department</th>
-                            <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Location</th>
-                            {isAdmin && <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">PIN</th>}
-                            {(canEdit || isAdmin) && <th className="px-6 py-5 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Actions</th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+        <div className="w-full bg-card dark:bg-slate-900/20 rounded-2xl border border-border/10 dark:border-white/[0.03] shadow-sm overflow-hidden animate-in fade-in duration-700">
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader className="bg-slate-50/50 dark:bg-slate-900/40">
+                        <TableRow className="border-border/10 dark:border-white/[0.03]">
+                            <TableHead className="w-20 text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Identity</TableHead>
+                            <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Contact Details</TableHead>
+                            <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Extension Code</TableHead>
+                            <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Department</TableHead>
+                            <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Location</TableHead>
+                            {isAdmin && <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">PIN</TableHead>}
+                            {(canEdit || isAdmin) && <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground/70 pr-6">Actions</TableHead>}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {extensions.map((ext) => (
-                            <tr key={ext.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                                <td className="px-6 py-4 text-center">
+                            <TableRow key={ext.id} className="group transition-colors border-border/10 dark:border-white/[0.03] hover:bg-primary/5">
+                                <TableCell className="text-center py-5">
                                     <div className="flex justify-center">
                                         <UserAvatar
                                             name={ext.name}
                                             url={ext.photo_url}
                                             size="sm"
-                                            className="ring-2 ring-white dark:ring-slate-800 shadow-sm group-hover:scale-110 transition-transform"
+                                            className="ring-2 ring-white/50 dark:ring-slate-800/50 shadow-sm transition-transform group-hover:scale-110"
                                         />
                                     </div>
-                                </td>
-                                <td className="px-6 py-4">
+                                </TableCell>
+                                <TableCell className="py-5">
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors tracking-tight">{ext.name}</span>
-                                        {ext.role && <span className="text-[10px] font-medium text-slate-400 italic mt-0.5">{ext.role}</span>}
+                                        <span className="text-sm font-black tracking-tight text-foreground transition-colors group-hover:text-primary uppercase">{ext.name}</span>
+                                        {ext.role && <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mt-1 italic">{ext.role}</span>}
                                     </div>
-                                </td>
-                                <td className="px-6 py-4 text-center">
+                                </TableCell>
+                                <TableCell className="text-center py-5">
                                     <button
                                         onClick={() => handleCopy(ext.id, ext.ext)}
-                                        className="inline-flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-mono font-bold text-lg hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 transition-all active:scale-95 shadow-sm group/btn min-w-[100px] justify-center"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-muted/30 dark:bg-slate-800/50 text-foreground rounded-xl font-mono font-black text-sm hover:bg-primary hover:text-primary-foreground transition-all active:scale-95 group/btn border border-border/10 dark:border-white/[0.05]"
                                     >
-                                        <span>{ext.ext}</span>
-                                        {copiedId === ext.id ? <Check size={14} className="text-white" /> : <Copy size={14} className="opacity-0 group-hover/btn:opacity-50 transition-opacity" />}
+                                        <span className="tracking-tighter">{ext.ext}</span>
+                                        {copiedId === ext.id ? <Check size={14} strokeWidth={3} /> : <Copy size={14} className="opacity-0 group-hover/btn:opacity-100 transition-opacity" />}
                                     </button>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                            {ext.dept}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest shadow-sm
+                                </TableCell>
+                                <TableCell className="py-5">
+                                    <span className="px-3 py-1 rounded-lg bg-muted/50 dark:bg-slate-800/40 text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest border border-border/10">
+                                        {ext.dept}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-center py-5">
+                                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em]
                                         ${ext.floor === 27
-                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800'
-                                            : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'}
+                                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                            : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}
                                     `}>
                                         Floor {ext.floor}
                                     </span>
-                                </td>
+                                </TableCell>
                                 {isAdmin && (
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="font-mono text-xs text-slate-400 dark:text-slate-600 select-all">
+                                    <TableCell className="text-center py-5">
+                                        <span className="font-mono text-xs font-bold text-muted-foreground/50 select-all tracking-widest">
                                             {ext.pin || '---'}
                                         </span>
-                                    </td>
+                                    </TableCell>
                                 )}
                                 {(canEdit || isAdmin) && (
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex gap-1 opacity-20 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-                                            <button onClick={() => onEdit?.(ext)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all"><Pencil size={14} /></button>
-                                            {isAdmin && <button onClick={() => onDelete?.(ext.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all"><Trash2 size={14} /></button>}
+                                    <TableCell className="text-right py-5 pr-6">
+                                        <div className="inline-flex gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                                            <Button variant="ghost" size="icon" onClick={() => onEdit?.(ext)} className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"><Pencil size={14} /></Button>
+                                            {isAdmin && <Button variant="ghost" size="icon" onClick={() => onDelete?.(ext.id)} className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"><Trash2 size={14} /></Button>}
                                         </div>
-                                    </td>
+                                    </TableCell>
                                 )}
-                            </tr>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );
@@ -380,12 +397,14 @@ export const ExtensionDirectory = ({
     currentUser,
     variant = 'standalone',
     externalSearchTerm,
-    externalFloorFilter
+    externalFloorFilter,
+    onFloorFilterChange
 }: {
     currentUser?: UserAccount | null;
     variant?: 'standalone' | 'integrated';
     externalSearchTerm?: string;
     externalFloorFilter?: 'All' | 26 | 27;
+    onFloorFilterChange?: (floor: 'All' | 26 | 27) => void;
 }) => {
     const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
@@ -435,6 +454,13 @@ export const ExtensionDirectory = ({
     useEffect(() => {
         fetchExtensions();
     }, []);
+
+    // Sync local floor filter with external prop if provided
+    useEffect(() => {
+        if (externalFloorFilter !== undefined) {
+            setFloorFilter(externalFloorFilter);
+        }
+    }, [externalFloorFilter]);
 
     // Reset pagination when search or filters change
     useEffect(() => {
@@ -688,7 +714,7 @@ export const ExtensionDirectory = ({
     const filteredExtensions = useMemo(() => {
         return extensions.filter((item) => {
             const activeFloorFilter = externalFloorFilter !== undefined ? externalFloorFilter : floorFilter;
-            if (activeFloorFilter !== 'All' && item.floor !== activeFloorFilter) return false;
+            if (activeFloorFilter !== 'All' && Number(item.floor) !== activeFloorFilter) return false;
 
             const searchLower = activeSearchTerm.toLowerCase().trim();
             if (!searchLower) return true;
@@ -708,13 +734,11 @@ export const ExtensionDirectory = ({
         return filteredExtensions.slice(start, start + itemsPerPage);
     }, [filteredExtensions, currentPage, itemsPerPage]);
 
-    const stats = useMemo(() => {
-        return {
-            total: extensions.length,
-            floor27: extensions.filter(e => e.floor === 27).length,
-            floor26: extensions.filter(e => e.floor === 26).length
-        };
-    }, [extensions]);
+    const stats = useMemo(() => ({
+        total: extensions.length,
+        floor26: extensions.filter(e => Number(e.floor) === 26).length,
+        floor27: extensions.filter(e => Number(e.floor) === 27).length
+    }), [extensions]);
 
     const handleExportExcel = () => {
         if (filteredExtensions.length === 0) return;
@@ -749,64 +773,59 @@ export const ExtensionDirectory = ({
     return (
         <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
             {/* Dashboard Header (Admin/Standalone) */}
-            {variant === 'standalone' && (
-                <div className="mb-10 pt-4">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 px-2">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                                <Users size={24} strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">
-                                    Directory <span className="text-blue-600">Extensions</span>
-                                </h1>
-                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">The City Tower & Infrastructure Registry</p>
-                            </div>
-                        </div>
+            {/* Public Header */}
+            {variant === 'integrated' && (
+                <div className="mb-8">
+                    <PageHeader
+                        title="Corporate Directory"
+                        description="GESIT Companies Network Registry • Floors 26 & 27"
+                    />
+                </div>
+            )}
 
-                        <div className="flex items-center gap-3">
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-500/20 active:scale-95 group"
-                                onClick={handleExportExcel}
+            {/* Dashboard Header (Admin/Standalone) */}
+            {variant === 'standalone' && (
+                <div className="mb-6 pt-4">
+                    <PageHeader title="Extension Directory" description="The City Tower & Infrastructure Registry">
+                        <Button variant="outline" onClick={handleExportExcel}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
+                        </Button>
+                        {canEdit && (
+                            <Button
+                                onClick={() => openModal()}
+                                className="bg-black hover:bg-black/90 text-white dark:bg-white dark:text-black dark:hover:bg-white/90 shadow-sm"
                             >
-                                <FileDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
-                                Export Excel
-                            </button>
-                            {canEdit && (
-                                <button
-                                    onClick={() => openModal()}
-                                    className="flex items-center gap-2 px-6 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 group"
-                                    style={{ backgroundColor: 'var(--primary)', boxShadow: '0 10px 20px -10px var(--primary)' }}
-                                >
-                                    <Plus size={14} className="group-hover:rotate-90 transition-transform" />
-                                    Add Extension
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                                <Plus className="mr-2 h-4 w-4" /> Add Extension
+                            </Button>
+                        )}
+                    </PageHeader>
 
                     {/* Metrics Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                         <StatCard
                             label="Total Extensions"
                             value={stats.total}
                             icon={Users}
-                            colorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20"
-                            subtext="Active Infrastructure Nodes"
+                            percentageChange={10}
+                            subValue="Active Nodes"
+                            color="slate"
                         />
                         <StatCard
                             label="27th Floor"
                             value={stats.floor27}
                             icon={Building2}
-                            colorClass="bg-amber-50 dark:bg-amber-500/10 text-amber-600 border-amber-100 dark:border-amber-500/20"
-                            subtext="City Tower Upper Deck"
+                            percentageChange={2}
+                            subValue="City Tower Upper Deck"
+                            color="blue"
                         />
                         <StatCard
                             label="26th Floor"
                             value={stats.floor26}
                             icon={MapPin}
-                            colorClass="bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20"
-                            subtext="Infrastructure Base"
+                            percentageChange={5}
+                            subValue="Infrastructure Base"
+                            color="emerald"
+                            status="on-track"
                         />
                     </div>
                 </div>
@@ -818,31 +837,62 @@ export const ExtensionDirectory = ({
             {/* List Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
                 <div className="flex items-center gap-3">
-                    <div className="w-2 h-7 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600" />
-                    <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                    <div className="w-1.5 h-6 rounded-full bg-primary" />
+                    <h2 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-[0.25em]">
                         Directory Registry
                     </h2>
                 </div>
 
-                <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-50/50 dark:bg-slate-800/50 rounded-[1.5rem] border border-slate-200/50 dark:border-slate-800/50 shadow-inner flex-1 md:flex-initial">
+                <div className="flex items-center gap-4 px-4 py-1.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-[1.5rem] border border-slate-200/60 dark:border-slate-700/60 shadow-sm flex-1 md:flex-initial">
                     {/* Search Bar */}
-                    <div className="relative flex-1 md:w-72 group">
-                        <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${searchTerm ? 'text-indigo-500' : 'text-slate-400 opacity-50'}`} />
+                    <div className="relative flex-1 md:w-80 group">
+                        <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
                         <input
                             type="text"
-                            placeholder="Search directory..."
+                            placeholder="Find name or extension..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl text-xs font-black text-slate-900 dark:text-slate-200 placeholder:text-slate-400/70 placeholder:font-bold focus:ring-0 outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl text-xs font-bold text-foreground dark:text-slate-100 placeholder:text-muted-foreground/50 dark:placeholder:text-slate-500 focus:ring-0 outline-none transition-all min-w-0"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm("")}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-destructive transition-colors"
                             >
                                 <X size={12} strokeWidth={3} />
                             </button>
                         )}
+                    </div>
+
+                    {/* Quick Floor Switches */}
+                    <div className="flex items-center gap-1.5 px-3 border-l border-slate-200 dark:border-slate-800">
+                        <button
+                            onClick={() => { setFloorFilter('All'); onFloorFilterChange?.('All'); }}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 'All'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
+                                }`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 26
+                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
+                                }`}
+                        >
+                            26F
+                        </button>
+                        <button
+                            onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 27
+                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
+                                }`}
+                        >
+                            27F
+                        </button>
                     </div>
 
                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
@@ -874,7 +924,7 @@ export const ExtensionDirectory = ({
 
                 {/* Pagination Controls */}
                 <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest">
                         {filteredExtensions.length} Active
                     </span>
                     <div className="flex items-center gap-1">
@@ -885,7 +935,7 @@ export const ExtensionDirectory = ({
                         >
                             <ChevronLeft size={16} />
                         </button>
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 min-w-[30px] text-center">
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 min-w-[30px] text-center">
                             {currentPage}/{totalPages || 1}
                         </span>
                         <button
@@ -902,7 +952,20 @@ export const ExtensionDirectory = ({
             {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                        <div key={i} className="h-48 bg-slate-100 dark:bg-slate-800/30 rounded-2xl animate-pulse border border-slate-200/50 dark:border-slate-800"></div>
+                        <div key={i} className="h-28 bg-slate-100/60 dark:bg-slate-800/60 rounded-[1.75rem] p-4 flex gap-4 animate-pulse border border-slate-200/50 dark:border-slate-700/30 shadow-sm overflow-hidden">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-200/50 dark:bg-slate-700/60 shrink-0 self-center" />
+                            <div className="flex-1 space-y-3 py-1 self-center">
+                                <div className="h-3.5 w-3/4 bg-slate-200/50 dark:bg-slate-700/60 rounded-full" />
+                                <div className="space-y-2">
+                                    <div className="h-2 w-1/2 bg-slate-200/40 dark:bg-slate-700/40 rounded-full" />
+                                    <div className="h-2 w-1/3 bg-slate-200/40 dark:bg-slate-700/40 rounded-full" />
+                                </div>
+                            </div>
+                            <div className="w-16 h-full flex flex-col items-center justify-center gap-2 border-l border-slate-200/30 dark:border-slate-700/30 bg-slate-50/50 dark:bg-slate-700/30 -mr-4">
+                                <div className="h-2 w-8 bg-slate-200/50 dark:bg-slate-700/50 rounded-full" />
+                                <div className="h-6 w-10 bg-slate-200/50 dark:bg-slate-700/50 rounded-lg" />
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : filteredExtensions.length > 0 ? (
@@ -910,10 +973,16 @@ export const ExtensionDirectory = ({
                     {viewMode === 'grid' ? (
                         <motion.div
                             key="grid"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            variants={{
+                                visible: {
+                                    transition: {
+                                        staggerChildren: 0.05
+                                    }
+                                }
+                            }}
                             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                         >
                             {paginatedExtensions.map((ext, index) => (
@@ -1156,28 +1225,6 @@ export const ExtensionDirectory = ({
                 </div>
             )}
 
-            {/* Floating Theme Toggle and Back Button (Public Only) */}
-            {
-                isPublic && (
-                    <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-                        <button
-                            onClick={toggleTheme}
-                            aria-label={theme === 'light' ? "Switch to dark mode" : "Switch to light mode"}
-                            className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
-                        >
-                            {theme === 'light' ? <Moon size={24} className="group-hover:rotate-12 transition-transform" /> : <Sun size={24} className="group-hover:rotate-90 transition-transform" />}
-                        </button>
-                        <button
-                            onClick={() => window.location.href = '/'}
-                            aria-label="Back to Portal"
-                            className="w-14 h-14 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all hover:scale-110 active:scale-90 group"
-                            title="Back to Portal"
-                        >
-                            <ExternalLink size={24} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-                        </button>
-                    </div>
-                )
-            }
         </div >
     );
 };

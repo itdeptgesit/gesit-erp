@@ -20,6 +20,8 @@ import { FileSpreadsheet } from 'lucide-react';
 import { useToast } from './ToastProvider';
 import { DeviceProfileDrawer } from './DeviceProfileDrawer';
 import { NetworkSummaryBar } from './NetworkSummaryBar';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -36,6 +38,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const [editingDevice, setEditingDevice] = useState<NetworkSwitch | null>(null);
     const [coreNodeId, setCoreNodeId] = useState<string | number | null>(null);
     const [deleteDevice, setDeleteDevice] = useState<NetworkSwitch | null>(null);
+    const [wipeConfirmOpen, setWipeConfirmOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -77,6 +80,9 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 if (coreNode) {
                     setInternetPos({ x: coreNode.pos_x ?? 1070, y: coreNode.pos_y ?? 120 });
                     setCoreNodeId(coreNode.id);
+                } else {
+                    setInternetPos({ x: 1070, y: 120 });
+                    setCoreNodeId(null);
                 }
 
                 // 1. Process Physical Switches
@@ -305,7 +311,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 updated_at: new Date().toISOString()
             };
 
-            if (editingDevice) {
+            if (editingDevice && !editingDevice.id.toString().startsWith('temp-')) {
                 const { error } = await supabase.from('network_switches').update(payload).eq('id', editingDevice.id);
                 if (error) throw error;
 
@@ -341,7 +347,13 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             } else {
                 const { data: newSwitch, error: switchError } = await supabase
                     .from('network_switches')
-                    .insert([{ ...payload, created_by: currentUser?.id, created_at: new Date().toISOString(), pos_x: 1200, pos_y: 400 }])
+                    .insert([{
+                        ...payload,
+                        created_by: currentUser?.id,
+                        created_at: new Date().toISOString(),
+                        pos_x: Math.round(editingDevice?.posX ?? 1200),
+                        pos_y: Math.round(editingDevice?.posY ?? 400)
+                    }])
                     .select()
                     .single();
 
@@ -374,15 +386,95 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         if (!deleteDevice || !canDelete) return;
         setIsSaving(true);
         try {
-            await supabase.from('switch_ports').delete().eq('switch_id', deleteDevice.id);
-            const { error } = await supabase.from('network_switches').delete().eq('id', deleteDevice.id);
-            if (error) throw error;
+            if (canManage && String(deleteDevice.id) !== 'internet' && !deleteDevice.id.toString().startsWith('temp-') && !deleteDevice.id.toString().startsWith('port-device-')) {
+                await supabase.from('switch_ports').delete().eq('switch_id', deleteDevice.id);
+                const { error } = await supabase.from('network_switches').delete().eq('id', deleteDevice.id);
+                if (error) throw error;
+            }
             setDeleteDevice(null);
             await fetchNetworkData();
         } catch (err: any) {
             showToast("Failed to delete node: " + err.message, 'error');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleAddNode = (type: DeviceType, x: number, y: number) => {
+        // Pre-populate node data
+        const newNode: NetworkSwitch = {
+            id: `temp-${Date.now()}`,
+            name: `New ${type}`,
+            model: type,
+            location: 'Main Site',
+            rack: 'Unracked',
+            ip: '-',
+            totalPorts: (type === DeviceType.ROUTER) ? 4 : 1,
+            uptime: 'Initial',
+            posX: x,
+            posY: y,
+            ports: [],
+            status: 'active'
+        };
+        setEditingDevice(newNode);
+        setIsAddDeviceOpen(true);
+    };
+
+    const handleDeleteNode = (id: string) => {
+        if (id.startsWith('port-device-')) {
+            showToast("Cannot delete derived leaf devices directly. Disconnect from port instead.", "warning");
+            return;
+        }
+        const sw = switches.find(s => s.id === id);
+        if (sw) setDeleteDevice(sw);
+    };
+
+    const handleConnectNodes = async (childId: string, parentId: string) => {
+        if (childId.startsWith('port-device-') || parentId.startsWith('port-device-')) {
+            showToast("Only infrastructure nodes can be wired manually.", "warning");
+            return;
+        }
+
+        if (childId.startsWith('temp-') || (parentId !== 'internet' && parentId.startsWith('temp-'))) {
+            showToast("Please save individual nodes before wiring them.", "warning");
+            return;
+        }
+
+        // Optimistic update local state
+        handleUpdateSwitches(switches.map(s => String(s.id) === String(childId) ? { ...s, uplinkId: parentId } : s));
+
+        setIsSaving(true);
+        try {
+            const dbUplinkId = parentId === 'internet' ? null : parentId;
+            const { error } = await supabase
+                .from('network_switches')
+                .update({ uplink_id: dbUplinkId })
+                .eq('id', childId);
+
+            if (error) throw error;
+            showToast("Circuit map synchronized", 'success');
+            await fetchNetworkData();
+        } catch (err: any) {
+            showToast("Link failure: " + err.message, 'error');
+            // Revert state if needed, but fetchNetworkData will handle it
+            await fetchNetworkData();
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleWipeTopology = async () => {
+        setIsSaving(true);
+        try {
+            await supabase.rpc('wipe_tables', { table_names: ['switch_ports', 'network_switches'] });
+            showToast("Topology erased successfully", 'success');
+            setWipeConfirmOpen(false);
+            await fetchNetworkData();
+        } catch (err: any) {
+            showToast("Failed to wipe topology: " + err.message, 'error');
+        } finally {
+            setIsSaving(true);
+            setTimeout(() => setIsSaving(false), 500);
         }
     };
 
@@ -441,45 +533,51 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                        <Activity size={24} strokeWidth={2.5} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Infrastructure <span className="text-blue-600">Engine</span></h1>
-                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Real-time network intelligence</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 min-h-[44px] justify-end">
+            <PageHeader
+                title="Infrastructure Engine"
+                description="Real-time network intelligence & topology map"
+            >
+                <div className="flex items-center gap-3">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={handleExportSwitches}
-                            className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            className="h-9 w-9 text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg"
                             title="Export Nodes"
                         >
                             <FileSpreadsheet size={18} />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={handleExportWiring}
-                            className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all"
+                            className="h-9 w-9 text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg"
                             title="Export Wiring"
                         >
                             <Server size={18} />
-                        </button>
+                        </Button>
                     </div>
                     {canManage && (
-                        <button onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }} className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 dark:shadow-none whitespace-nowrap">
-                            <Plus size={14} /> Provision Node
-                        </button>
+                        <Button
+                            onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }}
+                            className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20"
+                        >
+                            <Plus size={14} className="mr-2" /> Provision Node
+                        </Button>
                     )}
                     {hasUnsavedChanges && activeTab === 'topology' && canManage && (
-                        <button onClick={handleSaveLayout} disabled={isSaving} className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 animate-bounce whitespace-nowrap">
-                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Layout
-                        </button>
+                        <Button
+                            onClick={handleSaveLayout}
+                            disabled={isSaving}
+                            className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 animate-bounce"
+                        >
+                            {isSaving ? <Loader2 size={14} className="animate-spin mr-2" /> : <Save size={14} className="mr-2" />}
+                            Save Layout
+                        </Button>
                     )}
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Summary Bar */}
             <NetworkSummaryBar switches={switches.filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet')} />
@@ -512,6 +610,15 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                 onViewProfile={handleViewProfile}
                                 centeringTrigger={centeringTrigger}
                                 coreNodeId={coreNodeId?.toString()}
+                                onAddNode={handleAddNode}
+                                onDeleteNode={handleDeleteNode}
+                                onConnectNodes={handleConnectNodes}
+                                onWipeAll={() => setWipeConfirmOpen(true)}
+                                onEditNode={(sw) => {
+                                    setEditingDevice(sw);
+                                    setIsAddDeviceOpen(true);
+                                }}
+                                canManage={canManage}
                             />
                         </div>
                     ) : (
@@ -569,6 +676,13 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 device={profileDevice}
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
+            />
+            <DangerConfirmModal
+                isOpen={wipeConfirmOpen}
+                onClose={() => setWipeConfirmOpen(false)}
+                onConfirm={handleWipeTopology}
+                title="Wipe Entire Topology"
+                message="This will permanently delete ALL infrastructure nodes and their port connections. You will start with a completely empty canvas. Are you sure?"
             />
         </div>
     );

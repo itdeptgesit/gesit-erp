@@ -11,6 +11,9 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { useToast } from './ToastProvider';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const INDONESIAN_HOLIDAYS: { [key: string]: string } = {
     // 2025
@@ -207,34 +210,42 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
 
     return (
         <div className="h-full flex flex-col gap-6 animate-in fade-in duration-700 pb-10">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-600 text-white rounded-xl shadow-md"><Calendar size={20} /></div>
-                    <div>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase leading-none">
-                            {viewMode === 'Day' ? viewDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                        </h2>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Assignment Planner</p>
+            <PageHeader
+                title={viewMode === 'Day' ? viewDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                description="Assignment Planner & Operational Schedule"
+            >
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                        {[{ id: 'Day', icon: Zap }, { id: 'Week', icon: LayoutGrid }, { id: 'Month', icon: CalendarRange }].map(m => (
+                            <button
+                                key={m.id}
+                                onClick={() => setViewMode(m.id as any)}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all",
+                                    viewMode === m.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                )}
+                            >
+                                <m.icon size={12} /> {m.id}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden h-9">
+                            <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-r border-slate-200 dark:border-slate-700"><ChevronLeft size={16} /></button>
+                            <button onClick={() => setViewDate(new Date())} className="px-4 text-[10px] font-bold uppercase hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-slate-300">Today</button>
+                            <button onClick={() => navigate(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-l border-slate-200 dark:border-slate-700"><ChevronRight size={16} /></button>
+                        </div>
+                        {canManage && (
+                            <Button
+                                onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
+                                className="bg-slate-900 dark:bg-blue-600 text-white h-9 px-4 text-xs font-bold uppercase rounded-xl hover:bg-black dark:hover:bg-blue-700 shadow-lg"
+                            >
+                                <Plus className="mr-2 h-3.5 w-3.5" /> Assign
+                            </Button>
+                        )}
                     </div>
                 </div>
-                <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-xl">
-                    {[{ id: 'Day', icon: Zap }, { id: 'Week', icon: LayoutGrid }, { id: 'Month', icon: CalendarRange }].map(m => (
-                        <button key={m.id} onClick={() => setViewMode(m.id as any)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${viewMode === m.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><m.icon size={12} /> {m.id}</button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400"><ChevronLeft size={16} /></button>
-                        <button onClick={() => setViewDate(new Date())} className="px-4 text-[10px] font-bold uppercase hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-slate-300">Today</button>
-                        <button onClick={() => navigate(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400"><ChevronRight size={16} /></button>
-                    </div>
-                    {canManage && (
-                        <button onClick={() => { setEditingTask(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-6 py-2 bg-slate-900 dark:bg-blue-600 text-white text-[10px] font-bold uppercase rounded-xl hover:bg-black dark:hover:bg-blue-700 shadow-lg">
-                            <Plus size={16} /> Assign
-                        </button>
-                    )}
-                </div>
-            </div>
+            </PageHeader>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex-1 overflow-hidden flex flex-col min-h-[600px]">
                 {loading ? (

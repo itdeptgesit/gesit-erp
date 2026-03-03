@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
-    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, BarChart3, Eye, Tag, PieChart, Calendar, Building2
+    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, ChevronLeft, BarChart3, Eye, Tag, PieChart, Calendar, Building2
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Area
@@ -20,6 +20,14 @@ import { TopVendorsWidget } from './TopVendorsWidget';
 import { exportToExcel } from '../lib/excelExport';
 import { sendToGoogleSheet } from '../lib/googleSheets';
 import { useToast } from './ToastProvider';
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { cn } from "@/lib/utils";
 
 export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
     const { t } = useLanguage();
@@ -430,99 +438,158 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10 pt-6">
             {/* Header & Financial Health */}
             <div className="space-y-8 mb-10">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-                    <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                            <Wallet size={24} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Financial <span className="text-blue-600">Control</span></h1>
-                            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Enterprise Ledger & Fiscal Audit</p>
-                        </div>
+                <PageHeader
+                    title="Purchase Records"
+                    description="Procurement & Financial Audit Registry"
+                >
+                    <div className="w-full lg:w-auto">
+                        <FinancialHealthSummary
+                            outflowChange={financialHealth.outflowChange}
+                            pendingCount={financialHealth.pendingCount}
+                            largestCategory={financialHealth.largestCategory}
+                            riskLevel={financialHealth.riskLevel}
+                        />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="hidden lg:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
-                            <button onClick={() => setYearFilter('2026')} className={`px-5 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${yearFilter === '2026' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2026</button>
-                            <button onClick={() => setYearFilter('2025')} className={`px-5 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${yearFilter === '2025' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600'}`}>FY 2025</button>
-                        </div>
-                        <button
-                            onClick={handleExportExcel}
-                            className="flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap"
+                </PageHeader>
+
+                {/* Second Row: Actions & FY Filters */}
+                <div className="flex flex-wrap items-center justify-between gap-4 px-2 pt-2 border-t border-slate-100 dark:border-slate-800/50 mt-2">
+                    <div className="hidden lg:flex items-center bg-muted/50 p-1 rounded-xl border border-border backdrop-blur-sm">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setYearFilter('2026')}
+                            className={cn("h-8 px-4 text-[10px] font-black tracking-[0.1em] uppercase rounded-lg transition-all", yearFilter === '2026' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
                         >
-                            <FileSpreadsheet size={16} /> Export Excel
-                        </button>
-                        <button
+                            FY 2026
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setYearFilter('2025')}
+                            className={cn("h-8 px-4 text-[10px] font-black tracking-[0.1em] uppercase rounded-lg transition-all", yearFilter === '2025' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        >
+                            FY 2025
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 text-xs font-bold">
+                            <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={handleSyncAllToSheet}
                             disabled={isSyncingAll || filteredRecords.length === 0}
-                            className="flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-9 px-4 text-xs font-bold"
                         >
-                            {isSyncingAll ? <RefreshCcw className="animate-spin" size={16} /> : <FileSpreadsheet size={16} />}
-                            {isSyncingAll ? 'Syncing...' : 'Sync All (Sheet)'}
-                        </button>
-                        <button
+                            {isSyncingAll ? <RefreshCcw className="mr-2 h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="mr-2 h-3.5 w-3.5" />}
+                            Sync
+                        </Button>
+                        <Button
+                            size="sm"
                             onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
-                            className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                            className="h-9 px-4 text-xs font-bold shadow-md transition-all active:scale-95"
                         >
-                            <Plus size={16} /> New Entry
-                        </button>
+                            <Plus className="mr-2 h-3.5 w-3.5" /> New Entry
+                        </Button>
                     </div>
                 </div>
-
-                <FinancialHealthSummary
-                    outflowChange={financialHealth.outflowChange}
-                    pendingCount={financialHealth.pendingCount}
-                    largestCategory={financialHealth.largestCategory}
-                    riskLevel={financialHealth.riskLevel}
-                />
             </div>
 
             {/* Advanced Filters Bar */}
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-6">
-                <div className="relative flex-1 w-full">
-                    <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Search by TR-ID, description, or vendor name..." className="w-full pl-14 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/5 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                </div>
-                <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 shrink-0">
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[140px] cursor-pointer" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
-                        <option value="All">All Years</option>
-                        {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[145px] cursor-pointer" value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)}>
-                        <option value="All">All Quarters</option>
-                        <option value="Q1">Q1 (Jan-Mar)</option>
-                        <option value="Q2">Q2 (Apr-Jun)</option>
-                        <option value="Q3">Q3 (Jul-Sep)</option>
-                        <option value="Q4">Q4 (Oct-Dec)</option>
-                    </select>
-                    <select className="px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 min-w-[145px] cursor-pointer" value={monthFilter} onChange={e => setMonthFilter(e.target.value)}>
-                        <option value="All">All Months</option>
-                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                            <option key={m} value={m}>{m}</option>
-                        ))}
-                    </select>
-                    <button onClick={() => setShowDatePicker(!showDatePicker)} className={`px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all ${showDatePicker ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-100'}`}>
-                        <Clock size={16} /> Date Range
-                    </button>
-                </div>
-            </div>
-
-            {
-                showDatePicker && (
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex gap-4 animate-in slide-in-from-top-2">
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">Start Date</label>
-                            <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold uppercase text-slate-400 ml-1">End Date</label>
-                            <input type="date" className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                        </div>
+            <Card className="rounded-xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
+                <CardContent className="p-2.5 flex flex-col md:flex-row items-center gap-3">
+                    <div className="relative flex-1 w-full">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search descriptions, vendors, or IDs..."
+                            className="pl-9 h-9 bg-slate-50 border-none dark:bg-slate-800 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                )
-            }
+                    <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 shrink-0">
+                        <Select value={yearFilter} onValueChange={setYearFilter}>
+                            <SelectTrigger className="w-[110px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                                <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Years</SelectItem>
+                                {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={quarterFilter} onValueChange={setQuarterFilter}>
+                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                                <SelectValue placeholder="Quarter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Quarters</SelectItem>
+                                <SelectItem value="Q1">Q1 (Jan-Mar)</SelectItem>
+                                <SelectItem value="Q2">Q2 (Apr-Jun)</SelectItem>
+                                <SelectItem value="Q3">Q3 (Jul-Sep)</SelectItem>
+                                <SelectItem value="Q4">Q4 (Oct-Dec)</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={monthFilter} onValueChange={setMonthFilter}>
+                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                                <SelectValue placeholder="Month" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Months</SelectItem>
+                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Button
+                            variant={showDatePicker ? "default" : "secondary"}
+                            onClick={() => setShowDatePicker(!showDatePicker)}
+                            className={cn("h-9 px-4 text-[10px] font-bold uppercase tracking-wider gap-2", !showDatePicker && "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border-none")}
+                        >
+                            <Calendar size={13} />
+                            {showDatePicker ? 'Hide Date' : 'Date Range'}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {showDatePicker && (
+                <Card className="rounded-xl border-dashed border-2 bg-slate-50/50 dark:bg-slate-900/50 animate-in slide-in-from-top-2 duration-300">
+                    <CardContent className="p-4 flex flex-wrap gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period Start</label>
+                            <Input
+                                type="date"
+                                className="w-[180px] h-9 bg-white dark:bg-slate-950 font-bold border-muted-foreground/20"
+                                value={startDate}
+                                onChange={e => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period End</label>
+                            <Input
+                                type="date"
+                                className="w-[180px] h-9 bg-white dark:bg-slate-950 font-bold border-muted-foreground/20"
+                                value={endDate}
+                                onChange={e => setEndDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-end pb-0.5">
+                            <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950">
+                                Reset Range
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                 <StatCard label="Disbursed Funds" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Settled" icon={CheckCircle2} color="emerald" />
@@ -544,49 +611,50 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}
-            <div className="flex flex-col gap-6">
-                {/* Row 3.1: Main Chart Full Width but Slimmer */}
-                <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shadow-inner">
-                                <BarChart3 size={16} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm leading-none">Fiscal Trend</h3>
-                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Audit volume track</p>
+            <div className="grid grid-cols-1 gap-6">
+                {/* Main Chart Card */}
+                <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
+                                    <BarChart3 size={18} />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm uppercase">Fiscal Trend</h3>
+                                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Monthly transaction volume</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="h-[160px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
-                                <Tooltip
-                                    cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                    contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
-                                    itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
-                                    labelStyle={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                                    formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'AUDIT VALUE']}
-                                />
-                                <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
-                                <Bar dataKey="total" barSize={30} radius={[6, 6, 0, 0]} fill="#3b82f6" opacity={0.1} />
-                            </ComposedChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                        <div className="h-[200px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
+                                    <Tooltip
+                                        cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                        contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+                                        itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
+                                        labelStyle={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                        formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'AUDIT VALUE']}
+                                    />
+                                    <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
+                                    <Bar dataKey="total" barSize={30} radius={[6, 6, 0, 0]} fill="#3b82f6" opacity={0.1} />
+                                </ComposedChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Row 3.2: 3-Column Bento Details */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    {/* Top Vendors - Now integrated in bottom tier */}
                     <TopVendorsWidget vendors={vendorData} />
 
                     {/* Department Allocation */}
@@ -595,27 +663,27 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
                                 <Briefcase size={16} />
                             </div>
-                            <div>
-                                <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Departmental</h3>
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Utilization track</p>
+                            <div className="space-y-0.5">
+                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Departmental</h3>
+                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Utilization track</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
                             {deptData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[11px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data</p>
                             ) : deptData.slice(0, 5).map((dept, idx) => (
                                 <div key={dept.name} className="space-y-1">
-                                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
+                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5">
-                                            <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                            <div className={cn("w-1 h-1 rounded-full", idx === 0 ? 'bg-emerald-500' : 'bg-slate-300')}></div>
                                             <span className="text-slate-500 truncate max-w-[120px]">{dept.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
-                                            <span className="text-slate-900 dark:text-slate-300">{formatIDR(dept.total)}</span>
-                                            <span className="text-emerald-500 text-[11px] w-6">{dept.percentage}%</span>
+                                            <span className="text-slate-900 dark:text-slate-200">{formatIDR(dept.total)}</span>
+                                            <span className="text-emerald-500 text-[9px] w-6">{dept.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800/50 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${dept.percentage}%` }}
@@ -632,27 +700,27 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
                                 <Tag size={16} />
                             </div>
-                            <div>
-                                <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight text-xs leading-none">Classified</h3>
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Cost breakdown</p>
+                            <div className="space-y-0.5">
+                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Classified</h3>
+                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Cost breakdown</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
                             {categoryData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[11px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data</p>
                             ) : categoryData.slice(0, 5).map((cat, idx) => (
                                 <div key={cat.name} className="space-y-1">
-                                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
+                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5">
-                                            <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                                            <div className={cn("w-1 h-1 rounded-full", idx === 0 ? 'bg-indigo-500' : 'bg-slate-300')}></div>
                                             <span className="text-slate-500 truncate max-w-[120px]">{cat.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
-                                            <span className="text-slate-900 dark:text-slate-300">{formatIDR(cat.total)}</span>
-                                            <span className="text-indigo-500 text-[11px] w-6">{cat.percentage}%</span>
+                                            <span className="text-slate-900 dark:text-slate-200">{formatIDR(cat.total)}</span>
+                                            <span className="text-indigo-500 text-[9px] w-6">{cat.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800/50 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${cat.percentage}%` }}
@@ -665,152 +733,167 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-                <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
-                    <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">General Transaction Ledger</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                        <span className="text-[11px] font-bold text-slate-500">{filteredRecords.length} Records Found</span>
+            <Card className="shadow-sm rounded-xl overflow-hidden border-none bg-background/50 backdrop-blur-sm">
+                <CardHeader className="px-8 py-5 border-b flex flex-row items-center justify-between bg-muted/20">
+                    <div className="space-y-1">
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/70">General Transaction Ledger</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                            <span className="text-[11px] font-bold text-muted-foreground">{filteredRecords.length} Records Found</span>
+                        </div>
                     </div>
-                </div>
+                </CardHeader>
 
-                <div className="flex-1 overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[11px] border-b border-slate-100 dark:border-slate-800">
-                                <th className="px-8 py-5">Audit Identity</th>
-                                <th className="px-8 py-5">Item & Procurement Details</th>
-                                <th className="px-8 py-5 text-right">Fiscal Value</th>
-                                <th className="px-8 py-5">Corporate entity</th>
-                                <th className="px-8 py-5">Ledger Status</th>
-                                <th className="px-8 py-5 text-center">Audit Docs</th>
-                                <th className="px-8 py-5 text-center">Control</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50 border-b">
+                                <TableHead className="font-bold py-4">Audit Identity</TableHead>
+                                <TableHead className="font-bold py-4">Item & Procurement Details</TableHead>
+                                <TableHead className="text-right font-bold py-4">Fiscal Value</TableHead>
+                                <TableHead className="font-bold py-4">Corporate entity</TableHead>
+                                <TableHead className="font-bold py-4">Ledger Status</TableHead>
+                                <TableHead className="text-center font-bold py-4">Audit Docs</TableHead>
+                                <TableHead className="text-right font-bold pr-8 py-4">Control</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {isLoading ? (
-                                <tr><td colSpan={7} className="py-24 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={32} /></td></tr>
+                                <TableRow><TableCell colSpan={7} className="py-24 text-center"><RefreshCcw className="animate-spin text-primary mx-auto" size={32} /></TableCell></TableRow>
                             ) : filteredRecords.length === 0 ? (
-                                <tr><td colSpan={7} className="py-32 text-center text-slate-300 dark:text-slate-700 font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</td></tr>
+                                <TableRow><TableCell colSpan={7} className="py-32 text-center text-muted-foreground font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</TableCell></TableRow>
                             ) : paginatedRecords.map(record => (
-                                <tr key={record.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-all group border-b border-transparent">
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col gap-1.5">
-                                            <span className="text-[11px] font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-900/30 w-fit tracking-tighter shadow-sm">{record.transactionId}</span>
-                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase tracking-tight">
-                                                <Calendar size={12} className="opacity-50" />
+                                <TableRow key={record.id} className="group transition-colors hover:bg-muted/30">
+                                    <TableCell className="py-5">
+                                        <div className="flex flex-col gap-1.5 align-middle">
+                                            <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md w-fit tracking-tighter border border-primary/20">{record.transactionId}</span>
+                                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
+                                                <Calendar size={11} className="opacity-70" />
                                                 {record.purchaseDate}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col gap-1 max-w-sm">
-                                            <p className="font-bold text-slate-900 dark:text-slate-100 text-sm tracking-tight leading-tight truncate-2-lines group-hover:text-blue-600 transition-colors">{record.description}</p>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{record.vendor}</span>
-                                                <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{record.paymentMethod || 'N/A'}</span>
+                                    </TableCell>
+                                    <TableCell className="py-5">
+                                        <div className="flex flex-col gap-1 max-w-[280px]">
+                                            <p className="font-bold text-foreground text-sm tracking-tight leading-tight truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 h-4 bg-muted/50">{record.vendor}</Badge>
+                                                <span className="text-[10px] font-bold text-blue-500/80 uppercase tracking-tighter">{record.paymentMethod || 'N/A'}</span>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <p className="font-mono font-black text-sm text-slate-900 dark:text-slate-100 tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
-                                        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Gross total</span>
-                                    </td>
-                                    <td className="px-8 py-6">
+                                    </TableCell>
+                                    <TableCell className="py-5 text-right">
+                                        <p className="font-mono font-bold text-sm text-foreground tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Gross total</span>
+                                    </TableCell>
+                                    <TableCell className="py-5">
                                         <div className="flex flex-col gap-0.5">
-                                            <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">{record.company}</p>
-                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-bold uppercase">
-                                                <Building2 size={10} className="text-blue-500 opacity-60" />
+                                            <p className="text-[10px] font-black text-foreground/80 uppercase tracking-widest">{record.company}</p>
+                                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold">
+                                                <Building2 size={11} className="text-primary/70" />
                                                 {record.department}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] border inline-flex items-center gap-2 shadow-sm ${record.status === 'Paid' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/40' :
-                                            record.status === 'Pending' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-100 dark:border-amber-900/40' :
-                                                'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100 dark:border-rose-900/40'}`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full ${record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
+                                    </TableCell>
+                                    <TableCell className="py-5">
+                                        <Badge
+                                            variant="outline"
+                                            className={cn(
+                                                "text-[9px] font-bold uppercase tracking-widest gap-1.5 border-transparent px-2.5 py-0.5",
+                                                record.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                                    record.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                                        'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                            )}
+                                        >
+                                            <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500')}></div>
                                             {record.status}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-center">
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="py-5 text-center">
                                         <div className="flex justify-center">
-                                            {Object.values(record.docs).filter(v => v).length > 0 ? (
+                                            {Object.values(record.docs || {}).filter(v => v).length > 0 ? (
                                                 <div className="flex flex-col items-center gap-1">
-                                                    <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[11px] font-black shadow-sm shadow-emerald-500/20">
-                                                        {Object.values(record.docs).filter(v => v).length}/7
+                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold border border-primary/20">
+                                                        {Object.values(record.docs || {}).filter(v => v).length}/7
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-emerald-600 uppercase">Verified</span>
+                                                    <span className="text-[8px] font-black text-primary/70 uppercase tracking-tighter">Verified</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-center gap-1 opacity-40">
-                                                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-lg text-[11px] font-black">0/7</span>
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Missing Docs</span>
+                                                    <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-md text-[10px] font-bold">0/7</span>
+                                                    <span className="text-[8px] font-black uppercase tracking-tighter">Missing</span>
                                                 </div>
                                             )}
                                         </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
-                                            <button onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 transition-all shadow-sm" title="View Detail"><Eye size={16} /></button>
-                                            <button onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-amber-600 hover:border-amber-200 dark:hover:border-amber-800 transition-all shadow-sm"><Pencil size={16} /></button>
-                                            <button onClick={() => setDeleteRecord(record)} className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 hover:text-rose-600 hover:border-rose-200 dark:hover:border-rose-800 transition-all shadow-sm"><Trash2 size={16} /></button>
+                                    </TableCell>
+                                    <TableCell className="py-5 text-right pr-6">
+                                        <div className="inline-flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-primary"><Eye size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-amber-500"><Pencil size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableBody>
+                    </Table>
+                </CardContent>
 
                 {/* Pagination Controls */}
                 {filteredRecords.length > 0 && (
-                    <div className="px-6 py-4 border-t border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900/50">
-                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                            Showing <span className="text-slate-900 dark:text-slate-200">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 dark:text-slate-200">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span> of <span className="text-slate-900 dark:text-slate-200">{filteredRecords.length}</span> entries
+                    <div className="px-8 py-4 border-t flex flex-col md:flex-row justify-between items-center gap-4 bg-muted/10">
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            Showing <span className="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span>-
+                            <span className="text-foreground">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span>
+                            <span className="mx-1">of</span>
+                            <span className="text-foreground font-black">{filteredRecords.length}</span> entries
                         </div>
-                        <div className="flex items-center gap-1">
-                            <button
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-background"
                             >
-                                Prev
-                            </button>
+                                <ChevronLeft size={14} className="mr-1" /> Prev
+                            </Button>
 
-                            {[...Array(totalPages)].map((_, i) => {
-                                const page = i + 1;
-                                // Show first, last, and relative to current
-                                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${currentPage === page
-                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                } else if (page === currentPage - 2 || page === currentPage + 2) {
-                                    return <span key={page} className="text-slate-300">...</span>;
-                                }
-                                return null;
-                            })}
+                            <div className="flex items-center gap-1 mx-2">
+                                {[...Array(totalPages)].map((_, i) => {
+                                    const page = i + 1;
+                                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                                        return (
+                                            <Button
+                                                key={page}
+                                                variant={currentPage === page ? "default" : "ghost"}
+                                                size="sm"
+                                                onClick={() => setCurrentPage(page)}
+                                                className={cn("w-8 h-8 p-0 text-[11px] font-bold transition-all", currentPage === page ? "shadow-md shadow-primary/20" : "text-muted-foreground")}
+                                            >
+                                                {page}
+                                            </Button>
+                                        );
+                                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                        return <span key={page} className="text-muted-foreground">..</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
 
-                            <button
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-background"
                             >
-                                Next
-                            </button>
+                                Next <ChevronRight size={14} className="ml-1" />
+                            </Button>
                         </div>
                     </div>
                 )}
-            </div>
+            </Card>
 
             <PurchaseRecordFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleFormSubmit} initialData={editingRecord} />
             <PurchaseRecordDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} record={selectedDetail} />
@@ -824,6 +907,6 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 title="Delete Record" message={`Purge transaction record "${deleteRecord?.transactionId}"?`}
                 isLoading={isActionLoading}
             />
-        </div >
+        </div>
     );
 };

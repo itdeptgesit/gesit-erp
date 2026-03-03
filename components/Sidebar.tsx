@@ -5,12 +5,19 @@ import {
     LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
     Network, Folder, Shield, ChevronDown, X, Users, Building2,
     Briefcase, Layers, Zap, PanelLeftClose, PanelLeft, Phone,
-    Settings, Megaphone
+    Settings, Megaphone, Search, ChevronRight, Plus
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { APP_MENU_STRUCTURE } from '../constants';
 import { UserGroup } from '../types';
 import { useLanguage } from '../translations';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+
+// SHADCN UI IMPORTS
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, React.ElementType> = {
     LayoutDashboard: LayoutGrid,
@@ -53,26 +60,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['admin']);
     const { t } = useLanguage();
-
-    const LOGO_URL = "/image/logo.png";
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const allowedMenuIds = useMemo(() => {
         const allowed = new Set<string>();
         const role = userRole?.toLowerCase() || '';
 
-        console.log("Sidebar: userRole:", userRole, "role:", role, "groups:", userGroups);
-
-        // Broaden admin check
         if (role.includes('admin') || role.includes('owner')) {
             APP_MENU_STRUCTURE.forEach(m => allowed.add(m.id));
             return allowed;
         }
 
         if (!userGroups || !Array.isArray(userGroups) || userGroups.length === 0) {
-            allowed.add('dashboard');
-            allowed.add('helpdesk');
-            allowed.add('extension-directory');
-            allowed.add('profile');
+            ['helpdesk', 'asset-loan', 'extension-directory', 'profile'].forEach(id => allowed.add(id));
             return allowed;
         }
         userGroups.forEach(groupId => {
@@ -82,11 +83,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
         });
 
-        // Also ensure that if any child is allowed, the parent is also allowed
         APP_MENU_STRUCTURE.forEach(menu => {
-            if (menu.parentId && allowed.has(menu.id)) {
-                allowed.add(menu.parentId);
-            }
+            if (menu.parentId && allowed.has(menu.id)) allowed.add(menu.parentId);
         });
 
         return allowed;
@@ -100,7 +98,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const children = allMenus.filter(m => m.parentId === parent.id);
             const allowedChildren = children.filter(child => allowedMenuIds.has(child.id));
 
-            // If dashboard has children, add a "Summary" link to the parent itself (only for IT Staff)
             const finalChildren = [...allowedChildren];
             const roleStr = userRole?.toLowerCase() || '';
             const isITorAdmin = roleStr.includes('admin') || roleStr.includes('staff') || userGroups.some(g => g.toLowerCase().includes('admin') || g.toLowerCase().includes('staff'));
@@ -124,12 +121,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 })) : undefined
             };
         }).filter(Boolean);
-    }, [allowedMenuIds, t]);
+    }, [allowedMenuIds, t, userRole, userGroups]);
 
     const toggleMenu = (menuId: string) => {
         if (isCollapsed) {
             setIsCollapsed(false);
-            setExpandedMenus([menuId]);
+            setTimeout(() => setExpandedMenus([menuId]), 200);
             return;
         }
         setExpandedMenus(prev => prev.includes(menuId) ? prev.filter(id => id !== menuId) : [...prev, menuId]);
@@ -141,121 +138,208 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const Icon = item.icon;
         const path = item.id === 'dashboard' ? '/' : `/${item.id}`;
 
-        if (hasSub) {
-            const isSubItemActive = item.subItems?.some((s: any) => currentView === s.id);
-            return (
-                <div key={item.id} className="px-3 mb-1">
-                    <button
-                        onClick={() => toggleMenu(item.id)}
-                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isSubItemActive && !isExpanded
-                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
-                            }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <Icon size={20} className={isSubItemActive ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500 group-hover:text-blue-500'} strokeWidth={2} />
-                            {!isCollapsed && <span className="truncate">{item.label}</span>}
-                        </div>
-                        {!isCollapsed && <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-300`} />}
-                    </button>
+        const isActive = location.pathname === path || (item.id === 'dashboard' && location.pathname === '/');
 
-                    {isExpanded && !isCollapsed && (
-                        <div className="flex flex-col gap-1 mt-1 ml-4 border-l border-slate-100 dark:border-slate-800 pl-2 animate-in slide-in-from-top-1 duration-200">
-                            {item.subItems?.map((sub: any) => (
-                                <NavLink
-                                    key={sub.id}
-                                    to={sub.id === 'dashboard' ? '/' : `/${sub.id}`}
-                                    onClick={onClose}
-                                    className={({ isActive }) => `w-full text-left pl-6 pr-4 py-2 rounded-lg text-xs font-semibold transition-all ${isActive
-                                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50'
-                                        : 'text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50/50'
-                                        }`}
-                                >
-                                    {sub.label}
-                                </NavLink>
-                            ))}
-                        </div>
+        if (hasSub) {
+            const isSubItemActive = item.subItems?.some((s: any) => location.pathname === (s.id === 'dashboard' ? '/' : `/${s.id}`));
+
+            return (
+                <Collapsible
+                    key={item.id}
+                    open={isExpanded}
+                    onOpenChange={() => toggleMenu(item.id)}
+                    className="mb-1"
+                >
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            className={cn(
+                                "w-full flex items-center justify-between px-3 h-11 group relative transition-all duration-200",
+                                isCollapsed && "justify-center px-0",
+                                isSubItemActive
+                                    ? "bg-primary/10 text-primary dark:bg-primary/20 shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            {/* Indicator handled in text/icon color and background below */}
+                            <div className="flex items-center gap-3 w-full">
+                                <Icon
+                                    size={18}
+                                    className={cn(
+                                        "shrink-0",
+                                        isSubItemActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                    )}
+                                    strokeWidth={isSubItemActive ? 2.5 : 2}
+                                />
+                                {!isCollapsed && (
+                                    <span className={cn("truncate text-sm flex-1 text-left", isSubItemActive ? "font-bold" : "font-medium")}>
+                                        {item.label}
+                                    </span>
+                                )}
+                            </div>
+                            {!isCollapsed && (
+                                <ChevronDown
+                                    size={14}
+                                    className={cn(
+                                        "shrink-0 transition-transform duration-200",
+                                        isExpanded && "rotate-180",
+                                        isSubItemActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                    )}
+                                />
+                            )}
+
+                            {/* Elegant right indicator */}
+                            {isSubItemActive && (
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-l-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                            )}
+                        </Button>
+                    </CollapsibleTrigger>
+
+                    {!isCollapsed && (
+                        <CollapsibleContent className="CollapsibleContent px-3 pb-1 pt-1 ml-4 border-l border-border/10 dark:border-white/[0.03] mt-1">
+                            <div className="flex flex-col gap-1">
+                                {item.subItems?.map((sub: any) => {
+                                    const subPath = sub.id === 'dashboard' ? '/' : `/${sub.id}`;
+                                    const isSubActive = location.pathname === subPath;
+                                    return (
+                                        <Button
+                                            key={sub.id}
+                                            variant="ghost"
+                                            asChild
+                                            className={cn(
+                                                "w-full justify-start h-9 px-3 text-xs relative transition-all duration-200",
+                                                isSubActive
+                                                    ? "text-primary font-bold bg-primary/5"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 font-medium"
+                                            )}
+                                        >
+                                            <NavLink to={subPath} onClick={onClose}>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn(
+                                                        "w-1 h-1 rounded-full transition-all",
+                                                        isSubActive ? "bg-primary scale-125 shadow-[0_0_8px_rgba(59,130,246,0.4)]" : "bg-muted-foreground/30"
+                                                    )} />
+                                                    {sub.label}
+                                                </div>
+                                            </NavLink>
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </CollapsibleContent>
                     )}
-                </div>
+                </Collapsible>
             );
         }
 
         return (
-            <div key={item.id} className="px-3 mb-1">
-                <NavLink
-                    to={path}
-                    onClick={onClose}
-                    className={({ isActive }) => `w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} px-4 py-2.5 rounded-xl text-[14px] font-semibold transition-all group ${isActive
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
+            <div key={item.id} className="mb-1">
+                <Button
+                    variant="ghost"
+                    asChild
+                    className={cn(
+                        "w-full flex items-center justify-start gap-3 h-11 px-3 relative group transition-all duration-200",
+                        isCollapsed && "justify-center px-0",
+                        isActive
+                            ? "bg-primary/10 text-primary dark:bg-primary/20 shadow-sm font-bold"
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground font-medium"
+                    )}
                 >
-                    <Icon size={20} className="group-hover:text-blue-500 transition-colors" strokeWidth={2} />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
-                </NavLink>
+                    <NavLink to={path} onClick={onClose}>
+                        {/* Elegant right indicator */}
+                        {isActive && (
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-l-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                        )}
+                        <Icon
+                            size={18}
+                            strokeWidth={isActive ? 2.5 : 2}
+                            className={cn(
+                                "shrink-0",
+                                isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                            )}
+                        />
+                        {!isCollapsed && (
+                            <span className={cn("truncate text-sm", isActive ? "font-bold" : "font-medium")}>
+                                {item.label}
+                            </span>
+                        )}
+
+                        {/* Indicator removed here as it is moved above */}
+                    </NavLink>
+                </Button>
             </div>
         );
     };
 
     return (
         <>
-            {isMobileOpen && <div className="fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-sm transition-all" onClick={onClose} />}
-            <aside className={`fixed top-0 left-0 bottom-0 z-50 bg-white dark:bg-[#0f172a] border-r border-slate-100 dark:border-slate-800 flex flex-col transition-all duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:-translate-x-full ${isCollapsed ? 'w-20' : 'w-64'}`}>
-                <div className={`px-6 py-8 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                    <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-8 min-w-[32px] object-contain" />
+            <AnimatePresence>
+                {isMobileOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+                        onClick={onClose}
+                    />
+                )}
+            </AnimatePresence>
+
+            <motion.aside
+                animate={{ width: isCollapsed ? 80 : 260 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className={cn(
+                    "fixed top-0 left-0 bottom-0 z-50 bg-card border-r border-border/10 dark:border-white/[0.02] flex flex-col transition-all duration-300",
+                    isMobileOpen ? "translate-x-0" : "-translate-x-full",
+                    "md:translate-x-0 md:static overflow-hidden shadow-sm"
+                )}
+            >
+                {/* Brand Logo */}
+                <div className={cn("h-16 flex items-center shrink-0 border-b border-border/10 dark:border-white/[0.02] transition-all cursor-pointer", isCollapsed ? "justify-center px-4" : "px-6 gap-3")} onClick={() => navigate('/')}>
+                    <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
+                        <img src={logoUrl || "/image/logo.png"} alt="Logo" className="w-8 h-8 object-contain transition-transform duration-300 hover:scale-110 drop-shadow-sm" />
+                    </div>
+
                     {!isCollapsed && (
-                        <div className="flex flex-col animate-in fade-in duration-300">
-                            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
-                                {appName ? appSettingsName(appName).first : 'Gesit'} <span className="text-blue-600">{appName ? appSettingsName(appName).rest : 'ERP'}</span>
-                            </h1>
-                            <p className="text-[10px] font-semibold text-slate-300 mt-1 tracking-widest uppercase">Enterprise Work Platform</p>
-                        </div>
+                        <>
+                            <div className="h-6 w-px bg-border/20 mx-1 shrink-0"></div>
+                            <div className="flex flex-col leading-tight min-w-0">
+                                <h1 className="text-xl font-bold tracking-tight text-foreground leading-none flex items-center gap-1.5 truncate">
+                                    <span className="text-foreground">
+                                        {appName ? appName.split(' ')[0] : 'Gesit'}
+                                    </span>
+                                    <span className={`font-black ${(userRole?.toLowerCase() || '').includes('admin') ? 'text-rose-600' : 'text-primary'}`}>
+                                        {appName ? appName.split(' ').slice(1).join(' ') : 'Portal'}
+                                    </span>
+                                </h1>
+                                <p className="text-[9px] font-bold text-muted-foreground tracking-[0.15em] mt-1 line-clamp-1">
+                                    {(userRole?.toLowerCase() || '').includes('admin') ? 'Enterprise Control Center' : 'Personal Digital Workspace'}
+                                </p>
+                            </div>
+                        </>
                     )}
-                    <button onClick={onClose} aria-label="Close sidebar" className="md:hidden ml-auto p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"><X size={18} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar pt-2 no-scrollbar">
+                {/* Navigation Items */}
+                <div className="flex-1 overflow-y-auto no-scrollbar py-4 px-3">
                     <div className="mb-6">
-                        {!isCollapsed && <p className="px-8 text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-4">Core</p>}
-                        {menuItems.filter((m: any) => !['admin'].includes(m.id)).map(renderLink)}
+                        {!isCollapsed && <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Main Menu</p>}
+                        <div className="space-y-0.5">
+                            {menuItems.filter((m: any) => m.id !== 'admin').map(renderLink)}
+                        </div>
                     </div>
-                    <div>
-                        {!isCollapsed && <p className="px-8 text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-4">Admin</p>}
-                        {menuItems.filter((m: any) => m.id === 'admin').map(renderLink)}
-                    </div>
-                </div>
 
-                <div className="p-4 mt-auto border-t border-slate-50 dark:border-slate-800/50">
-                    <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-xl transition-all group`}
-                        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-                    >
-                        {isCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
-                        {!isCollapsed && <span className="text-xs font-bold uppercase tracking-widest">Hide Panel</span>}
-                    </button>
-
-                    {!isCollapsed && (
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 mt-4 animate-in fade-in zoom-in duration-300">
-                            <NavLink to="/profile" className="w-full flex items-center gap-3.5 text-left group">
-                                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
-                                    {userName ? userName.substring(0, 2).toUpperCase() : 'GS'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-800 dark:text-white truncate leading-none mb-1">{userName || 'User'}</p>
-                                    <p className="text-[10px] font-semibold text-slate-400 truncate tracking-widest uppercase">{userRole || 'Staff'}</p>
-                                </div>
-                            </NavLink>
+                    {menuItems.some((m: any) => m.id === 'admin') && (
+                        <div className="mb-6 border-t border-border/10 dark:border-white/[0.03] pt-6">
+                            {!isCollapsed && <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Administration</p>}
+                            <div className="space-y-0.5">
+                                {menuItems.filter((m: any) => m.id === 'admin').map(renderLink)}
+                            </div>
                         </div>
                     )}
                 </div>
-            </aside>
+
+            </motion.aside>
         </>
     );
-};
-
-const appSettingsName = (name: string) => {
-    const parts = name.split(' ');
-    return { first: parts[0], rest: parts.slice(1).join(' ') };
 };

@@ -10,6 +10,8 @@ import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
 import { UserAccount } from '../types';
 import { useToast } from './ToastProvider';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface MasterDepartmentProps {
     currentUser: UserAccount | null;
@@ -150,20 +152,27 @@ export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser 
 
     return (
         <div className="animate-in fade-in duration-300 pb-10">
-            <div className="flex justify-between items-center mb-6">
-                <div><h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Master Department</h1><p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Manage your company's department</p></div>
-                <div className="flex gap-2">
-                    <button onClick={fetchDepartments} className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl transition-all">
-                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
-                    </button>
-                    <button
-                        onClick={handleAdd}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl hover:bg-black dark:hover:bg-blue-700 shadow-sm active:scale-95 transition-all"
+            <PageHeader
+                title="Master Department"
+                description="Manage your company's organizational units & personnel"
+            >
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={fetchDepartments}
+                        className="h-9 w-9 rounded-xl hover:bg-muted"
                     >
-                        <Plus size={16} /> New Dept
-                    </button>
+                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+                    </Button>
+                    <Button
+                        onClick={handleAdd}
+                        className="h-10 px-6 bg-slate-900 dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/10"
+                    >
+                        <Plus size={14} className="mr-2" /> New Dept
+                    </Button>
                 </div>
-            </div>
+            </PageHeader>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">

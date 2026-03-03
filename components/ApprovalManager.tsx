@@ -6,6 +6,8 @@ import { Check, X, Search, RefreshCcw, ShoppingCart, User, Calendar, CheckCircle
 import { PurchasePlan, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface ApprovalManagerProps {
     currentUser?: UserAccount | null;
@@ -189,15 +191,21 @@ export const ApprovalManager: React.FC<ApprovalManagerProps> = ({ currentUser })
 
     return (
         <div className="animate-in fade-in duration-300">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Approvals Required</h2>
-                    <p className="text-sm text-gray-500">Daftar permintaan pembelian yang membutuhkan persetujuan Anda.</p>
+            <PageHeader
+                title="Approvals Required"
+                description="Purchase request verification & protocol compliance"
+            >
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={fetchPendingRequests}
+                        className="h-9 w-9 rounded-xl hover:bg-muted"
+                    >
+                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
+                    </Button>
                 </div>
-                <button onClick={fetchPendingRequests} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
-                    <RefreshCcw size={20} className={isLoading ? 'animate-spin' : ''} />
-                </button>
-            </div>
+            </PageHeader>
 
             {errorMessage && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-700 animate-in slide-in-from-top-2">

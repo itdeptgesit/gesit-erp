@@ -9,6 +9,8 @@ import { AssetCategory, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { trackActivity } from '../lib/auditLogger';
 import { useToast } from './ToastProvider';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface MasterCategoryProps {
     currentUser: UserAccount | null;
@@ -96,23 +98,27 @@ export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) =
 
     return (
         <div className="animate-in fade-in duration-300 pb-10 font-sans">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">Master Categories</h2>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Classification Hierarchy Management</p>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={fetchCategories} className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl transition-all">
-                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
-                    </button>
-                    <button
-                        onClick={handleAdd}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl hover:bg-black dark:hover:bg-blue-700 transition-all shadow-sm active:scale-95"
+            <PageHeader
+                title="Master Categories"
+                description="Classification Hierarchy Management"
+            >
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={fetchCategories}
+                        className="h-9 w-9 rounded-xl hover:bg-muted"
                     >
-                        <Plus size={16} /> New Category
-                    </button>
+                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+                    </Button>
+                    <Button
+                        onClick={handleAdd}
+                        className="h-10 px-6 bg-slate-900 dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/10"
+                    >
+                        <Plus size={14} className="mr-2" /> New Category
+                    </Button>
                 </div>
-            </div>
+            </PageHeader>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">

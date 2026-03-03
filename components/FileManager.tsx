@@ -8,6 +8,8 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
 import { UserAccount } from '../types';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 interface FileItem { id: string; name: string; type: 'pdf' | 'doc' | 'sheet' | 'image' | 'folder'; updatedAt: string; gdriveUrl: string; category?: string; }
 
@@ -76,36 +78,28 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/10 shrink-0">
-                        <Library size={24} strokeWidth={2.5} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-1">Library <span className="text-blue-600">Manager</span></h1>
-                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <span className="w-8 h-[1px] bg-slate-200 dark:bg-slate-800" />
-                            Shared resource database
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
+            <PageHeader
+                title="Library Manager"
+                description="Shared resource database & global documentation"
+            >
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
                         onClick={handleExportExcel}
-                        className="flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+                        className="h-9 px-4 text-xs font-bold"
                     >
-                        <FileSpreadsheet size={16} /> Export Excel
-                    </button>
+                        <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export Excel
+                    </Button>
                     {canManage && (
-                        <button
+                        <Button
                             onClick={() => { setEditingFile(null); setIsModalOpen(true); }}
-                            className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                            className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-blue-500/20"
                         >
-                            <Plus size={16} /> Register Document
-                        </button>
+                            <Plus className="mr-2 h-3.5 w-3.5" /> Register Document
+                        </Button>
                     )}
                 </div>
-            </div>
+            </PageHeader>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <StatCard label="CLOUD REPOSITORY" value={files.length} subValue="Total entries" icon={Cloud} color="blue" />
                 <StatCard label="DOCUMENTS" value={files.filter(f => f.type === 'pdf' || f.type === 'doc').length} subValue="Guides & Manuals" icon={FileType} color="rose" />

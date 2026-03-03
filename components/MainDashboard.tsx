@@ -14,6 +14,8 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { ActivityLog, PortStatus, Announcement, UserAccount } from '../types';
 import { StatCard } from './StatCard';
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
 
 // --- Types ---
 
@@ -235,24 +237,13 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
     return (
         <div className="pb-12 space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 shadow-lg shrink-0">
-                        <Zap size={24} strokeWidth={2} />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-3 mb-0.5">
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
-                            <span className="px-2 py-0.5 text-[9px] font-bold text-slate-400 border border-slate-200 dark:border-slate-800 rounded-lg uppercase tracking-widest">
-                                {userRole} Terminal
-                            </span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">System operational overview</p>
-                    </div>
-                </div>
+            <PageHeader
+                title="Dashboard"
+                description="System operational overview & terminal status"
+            >
                 <div className="flex items-center gap-4">
                     {/* Mode Switcher */}
-                    <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 mr-2">
+                    <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200 dark:border-slate-800">
                         {(['All', 'Finance', 'Technical'] as DashboardMode[]).map((mode) => (
                             <button
                                 key={mode}
@@ -270,15 +261,20 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         ))}
                     </div>
 
-                    <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
-                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                    </button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={fetchData}
+                        className="h-9 w-9 rounded-xl hover:bg-muted"
+                    >
+                        <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+                    </Button>
                     <div className="px-4 py-2 bg-white dark:bg-slate-900 text-emerald-500 dark:text-emerald-400 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-800 flex items-center gap-2.5 shadow-sm">
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                         Online
                     </div>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* --- EXECUTIVE INSIGHTS (NEW) --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -634,7 +630,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="relative z-10">
                             <h2 className="text-4xl font-black mb-3 italic tracking-tight">Hello, {userName || 'Champion'}!</h2>
                             <p className="text-sm text-slate-300 font-medium max-w-lg leading-relaxed">
-                                Welcome back to your GESIT workspace. All your assigned assets, pending tasks, and support tickets are synchronized and ready.
+                                Welcome back to your TASKPLUS workspace. All your assigned assets, pending tasks, and support tickets are synchronized and ready.
                             </p>
                             <div className="flex gap-4 mt-8">
                                 <button onClick={() => onNavigate('helpdesk')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20">New Ticket</button>

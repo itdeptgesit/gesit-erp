@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Megaphone, Plus, Trash2, Save, Send, Clock, Calendar, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/button';
+
 
 interface Announcement {
     id?: number;
@@ -90,18 +93,14 @@ export const AnnouncementManager: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">System Broadcasts</h1>
-                    <p className="text-xs font-medium text-slate-500 mt-1 uppercase tracking-widest">Emergency & Info Center</p>
-                </div>
-                <button
+            <PageHeader title="System Broadcasts" description="Emergency & Info Center">
+                <Button
                     onClick={() => setIsFormOpen(!isFormOpen)}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-black dark:hover:bg-blue-700 transition-all shadow-lg active:scale-95"
+                    className="bg-slate-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg active:scale-95 transition-all"
                 >
-                    {isFormOpen ? 'Cancel Protocol' : <><Plus size={14} /> New Broadcast</>}
-                </button>
-            </div>
+                    {isFormOpen ? 'Cancel Protocol' : <><Plus className="mr-2 h-4 w-4" /> New Broadcast</>}
+                </Button>
+            </PageHeader>
 
             {statusMsg && (
                 <div className={`p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-2 ${statusMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/20' : 'bg-rose-50 dark:bg-rose-900/10 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/20'}`}>
