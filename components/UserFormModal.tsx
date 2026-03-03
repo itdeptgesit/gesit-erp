@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Shield, Users, Building2, UserCheck, Layers, Briefcase, MapPin, Loader2, Image as ImageIcon, Camera } from 'lucide-react';
+import { X, Shield, Users, Building2, UserCheck, Layers, Briefcase, MapPin, Loader2, Image as ImageIcon, Camera, LifeBuoy } from 'lucide-react';
 import { UserAccount, UserGroup, Company } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
@@ -51,7 +51,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                 department: '',
                 jobTitle: '',
                 supervisorId: '',
-                managerId: ''
+                managerId: '',
+                isHelpdeskSupport: false
             });
         }
     }, [initialData, isOpen]);
@@ -219,6 +220,28 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                                 <option value="Disabled">Disabled</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
+                        <div className="flex items-center justify-between mb-2 border-b border-slate-200 dark:border-slate-700 pb-3">
+                            <div className="flex items-center gap-2">
+                                <LifeBuoy size={18} className="text-indigo-600 dark:text-indigo-400" />
+                                <h3 className="font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-widest">Helpdesk Access</h3>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={formData.isHelpdeskSupport || false}
+                                    onChange={(e) => setFormData({ ...formData, isHelpdeskSupport: e.target.checked })}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
+                                <span className="ml-3 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Support Staff Status</span>
+                            </label>
+                        </div>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed italic">
+                            Enable this to grant this account access to the Helpdesk Management view and allow them to be assigned to support tickets.
+                        </p>
                     </div>
 
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">

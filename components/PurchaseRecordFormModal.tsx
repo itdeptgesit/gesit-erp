@@ -1,11 +1,35 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calculator, Building2, User, Calendar, Tag, CheckCircle2, AlertCircle, Save, ShieldCheck } from 'lucide-react';
+import { X, Calculator, Building2, User, Calendar, Tag, CheckCircle2, AlertCircle, Save, ShieldCheck, Plus, Trash2, Receipt, ShoppingCart } from 'lucide-react';
 import { PurchaseRecord } from '../types';
 import { useLanguage } from '../translations';
 import { supabase } from '../lib/supabaseClient';
+
+// SHADCN UI IMPORTS
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface PurchaseRecordFormModalProps {
     isOpen: boolean;
@@ -128,279 +152,274 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
         }
     }, [formData.price, formData.qty, formData.vat, formData.deliveryFee, formData.insurance, formData.appFee, formData.items]);
 
-    if (!isOpen) return null;
-
-    const handleDocToggle = (key: keyof PurchaseRecord['docs']) => {
+    const handleDocToggle = (key: keyof NonNullable<PurchaseRecord['docs']>) => {
         setFormData(prev => ({
             ...prev,
-            docs: { ...prev.docs!, [key]: !prev.docs![key] }
+            docs: {
+                ...(prev.docs || {
+                    prForm: false, cashAdvance: false, checkout: false, paymentSlip: false,
+                    invoice: false, expenseApproval: false, checkByRara: false
+                }),
+                [key]: !prev.docs?.[key]
+            }
         }));
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 mt-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 shadow-sm";
-    const labelClass = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-2";
-
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-5xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[95vh] border border-white/20 dark:border-slate-800">
-                <div className="flex justify-between items-center px-10 py-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/30">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[1400px] w-[95vw] max-h-[90vh] p-0 overflow-hidden rounded-xl border shadow-2xl bg-background flex flex-col">
+                <DialogHeader className="px-8 py-6 border-b shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <ShieldCheck className="text-white" size={24} />
+                        <div className="w-12 h-12 bg-primary/5 text-primary rounded-xl flex items-center justify-center border border-primary/10">
+                            <ShieldCheck size={24} />
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        <div className="text-left">
+                            <DialogTitle className="text-xl font-bold uppercase tracking-tight">
                                 Purchase Audit Entry
-                            </h2>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Certified Document Traceability</p>
+                            </DialogTitle>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5 opacity-60">Certified Document Traceability & Ledger Control</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400"><X size={24} /></button>
-                </div>
+                </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    <form id="recordForm" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-8">
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                            <div className="md:col-span-2">
-                                <label className={labelClass}>Descriptive Overview</label>
-                                <textarea rows={2} className={`${inputClass} resize-none h-[54px]`} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} required placeholder="Enter primary procurement description..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Reference ID(s)</label>
-                                <input
-                                    type="text"
-                                    className={`${inputClass} ${isGeneratingId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    value={formData.transactionId || ''}
-                                    onChange={e => setFormData({ ...formData, transactionId: e.target.value })}
-                                    required
-                                    readOnly={isGeneratingId}
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Company</label>
-                                <select className={inputClass} value={formData.company || ''} onChange={e => setFormData({ ...formData, company: e.target.value })}>
-                                    <option value="">- {t('pilih')} -</option>
-                                    {companies.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                            <div>
-                                <label className={labelClass}>Requester Name</label>
-                                <input type="text" className={inputClass} value={formData.user || ''} onChange={e => setFormData({ ...formData, user: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Department</label>
-                                <select className={inputClass} value={formData.department || ''} onChange={e => setFormData({ ...formData, department: e.target.value })}>
-                                    <option value="">- {t('pilih')} -</option>
-                                    {departments.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Vendor(s)</label>
-                                <input type="text" className={inputClass} value={formData.vendor || ''} onChange={e => setFormData({ ...formData, vendor: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Payment Method</label>
-                                <select
-                                    className={inputClass}
-                                    value={formData.paymentMethod || ''}
-                                    onChange={e => setFormData({ ...formData, paymentMethod: e.target.value as any })}
-                                >
-                                    <option value="">- {t('pilih')} -</option>
-                                    <option value="Transfer">Transfer</option>
-                                    <option value="VA">VA</option>
-                                    <option value="Debit/CC">Debit/CC</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                            <div>
-                                <label className={labelClass}>Category</label>
-                                <select className={inputClass} value={formData.category || ''} onChange={e => setFormData({ ...formData, category: e.target.value })} required>
-                                    <option value="">- {t('pilih')} -</option>
-                                    <option value="Hardware">Hardware</option>
-                                    <option value="Software & License">Software & License</option>
-                                    <option value="Cloud & Hosting">Cloud & Hosting</option>
-                                    <option value="Network & Internet">Network & Internet</option>
-                                    <option value="Maintenance & Support">Maintenance & Support</option>
-                                    <option value="IT Services">IT Services</option>
-                                    <option value="Security">Security</option>
-                                    <option value="Subscription">Subscription</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Platform</label>
-                                <div className="flex items-center gap-4 mt-2 h-[38px]">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="radio"
-                                            name="platform"
-                                            value="Vendor"
-                                            checked={formData.platform === 'Vendor'}
-                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Vendor</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="radio"
-                                            name="platform"
-                                            value="Market Place"
-                                            checked={formData.platform === 'Market Place'}
-                                            onChange={e => setFormData({ ...formData, platform: e.target.value })}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors uppercase">Market</span>
-                                    </label>
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                    <form id="recordForm" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="p-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                            {/* --- LEFT COLUMN: PROCUREMENT DETAILS (7/12) --- */}
+                            <div className="lg:col-span-7 space-y-8">
+                                {/* Section 1: Core Identification */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3 border-b pb-2">
+                                        <div className="w-1 h-4 bg-primary rounded-full"></div>
+                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">Core Identification</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Descriptive Overview</Label>
+                                            <Textarea
+                                                className="min-h-[120px] resize-none font-medium text-sm bg-muted/20 border-muted-foreground/10 focus:border-primary focus:bg-background rounded-xl p-4 transition-all"
+                                                value={formData.description || ''}
+                                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                                required
+                                                placeholder="Enter primary procurement description..."
+                                            />
+                                        </div>
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Reference ID</Label>
+                                                <Input
+                                                    className={cn("font-mono font-bold h-11 bg-muted/20 border-muted-foreground/10 rounded-xl text-primary", isGeneratingId && "animate-pulse")}
+                                                    value={formData.transactionId || ''}
+                                                    onChange={e => setFormData({ ...formData, transactionId: e.target.value })}
+                                                    required
+                                                    readOnly={isGeneratingId}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Target Entity</Label>
+                                                <Select value={formData.company || ''} onValueChange={val => setFormData({ ...formData, company: val })}>
+                                                    <SelectTrigger className="font-bold h-11 border-muted-foreground/10 rounded-xl bg-muted/20">
+                                                        <SelectValue placeholder={`- ${t('pilih')} -`} />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl">
+                                                        {companies.map(c => <SelectItem key={c.name} value={c.name} className="font-bold">{c.name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Evidence / Drive Link</label>
-                                <input
-                                    type="url"
-                                    className={inputClass}
-                                    value={formData.evidenceLink || ''}
-                                    onChange={e => setFormData({ ...formData, evidenceLink: e.target.value })}
-                                    placeholder="https://drive.google.com/..."
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Status</label>
-                                <select className={inputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-                                    <option value="Paid">Paid (Verified)</option>
-                                    <option value="Pending">Pending</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-inner">
-                            <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                                <Calculator size={14} /> Financial Data Entry
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
-                                <div>
-                                    <label className={labelClass}>Base Price</label>
-                                    <input
-                                        type="text"
-                                        className={inputClass}
-                                        value={formatNumber(formData.price)}
-                                        onChange={e => setFormData({ ...formData, price: parseNumber(e.target.value) })}
-                                        disabled={formData.items && formData.items.length > 0}
-                                        placeholder="0"
+                                {/* Section 2: Stakeholders & Sourcing */}
+                                <div className="space-y-6 p-6 bg-muted/5 rounded-xl border">
+                                    <div className="flex items-center gap-3 border-b pb-2">
+                                        <div className="w-1 h-4 bg-primary rounded-full"></div>
+                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">Stakeholders & Sourcing</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Requester</Label>
+                                            <Input className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-background" value={formData.user || ''} onChange={e => setFormData({ ...formData, user: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Department</Label>
+                                            <Select value={formData.department || ''} onValueChange={val => setFormData({ ...formData, department: val })}>
+                                                <SelectTrigger className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-background">
+                                                    <SelectValue placeholder={`- ${t('pilih')} -`} />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-lg">
+                                                    {departments.map(d => <SelectItem key={d.name} value={d.name} className="font-medium">{d.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Vendor</Label>
+                                            <Input className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-background" value={formData.vendor || ''} onChange={e => setFormData({ ...formData, vendor: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Payment Method</Label>
+                                            <Select value={formData.paymentMethod || ''} onValueChange={val => setFormData({ ...formData, paymentMethod: val as any })}>
+                                                <SelectTrigger className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-background">
+                                                    <SelectValue placeholder={`- ${t('pilih')} -`} />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-lg">
+                                                    <SelectItem value="Transfer" className="font-medium">Transfer</SelectItem>
+                                                    <SelectItem value="VA" className="font-medium">VA</SelectItem>
+                                                    <SelectItem value="Debit/CC" className="font-medium">Debit/CC</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 3: Technical Categorization & Dates */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Category</Label>
+                                            <Select value={formData.category || ''} onValueChange={val => setFormData({ ...formData, category: val })}>
+                                                <SelectTrigger className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-muted/5">
+                                                    <SelectValue placeholder={`- ${t('pilih')} -`} />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-lg">
+                                                    {['Hardware', 'Software & License', 'Cloud & Hosting', 'Network & Internet', 'Maintenance & Support', 'IT Services', 'Security', 'Subscription'].map(cat => (
+                                                        <SelectItem key={cat} value={cat} className="font-medium">{cat}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Evidence Link</Label>
+                                            <Input
+                                                type="url"
+                                                className="font-medium h-10 border-muted-foreground/10 rounded-lg bg-muted/5"
+                                                value={formData.evidenceLink || ''}
+                                                onChange={e => setFormData({ ...formData, evidenceLink: e.target.value })}
+                                                placeholder="https://..."
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Procurement Date</Label>
+                                            <Input type="date" className="font-bold h-10 rounded-lg border-muted-foreground/10 bg-muted/5 text-sm" value={formData.purchaseDate || ''} onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Payment Date</Label>
+                                            <Input type="date" className="font-bold h-10 rounded-lg border-primary/20 bg-primary/5 text-primary text-sm" value={formData.paymentDate || ''} onChange={e => {
+                                                const newDate = e.target.value;
+                                                setFormData(prev => ({ ...prev, paymentDate: newDate, transactionId: 'Generating...' }));
+                                                generateNextTransactionId(newDate);
+                                            }} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Internal Audit Remarks</Label>
+                                    <Textarea
+                                        rows={2}
+                                        className="resize-none font-medium text-sm bg-muted/5 border-muted-foreground/10 rounded-lg p-3"
+                                        value={formData.remarks || ''}
+                                        onChange={e => setFormData({ ...formData, remarks: e.target.value })}
+                                        placeholder="Optional audit notes..."
                                     />
                                 </div>
-                                <div>
-                                    <label className={labelClass}>Qty/Items</label>
-                                    <input
-                                        type="text"
-                                        className={inputClass}
-                                        value={formatNumber(formData.qty)}
-                                        onChange={e => setFormData({ ...formData, qty: parseNumber(e.target.value) })}
-                                        disabled={formData.items && formData.items.length > 0}
-                                        placeholder="1"
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>VAT Fee (PPN)</label>
-                                    <input
-                                        type="text"
-                                        className={inputClass}
-                                        value={formatNumber(formData.vat)}
-                                        onChange={e => setFormData({ ...formData, vat: parseNumber(e.target.value) })}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Delivery Fee</label>
-                                    <input
-                                        type="text"
-                                        className={inputClass}
-                                        value={formatNumber(formData.deliveryFee)}
-                                        onChange={e => setFormData({ ...formData, deliveryFee: parseNumber(e.target.value) })}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Service Fee</label>
-                                    <input
-                                        type="text"
-                                        className={inputClass}
-                                        value={formatNumber(formData.appFee)}
-                                        onChange={e => setFormData({ ...formData, appFee: parseNumber(e.target.value) })}
-                                        placeholder="0"
-                                    />
+                            </div>
+
+                            {/* --- RIGHT COLUMN: FINANCIALS & DOCUMENTS (5/12) --- */}
+                            <div className="lg:col-span-5 space-y-8">
+                                {/* Financial Ledger Section */}
+                                <div className="bg-slate-950 p-8 rounded-xl text-white shadow-xl relative overflow-hidden group border border-slate-800">
+                                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                                        <Receipt size={80} />
+                                    </div>
+                                    <div className="relative space-y-10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-primary/20 text-primary rounded-lg flex items-center justify-center border border-primary/20">
+                                                <Calculator size={18} />
+                                            </div>
+                                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/70">Audit Ledger</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-bold uppercase tracking-wider opacity-40">Base Price</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        className="font-bold h-10 rounded-lg bg-white/5 border-white/10 pl-10 text-white text-base focus:bg-white/10"
+                                                        value={formatNumber(formData.price)}
+                                                        onChange={e => setFormData({ ...formData, price: parseNumber(e.target.value) })}
+                                                        disabled={formData.items && formData.items.length > 0}
+                                                    />
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold opacity-30">Rp</span>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[9px] font-bold uppercase tracking-wider opacity-40">Qty</Label>
+                                                <Input
+                                                    className="font-bold text-center h-10 rounded-lg bg-white/5 border-white/10 text-white text-base focus:bg-white/10"
+                                                    value={formatNumber(formData.qty)}
+                                                    onChange={e => setFormData({ ...formData, qty: parseNumber(e.target.value) })}
+                                                    disabled={formData.items && formData.items.length > 0}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">Liability</p>
+                                                <p className="text-3xl font-mono font-bold text-primary tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(formData.subtotal || 0)}</p>
+                                            </div>
+                                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+                                                <ShieldCheck className="text-primary" size={24} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="md:col-span-5 bg-white/50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 mt-4">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Tag size={12} /> Transaction Items / Invoices
-                                        </h4>
-                                        <button
+                                {/* Item Breakdown */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-2">
+                                        <h3 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+                                            <ShoppingCart size={14} className="text-primary" /> Item Breakdown
+                                        </h3>
+                                        <Button
                                             type="button"
+                                            variant="ghost"
+                                            size="sm"
                                             onClick={() => {
                                                 const currentItems = formData.items || [];
-                                                setFormData({
-                                                    ...formData, items: [...currentItems, {
-                                                        description: '', vendor: '', qty: 1, price: 0,
-                                                        deliveryFee: 0, insuranceFee: 0,
-                                                        itemDiscount: 0, shippingDiscount: 0
-                                                    }]
-                                                });
+                                                setFormData({ ...formData, items: [...currentItems, { description: '', vendor: '', qty: 1, price: 0, deliveryFee: 0, insuranceFee: 0, itemDiscount: 0, shippingDiscount: 0 }] });
                                             }}
-                                            className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg text-[9px] font-bold uppercase transition-all hover:bg-blue-100"
+                                            className="h-7 text-[9px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5 rounded-lg"
                                         >
-                                            + Add Item/Invoice
-                                        </button>
+                                            <Plus className="w-3 h-3 mr-1" /> Add Entry
+                                        </Button>
                                     </div>
 
-                                    {(formData.items || []).length > 0 ? (
-                                        <div className="space-y-6">
-                                            {(formData.items || []).map((item, idx) => (
-                                                <div key={idx} className="p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm relative group">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Item/Invoice #</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="e.g. WD Caviar PURPLE PRO 10"
-                                                                className={inputClass}
-                                                                value={item.description}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].description = e.target.value;
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Shop/Vendor</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="e.g. WD Official Store"
-                                                                className={inputClass}
-                                                                value={item.vendor || ''}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].vendor = e.target.value;
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Qty</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="1"
-                                                                className={inputClass}
+                                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {(formData.items || []).length === 0 ? (
+                                            <div className="text-center py-10 bg-muted/5 rounded-xl border border-dashed border-muted-foreground/10">
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase opacity-50">No granular items documented</p>
+                                            </div>
+                                        ) : (
+                                            (formData.items || []).map((item, idx) => (
+                                                <Card key={idx} className="rounded-xl border border-muted shadow-sm group relative overflow-hidden">
+                                                    <div className="p-4 space-y-3">
+                                                        <Input
+                                                            className="font-bold h-8 bg-muted/30 border-none rounded-lg text-[10px] uppercase"
+                                                            value={item.description}
+                                                            placeholder="Item name..."
+                                                            onChange={e => {
+                                                                const newItems = [...(formData.items || [])];
+                                                                newItems[idx].description = e.target.value;
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                        />
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <Input
+                                                                className="font-bold text-center h-8 bg-muted/30 border-none rounded-lg text-[10px]"
                                                                 value={formatNumber(item.qty)}
                                                                 onChange={e => {
                                                                     const newItems = [...(formData.items || [])];
@@ -408,176 +427,86 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                                     setFormData({ ...formData, items: newItems });
                                                                 }}
                                                             />
+                                                            <div className="relative">
+                                                                <Input
+                                                                    className="font-bold h-8 bg-muted/30 border-none rounded-lg pl-8 text-[10px]"
+                                                                    value={formatNumber(item.price)}
+                                                                    onChange={e => {
+                                                                        const newItems = [...(formData.items || [])];
+                                                                        newItems[idx].price = parseNumber(e.target.value);
+                                                                        setFormData({ ...formData, items: newItems });
+                                                                    }}
+                                                                />
+                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground/40">Rp</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Unit Price</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0"
-                                                                className={inputClass}
-                                                                value={formatNumber(item.price)}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].price = parseNumber(e.target.value);
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Ongkir</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0"
-                                                                className={inputClass}
-                                                                value={formatNumber(item.deliveryFee)}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].deliveryFee = parseNumber(e.target.value);
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Asuransi</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0"
-                                                                className={inputClass}
-                                                                value={formatNumber(item.insuranceFee)}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].insuranceFee = parseNumber(e.target.value);
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newItems = (formData.items || []).filter((_, i) => i !== idx);
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-rose-500 hover:bg-rose-50 p-1 rounded"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
                                                     </div>
+                                                </Card>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
 
-                                                    {/* Row Diskon */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-50 dark:border-slate-800">
-                                                        <div className="bg-rose-50/50 dark:bg-rose-900/10 p-3 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
-                                                            <label className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1.5 block">Kupon Diskon Barang (-)</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0"
-                                                                className={`${inputClass} !bg-white/50 border-rose-200/50 text-rose-600 font-bold`}
-                                                                value={formatNumber(item.itemDiscount)}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].itemDiscount = parseNumber(e.target.value);
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
-                                                            <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1.5 block">Gratis Ongkir (-)</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="0"
-                                                                className={`${inputClass} !bg-white/50 border-emerald-200/50 text-emerald-600 font-bold`}
-                                                                value={formatNumber(item.shippingDiscount)}
-                                                                onChange={e => {
-                                                                    const newItems = [...(formData.items || [])];
-                                                                    newItems[idx].shippingDiscount = parseNumber(e.target.value);
-                                                                    setFormData({ ...formData, items: newItems });
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newItems = (formData.items || []).filter((_, i) => i !== idx);
-                                                            setFormData({ ...formData, items: newItems });
-                                                        }}
-                                                        className="absolute -top-2 -right-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-md text-rose-500 hover:text-rose-600 transition-all p-1.5 rounded-full opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
+                                {/* Documentation Matrix */}
+                                <div className="bg-emerald-500/5 p-5 rounded-xl border border-emerald-500/10 space-y-3">
+                                    <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                        <CheckCircle2 size={14} /> Documentation Matrix
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {Object.entries({
+                                            prForm: 'PR Form',
+                                            checkout: 'Checkout',
+                                            paymentSlip: 'Slip',
+                                            invoice: 'Invoice',
+                                            checkByRara: 'Audited'
+                                        }).map(([key, label]) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => handleDocToggle(key as any)}
+                                                className={cn(
+                                                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold uppercase tracking-wider transition-all",
+                                                    formData.docs?.[key as keyof PurchaseRecord['docs']]
+                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                                        : 'bg-background text-muted-foreground border-muted-foreground/10 hover:bg-emerald-50/50'
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "w-3 h-3 rounded flex items-center justify-center border",
+                                                    formData.docs?.[key as keyof PurchaseRecord['docs']] ? 'bg-white text-emerald-600 border-white' : 'bg-muted/50 border-muted'
+                                                )}>
+                                                    {formData.docs?.[key as keyof PurchaseRecord['docs']] && <CheckCircle2 size={8} strokeWidth={4} />}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-[10px] text-slate-400 font-medium italic">No split items added. Using Base Price & Qty above.</p>
-                                    )}
-                                </div>
-
-                                <div className="md:col-span-5 flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mt-4 gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
-                                            <ShieldCheck size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Calculation</p>
-                                            <p className="text-[10px] md:text-sm font-bold text-slate-600 dark:text-slate-400">Sum of all entered fields</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-left md:text-right">
-                                        <p className="text-2xl md:text-3xl font-black text-blue-600">Rp {new Intl.NumberFormat('id-ID').format(formData.subtotal || 0)}</p>
+                                                {label}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className={labelClass}>Purchase Date</label>
-                                <input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Payment Date</label>
-                                <input type="date" className={inputClass} value={formData.paymentDate || ''} onChange={e => {
-                                    const newDate = e.target.value;
-                                    setFormData(prev => ({ ...prev, paymentDate: newDate, transactionId: 'Generating...' }));
-                                    generateNextTransactionId(newDate);
-                                }} />
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-800">
-                            <h3 className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <CheckCircle2 size={14} /> Document Checklist
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                                {Object.entries({
-                                    prForm: 'PR Form',
-                                    cashAdvance: 'Cash Advance',
-                                    checkout: 'Checkout SS',
-                                    paymentSlip: 'Payment Slip',
-                                    invoice: 'Invoice(s)',
-                                    expenseApproval: 'Expense Appr.',
-                                    checkByRara: 'Checked By Rara'
-                                }).map(([key, label]) => (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => handleDocToggle(key as any)}
-                                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-[10px] font-bold uppercase transition-all ${formData.docs?.[key as keyof PurchaseRecord['docs']] ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-700'}`}
-                                    >
-                                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${formData.docs?.[key as keyof PurchaseRecord['docs']] ? 'bg-white text-emerald-600' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                            {formData.docs?.[key as keyof PurchaseRecord['docs']] && <CheckCircle2 size={12} />}
-                                        </div>
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className={labelClass}>Remarks</label>
-                            <textarea rows={3} className={`${inputClass} resize-none`} value={formData.remarks || ''} onChange={e => setFormData({ ...formData, remarks: e.target.value })} placeholder="Additional record notes..." />
                         </div>
                     </form>
                 </div>
 
-                <div className="px-10 py-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-[2.5rem] flex justify-end gap-4">
-                    <button type="button" onClick={onClose} className="px-8 py-3 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95">Discard</button>
-                    <button type="submit" form="recordForm" className="px-12 py-3 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center gap-3">
-                        <Save size={18} /> Commit Record
-                    </button>
-                </div>
-            </div >
-        </div >
+                <DialogFooter className="px-8 py-4 border-t shrink-0 gap-3 sm:justify-end">
+                    <Button variant="ghost" onClick={onClose} className="rounded-xl h-10 px-6 text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 hover:text-rose-600 transition-all">
+                        Discard
+                    </Button>
+                    <Button type="submit" form="recordForm" className="rounded-xl h-10 px-8 text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-95">
+                        <Save size={14} className="mr-2" /> Commit Record
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
+

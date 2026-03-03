@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-    Bell, Menu, ChevronDown, LogOut, User, Sun, Moon, Check,
-    Info, AlertTriangle, AlertCircle, LayoutGrid,
+    Bell, Menu, ChevronDown, LogOut, User, Sun, Moon,
+    LayoutGrid,
     LifeBuoy, Activity, Calendar, ShoppingCart, Package, Network, Folder,
     Shield, Users, Building2, Briefcase, Layers, Zap, Phone, Megaphone,
-    Search, X, Share2
+    X, Share2, Home, Settings, Github, Search, Mic, Plus
 } from 'lucide-react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
@@ -63,11 +63,10 @@ interface TopNavigationProps {
 export const TopNavigation: React.FC<TopNavigationProps> = ({
     onMenuClick, onLogout,
     userGroups = [], userRole, groupDefinitions = [],
-    user, appName = 'GESIT WORK', logoUrl,
+    user, appName = 'TASKPLUS', logoUrl,
     variant = 'admin', searchProps,
     floorFilter = 'All', onFloorFilterChange, onShare
 }) => {
-    const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -78,7 +77,6 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
     const location = useLocation();
     const currentView = location.pathname.substring(1) || 'dashboard';
 
-    const navRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -109,7 +107,6 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
             if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) setIsNotificationOpen(false);
-            if (navRef.current && !navRef.current.contains(event.target as Node)) setActiveSubMenu(null);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -133,116 +130,68 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    const allowedMenuIds = useMemo(() => {
-        const allowed = new Set<string>();
-        const role = userRole?.toLowerCase() || '';
-
-        // Public/Default allowed menus
-        allowed.add('extension-directory');
-        allowed.add('helpdesk');
-
-        if (role.includes('admin') || role.includes('owner')) {
-            APP_MENU_STRUCTURE.forEach(m => allowed.add(m.id));
-            return allowed;
+    // ─── Get Breadcrumb Label ───────────────────────────────────────────
+    const getBreadcrumb = () => {
+        if (currentView === 'dashboard' || currentView === '') return 'Dashboard';
+        const menu = APP_MENU_STRUCTURE.find(m => m.id === currentView);
+        if (menu) {
+            const key = menu.id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any;
+            const translated = t(key);
+            return (translated && translated !== key) ? translated : menu.label;
         }
+        return currentView.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    };
 
-        if (!user || (!userGroups || userGroups.length === 0)) {
-            // Unauthenticated or user without groups only gets public menus
-            return allowed;
-        }
-
-        userGroups.forEach(groupId => {
-            const groupConfig = groupDefinitions?.find(g => g.id === groupId);
-            if (groupConfig?.allowedMenus) groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
-        });
-
-        APP_MENU_STRUCTURE.forEach(menu => {
-            if (menu.parentId && allowed.has(menu.id)) allowed.add(menu.parentId);
-        });
-
-        return allowed;
-    }, [user, userGroups, groupDefinitions, userRole]);
-
-    const menuItems = useMemo(() => {
-        const parents = APP_MENU_STRUCTURE.filter(m => !m.parentId);
-        return parents.map(parent => {
-            if (!allowedMenuIds.has(parent.id)) return null;
-            const children = APP_MENU_STRUCTURE.filter(m => m.parentId === parent.id);
-            const allowedChildren = children.filter(child => allowedMenuIds.has(child.id));
-            const formatLabel = (text: string) => {
-                // Convert camelCase or kebab-case to Title Case
-                return text
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, (str) => str.toUpperCase())
-                    .trim();
-            };
-
-            const getLabel = (id: string, defaultLabel: string) => {
-                const key = id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any;
-                const translated = t(key);
-                if (translated && translated !== key) return translated;
-                return formatLabel(defaultLabel || id);
-            };
-
-            return {
-                id: parent.id,
-                label: getLabel(parent.id, parent.label),
-                icon: ICON_MAP[parent.iconName] || LayoutGrid,
-                subItems: allowedChildren.length > 0 ? allowedChildren.map(c => ({
-                    id: c.id,
-                    label: getLabel(c.id, c.label),
-                    icon: ICON_MAP[c.iconName]
-                })) : undefined
-            };
-        }).filter(Boolean);
-    }, [allowedMenuIds, t]);
+    // ─── Get current date ───────────────────────────────────────────────
+    const formattedDate = new Date().toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
 
     return (
         <div className="sticky top-0 z-50 flex flex-col w-full">
-            {/* HEADER - Different layout for public vs admin */}
+            {/* HEADER */}
             {variant === 'public' ? (
-                // PUBLIC VARIANT - Modern TGC Directory Style
-                <header className="relative z-20 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-8 md:px-12 flex items-center justify-between transition-all">
-                    {/* Logo & Title - Left */}
-                    <NavLink to="/" className="flex items-center gap-4 group shrink-0">
-                        <div className="w-12 h-12 flex items-center justify-center transition-all group-hover:scale-105">
-                            <img src="/image/logo.png" alt="Logo" className="h-10 w-10 transition-transform duration-300 group-hover:scale-110 object-contain" />
+                // PUBLIC VARIANT
+                <header className="relative z-20 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 md:px-8 flex items-center justify-between transition-all">
+                    <NavLink to="/" className="flex items-center gap-3 group shrink-0">
+                        <div className="w-9 h-9 flex items-center justify-center">
+                            <img src="/image/logo.png" alt="Logo" className="h-8 w-8 object-contain" />
                         </div>
                         <div className="flex flex-col leading-tight">
-                            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-                                TGC <span className="text-primary">Directory</span>
+                            <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                                TASKPLUS <span className="text-blue-600">Directory</span>
                             </h1>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black tracking-[0.2em] uppercase">Internal Registry</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wider uppercase">Internal Registry</p>
                         </div>
                     </NavLink>
 
-                    <div className="flex items-center gap-6 ml-8">
+                    <div className="flex items-center gap-4 ml-8">
                         <NavLink
                             to="/helpdesk"
-                            className={({ isActive }) => `flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all ${isActive ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                         >
-                            <LifeBuoy size={16} />
+                            <LifeBuoy size={14} />
                             Helpdesk
                         </NavLink>
                     </div>
 
                     <div className="flex-1" />
 
-                    {/* Right Controls */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        {/* Floor Filter Segmented Control */}
-                        <div className="hidden md:flex items-center bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 relative">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
                             <LayoutGroup id="floor-filter">
                                 {['All', 27, 26].map((f) => (
                                     <button
                                         key={f}
                                         onClick={() => onFloorFilterChange?.(f as any)}
-                                        className={`relative px-5 py-2 text-[10px] font-black rounded-xl transition-colors duration-300 z-10 uppercase tracking-widest ${floorFilter === f ? 'text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`relative px-3 py-1.5 text-[11px] font-semibold rounded-md transition-colors duration-200 z-10 ${floorFilter === f ? 'text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                     >
                                         {floorFilter === f && (
                                             <motion.div
                                                 layoutId="active-pill"
-                                                className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-xl z-[-1]"
+                                                className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-md z-[-1]"
                                                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                             />
                                         )}
@@ -252,197 +201,130 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             </LayoutGroup>
                         </div>
 
-                        {/* Share Button */}
-                        <button
-                            onClick={onShare}
-                            className="p-3 text-slate-500 hover:text-primary transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
-                            title="Share"
-                        >
-                            <Share2 size={18} />
+                        <button onClick={onShare} className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="Share">
+                            <Share2 size={16} />
                         </button>
-
-                        {/* Theme Toggle */}
-                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-3 text-slate-500 hover:text-primary transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-                            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
                     </div>
                 </header>
             ) : (
-                // ADMIN VARIANT - Original layout
-                <header className="relative z-20 h-14 bg-white/95 dark:bg-[#020617]/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 md:px-8 flex items-center justify-between transition-all">
-                    <div className="flex items-center gap-4">
-                        <button onClick={onMenuClick} aria-label="Open sidebar menu" className="md:hidden p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
+                <header className="relative z-20 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between gap-6 transition-all">
+                    {/* Left: Mobile menu + Search */}
+                    <div className="flex items-center gap-4 flex-1">
+                        <button onClick={onMenuClick} className="md:hidden p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                             <Menu size={20} />
                         </button>
-                        <NavLink to="/" className="flex items-center gap-3 group">
-                            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 object-contain" />
-                            <div className="flex flex-col leading-tight">
-                                <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                                    <span>{appName.split(' ')[0]}</span>
-                                    <span className="text-primary">{appName.split(' ').slice(1).join(' ')}</span>
-                                </h1>
-                                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 tracking-[0.2em] mt-0.5 hidden md:block uppercase">Enterprise Work Platform</p>
-                            </div>
-                        </NavLink>
+
+                        <div className="relative flex-1 max-w-md">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3 pl-4">
-                        {/* Language Toggle */}
-                        <div className="hidden sm:flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-                            <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>EN</button>
-                            <button onClick={() => setLanguage('id')} className={`px-2 py-0.5 text-[9px] font-black rounded transition-all ${language === 'id' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500'}`}>ID</button>
-                        </div>
-
+                    {/* Right: Controls */}
+                    <div className="flex items-center gap-1">
                         {/* Theme Toggle */}
-                        <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-2 text-slate-400 hover:text-primary transition-all">
-                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        <button onClick={toggleTheme} className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                            {isDark ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
-                        {user ? (
-                            <>
-                                <div className="relative" ref={notificationRef}>
-                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} aria-label="View notifications" className={`p-2 rounded-lg transition-all ${isNotificationOpen ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary'}`}>
-                                        <Bell size={18} />
-                                        {unreadCount > 0 && <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-[#020617]"></span>}
-                                    </button>
-                                    <AnimatePresence>
-                                        {isNotificationOpen && (
-                                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden z-[100]">
-                                                <div className="px-4 py-2 border-b dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-                                                    <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">Notifications</h3>
+                        {/* Notifications */}
+                        <div className="relative" ref={notificationRef}>
+                            <button
+                                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all relative rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                <Bell size={18} />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                                )}
+                            </button>
+                            <AnimatePresence>
+                                {isNotificationOpen && (
+                                    <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }} className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden z-[100]">
+                                        <div className="px-4 py-3 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+                                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</h3>
+                                            {unreadCount > 0 && <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-semibold rounded-full">{unreadCount} New</span>}
+                                        </div>
+                                        <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                                            {notifications.length === 0 ? (
+                                                <div className="py-10 text-center">
+                                                    <Bell size={20} className="text-slate-300 mx-auto mb-2" />
+                                                    <p className="text-xs text-slate-400">No notifications</p>
                                                 </div>
-                                                <div className="max-h-[300px] overflow-y-auto">
-                                                    {notifications.length === 0 ? <div className="py-6 text-center text-[10px] text-slate-400">All caught up!</div> : notifications.map(n => (
-                                                        <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b last:border-0 dark:border-slate-700 ${!n.isRead ? 'bg-primary/5' : ''}`}>
-                                                            <p className="text-[11px] font-bold mb-1">{n.title}</p>
-                                                            <p className="text-[10px] text-slate-500 line-clamp-1">{n.message}</p>
-                                                        </div>
-                                                    ))}
+                                            ) : notifications.map(n => (
+                                                <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${!n.isRead ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}`}>
+                                                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white mb-0.5">{n.title}</p>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">{n.message}</p>
                                                 </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
-                                <div className="relative ml-2" ref={dropdownRef}>
-                                    <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-2 pl-3 border-l dark:border-slate-700">
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-[10px] font-medium text-slate-500 leading-none mb-1">Welcome,</p>
-                                            <p className="text-sm font-extrabold text-slate-700 dark:text-slate-200 leading-none">{userName}</p>
+                        {/* Separator */}
+                        <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2" />
+
+                        {user ? (
+                            <div className="relative" ref={dropdownRef}>
+                                <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
+                                    <div className="relative">
+                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                                            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</div>}
                                         </div>
-                                        <div className="relative">
-                                            <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white dark:border-slate-800 shadow-sm flex items-center justify-center text-white text-[10px] font-black overflow-hidden">
-                                                {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : userName.substring(0, 2).toUpperCase()}
+                                        <div className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border-[1.5px] border-white dark:border-slate-900"></div>
+                                    </div>
+                                    <div className="hidden md:flex flex-col text-left">
+                                        <span className="text-sm font-semibold text-slate-800 dark:text-white leading-none">{userName}</span>
+                                        <span className="text-[11px] text-slate-400 mt-0.5">{user?.email || ''}</span>
+                                    </div>
+                                    <ChevronDown size={14} className={`hidden md:block text-slate-300 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                <AnimatePresence>
+                                    {isDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                                            className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden z-[100]"
+                                        >
+                                            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{user?.role || 'Operator'}</p>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{userName}</p>
                                             </div>
-                                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900"></div>
-                                        </div>
-                                        <ChevronDown size={12} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    <AnimatePresence>
-                                        {isDropdownOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                className="absolute right-0 mt-4 w-56 bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 py-2 z-[100] ring-1 ring-black/5 overflow-hidden"
-                                            >
-                                                <div className="px-5 py-4 border-b border-slate-50 dark:border-slate-800/50 mb-1 bg-slate-50/30 dark:bg-white/[0.02]">
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{user?.role || 'Staff Member'}</p>
-                                                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{userName}</p>
-                                                </div>
-                                                <div className="px-2 space-y-0.5">
-                                                    <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all tracking-wide group">
-                                                        <User size={14} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                                                        Account Profile
-                                                    </button>
-                                                    <button onClick={() => { onLogout?.(); setIsDropdownOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all tracking-wide group">
-                                                        <LogOut size={14} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
-                                                        Sign Out
-                                                    </button>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </>
+                                            <div className="p-1.5">
+                                                <button onClick={() => { navigate('/profile'); setIsDropdownOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                                                    <User size={16} className="text-slate-400" />
+                                                    Account Info
+                                                </button>
+                                                <button onClick={() => { onLogout?.(); setIsDropdownOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-all">
+                                                    <LogOut size={16} />
+                                                    Logout
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         ) : (
                             <NavLink
                                 to="/login"
-                                className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95"
+                                className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[12px] font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex items-center gap-2"
                             >
-                                <Zap size={14} fill="currentColor" />
-                                Sign In
+                                <Zap size={14} />
+                                ACCESS PORTAL
                             </NavLink>
                         )}
                     </div>
                 </header>
-            )}
-
-            {/* ROW 2: PRIMARY NAVIGATION (Pill-style Navbar) - Hidden for public variant */}
-            {variant !== 'public' && (
-                <nav className="relative z-10 h-12 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 hidden md:flex items-center justify-center px-4" ref={navRef}>
-                    <LayoutGroup>
-                        <div className="flex items-center justify-center gap-1 w-full max-w-screen-2xl">
-                            {menuItems.map((item: any) => {
-                                const hasSub = !!item.subItems;
-                                const Icon = item.icon;
-                                const isSubActive = item.subItems?.some((s: any) => currentView === s.id);
-                                const path = item.id === 'dashboard' ? '/' : `/${item.id}`;
-
-                                if (hasSub) {
-                                    return (
-                                        <div key={item.id} className="relative">
-                                            <motion.button
-                                                onClick={() => setActiveSubMenu(activeSubMenu === item.id ? null : item.id)}
-                                                className={`relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all z-10
-                            ${isSubActive ? 'text-primary bg-primary/10 ring-1 ring-primary/10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                                            >
-                                                <Icon size={18} className={isSubActive ? 'text-primary' : 'opacity-70'} />
-                                                <span className="ml-2 overflow-hidden whitespace-nowrap">
-                                                    {item.label}
-                                                </span>
-                                                <ChevronDown size={10} className={`ml-1 transition-transform ${activeSubMenu === item.id ? 'rotate-180' : ''}`} />
-                                            </motion.button>
-                                            <AnimatePresence>
-                                                {activeSubMenu === item.id && (
-                                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 left-0 w-56 bg-white dark:bg-[#0f172a] rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-[60]">
-                                                        {item.subItems.map((sub: any) => (
-                                                            <NavLink key={sub.id} to={`/${sub.id}`} onClick={() => setActiveSubMenu(null)} className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold transition-all ${isActive ? 'text-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-                                                                {sub.icon && <sub.icon size={14} className="opacity-50" />}
-                                                                {sub.label}
-                                                            </NavLink>
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    );
-                                }
-
-                                return (
-                                    <NavLink
-                                        key={item.id}
-                                        to={path}
-                                        className={({ isActive }) => `relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all z-10
-                                            ${isActive ? 'text-primary' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                                    >
-                                        {({ isActive }) => (
-                                            <>
-                                                {isActive && (
-                                                    <motion.div layoutId="nav-pill" className="absolute inset-0 bg-primary/10 ring-1 ring-primary/20 rounded-xl z-[-1]" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
-                                                )}
-                                                <Icon size={18} className={isActive ? 'text-primary' : 'opacity-70'} />
-                                                <span className="ml-2 overflow-hidden whitespace-nowrap">
-                                                    {item.label}
-                                                </span>
-                                            </>
-                                        )}
-                                    </NavLink>
-                                );
-                            })}
-                        </div>
-                    </LayoutGroup>
-                </nav>
             )}
         </div>
     );

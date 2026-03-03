@@ -24,56 +24,56 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
-                    <TrendingUp size={18} />
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+            <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <TrendingUp size={16} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cash Outflow</p>
-                    <p className={`text-sm font-bold ${outflowChange > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                        {outflowChange > 0 ? '↑' : '↓'} {Math.abs(outflowChange)}% <span className="text-slate-400 font-medium text-[10px]">vs last month</span>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cash Outflow</p>
+                    <p className={`text-xs font-bold ${outflowChange > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {outflowChange > 0 ? '↑' : '↓'} {Math.abs(outflowChange)}% <span className="text-slate-400 font-medium text-[9px]">vs last month</span>
                     </p>
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
-                    <AlertTriangle size={18} />
+            <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
+                    <AlertTriangle size={16} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pending Approvals</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                        {pendingCount} <span className="text-slate-400 font-medium text-[10px]">invoices</span>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending Approvals</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {pendingCount} <span className="text-slate-400 font-medium text-[9px]">invoices</span>
                     </p>
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg">
-                    <PieChart size={18} />
+            <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg">
+                    <PieChart size={16} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Largest Category</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                        {largestCategory.name} <span className="text-slate-400 font-medium text-[10px]">({largestCategory.percentage}%)</span>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Largest Category</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {largestCategory.name} <span className="text-slate-400 font-medium text-[9px]">({largestCategory.percentage}%)</span>
                     </p>
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg">
-                    <Wallet size={18} />
+            <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg">
+                    <Wallet size={16} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Risk Level</p>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${getRiskColor(riskLevel)}`}>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Risk Level</p>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${getRiskColor(riskLevel)}`}>
                         {riskLevel}
                     </span>
                 </div>
