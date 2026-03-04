@@ -21,6 +21,8 @@
     --color-brand-600: #0f48bc;
     --color-brand-700: #0d3ca1;
     --color-brand-900: #0a2a75;
+
+    --breakpoint-xs: 480px;
 }
 
 @variant dark (&:where(.dark, .dark *));
@@ -109,8 +111,10 @@ html.dark textarea:focus {
 }
 
 html.dark .glass-header {
-    background: rgba(13, 17, 23, 0.82);
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+    background: rgba(2, 6, 23, 0.88);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom-color: rgba(148, 163, 184, 0.08);
 }
 
 .glass-card {
@@ -121,8 +125,9 @@ html.dark .glass-header {
 }
 
 html.dark .glass-card {
-    background: rgba(21, 27, 39, 0.65);
-    border-color: rgba(255, 255, 255, 0.03);
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(148, 163, 184, 0.08);
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Scrollbar Styling */
@@ -291,27 +296,26 @@ html.dark thead {
 .dark {
     --background: 222 47% 4%;
     --foreground: 213 31% 91%;
-    --card: 222 47% 4%;
+    --card: 222 40% 7%;
     --card-foreground: 213 31% 91%;
-    --popover: 222 47% 4%;
+    --popover: 222 40% 8%;
     --popover-foreground: 213 31% 91%;
     --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 222 47% 11%;
+    --secondary: 222 40% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 223 47% 11%;
+    --muted: 223 40% 12%;
     --muted-foreground: 215.4 16.3% 56.9%;
     --accent: 216 34% 17%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 12%;
-    /* Darker, more muted border */
-    --input: 217 33% 12%;
+    --border: 217 30% 16%;
+    --input: 217 30% 14%;
     --ring: 217 91% 60%;
 
     --background-dark: 222 47% 4%;
-    --card-dark: 222 47% 6%;
+    --card-dark: 222 40% 7%;
 }
 
 @layer base {
