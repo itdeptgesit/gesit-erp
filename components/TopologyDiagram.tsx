@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Minimize, Info, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate } from 'lucide-react';
+import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Minimize, Info, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate, Trash2, Search, Pencil } from 'lucide-react';
 import { NetworkSwitch, PortStatus, DeviceType } from '../types';
 import * as htmlToImage from 'html-to-image';
 import { useToast } from './ToastProvider';
@@ -21,6 +21,7 @@ interface NodeProps {
     isInternet?: boolean;
     searchTerm?: string;
     tier?: string;
+    isWiringMode?: boolean;
 }
 
 // Minimalist Dimensions
@@ -28,7 +29,21 @@ const NODE_WIDTH = 80;
 const NODE_HEIGHT = 80;
 const GRID_SIZE = 20;
 
-const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '', tier }) => {
+const getIconForType = (type: string) => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('isp') || t.includes('internet') || t.includes('uplink') || t.includes('cloud')) return Globe;
+    if (t.includes('mikrotik') || t.includes('router') || t.includes('core')) return Router;
+    if (t.includes('wifi') || t.includes('ap') || t.includes('access point')) return Wifi;
+    if (t.includes('cctv') || t.includes('camera') || t.includes('nvr') || t.includes('dvr')) return Video;
+    if (t.includes('server')) return Server;
+    if (t.includes('pc') || t.includes('laptop') || t.includes('computer')) return Monitor;
+    if (t.includes('printer')) return Printer;
+    if (t.includes('phone') || t.includes('voip')) return Phone;
+    if (t.includes('storage') || t.includes('nas') || t.includes('harddrive')) return HardDrive;
+    return Server;
+};
+
+const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '', tier, isWiringMode }) => {
     const [dragging, setDragging] = useState(false);
     const [localPos, setLocalPos] = useState({ x, y });
     const startMousePos = useRef({ x: 0, y: 0 });
@@ -71,10 +86,12 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
     const { icon: Icon, color, isWireless } = getIconInfo();
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        if (isLocked) return;
         if ((e.target as HTMLElement).closest('button')) return;
         e.stopPropagation();
         onSelect(switchData.id);
+
+        if (isLocked || isWiringMode) return;
+
         setDragging(true);
         startMousePos.current = { x: e.clientX, y: e.clientY };
         startNodePos.current = { x, y };
@@ -129,7 +146,10 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
 
     const isInternetNode = switchData.id === 'internet';
     const isChild = switchData.id.startsWith('port-device-');
-    const isMatched = !searchTerm || switchData.name.toLowerCase().includes(searchTerm.toLowerCase()) || (switchData.ip || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const isMatched = !searchTerm ||
+        switchData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (switchData.ip || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (switchData.model || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     return (
         <div
@@ -172,8 +192,19 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                 )}
 
                 <div className={`relative z-10 ${isSelected ? 'text-white' : color}`}>
-                    <Icon size={isInternet || isInternetNode ? 36 : 28} strokeWidth={2.5} className={(isWireless || !isInternet && !isInternetNode) ? 'animate-pulse' : ''} />
-                    {(isWireless || !isInternet && !isInternetNode) && (
+                    {isInternet ? (
+                        <div className="relative">
+                            <Icon size={36} strokeWidth={2.5} />
+                            {getIconForType(switchData.model) !== Icon && (
+                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-xl">
+                                    {React.createElement(getIconForType(switchData.model), { size: 12, className: "text-slate-900" })}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Icon size={28} strokeWidth={2.5} className={(isWireless || isChild) ? 'animate-pulse' : ''} />
+                    )}
+                    {(isWireless || isChild) && (
                         <div className={`absolute -inset-4 border ${isWireless ? 'border-cyan-400/20' : 'border-blue-400/20'} rounded-full animate-ping pointer-events-none`}></div>
                     )}
                 </div>
@@ -220,15 +251,15 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
 
 DiagramNode.displayName = 'DiagramNode';
 
-const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds, searchTerm, matchesSearch }: any) => {
+const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds, searchTerm, matchesSearch, coreNodeId }: any) => {
     const [isHovered, setIsHovered] = useState(false);
     let startX, startY;
-    const isInternetLink = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root';
+    const isInternetLink = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root' || (coreNodeId && String(sw.uplinkId) === String(coreNodeId));
     if (isInternetLink) {
         startX = internetPos.x + NODE_WIDTH / 2;
         startY = internetPos.y + NODE_HEIGHT / 2;
     } else {
-        const parent = switches.find((p: any) => p.id === sw.uplinkId);
+        const parent = switches.find((p: any) => String(p.id) === String(sw.uplinkId));
         if (!parent || parent.posX === undefined || parent.posY === undefined) return null;
         startX = parent.posX + NODE_WIDTH / 2;
         startY = parent.posY + NODE_HEIGHT / 2;
@@ -260,10 +291,10 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
         else if (sw.vlan === 30) color = '#f472b6';
         else if (sw.vlan > 50) color = '#a78bfa';
     }
-    const isPathActive = (activePathNodeIds.has(sw.id) && (sw.uplinkId === 'internet' ? activePathNodeIds.has('internet') : activePathNodeIds.has(sw.uplinkId))) || isHovered;
+    const isPathActive = (activePathNodeIds.has(String(sw.id)) && (isInternetLink ? (activePathNodeIds.has('internet') || (coreNodeId && activePathNodeIds.has(String(coreNodeId)))) : activePathNodeIds.has(String(sw.uplinkId)))) || isHovered;
 
-    const strokeWidth = isInternetLink ? 2.5 : (isPathActive ? 4 : (usagePercent > 70 ? 2.5 : 1.5));
-    const opacity = isInternetLink ? 'opacity-80' : (isPathActive ? 'opacity-100' : 'opacity-40');
+    const strokeWidth = isInternetLink ? 3 : (isPathActive ? 4 : (usagePercent > 70 ? 2.5 : 2));
+    const opacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-70');
     const pulseScale = isPathActive ? 1.8 : 1;
 
     return (
@@ -304,7 +335,7 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
 
 TopologyLink.displayName = 'TopologyLink';
 
-interface TopologyDiagramProps {
+export interface TopologyDiagramProps {
     switches: NetworkSwitch[];
     internetPos: { x: number, y: number };
     onUpdateSwitches: (sws: NetworkSwitch[], internet?: { x: number, y: number }) => void;
@@ -315,7 +346,12 @@ interface TopologyDiagramProps {
     setSelectedNodeId: (id: string | null) => void;
     onViewProfile?: (device: NetworkSwitch) => void;
     centeringTrigger?: number;
-    coreNodeId?: string;
+    coreNodeId?: string | number;
+    onAddNode?: (type: any, x: number, y: number) => void;
+    onDeleteNode?: (id: string) => void;
+    onEditNode?: (device: any) => void;
+    onConnectNodes?: (childId: string, parentId: string) => void;
+    onWipeAll?: () => void;
 }
 
 export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
@@ -328,8 +364,15 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
     setSelectedNodeId,
     onViewProfile,
     centeringTrigger = 0,
-    coreNodeId
+    coreNodeId,
+    onAddNode,
+    onDeleteNode,
+    onEditNode,
+    onConnectNodes,
+    onWipeAll,
+    canManage = true
 }) => {
+    const [paletteSearch, setPaletteSearch] = useState('');
     const { showToast } = useToast();
     const diagramRef = useRef<HTMLDivElement>(null);
     const [relinkingSwitch, setRelinkingSwitch] = useState<NetworkSwitch | null>(null);
@@ -343,6 +386,12 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
     const [viewMode, setViewMode] = useState<'simplified' | 'detailed'>('simplified');
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
     const lastMousePos = useRef({ x: 0, y: 0 });
+
+    // New Manual Assembly States
+    const [isWiringMode, setIsWiringMode] = useState(false);
+    const [wiringStartNodeId, setWiringStartNodeId] = useState<string | null>(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [draggedTemplate, setDraggedTemplate] = useState<DeviceType | null>(null);
 
     const centerView = useCallback(() => {
         if (!diagramRef.current || !diagramRef.current.parentElement) return;
@@ -397,12 +446,12 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
         if (!selectedNodeId || selectedNodeId === 'internet') return new Set<string>();
         const path = new Set<string>();
         let currentId: string | undefined = selectedNodeId;
-        while (currentId && currentId !== 'internet') {
-            path.add(currentId);
-            const node = switches.find(s => s.id === currentId);
+        while (currentId && String(currentId) !== 'internet') {
+            path.add(String(currentId));
+            const node = switches.find(s => String(s.id) === String(currentId));
             currentId = node?.uplinkId;
         }
-        if (currentId === 'internet') path.add('internet');
+        if (String(currentId) === 'internet') path.add('internet');
         return path;
     }, [selectedNodeId, switches]);
 
@@ -428,10 +477,86 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
         return sw.name.toLowerCase().includes(s) || (sw.ip || '').toLowerCase().includes(s) || (sw.model || '').toLowerCase().includes(s);
     }, [searchTerm]);
 
+
+    // Dynamic Templates based on unique models and types in data
+    const dynamicPaletteItems = useMemo(() => {
+        const items = new Map<string, { type: DeviceType, icon: any, label: string }>();
+
+        // Add defaults first so palette is never empty
+        items.set('ISP', { type: DeviceType.UPLINK, icon: Globe, label: 'Cloud / ISP' });
+        items.set('Router', { type: DeviceType.ROUTER, icon: Router, label: 'Router' });
+        items.set('Mikrotik', { type: DeviceType.ROUTER, icon: Router, label: 'Mikrotik' });
+        items.set('Switch', { type: DeviceType.ROUTER, icon: Server, label: 'Switch' });
+        items.set('AP', { type: DeviceType.AP, icon: Wifi, label: 'Access Point' });
+        items.set('CCTV', { type: DeviceType.CCTV, icon: Video, label: 'Camera' });
+        items.set('PC', { type: DeviceType.PC, icon: Monitor, label: 'Station' });
+
+        // Add unique models from active switches
+        switches.forEach(sw => {
+            if (sw.id.startsWith('port-device-') || sw.id === 'internet') return;
+            const model = sw.model || 'Unknown';
+            if (model && model !== '-' && !items.has(model)) {
+                items.set(model, {
+                    type: sw.model as DeviceType,
+                    icon: getIconForType(sw.model),
+                    label: model
+                });
+            }
+        });
+
+        return Array.from(items.values());
+    }, [switches]);
+
+    // Existing actual nodes list for the palette
+    const existingNodesPalette = useMemo(() => {
+        return switches
+            .filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet')
+            .filter(sw => !paletteSearch ||
+                sw.name.toLowerCase().includes(paletteSearch.toLowerCase()) ||
+                (sw.model || '').toLowerCase().includes(paletteSearch.toLowerCase())
+            );
+    }, [switches, paletteSearch]);
+
+    const paletteItems = dynamicPaletteItems;
+
+    const toggleWiringMode = () => {
+        setIsWiringMode(!isWiringMode);
+        setWiringStartNodeId(null);
+        if (!isWiringMode) {
+            showToast('Wiring Mode: Select Source (Child) node', 'info');
+        }
+    };
+
     const selectedNode = useMemo(() => {
-        if (selectedNodeId === 'internet') return { id: 'internet', name: 'Main Core Hub', model: 'Edge Gateway', ip: 'Static ISP IP', totalPorts: 1, ports: [{ id: 'internet-port', portNumber: 1, status: PortStatus.ACTIVE }], rack: 'Core-01', location: 'External', uptime: 'Online' } as NetworkSwitch;
-        return switches.find(s => s.id === selectedNodeId);
+        if (String(selectedNodeId) === 'internet') return { id: 'internet', name: 'Main Core Hub', model: 'Edge Gateway', ip: 'Static ISP IP', totalPorts: 1, ports: [{ id: 'internet-port', portNumber: 1, status: PortStatus.ACTIVE }], rack: 'Core-01', location: 'External', uptime: 'Online' } as NetworkSwitch;
+        return switches.find(s => String(s.id) === String(selectedNodeId));
     }, [switches, selectedNodeId]);
+
+    const handleNodeSelect = (id: string | null) => {
+        if (isWiringMode && id) {
+            // Check if user is trying to make internet the source (it cannot be a child)
+            if (!wiringStartNodeId && String(id) === 'internet') {
+                showToast("The Internet Hub cannot be a source. Select a device first, then link it to the hub.", "warning");
+                return;
+            }
+
+            if (!wiringStartNodeId) {
+                setWiringStartNodeId(id);
+                showToast(`Source [Child] selected. Now click the Target [Parent] node.`, 'info');
+            } else if (String(wiringStartNodeId) === String(id)) {
+                setWiringStartNodeId(null);
+                showToast(`Wiring cancelled`, 'info');
+            } else {
+                // Connect them
+                onConnectNodes?.(wiringStartNodeId, id);
+                setWiringStartNodeId(null);
+                setIsWiringMode(false);
+                // The establishment toast will be shown by the parent handler upon success
+            }
+            return;
+        }
+        setSelectedNodeId(id);
+    };
 
     const handleWheel = (e: React.WheelEvent) => {
         if (e.ctrlKey || e.metaKey) {
@@ -447,7 +572,11 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             setIsPanning(true);
             lastMousePos.current = { x: e.clientX, y: e.clientY };
         } else if (e.target === e.currentTarget) {
-            setSelectedNodeId(null);
+            handleNodeSelect(null);
+            if (isWiringMode) {
+                setIsWiringMode(false);
+                setWiringStartNodeId(null);
+            }
         }
     };
 
@@ -471,17 +600,34 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
         };
     }, [isPanning]);
 
+    // Track mouse position for wiring preview
+    useEffect(() => {
+        if (!isWiringMode || !wiringStartNodeId) return;
+
+        const handleMouseMoveGlobal = (e: MouseEvent) => {
+            if (!diagramRef.current) return;
+            const rect = diagramRef.current.parentElement!.getBoundingClientRect();
+            const x = (e.clientX - rect.left - offset.x) / scale;
+            const y = (e.clientY - rect.top - offset.y) / scale;
+            setMousePos({ x, y });
+        };
+
+        window.addEventListener('mousemove', handleMouseMoveGlobal);
+        return () => window.removeEventListener('mousemove', handleMouseMoveGlobal);
+    }, [isWiringMode, wiringStartNodeId, offset, scale]);
+
     const handleNodeDragEnd = useCallback((id: string, x: number, y: number) => {
         if (id === 'internet') {
             onUpdateSwitches(switches, { x, y });
         } else {
-            onUpdateSwitches(switches.map(s => s.id === id ? { ...s, posX: x, posY: y } : s));
+            onUpdateSwitches(switches.map(s => String(s.id) === String(id) ? { ...s, posX: x, posY: y } : s));
         }
     }, [switches, onUpdateSwitches]);
 
     const handleRelink = (swId: string, parentId: string) => {
-        onUpdateSwitches(switches.map(s => s.id === swId ? { ...s, uplinkId: parentId } : s));
+        onConnectNodes?.(swId, parentId);
         setRelinkingSwitch(null);
+        showToast(`Route updated`, 'success');
     };
 
     const handleDownload = async () => {
@@ -630,11 +776,48 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
         };
     }, [switches, viewMode, expandedGroups]);
 
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+
+        if (!diagramRef.current) return;
+        const rect = diagramRef.current.parentElement!.getBoundingClientRect();
+        const x = (e.clientX - rect.left - offset.x) / scale;
+        const y = (e.clientY - rect.top - offset.y) / scale;
+
+        let finalX = x - NODE_WIDTH / 2;
+        let finalY = y - NODE_HEIGHT / 2;
+
+        if (snapToGrid) {
+            finalX = Math.round(finalX / GRID_SIZE) * GRID_SIZE;
+            finalY = Math.round(finalY / GRID_SIZE) * GRID_SIZE;
+        }
+
+        const nodeId = e.dataTransfer.getData('nodeId');
+        if (nodeId) {
+            // Move existing node
+            onUpdateSwitches(switches.map(s => String(s.id) === String(nodeId) ? { ...s, posX: finalX, posY: finalY } : s));
+            showToast('Node repositioned', 'success');
+            return;
+        }
+
+        const type = e.dataTransfer.getData('deviceType') as DeviceType;
+        if (!type) return;
+
+        onAddNode?.(type, finalX, finalY);
+    };
+
     return (
         <div
-            className={`w-full h-full relative cursor-${isPanning ? 'grabbing' : (isUiLocked || isLocked ? 'default' : 'grab')} overflow-hidden bg-[#080c14] rounded-lg border border-slate-800 shadow-2xl select-none flex`}
+            className={`w-full h-full relative cursor-${isPanning ? 'grabbing' : (isUiLocked || isLocked ? 'default' : 'grab')} overflow-hidden bg-[#080c14] rounded-lg border border-slate-800 shadow-2xl select-none flex ${isWiringMode ? 'cursor-crosshair' : ''}`}
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
         >
             {/* Cinematic Background Layer */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -652,14 +835,90 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                         key={i}
                         className="absolute bg-white rounded-full opacity-20"
                         style={{
-                            width: `${Math.random() * 2 + 1} px`,
-                            height: `${Math.random() * 2 + 1} px`,
-                            left: `${Math.random() * 100}% `,
-                            top: `${Math.random() * 100}% `,
+                            width: `${Math.random() * 2 + 1}px`,
+                            height: `${Math.random() * 2 + 1}px`,
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
                             boxShadow: `0 0 ${Math.random() * 10 + 5}px rgba(255, 255, 255, 0.4)`
                         }}
                     />
                 ))}
+            </div>
+
+            {/* Manual Assembly Palette */}
+            <div className="absolute top-24 bottom-24 left-6 z-[120] w-64 flex flex-col bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+                <div className="p-4 border-b border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">Infrastructure Library</span>
+                    </div>
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Find nodes..."
+                            className="w-full pl-9 pr-3 py-2 bg-black/20 border border-white/5 rounded-xl text-[10px] text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                            value={paletteSearch}
+                            onChange={(e) => setPaletteSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-6">
+                    {/* Templates Section */}
+                    <div className="space-y-3">
+                        <span className="px-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Templates (Provising)</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            {paletteItems.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    draggable
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData('deviceType', item.type);
+                                        e.dataTransfer.setData('modelName', item.label);
+                                    }}
+                                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all cursor-grab active:cursor-grabbing hover:scale-[1.02]"
+                                >
+                                    <item.icon size={18} className="text-slate-400 group-hover:text-blue-400 mb-1.5" />
+                                    <span className="text-[8px] font-bold text-slate-300 group-hover:text-white text-center truncate w-full">{item.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Existing Nodes Section */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Active Nodes Library</span>
+                            <span className="text-[8px] font-black text-blue-500">{existingNodesPalette.length}</span>
+                        </div>
+                        <div className="space-y-2">
+                            {existingNodesPalette.map((node) => {
+                                const Icon = getIconForType(node.model);
+                                return (
+                                    <div
+                                        key={node.id}
+                                        draggable
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.setData('nodeId', node.id);
+                                        }}
+                                        className="group flex items-center gap-3 p-3 rounded-2xl bg-black/20 border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all cursor-grab active:cursor-grabbing"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-white/5 group-hover:text-emerald-400 text-slate-400">
+                                            <Icon size={16} />
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[9px] font-black text-white truncate leading-tight uppercase">{node.name}</span>
+                                            <div className="flex items-center gap-1.5 opacity-60">
+                                                <span className="text-[7px] font-bold text-slate-400 truncate uppercase">{node.model}</span>
+                                                <span className="text-[7px] font-mono text-blue-400">{node.ip}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Floating Control Hub */}
@@ -677,6 +936,10 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
                     <button onClick={() => setSnapToGrid(!snapToGrid)} className={`p-3 rounded-xl transition-all active:scale-90 ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
                         <Grid3X3 size={18} />
+                    </button>
+                    <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
+                    <button onClick={toggleWiringMode} className={`p-3 rounded-xl transition-all active:scale-90 ${isWiringMode ? 'bg-emerald-500/20 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'text-slate-400 hover:bg-white/10'}`} title="Wiring Mode">
+                        <Link2 size={18} />
                     </button>
                 </div>
 
@@ -791,13 +1054,46 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             <span className="text-[8px] font-mono font-black text-blue-500/60 uppercase tracking-[0.4em]">Monitoring Logical stream...</span>
                         </div>
 
-                        <button
-                            onClick={() => onViewProfile && onViewProfile(selectedNode)}
-                            className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/20"
-                        >
-                            <Info size={16} />
-                            View Full Profile
-                        </button>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => onViewProfile && onViewProfile(selectedNode)}
+                                className="flex items-center justify-center gap-3 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 border border-white/5"
+                            >
+                                <Info size={16} />
+                                Profile
+                            </button>
+                            {canManage && !selectedNode.id.toString().startsWith('temp-') && (
+                                <button
+                                    onClick={() => onEditNode && onEditNode(selectedNode)}
+                                    className="flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/20"
+                                >
+                                    <Pencil size={16} />
+                                    Edit
+                                </button>
+                            )}
+                        </div>
+
+                        {onDeleteNode && selectedNode.id !== 'internet' && (coreNodeId ? String(selectedNode.id) !== String(coreNodeId) : true) && (
+                            <button
+                                onClick={() => onDeleteNode(selectedNode.id)}
+                                className="w-full mt-3 p-4 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl transition-all active:scale-90 border border-rose-500/30 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest"
+                            >
+                                <Trash2 size={16} /> Delete Node
+                            </button>
+                        )}
+                        {canManage && String(selectedNodeId) !== 'internet' && !selectedNode.id.toString().startsWith('temp-') && (
+                            <button
+                                onClick={() => {
+                                    onConnectNodes?.(selectedNode.id, 'internet');
+                                    setSelectedNodeId(null);
+                                    showToast(`${selectedNode.name} is now a Core Gateway`, 'success');
+                                }}
+                                className="w-full flex items-center justify-center gap-3 mt-4 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-emerald-500/20"
+                            >
+                                <Globe size={14} />
+                                <span>Designate as Core HUB</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -888,7 +1184,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     </div>
                     <DiagramNode
                         switchData={switches.find(s => coreNodeId && s.id.toString() === coreNodeId.toString()) || { id: 'internet', name: 'ISP CORE HUB', model: 'Gateway', ip: 'Public Static', totalPorts: 1, ports: [{ id: 'internet-p1', portNumber: 1, status: PortStatus.ACTIVE }], uptime: 'Online', location: 'External', rack: 'Core' } as NetworkSwitch}
-                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet' || (coreNodeId && selectedNodeId === coreNodeId)} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={setSelectedNodeId} isInternet searchTerm={searchTerm} tier={nodeTiers.get('internet') || 'Main Hub'}
+                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet' || (coreNodeId && selectedNodeId === coreNodeId)} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={handleNodeSelect} isInternet searchTerm={searchTerm} tier={nodeTiers.get('internet') || 'Main Hub'} isWiringMode={isWiringMode}
                     />
 
                     {processedData.displaySwitches.map((sw: any) => {
@@ -919,12 +1215,13 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                             return next;
                                         });
                                     } else {
-                                        setSelectedNodeId(id);
+                                        handleNodeSelect(id);
                                     }
                                 }}
                                 onRelink={setRelinkingSwitch}
                                 searchTerm={searchTerm}
                                 tier={nodeTiers.get(sw.id)}
+                                isWiringMode={isWiringMode}
                             />
                         );
                     })}
@@ -937,7 +1234,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             </filter>
                         </defs>
                         {processedData.displayLinks.map((sw: any) => {
-                            if (sw.id === 'internet' || (coreNodeId && sw.id.toString() === coreNodeId.toString())) return null;
+                            if (sw.id === 'internet') return null;
                             if (!sw.uplinkId || sw.posX === undefined || sw.posY === undefined) return null;
                             return <TopologyLink
                                 key={`link-${sw.id}`}
@@ -947,8 +1244,23 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                 activePathNodeIds={activePathNodeIds}
                                 searchTerm={searchTerm}
                                 matchesSearch={matchesSearch}
+                                coreNodeId={coreNodeId}
                             />;
                         })}
+
+                        {/* Wiring Preview Line */}
+                        {isWiringMode && wiringStartNodeId && (
+                            <line
+                                x1={(switches.find(s => String(s.id) === String(wiringStartNodeId))?.posX || (String(wiringStartNodeId) === 'internet' ? internetPos.x : 0)) + NODE_WIDTH / 2}
+                                y1={(switches.find(s => String(s.id) === String(wiringStartNodeId))?.posY || (String(wiringStartNodeId) === 'internet' ? internetPos.y : 0)) + NODE_HEIGHT / 2}
+                                x2={mousePos.x}
+                                y2={mousePos.y}
+                                stroke="#10b981"
+                                strokeWidth="2"
+                                strokeDasharray="5,5"
+                                className="animate-[dash_1s_linear_infinite]"
+                            />
+                        )}
                     </svg>
                 </div>
             </div>
@@ -985,49 +1297,53 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             </div>
 
             {/* Empty State */}
-            {switches.length === 0 && !searchTerm && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-[50]">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full" />
-                        <div className="relative bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/10 shadow-2xl flex flex-col items-center">
-                            <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-xl group">
-                                <Radio size={40} className="text-blue-500 animate-pulse group-hover:scale-110 transition-transform" />
-                            </div>
-                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Nexus Empty</h3>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest max-w-[200px] text-center opacity-60">No active infrastructure nodes detected in the current sector.</p>
-                            <button onClick={handleAutoLayout} className="mt-8 px-8 py-3 bg-blue-600/90 hover:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95">Re-scan Area</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {relinkingSwitch && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/10">
-                        <div className="p-10">
-                            <div className="flex justify-between items-center mb-10">
-                                <div className="text-left">
-                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Reroute link</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1 opacity-60">Node: {relinkingSwitch.name}</p>
+            {
+                switches.length === 0 && !searchTerm && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-[50]">
+                        <div className="relative mb-8">
+                            <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full" />
+                            <div className="relative bg-slate-900/40 backdrop-blur-3xl p-10 rounded-[3rem] border border-white/10 shadow-2xl flex flex-col items-center">
+                                <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-xl group">
+                                    <Radio size={40} className="text-blue-500 animate-pulse group-hover:scale-110 transition-transform" />
                                 </div>
-                                <button onClick={() => setRelinkingSwitch(null)} className="p-3 hover:bg-white/5 rounded-2xl text-slate-500 transition-all border border-white/5"><X size={20} /></button>
-                            </div>
-                            <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-3">
-                                <button onClick={() => handleRelink(relinkingSwitch.id, 'internet')} className={`w-full flex items-center gap-4 p-5 rounded-2xl border transition-all ${relinkingSwitch.uplinkId === 'internet' ? 'bg-emerald-500/10 border-emerald-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg"><Globe size={20} /></div>
-                                    <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">ISP Gateway</span></div>
-                                </button>
-                                {switches.filter(s => s.id !== relinkingSwitch.id && !s.id.startsWith('port-device-')).map(sw => (
-                                    <button key={sw.id} onClick={() => handleRelink(relinkingSwitch.id, sw.id)} className={`w-full flex items-center gap-4 p-5 rounded-2xl border transition-all ${relinkingSwitch.uplinkId === sw.id ? 'bg-blue-500/10 border-blue-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
-                                        <div className="w-10 h-10 rounded-xl bg-slate-800 text-blue-400 flex items-center justify-center border border-white/5"><Router size={20} /></div>
-                                        <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">{sw.name}</span></div>
-                                    </button>
-                                ))}
+                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Nexus Empty</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest max-w-[200px] text-center opacity-60">No active infrastructure nodes detected in the current sector.</p>
+                                <button onClick={handleAutoLayout} className="mt-8 px-8 py-3 bg-blue-600/90 hover:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95">Re-scan Area</button>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            {
+                relinkingSwitch && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl animate-in fade-in duration-300">
+                        <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/10">
+                            <div className="p-10">
+                                <div className="flex justify-between items-center mb-10">
+                                    <div className="text-left">
+                                        <h3 className="text-xl font-black text-white uppercase tracking-tight">Reroute link</h3>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1 opacity-60">Node: {relinkingSwitch.name}</p>
+                                    </div>
+                                    <button onClick={() => setRelinkingSwitch(null)} className="p-3 hover:bg-white/5 rounded-2xl text-slate-500 transition-all border border-white/5"><X size={20} /></button>
+                                </div>
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-3">
+                                    <button onClick={() => handleRelink(relinkingSwitch.id, 'internet')} className={`w-full flex items-center gap-4 p-5 rounded-2xl border transition-all ${relinkingSwitch.uplinkId === 'internet' ? 'bg-emerald-500/10 border-emerald-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg"><Globe size={20} /></div>
+                                        <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">ISP Gateway</span></div>
+                                    </button>
+                                    {switches.filter(s => s.id !== relinkingSwitch.id && !s.id.startsWith('port-device-')).map(sw => (
+                                        <button key={sw.id} onClick={() => handleRelink(relinkingSwitch.id, sw.id)} className={`w-full flex items-center gap-4 p-5 rounded-2xl border transition-all ${relinkingSwitch.uplinkId === sw.id ? 'bg-blue-500/10 border-blue-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
+                                            <div className="w-10 h-10 rounded-xl bg-slate-800 text-blue-400 flex items-center justify-center border border-white/5"><Router size={20} /></div>
+                                            <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">{sw.name}</span></div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };

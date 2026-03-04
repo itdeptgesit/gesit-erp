@@ -289,49 +289,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 animate={{ width: isCollapsed ? 80 : 260 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 className={cn(
-                    "fixed top-0 left-0 bottom-0 z-50 bg-card border-r border-border/10 dark:border-white/[0.02] flex flex-col transition-all duration-300",
+                    "fixed top-0 left-0 bottom-0 z-50 bg-card dark:bg-slate-950 border-r border-border/10 dark:border-slate-800/50 flex flex-col transition-all duration-300",
                     isMobileOpen ? "translate-x-0" : "-translate-x-full",
-                    "md:translate-x-0 md:static overflow-hidden shadow-sm"
+                    "md:translate-x-0 md:static overflow-hidden shadow-sm dark:shadow-none"
                 )}
             >
                 {/* Brand Logo */}
-                <div className={cn("h-16 flex items-center shrink-0 border-b border-border/10 dark:border-white/[0.02] transition-all cursor-pointer", isCollapsed ? "justify-center px-4" : "px-6 gap-3")} onClick={() => navigate('/')}>
-                    <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-                        <img src={logoUrl || "/image/logo.png"} alt="Logo" className="w-8 h-8 object-contain transition-transform duration-300 hover:scale-110 drop-shadow-sm" />
+                <div
+                    className={cn(
+                        "h-20 flex items-center shrink-0 transition-all cursor-pointer px-6 mb-2 border-b border-transparent dark:border-slate-800/30",
+                        isCollapsed && "justify-center px-0"
+                    )}
+                    onClick={() => navigate('/')}
+                >
+                    <div className="relative shrink-0 flex items-center justify-center w-10 h-10">
+                        <img
+                            src={logoUrl || "/image/logo.png"}
+                            alt="Logo"
+                            className="w-9 h-9 object-contain"
+                        />
                     </div>
 
                     {!isCollapsed && (
-                        <>
-                            <div className="h-6 w-px bg-border/20 mx-1 shrink-0"></div>
-                            <div className="flex flex-col leading-tight min-w-0">
-                                <h1 className="text-xl font-bold tracking-tight text-foreground leading-none flex items-center gap-1.5 truncate">
-                                    <span className="text-foreground">
-                                        {appName ? appName.split(' ')[0] : 'Gesit'}
-                                    </span>
-                                    <span className={`font-black ${(userRole?.toLowerCase() || '').includes('admin') ? 'text-rose-600' : 'text-primary'}`}>
-                                        {appName ? appName.split(' ').slice(1).join(' ') : 'Portal'}
-                                    </span>
-                                </h1>
-                                <p className="text-[9px] font-bold text-muted-foreground tracking-[0.15em] mt-1 line-clamp-1">
-                                    {(userRole?.toLowerCase() || '').includes('admin') ? 'Enterprise Control Center' : 'Personal Digital Workspace'}
-                                </p>
-                            </div>
-                        </>
+                        <div className="flex flex-col justify-center leading-tight min-w-0 ml-3">
+                            <h1 className="flex items-baseline gap-1">
+                                <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                                    Gesit
+                                </span>
+                                <span className="text-xl font-bold tracking-tight text-[#4f46e5] dark:text-indigo-400 leading-none">
+                                    Portal
+                                </span>
+                            </h1>
+                            <p className="text-[7.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] whitespace-nowrap mt-1">
+                                Enterprise Work Platform
+                            </p>
+                        </div>
                     )}
                 </div>
 
                 {/* Navigation Items */}
                 <div className="flex-1 overflow-y-auto no-scrollbar py-4 px-3">
                     <div className="mb-6">
-                        {!isCollapsed && <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Main Menu</p>}
+                        {!isCollapsed && <p className="px-3 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider mb-2">Main Menu</p>}
                         <div className="space-y-0.5">
                             {menuItems.filter((m: any) => m.id !== 'admin').map(renderLink)}
                         </div>
                     </div>
 
                     {menuItems.some((m: any) => m.id === 'admin') && (
-                        <div className="mb-6 border-t border-border/10 dark:border-white/[0.03] pt-6">
-                            {!isCollapsed && <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Administration</p>}
+                        <div className="mb-6 border-t border-border/10 dark:border-slate-800/50 pt-6">
+                            {!isCollapsed && <p className="px-3 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider mb-2">Administration</p>}
                             <div className="space-y-0.5">
                                 {menuItems.filter((m: any) => m.id === 'admin').map(renderLink)}
                             </div>

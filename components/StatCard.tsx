@@ -68,48 +68,48 @@ export const StatCard: React.FC<StatCardProps> = ({
 
     return (
         <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
             onClick={onClick}
             className={`
-                relative flex items-center p-5
-                bg-card dark:bg-slate-900/40 text-card-foreground border border-slate-100 dark:border-white/[0.05] shadow-sm
-                rounded-2xl backdrop-blur-sm
+                relative flex items-center p-4
+                bg-card text-card-foreground border border-border shadow-sm
+                rounded-xl
                 transition-all duration-300 cursor-pointer group
             `}
         >
-            {/* Icon Container with subtle glass effect */}
-            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${c.iconBg} ${c.text} shrink-0 transition-transform duration-300 group-hover:scale-110`}>
-                <Icon size={28} strokeWidth={1.5} />
+            {/* Icon Container */}
+            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${c.iconBg} ${c.text} shrink-0 transition-transform duration-300 group-hover:scale-105`}>
+                <Icon size={24} strokeWidth={1.5} />
             </div>
 
             {/* Content Section with refined typography */}
-            <div className="ml-5 flex flex-col justify-center overflow-hidden">
-                <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground/70 leading-none mb-2">
+            <div className="ml-4 flex flex-col justify-center overflow-hidden">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none mb-1.5">
                     {label}
                 </p>
-                <div className="flex items-baseline gap-2">
-                    <h4 className="text-2xl font-black tracking-tight text-foreground leading-none">
+                <div className="flex items-baseline gap-1.5">
+                    <h4 className="text-xl font-bold tracking-tight text-foreground leading-none">
                         {value}
                     </h4>
                     {calculatedChange !== undefined && (
-                        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${trendDirection === 'up' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive'}`}>
-                            {trendDirection === 'up' ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
-                            <span className="text-[10px] font-black tracking-tighter">
+                        <div className={`flex items-center gap-0.5 px-1 py-0.5 rounded ${trendDirection === 'up' ? 'text-emerald-500' : 'text-destructive'}`}>
+                            {trendDirection === 'up' ? <ArrowUpRight size={10} strokeWidth={3} /> : <ArrowDownRight size={10} strokeWidth={3} />}
+                            <span className="text-[9px] font-bold">
                                 {Math.abs(calculatedChange).toFixed(1)}%
                             </span>
                         </div>
                     )}
                 </div>
                 {(finalSubText || status) && (
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-1.5">
                         {status === 'on-track' && (
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 rounded-md">
-                                <CheckCircle2 size={10} className="text-emerald-500" />
-                                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Live</span>
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 rounded">
+                                <CheckCircle2 size={9} className="text-emerald-500" />
+                                <span className="text-[8px] font-bold text-emerald-500 uppercase">Live</span>
                             </div>
                         )}
                         {finalSubText && (
-                            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider italic">
+                            <p className="text-[9px] font-medium text-muted-foreground/70 uppercase">
                                 {finalSubText}
                             </p>
                         )}

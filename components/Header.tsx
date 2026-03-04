@@ -170,9 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="glass-header flex items-center justify-between px-4 md:px-8 h-16 sticky top-0 z-50 transition-all dark:bg-background/95 dark:border-border backdrop-blur-xl border-b border-border shadow-sm">
+    <header className="glass-header flex items-center justify-between px-3 md:px-8 h-16 sticky top-0 z-50 transition-all dark:bg-slate-950/90 dark:border-slate-800/50 backdrop-blur-xl border-b border-border shadow-sm">
       {/* BRANDING */}
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1 md:gap-4">
         {onMenuClick && (
           <Button
             variant="ghost"
@@ -186,29 +186,31 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         <div
-          className={`flex items-center gap-2 cursor-pointer group ${!forceShowLogo ? 'md:hidden' : ''}`}
+          className={`flex items-center gap-2 sm:gap-3 cursor-pointer group ${!forceShowLogo ? 'md:hidden' : ''}`}
           onClick={() => onNavigate?.('dashboard')}
         >
-          <div className="relative w-8 h-8">
-            <img src={logoUrl || LOGO_URL} alt="Logo" className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm object-contain" />
+          <div className="relative">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center bg-white dark:bg-slate-800/80 rounded-lg shadow-sm border border-border/10 dark:border-slate-700/50 overflow-hidden">
+              <img src={logoUrl || LOGO_URL} alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm object-contain" />
+            </div>
           </div>
 
-          <div className="flex flex-col">
-            <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
-              {(appName || 'GESIT WORK').split(' ')[0]}<span className="text-primary dark:text-slate-300 font-black ml-1">{(appName || 'GESIT WORK').split(' ').slice(1).join(' ')}</span>
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xs sm:text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-none truncate">
+              {(appName || 'GESIT WORK').split(' ')[0]}<span className="text-primary dark:text-blue-400 font-black ml-0.5 hidden xs:inline sm:inline">{(appName || 'GESIT WORK').split(' ').slice(1).join(' ')}</span>
             </h1>
           </div>
         </div>
       </div>
 
       {/* HEADER TOOLS */}
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1 md:gap-4">
         {/* Language Selection */}
-        <div className="flex items-center bg-muted/30 dark:bg-slate-800/50 p-1 rounded-full border border-border/10 dark:border-white/[0.05]" role="group" aria-label="Language selection">
+        <div className="flex items-center bg-muted/30 dark:bg-slate-800/60 p-0.5 rounded-full border border-border/10 dark:border-slate-700/50" role="group" aria-label="Language selection">
           <Button
             variant={language === 'en' ? "secondary" : "ghost"}
             size="sm"
-            className={`h-7 px-2.5 text-[10px] font-black rounded-full transition-all ${language === 'en' ? 'shadow-sm bg-white dark:bg-slate-700 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`h-5 sm:h-7 px-1.5 sm:px-2.5 text-[8px] sm:text-[10px] font-black rounded-full transition-all ${language === 'en' ? 'shadow-sm bg-white dark:bg-slate-600 text-primary dark:text-blue-400' : 'text-muted-foreground hover:text-foreground dark:hover:text-slate-200'}`}
             onClick={() => setLanguage('en')}
           >
             EN
@@ -216,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Button
             variant={language === 'id' ? "secondary" : "ghost"}
             size="sm"
-            className={`h-7 px-2.5 text-[10px] font-black rounded-full transition-all ${language === 'id' ? 'shadow-sm bg-white dark:bg-slate-700 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`h-5 sm:h-7 px-1.5 sm:px-2.5 text-[8px] sm:text-[10px] font-black rounded-full transition-all ${language === 'id' ? 'shadow-sm bg-white dark:bg-slate-600 text-primary dark:text-blue-400' : 'text-muted-foreground hover:text-foreground dark:hover:text-slate-200'}`}
             onClick={() => setLanguage('id')}
           >
             ID
@@ -228,22 +230,22 @@ export const Header: React.FC<HeaderProps> = ({
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="text-muted-foreground"
+          className="text-muted-foreground dark:text-slate-400 dark:hover:text-slate-200 h-8 w-8 sm:h-10 sm:w-10"
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </Button>
 
         {/* Notifications Popover */}
         <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-              <Bell size={18} />
-              {unreadCount > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-background animate-pulse"></span>}
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground dark:text-slate-400 dark:hover:text-slate-200 h-8 w-8 sm:h-10 sm:w-10">
+              <Bell size={16} />
+              {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full border-2 border-background animate-pulse"></span>}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 flex justify-between items-center bg-muted/50 border-b border-border">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">Alerts</h3>
+          <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden dark:bg-slate-900 dark:border-slate-800">
+            <div className="px-4 py-3 flex justify-between items-center bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-slate-700/50">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-foreground dark:text-slate-200">Alerts</h3>
               {unreadCount > 0 && (
                 <Button variant="link" size="sm" onClick={markAllAsRead} className="h-auto p-0 text-[10px] uppercase font-bold text-primary">
                   Clear All
@@ -280,30 +282,33 @@ export const Header: React.FC<HeaderProps> = ({
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-3 px-2 h-10 border-l border-border rounded-none bg-transparent hover:bg-transparent group">
+              <Button variant="ghost" className="flex items-center gap-1.5 sm:gap-2.5 px-1 sm:px-2 h-10 sm:h-12 hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-all group rounded-xl">
                 <div className="hidden md:flex flex-col items-end">
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold text-muted-foreground tracking-tight leading-none uppercase">{(user?.role || 'User').includes('Admin') ? 'System console' : 'Active workspace'}</span>
-                    <Badge variant={(user?.role || '').includes('Admin') ? 'destructive' : 'default'} className="h-4 px-1.5 py-0 text-[8px] font-black uppercase tracking-widest rounded-md animate-in fade-in zoom-in duration-500">
+                    <span className="text-sm font-bold text-foreground tracking-tight leading-none">{userName}</span>
+                    <Badge
+                      variant={(user?.role || '').includes('Admin') ? 'destructive' : 'secondary'}
+                      className="h-4 px-1.5 py-0 text-[7px] font-black uppercase tracking-widest rounded-full"
+                    >
                       {(user?.role || 'User').includes('Admin') ? 'Admin' : 'Personal'}
                     </Badge>
                   </div>
-                  <span className="text-xs font-bold text-foreground tracking-tight mt-1">{userName}</span>
+                  {user?.jobTitle && <span className="text-[9px] font-medium text-muted-foreground mt-1 opacity-60 uppercase tracking-wider">{user.jobTitle}</span>}
                 </div>
                 <div className="relative">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-xs text-primary-foreground overflow-hidden shadow-sm border border-border group-hover:ring-2 group-hover:ring-primary/20 transition-all cursor-pointer">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400 overflow-hidden shadow-sm border border-border dark:border-slate-700 group-hover:border-primary/50 transition-all">
                     {user?.avatarUrl ? (
                       <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
                       userName.substring(0, 2).toUpperCase()
                     )}
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background"></div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-background shadow-sm"></div>
                 </div>
-                <ChevronDown size={14} className="text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity" />
+                <ChevronDown size={12} className="text-muted-foreground/50 dark:text-slate-500 group-hover:text-foreground transition-colors" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl">
+            <DropdownMenuContent align="end" className="w-56 rounded-xl dark:bg-slate-900 dark:border-slate-800">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-xs tracking-widest text-muted-foreground uppercase font-black">{user?.role || 'Staff'}</p>
