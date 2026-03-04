@@ -172,6 +172,7 @@ export interface UserAccount {
   avatarUrl?: string;
   company?: string;
   isHelpdeskSupport?: boolean;
+  createdAt?: string;
 }
 
 export interface UserGroup {

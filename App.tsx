@@ -208,7 +208,7 @@ const InternalApp: React.FC = () => {
         if (!session.user.email.endsWith('@gesit.co.id')) {
           console.warn("App.tsx: Access denied for non-internal email:", session.user.email);
           await supabase.auth.signOut();
-          showToast('Access restricted to gesit.co.id domain.', 'error');
+          showToast(t('accessRestricted'), 'error');
           return;
         }
         handleLogin(session.user.email);
@@ -302,7 +302,8 @@ const InternalApp: React.FC = () => {
           managerId: data.manager_id?.toString(),
           avatarUrl: data.avatar_url,
           company: data.company,
-          isHelpdeskSupport: data.is_helpdesk_support
+          isHelpdeskSupport: data.is_helpdesk_support,
+          createdAt: data.created_at
         };
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
@@ -348,12 +349,12 @@ const InternalApp: React.FC = () => {
           };
           setCurrentUser(userProfile);
           setIsAuthenticated(true);
-          showToast('Welcome! Your account has been automatically created.', 'success');
+          showToast(t('welcomeAutoReg'), 'success');
         }
       }
     } catch (error) {
       console.error('Login error:', error);
-      showToast('Login failed. Please contact administrator.', 'error');
+      showToast(t('loginFailedAdmin'), 'error');
     }
   };
 
@@ -374,7 +375,7 @@ const InternalApp: React.FC = () => {
   const handleGlobalShare = () => {
     const url = window.location.origin + '/directory';
     navigator.clipboard.writeText(url);
-    showToast('Directory link copied to clipboard!', 'success');
+    showToast(t('linkCopied'), 'success');
   };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -679,7 +680,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
 
         <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-slate-50 dark:bg-slate-950">
           <div className="flex-1 p-3 md:p-6 lg:p-8">
-            <div className="max-w-[1800px] mx-auto h-full">
+            <div className="max-w-[1800px] mx-auto min-h-full">
               {children ? children : (
                 <Routes>
                   <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
