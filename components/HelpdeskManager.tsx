@@ -92,10 +92,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         currentUser?.isHelpdeskSupport === true;
 
     // Client-side UI states from HelpdeskPublic
-    const [viewMode, setViewMode] = useState<'list' | 'form' | 'success' | 'archive'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'form' | 'success' | 'detail' | 'archive'>(isSupport ? 'list' : 'archive');
     const [archivePage, setArchivePage] = useState(1);
     const ARCHIVE_PER_PAGE = 5;
-    const [recentFilter, setRecentFilter] = useState<'Active' | 'Resolved'>('Active');
+    const [recentFilter, setRecentFilter] = useState<'Progress' | 'Resolved'>('Progress');
     const [supportFilter, setSupportFilter] = useState<'all' | 'assigned' | 'mine'>('all');
     const [userRoles, setUserRoles] = useState<Record<string, string>>({});
     const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
@@ -176,7 +176,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
     const newTicketFileInputRef = useRef<HTMLInputElement>(null);
     const newTicketDescriptionRef = useRef<HTMLTextAreaElement>(null);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
-    const [infoModal, setInfoModal] = useState<{ title: string; content: string } | null>(null);
+    const [infoModal, setInfoModal] = useState<{ title: string; content: string; icon: any } | null>(null);
 
     const applyFormatting = (textarea: HTMLTextAreaElement, type: string, value: string, setter: (val: string) => void) => {
         const start = textarea.selectionStart;
@@ -250,40 +250,40 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             name: 'Smileys',
             icon: <Smile size={16} />,
             emojis: [
-                '😊', '😂', '🤣', '❤️', '😍', '😒', '😭', '😘', '😔', '😩',
-                '😏', '😉', '😌', '😎', '😅', '😋', '😶', '😱', '😐', '😣',
-                '😯', '😮', '😲', '😴', '😫', '😪', '🙌', '👍', '👋', '👏',
-                '👊', '✊', '✌️', '👌', '✋', '👎', '💪', '🙏', '🤝', '💅'
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '?', '??', '??', '?', '??', '??', '??', '??', '??'
             ]
         },
         {
             name: 'Nature',
             icon: <Globe size={16} />,
             emojis: [
-                '🐱', '🐶', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
-                '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦅',
-                '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌',
-                '🐞', '🐜', '🦟', '🦗', '🕷', '🕸', '🦂', '🐢', '🐍', '🦎'
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??'
             ]
         },
         {
             name: 'Tech',
             icon: <Zap size={16} />,
             emojis: [
-                '💻', '📱', '📧', '💡', '📌', '📎', '📅', '⌚', '🛍️', '🔧',
-                '🔒', '🔑', '💎', '📦', '🎁', '🎈', '📂', '📜', '📄', '📓',
-                '📊', '📈', '📉', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '📼',
-                '🔋', '🔌', '📡', '🛰️', '📠', '📺', '📻', '🎤', '🎚️', '🎛️'
+                '??', '??', '??', '??', '??', '??', '??', '?', '???', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '??', '???', '???', '???', '???', '???', '???', '??',
+                '??', '??', '??', '???', '??', '??', '??', '??', '???', '???'
             ]
         },
         {
             name: 'Symbols',
             icon: <Hash size={16} />,
             emojis: [
-                '✅', '❌', '⚠️', '⭐', '🔥', '✨', '⚡', '💯', '🎉', '🆘',
-                '🚫', '☢️', '💍', '💎', '🌀', '💤', '💥', '💢', '💦', '💨',
-                '💫', '💬', '🗨️', '💭', '🗯️', '🔕', '🔈', '🔉', '🔊', '🎵',
-                '🎶', '➕', '➖', '✖️', '➗', '❓', '❔', '❕', '❗'
+                '?', '?', '??', '?', '??', '?', '?', '??', '??', '??',
+                '??', '??', '??', '??', '??', '??', '??', '??', '??', '??',
+                '??', '??', '???', '??', '???', '??', '??', '??', '??', '??',
+                '??', '?', '?', '??', '?', '?', '?', '?', '?'
 
             ]
         }
@@ -1337,25 +1337,27 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 !isManagementMode && !selectedTicket && (
                     <div className="flex items-center gap-1 pb-4 overflow-x-auto no-scrollbar">
                         {[
+                            { id: 'archive', label: t('myTickets'), icon: Inbox },
                             { id: 'form', label: t('submitTicket'), icon: PlusCircle },
-                            { id: 'list', label: t('myTickets'), icon: Inbox },
-                            { id: 'archive', label: t('archive'), icon: Archive }
                         ].map((tab) => {
-                            const isActive = (viewMode === tab.id && !selectedTicket) || (tab.id === 'list' && selectedTicket);
+                            const isActive = viewMode === tab.id;
                             return (
-                                <button
+                                <Button
                                     key={tab.id}
+                                    variant={isActive ? "secondary" : "ghost"}
+                                    size="sm"
                                     onClick={() => {
                                         setSelectedTicket(null);
                                         setViewMode(tab.id as any);
                                     }}
-                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
-                                        ? 'bg-white dark:bg-slate-800 text-primary shadow-sm border border-border/50'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 h-9 rounded-md text-xs font-medium transition-all whitespace-nowrap",
+                                        isActive ? "shadow-sm border border-border" : "text-muted-foreground hover:text-foreground"
+                                    )}
                                 >
-                                    <tab.icon size={14} />
+                                    <tab.icon size={13} />
                                     {tab.label}
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>
@@ -1363,9 +1365,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             }
 
             {toast && (
-                <div className={`fixed top-24 right-8 z-[2000] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl border animate-in slide-in-from-right-2 duration-300 ${toast.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
-                    {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider">{toast.text}</span>
+                <div className={cn(
+                    "fixed top-24 right-8 z-[2000] flex items-center gap-2 px-4 py-2.5 rounded-md shadow-lg border animate-in slide-in-from-right-2 duration-300",
+                    toast.type === 'success' ? "bg-background border-border text-foreground" : "bg-destructive text-destructive-foreground"
+                )}>
+                    {toast.type === 'success' ? <CheckCircle2 size={14} className="text-primary" /> : <AlertCircle size={14} />}
+                    <span className="text-xs font-medium">{toast.text}</span>
                 </div>
             )}
 
@@ -1383,20 +1388,20 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             {/* AREA UTAMA */}
             {
                 viewMode === 'success' ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg mx-auto mt-12 animate-in zoom-in duration-500">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-border shadow-sm max-w-lg mx-auto mt-12 animate-in zoom-in duration-500">
                         <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">{t('reportSent')}</h2>
                         <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{t('reportSuccessDesc')}</p>
 
-                        <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 rounded-xl border border-slate-100 dark:border-slate-800 inline-block mb-8">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 rounded-xl border border-border inline-block mb-8">
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('reportId')}</div>
-                            <span className="text-2xl font-black text-indigo-600 font-mono tracking-tight">#{lastCreatedTicketId}</span>
+                            <span className="text-xl font-bold text-primary font-mono tracking-tight">#{lastCreatedTicketId}</span>
                         </div>
 
                         <div>
                             <Button
                                 size="lg"
-                                onClick={() => setViewMode('list')}
+                                onClick={() => setViewMode('archive')}
                                 className="w-full rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
                             >
                                 {t('returnToTicketing')}
@@ -1404,138 +1409,195 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         </div>
                     </div>
                 ) : viewMode === 'form' ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl p-10 max-w-4xl w-full mx-auto animate-in fade-in slide-in-from-bottom-5 duration-500 overflow-hidden relative">
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="w-full mt-6"
+                    >
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2">
+                                <Card className="border-border/60 shadow-sm overflow-hidden">
+                                    <CardHeader className="flex flex-row items-center justify-between pb-4">
+                                        <div className="space-y-1">
+                                            <CardTitle className="text-xl font-bold tracking-tight">{t('submitSupportTicket')}</CardTitle>
+                                            <p className="text-xs text-muted-foreground">{t('supportTeamBackSoon')}</p>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {/* Subject Field */}
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">{t('subject')}</label>
+                                            <input
+                                                type="text"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                                                placeholder={t('subjectPlaceholder')}
+                                                value={newTicketData.subject}
+                                                onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
+                                            />
+                                        </div>
 
-                        <div className="flex items-center justify-between mb-10">
-                            <div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2 uppercase">{t('submitSupportTicket')}</h2>
-                                <p className="text-slate-500 text-sm font-medium">{t('supportTeamBackSoon')}</p>
-                            </div>
-                            <button onClick={() => setViewMode('list')} className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-8">
-                            {/* Subject Field */}
-                            <div className="space-y-3">
-                                <label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-widest">{t('subject')}</label>
-                                <input
-                                    type="text"
-                                    className="w-full h-16 px-8 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-bold text-lg placeholder:text-slate-400 shadow-sm"
-                                    placeholder={t('subjectPlaceholder')}
-                                    value={newTicketData.subject}
-                                    onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
-                                />
-                            </div>
-
-                            {/* Deskripsi Field */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-widest">{t('description')}</label>
-                                </div>
-                                <div className="border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-500 transition-all shadow-sm">
-                                    {/* Rich Text Toolbar */}
-                                    <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex flex-wrap gap-1 items-center">
-                                        {[
-                                            { icon: Bold, type: 'bold' },
-                                            { icon: Italic, type: 'italic' },
-                                            { icon: Link, type: 'link' },
-                                            { icon: List, type: 'list' },
-                                            { icon: ImageIcon, type: 'image' },
-                                            { icon: FileText, type: 'file' },
-                                            { icon: Code, type: 'code' }
-                                        ].map((item, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => applyNewTicketFormatting(item.type)}
-                                                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                            >
-                                                <item.icon size={16} />
-                                            </button>
-                                        ))}
-                                        {isUploading && <Loader2 size={16} className="animate-spin text-indigo-500 ml-2" />}
-                                    </div>
-                                    <textarea
-                                        ref={newTicketDescriptionRef}
-                                        className="w-full h-[280px] p-8 bg-white dark:bg-slate-900 border-none outline-none font-medium text-base placeholder:text-slate-400 resize-none leading-relaxed"
-                                        placeholder={t('descPlaceholder')}
-                                        value={newTicketData.description}
-                                        onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
-                                        onKeyDown={e => {
-                                            if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
-                                                e.preventDefault();
-                                                applyNewTicketFormatting(e.key === 'b' ? 'bold' : 'italic');
-                                            }
-                                        }}
-                                    />
-
-                                    {/* Email-style Attachments Section */}
-                                    {newTicketData.attachments.length > 0 && (
-                                        <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800/50">
-                                            <div className="flex items-center gap-2 mb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                <Paperclip size={12} />
-                                                {newTicketData.attachments.length} Attachments
-                                            </div>
-                                            <div className="flex flex-wrap gap-3">
-                                                {newTicketData.attachments.map((file, i) => (
-                                                    <div key={i} className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900 transition-all group max-w-[240px]">
-                                                        <div className={`p-2 rounded-lg shrink-0 ${file.type.startsWith('image/') ? 'bg-indigo-50 text-indigo-500' : 'bg-rose-50 text-rose-500'}`}>
-                                                            {file.type.startsWith('image/') ? <ImageIcon size={16} /> : <FileText size={16} />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{file.name}</p>
-                                                            <p className="text-[9px] text-slate-400 uppercase font-black tracking-tight">{file.type.split('/')[1] || 'FILE'}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setNewTicketData(prev => ({
-                                                                    ...prev,
-                                                                    attachments: prev.attachments.filter((_, idx) => idx !== i)
-                                                                }));
-                                                            }}
-                                                            className="p-1.5 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-slate-300"
+                                        {/* Deskripsi Field */}
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">{t('description')}</label>
+                                            <div className="border border-input rounded-md overflow-hidden bg-background focus-within:ring-1 focus-within:ring-ring transition-all">
+                                                {/* Rich Text Toolbar */}
+                                                <div className="px-2 py-1 bg-muted/20 border-b border-input flex flex-wrap gap-1 items-center">
+                                                    {[
+                                                        { icon: Bold, type: 'bold' },
+                                                        { icon: Italic, type: 'italic' },
+                                                        { icon: Link, type: 'link' },
+                                                        { icon: List, type: 'list' },
+                                                        { icon: ImageIcon, type: 'image' },
+                                                        { icon: FileText, type: 'file' },
+                                                        { icon: Code, type: 'code' }
+                                                    ].map((item, idx) => (
+                                                        <Button
+                                                            key={idx}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            type="button"
+                                                            onClick={() => applyNewTicketFormatting(item.type)}
+                                                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                                         >
-                                                            <X size={14} />
-                                                        </button>
+                                                            <item.icon size={12} />
+                                                        </Button>
+                                                    ))}
+                                                    {isUploading && <Loader2 size={12} className="animate-spin text-primary ml-2" />}
+                                                </div>
+                                                <textarea
+                                                    ref={newTicketDescriptionRef}
+                                                    className="w-full h-[220px] p-4 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground resize-none leading-relaxed"
+                                                    placeholder={t('descPlaceholder')}
+                                                    value={newTicketData.description}
+                                                    onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
+                                                />
+
+                                                {/* Email-style Attachments Section */}
+                                                {newTicketData.attachments.length > 0 && (
+                                                    <div className="px-4 py-3 bg-muted/20 border-t border-input">
+                                                        <div className="flex items-center gap-2 mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                                            <Paperclip size={12} />
+                                                            {newTicketData.attachments.length} Attachments
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-3">
+                                                            {newTicketData.attachments.map((file, i) => (
+                                                                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-md shadow-sm transition-all group max-w-[200px]">
+                                                                    <div className={`p-1.5 rounded-md shrink-0 ${file.type.startsWith('image/') ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                                        {file.type.startsWith('image/') ? <ImageIcon size={14} /> : <FileText size={14} />}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[11px] font-medium text-foreground truncate">{file.name}</p>
+                                                                        <p className="text-[9px] text-muted-foreground uppercase font-semibold">{file.type.split('/')[1] || 'FILE'}</p>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setNewTicketData(prev => ({
+                                                                                ...prev,
+                                                                                attachments: prev.attachments.filter((_, idx) => idx !== i)
+                                                                            }));
+                                                                        }}
+                                                                        className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                                                                    >
+                                                                        <X size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                ))}
+                                                )}
+
+                                                {/* Hidden File Input */}
+                                                <input type="file" ref={newTicketFileInputRef} className="hidden" multiple onChange={handleNewTicketFileUpload} />
                                             </div>
                                         </div>
-                                    )}
-
-                                    {/* Hidden File Input */}
-                                    <input type="file" ref={newTicketFileInputRef} className="hidden" multiple onChange={handleNewTicketFileUpload} />
-                                </div>
+                                    </CardContent>
+                                    <div className="p-4 border-t bg-muted/10 flex items-center justify-end gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setViewMode('archive')}
+                                            className="h-9 px-4 text-xs font-semibold"
+                                        >
+                                            {t('cancel')}
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleCreateTicket}
+                                            disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
+                                            className="h-9 px-4 text-xs font-semibold"
+                                        >
+                                            {isActionLoading ? <Loader2 size={14} className="animate-spin mr-2" /> : <Send size={13} className="mr-2" />}
+                                            {t('submitReport')}
+                                        </Button>
+                                    </div>
+                                </Card>
                             </div>
 
-
-                            {/* Footer Actions */}
-                            <div className="pt-6 flex items-center gap-4">
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    onClick={() => setViewMode('list')}
-                                    className="h-16 px-10 rounded-2xl font-bold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all uppercase tracking-widest text-[11px]"
-                                >
-                                    {t('cancel')}
-                                </Button>
-                                <Button
-                                    size="lg"
-                                    onClick={handleCreateTicket}
-                                    disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
-                                    className="flex-1 h-16 rounded-2xl font-bold shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.01] active:scale-[0.99] text-white gap-3 transition-all uppercase tracking-widest text-[11px]"
-                                >
-                                    {isActionLoading ? <Loader2 size={24} className="animate-spin" /> : <Send size={20} />}
-                                    <span>{t('submitReport')}</span>
-                                </Button>
+                            {/* Sidebar Info in Form */}
+                            <div className="space-y-6">
+                                <Card className="border-border/60 shadow-sm overflow-hidden p-5 bg-indigo-50/10">
+                                    <CardTitle className="text-sm font-bold mb-4 flex items-center gap-2">
+                                        <Info size={16} className="text-indigo-500" />
+                                        Support Info
+                                    </CardTitle>
+                                    {infoModal ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="bg-background rounded-lg p-4 border border-border shadow-sm relative"
+                                        >
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <infoModal.icon size={16} className="text-primary" />
+                                                <h4 className="text-[11px] font-bold text-primary uppercase tracking-wider">{infoModal.title}</h4>
+                                            </div>
+                                            <p className="text-[12px] text-muted-foreground leading-relaxed font-medium mb-4">
+                                                {infoModal.content}
+                                            </p>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setInfoModal(null)}
+                                                className="w-full text-xs font-bold"
+                                            >
+                                                Dismiss
+                                            </Button>
+                                        </motion.div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {[
+                                                {
+                                                    label: '08.00 - 17:00',
+                                                    icon: Clock,
+                                                    title: 'Ticketing Operating Hours',
+                                                    detail: 'Our technical support team is available every business day (Monday - Friday) from 08:00 to 17:00 WIB. Requests submitted outside these hours will be prioritized on the next business day.'
+                                                },
+                                                {
+                                                    label: 'Ext Call 196',
+                                                    icon: Phone,
+                                                    title: 'IT Extension Support',
+                                                    detail: 'For immediate technical assistance within the office area, please call extension 196. We are ready to help with hardware, network, and internal application issues.'
+                                                }
+                                            ].map((item, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setInfoModal({ title: item.title, content: item.detail, icon: item.icon })}
+                                                    className="flex items-start gap-3 w-full p-3 text-left rounded-xl border border-border/40 bg-background hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                                                >
+                                                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
+                                                        <item.icon size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">{item.label}</h4>
+                                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Tap for Details</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </Card>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 ) : isManagementMode ? (
                     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
                         {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
@@ -1880,7 +1942,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                     <span className={`text-[9px] ${isSelf ? 'text-white/70' : 'text-slate-400'}`}>
                                                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                     </span>
-                                                                    {isSelf && <span className="text-[11px] text-blue-300">✓✓</span>}
+                                                                    {isSelf && <span className="text-[11px] text-blue-300">??</span>}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1932,7 +1994,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     <textarea
                                                         rows={1}
                                                         className="w-full bg-transparent border-none text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none resize-none leading-relaxed"
-                                                        placeholder={isInternal ? '🔒 Private internal note...' : 'Type a message...'}
+                                                        placeholder={isInternal ? '?? Private internal note...' : 'Type a message...'}
                                                         value={resolutionNote}
                                                         onChange={e => {
                                                             setResolutionNote(e.target.value);
@@ -2227,9 +2289,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                     </div>
                 ) : (
 
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 gap-8">
                         {/* Area Utama */}
-                        <div className={`${selectedTicket ? 'lg:col-span-4' : 'lg:col-span-3'} space-y-8`}>
+                        <div className="space-y-8">
                             <AnimatePresence mode="wait">
                                 {selectedTicket ? (
                                     <motion.div
@@ -2238,7 +2300,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, scale: 1.02, transition: { duration: 0.2 } }}
                                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                                        className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px] relative"
+                                        className="bg-white dark:bg-slate-900 rounded-xl border border-border shadow-sm overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px] relative"
                                     >
                                         {/* WA-style Header */}
                                         <div className="px-5 py-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-100/80 dark:border-slate-800/80 flex items-center gap-4 z-10 shrink-0 relative">
@@ -2308,7 +2370,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                     <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} isSelf={isInitialSelf} />
                                                                 </div>
                                                                 <p className={`text-[10px] ${isInitialSelf ? 'text-indigo-200' : 'text-slate-400'} mt-2 text-right font-medium flex items-center justify-end gap-1`}>
-                                                                    {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {isInitialSelf && <span className="text-blue-300">✓✓</span>}
+                                                                    {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {isInitialSelf && <span className="text-blue-300">??</span>}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -2380,7 +2442,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                     <span className={`text-[10px] font-medium ${isSelf ? 'text-indigo-200' : 'text-slate-400'}`}>
                                                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                     </span>
-                                                                    {isSelf && <span className="text-[11px] text-blue-300">✓✓</span>}
+                                                                    {isSelf && <span className="text-[11px] text-blue-300">??</span>}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2398,8 +2460,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 >
                                                     {/* Resolution Announcement */}
                                                     <div className="text-center">
-                                                        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-500/10 ring-4 ring-white dark:ring-slate-900">
-                                                            <CheckCircle2 size={36} />
+                                                        <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-4 border border-emerald-100 dark:border-emerald-900/30">
+                                                            <CheckCircle2 size={32} />
                                                         </div>
                                                         <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Support Success!</h3>
                                                         <p className="text-slate-500 font-medium text-sm mt-1">This ticket has been officially resolved.</p>
@@ -2414,7 +2476,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
                                                     {/* Final Resolution Note */}
                                                     {selectedTicket.resolution && (
-                                                        <div className="bg-white dark:bg-slate-800/60 backdrop-blur-sm rounded-[24px] p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                                                        <div className="bg-white dark:bg-slate-800/40 rounded-xl p-6 border border-border shadow-sm relative overflow-hidden group">
                                                             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
                                                             <div className="flex items-start gap-4">
                                                                 <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0"><Check size={18} /></div>
@@ -2429,7 +2491,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     )}
 
                                                     {/* Rating Section */}
-                                                    <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-[32px] p-8 border border-white dark:border-slate-700/50 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                                                    <div className="bg-white dark:bg-slate-800/80 rounded-xl p-8 border border-border shadow-sm">
                                                         <h4 className="text-center text-sm font-bold text-slate-800 dark:text-slate-200 mb-6 uppercase tracking-widest leading-none">Experience Feedback</h4>
 
                                                         {selectedTicket.rating || !isRequester ? (
@@ -2438,13 +2500,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                     {[1, 2, 3, 4, 5].map((star, idx) => (
                                                                         <motion.div
                                                                             key={star}
-                                                                            initial={{ opacity: 0, scale: 0.5 }}
+                                                                            initial={{ opacity: 0, scale: 0.8 }}
                                                                             animate={{ opacity: 1, scale: 1 }}
-                                                                            transition={{ delay: 0.2 + idx * 0.1, type: "spring", stiffness: 200 }}
+                                                                            transition={{ delay: 0.1 + idx * 0.05 }}
                                                                         >
                                                                             <Star
-                                                                                size={36}
-                                                                                className={`${(selectedTicket.rating || 0) >= star ? 'fill-amber-400 text-amber-400 drop-shadow-xl' : 'text-slate-100 dark:text-slate-800'}`}
+                                                                                size={32}
+                                                                                className={`${(selectedTicket.rating || 0) >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-800'}`}
                                                                             />
                                                                         </motion.div>
                                                                     ))}
@@ -2600,388 +2662,162 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             </div>
                                         )}
                                     </motion.div>
-                                ) : viewMode === 'archive' ? (
-                                    <motion.div
-                                        key="archive"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[500px] relative"
-                                    >
-                                        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-50/30 dark:bg-indigo-900/5 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
-                                        <div className="p-8 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between relative z-10">
-                                            <div>
-                                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight mb-1.5">Ticket Archive</h2>
-                                                <p className="text-sm text-slate-500 font-medium">Browse all your previous support requests</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setViewMode('list')}
-                                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95 hover:scale-[1.02] group"
-                                            >
-                                                <PlusCircle size={16} className="group-hover:rotate-90 transition-transform" />
-                                                Submit New
-                                            </button>
-                                        </div>
-
-                                        <div className="overflow-x-auto flex-1">
-                                            {tickets.length === 0 ? (
-                                                <div className="flex flex-col items-center justify-center py-24 text-center">
-                                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 mb-4">
-                                                        <Inbox size={32} />
-                                                    </div>
-                                                    <p className="text-sm font-bold text-slate-400">No tickets found in your history.</p>
-                                                </div>
-                                            ) : (
-                                                <table className="w-full text-left border-separate border-spacing-0">
-                                                    <thead>
-                                                        <tr className="bg-slate-50/50 dark:bg-slate-800/50 sticky top-0 z-10">
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Reference</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Subject</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Status</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Date</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                        {(() => {
-                                                            const startIdx = (archivePage - 1) * ARCHIVE_PER_PAGE;
-                                                            const pageTickets = filteredTickets.slice(startIdx, startIdx + ARCHIVE_PER_PAGE);
-
-                                                            return pageTickets.map((t) => (
-                                                                <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
-                                                                    <td className="px-6 py-5">
-                                                                        <span className="text-[11px] font-bold text-slate-500 font-mono tracking-widest bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">#{t.ticketId}</span>
-                                                                    </td>
-                                                                    <td className="px-6 py-5">
-                                                                        <div className="flex items-start gap-3">
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="text-[14px] font-bold text-slate-800 dark:text-white line-clamp-1 mb-1 flex items-center gap-2">
-                                                                                    {t.subject}
-                                                                                    {t.attachments && t.attachments.length > 0 && (
-                                                                                        <Paperclip size={12} className="text-slate-400" />
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.department}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-5">
-                                                                        {(() => {
-                                                                            const isResolved = t.status === 'Resolved' || t.status === 'Closed';
-                                                                            const isOpen = t.status === 'Open' || t.status === 'New';
-                                                                            const statusBg = isResolved ? 'bg-emerald-50 text-emerald-600' : isOpen ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600';
-                                                                            const dotColor = isResolved ? 'bg-emerald-500' : isOpen ? 'bg-rose-500' : 'bg-slate-500';
-                                                                            return (
-                                                                                <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md ${statusBg} dark:bg-slate-800`}>
-                                                                                    <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-                                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">{t.status}</span>
-                                                                                </div>
-                                                                            );
-                                                                        })()}
-                                                                    </td>
-                                                                    <td className="px-6 py-5">
-                                                                        <div className="text-xs text-slate-600 dark:text-slate-400 font-bold">{new Date(t.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                                                                    </td>
-                                                                    <td className="px-6 py-5 text-right">
-                                                                        <button
-                                                                            onClick={() => setSelectedTicket(t)}
-                                                                            className="p-2.5 bg-slate-50 dark:bg-slate-800 border-none hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 rounded-xl transition-all active:scale-95 inline-flex"
-                                                                        >
-                                                                            <ArrowRight size={16} />
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ));
-                                                        })()}
-                                                    </tbody>
-                                                </table>
-                                            )}
-                                        </div>
-
-                                        {/* Archive Pagination */}
-                                        {filteredTickets.length > ARCHIVE_PER_PAGE && (
-                                            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/30">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                    Showing {Math.min(filteredTickets.length, (archivePage - 1) * ARCHIVE_PER_PAGE + 1)}-{Math.min(filteredTickets.length, archivePage * ARCHIVE_PER_PAGE)} of {filteredTickets.length}
-                                                </p>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        disabled={archivePage === 1}
-                                                        onClick={() => setArchivePage(prev => prev - 1)}
-                                                        className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                                                    >
-                                                        <ChevronLeft size={16} />
-                                                    </button>
-                                                    {(() => {
-                                                        const totalPages = Math.ceil(tickets.length / ARCHIVE_PER_PAGE);
-                                                        return Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                                                            <button
-                                                                key={p}
-                                                                onClick={() => setArchivePage(p)}
-                                                                className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${archivePage === p ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-600'}`}
-                                                            >
-                                                                {p}
-                                                            </button>
-                                                        ));
-                                                    })()}
-                                                    <button
-                                                        disabled={archivePage >= Math.ceil(tickets.length / ARCHIVE_PER_PAGE)}
-                                                        onClick={() => setArchivePage(prev => prev + 1)}
-                                                        className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-600 transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                                                    >
-                                                        <ChevronRight size={16} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </motion.div>
                                 ) : (
                                     <motion.div
-                                        key="list-empty"
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 1.05 }}
-                                        className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center min-h-[550px] relative overflow-hidden group"
+                                        key="archive"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-6"
                                     >
-                                        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
-                                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50/30 dark:bg-blue-900/5 rounded-full blur-3xl -z-10 transform -translate-x-1/2 translate-y-1/2"></div>
-
-                                        <div className="relative mb-8">
-                                            <div className="w-28 h-28 bg-indigo-50 dark:bg-indigo-900/30 rounded-[32px] flex items-center justify-center text-indigo-500 transform rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-xl shadow-indigo-100 dark:shadow-none">
-                                                <LifeBuoy size={56} strokeWidth={1.5} className="animate-spin-slow" />
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-border shadow-sm">
+                                            <div>
+                                                <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white mb-1">My Support Tickets</h2>
+                                                <p className="text-sm text-slate-500 font-medium">Manage and track your technical requests</p>
                                             </div>
-                                            <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-700">
-                                                <MessageSquare size={20} className="text-indigo-600" />
-                                            </div>
-                                        </div>
-
-                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Hi {currentUser?.fullName?.split(' ')[0] || 'User'}, how can we help?</h2>
-                                        <p className="text-slate-500 font-medium text-base max-w-sm mx-auto mb-10 leading-relaxed">
-                                            Our IT support team is ready to assist you with any technical issues or service requests.
-                                        </p>
-
-                                        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                                            <Button
-                                                size="lg"
-                                                onClick={() => setViewMode('form')}
-                                                className="flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-3"
-                                            >
-                                                <PlusCircle size={20} />
-                                                Open New Ticket
-                                            </Button>
-                                            <Button
-                                                size="lg"
-                                                variant="outline"
-                                                onClick={() => setViewMode('archive')}
-                                                className="flex-1 h-14 rounded-2xl font-bold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all gap-3"
-                                            >
-                                                <Archive size={18} />
-                                                View Archive
-                                            </Button>
-                                        </div>
-
-                                        <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 w-full max-w-md flex items-center justify-center gap-6">
-                                            <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length}</div>
-                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active</div>
-                                            </div>
-                                            <div className="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-                                            <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length}</div>
-                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Resolved</div>
+                                            <div className="flex p-1 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                                                {(['Progress', 'Resolved'] as const).map((tab) => (
+                                                    <button
+                                                        key={tab}
+                                                        onClick={() => setRecentFilter(tab)}
+                                                        className={cn(
+                                                            "px-6 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                                            recentFilter === tab
+                                                                ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                                                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                                        )}
+                                                    >
+                                                        {tab}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
 
-                        {/* RIGHT COLUMN: Sidebar - Hidden when ticket is selected for Full-Focus chat */}
-                        {
-                            !selectedTicket && (
-                                <div className="space-y-6 lg:col-span-1">
-                                    {/* Recent Tickets Card */}
-                                    <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
-                                        {/* Accent blob */}
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50/30 dark:bg-rose-900/10 rounded-full blur-2xl -z-10"></div>
-
-                                        <div className="flex items-center justify-between mb-5">
-                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Recent Tickets</h3>
-                                            <button onClick={fetchTickets} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-indigo-600">
-                                                <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
-                                            </button>
-                                        </div>
-
-                                        {/* Mini Tabs */}
-                                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
-                                            {(['Active', 'Resolved'] as const).map((tab) => (
-                                                <button
-                                                    key={tab}
-                                                    onClick={() => setRecentFilter(tab)}
-                                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${recentFilter === tab ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                                >
-                                                    {tab}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border shadow-sm overflow-hidden">
                                             {(() => {
                                                 const filtered = tickets.filter(t =>
                                                     recentFilter === 'Resolved' ? (t.status === 'Resolved' || t.status === 'Closed') : (t.status !== 'Resolved' && t.status !== 'Closed')
                                                 );
 
                                                 if (filtered.length === 0) {
-                                                    return <div className="text-center py-12">
-                                                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-300">
-                                                            <Inbox size={20} />
-                                                        </div>
-                                                        <p className="text-[10px] font-medium text-slate-400">No {recentFilter.toLowerCase()} tickets</p>
-                                                    </div>;
-                                                }
-
-                                                return filtered.map((ticket) => {
-                                                    const isActive = ticket.status === 'Open' || ticket.status === 'New';
-                                                    const statusColors: Record<string, string> = {
-                                                        'Resolved': 'bg-emerald-500',
-                                                        'Closed': 'bg-emerald-500',
-                                                        'In Progress': 'bg-indigo-500',
-                                                        'Pending': 'bg-amber-500',
-                                                        'Open': 'bg-rose-500',
-                                                    };
-                                                    const colorDot = statusColors[ticket.status] || 'bg-slate-400';
-
                                                     return (
-                                                        <div
-                                                            key={ticket.id}
-                                                            onClick={() => setSelectedTicket(ticket)}
-                                                            className="group cursor-pointer p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-700 transition-all hover:shadow-sm"
-                                                        >
-                                                            <div className="flex items-center justify-between mb-2.5">
-                                                                <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">#{ticket.ticketId}</span>
-                                                                <div className={`w-2 h-2 rounded-full ${colorDot} ring-4 ring-${colorDot.replace('bg-', '')}/10`} />
+                                                        <div className="p-20 text-center">
+                                                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                                                                <Inbox size={32} />
                                                             </div>
-                                                            <h4 className="text-[13px] font-bold text-slate-800 dark:text-white mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{ticket.subject}</h4>
-                                                            <div className="flex items-center justify-between mt-1">
-                                                                <p className="text-[10px] font-semibold text-slate-500">{new Date(ticket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
-                                                                <span className={`text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all flex items-center gap-1 ${isActive ? 'text-rose-600' : 'text-indigo-600'}`}>
-                                                                    {isActive ? 'Awaiting Reply' : 'View Details'} <ArrowRight size={10} />
-                                                                </span>
-                                                            </div>
+                                                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No {recentFilter.toLowerCase()} tickets</h3>
+                                                            <p className="text-sm text-slate-500 mb-8 max-w-xs mx-auto">When you have support requests, they will appear here for you to track.</p>
+                                                            <Button onClick={() => setViewMode('form')} className="rounded-full px-8 bg-indigo-600 hover:bg-indigo-700">
+                                                                <PlusCircle className="mr-2 h-4 w-4" /> Open New Ticket
+                                                            </Button>
                                                         </div>
                                                     );
-                                                });
+                                                }
+
+                                                return (
+                                                    <Table>
+                                                        <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+                                                            <TableRow>
+                                                                <TableHead className="w-[100px] text-[10px] uppercase font-black tracking-widest text-slate-400">ID</TableHead>
+                                                                <TableHead className="text-[10px] uppercase font-black tracking-widest text-slate-400">Subject</TableHead>
+                                                                <TableHead className="text-[10px] uppercase font-black tracking-widest text-slate-400">Category</TableHead>
+                                                                <TableHead className="text-[10px] uppercase font-black tracking-widest text-slate-400">Status</TableHead>
+                                                                <TableHead className="text-[10px] uppercase font-black tracking-widest text-slate-400">Last Update</TableHead>
+                                                                <TableHead className="w-[50px]"></TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {filtered.map((ticket) => (
+                                                                <TableRow
+                                                                    key={ticket.id}
+                                                                    className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
+                                                                    onClick={() => setSelectedTicket(ticket)}
+                                                                >
+                                                                    <TableCell className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                                                                        #{ticket.ticketId}
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-1">
+                                                                                {ticket.subject}
+                                                                            </span>
+                                                                            <span className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                                                                {ticket.description.replace(/[#*`]/g, '')}
+                                                                            </span>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50">
+                                                                            {ticket.department || 'General'}
+                                                                        </Badge>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className={cn(
+                                                                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                                                            ticket.status === 'Resolved' ? "bg-emerald-50 text-emerald-600" :
+                                                                                ticket.status === 'In Progress' ? "bg-indigo-50 text-indigo-600" :
+                                                                                    ticket.status === 'Pending' ? "bg-amber-50 text-amber-600" :
+                                                                                        "bg-rose-50 text-rose-600"
+                                                                        )}>
+                                                                            <div className={cn(
+                                                                                "w-1.5 h-1.5 rounded-full",
+                                                                                ticket.status === 'Resolved' ? "bg-emerald-500" :
+                                                                                    ticket.status === 'In Progress' ? "bg-indigo-500" :
+                                                                                        ticket.status === 'Pending' ? "bg-amber-500" :
+                                                                                            "bg-rose-500"
+                                                                            )} />
+                                                                            {ticket.status === 'In Progress' ? 'Processing' : ticket.status}
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-xs font-medium text-slate-500">
+                                                                        {new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                                                            <ArrowRight size={14} />
+                                                                        </div>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                );
                                             })()}
                                         </div>
-
-                                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedTicket(null);
-                                                    setArchivePage(1);
-                                                    setViewMode('archive');
-                                                }}
-                                                className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
-                                            >
-                                                View All Archive
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Operational Hours Card */}
-                                    <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-slate-800/80 dark:to-slate-900 rounded-[24px] border border-indigo-100/50 dark:border-slate-700/50 p-6 relative overflow-hidden">
-                                        <h3 className="font-bold text-slate-800 dark:text-white mb-5 tracking-tight">Operational Hours</h3>
-                                        {infoModal ? (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-indigo-100 dark:border-slate-700 shadow-sm relative animate-in fade-in slide-in-from-bottom-2"
-                                            >
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
-                                                            <Info size={16} />
-                                                        </div>
-                                                        <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-widest">{infoModal.title}</h4>
-                                                    </div>
-                                                    <button onClick={() => setInfoModal(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400">
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                                                    {infoModal.content}
-                                                </p>
-                                                <button
-                                                    onClick={() => setInfoModal(null)}
-                                                    className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all"
-                                                >
-                                                    Close Details
-                                                </button>
-                                            </motion.div>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                {[
-                                                    {
-                                                        label: '08.00 - 17:00',
-                                                        icon: Clock,
-                                                        title: 'Ticketing Operating Hours',
-                                                        detail: 'Our technical support team is available every business day (Monday - Friday) from 08:00 to 17:00 WIB. Requests submitted outside these hours will be prioritized on the next business day.'
-                                                    },
-                                                    {
-                                                        label: 'Ext Call 196',
-                                                        icon: Phone,
-                                                        title: 'IT Extension Support',
-                                                        detail: 'For immediate technical assistance within the office area, please call extension 196. We are ready to help with hardware, network, and internal application issues.'
-                                                    }
-                                                ].map((item, i) => (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => setInfoModal({ title: item.title, content: item.detail })}
-                                                        className="flex items-center gap-4 w-full p-3 text-left bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800 rounded-xl border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all group"
-                                                    >
-                                                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                                                            <item.icon size={16} />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.label}</h4>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Click for details</p>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        }
-
-
-
-                        {/* Image Preview Modal */}
-                        {
-                            previewImage && (
-                                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl" onClick={() => setPreviewImage(null)}>
-                                    <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
-                                    <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
-                                    <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                                        {previewImage.toLowerCase().includes('.pdf') ? (
-                                            <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
-                                                <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
-                                                <div className="absolute bottom-4 right-4">
-                                                    <a href={previewImage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"><ExternalLink size={12} /> Open Original PDF</a>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        }
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                     </div>
                 )}
+
+
+
+            {/* Image Preview Modal */}
+            {
+                previewImage && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl" onClick={() => setPreviewImage(null)}>
+                        <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
+                        <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
+                        <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                            {previewImage.toLowerCase().includes('.pdf') ? (
+                                <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
+                                    <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
+                                    <div className="absolute bottom-4 right-4">
+                                        <a href={previewImage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"><ExternalLink size={12} /> Open Original PDF</a>
+                                    </div>
+                                </div>
+                            ) : (
+                                <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+                            )}
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 };
+
+
+

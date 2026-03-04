@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ interface ProjectItem {
     completedTasks: number;
     dueDate: string;
     owner: string;
+    department?: string;
+    priority?: string;
 }
 
 interface PerformanceData {
@@ -220,15 +223,23 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
             // --- PROJECTS DATA (FROM WEEKLY PLANS) ---
             const projectPlans = (weeklyPlans || []).filter(w => w.category === 'Project');
-            const groupedProjects: Record<string, { tasks: any[]; latestDate: string; owner: string }> = {};
+            const groupedProjects: Record<string, { tasks: any[]; latestDate: string; owner: string; dept: string; priority: string }> = {};
 
             projectPlans.forEach(task => {
                 const name = task.task.split(':')[0] || 'Operational';
                 if (!groupedProjects[name]) {
-                    groupedProjects[name] = { tasks: [], latestDate: task.due_date || today, owner: task.assignee || 'IT' };
+                    groupedProjects[name] = {
+                        tasks: [],
+                        latestDate: task.due_date || today,
+                        owner: task.assignee || 'IT',
+                        dept: task.department || 'GENERAL',
+                        priority: task.priority || 'Medium'
+                    };
                 }
                 groupedProjects[name].tasks.push(task);
                 if (task.due_date > groupedProjects[name].latestDate) groupedProjects[name].latestDate = task.due_date;
+                // Keep the highest priority
+                if (task.priority === 'High') groupedProjects[name].priority = 'High';
             });
 
             const projectItems: ProjectItem[] = Object.entries(groupedProjects).map(([name, data], index) => {
@@ -243,7 +254,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                     totalTasks: total,
                     completedTasks: completed,
                     dueDate: data.latestDate,
-                    owner: data.owner
+                    owner: data.owner,
+                    department: data.dept,
+                    priority: data.priority
                 };
             });
 
@@ -664,102 +677,77 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                     )}
 
                     {/* 1. Summary Cards (Global KPI) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                        <StatCard label="Total Open Tickets" value={stats.totalOpenTickets} icon={MessageSquare} color="blue" subValue="Across teams" />
-                        <StatCard label="Active Activities" value={stats.totalActiveActivities} icon={Activity} color="indigo" subValue="In progress" />
-                        <StatCard label="Pending Procurement" value={stats.pendingProcurement} icon={ShoppingCart} color="amber" subValue="To review" />
-                        <StatCard label="Purchase This Month" value={formatCurrency(stats.totalPurchaseThisMonth)} icon={TrendingUp} color="emerald" subValue="Budget usage" />
-                        <StatCard label="Total IT Assets" value={stats.totalITAssets} icon={Database} color="purple" subValue="Inventory count" />
-                        <StatCard label="Active Asset Loans" value={stats.activeAssetLoans} icon={Box} color="sky" subValue="Out on loan" />
-                        <StatCard label="Completion Rate" value={stats.taskCompletionRate} icon={Zap} color="orange" subValue="Efficiency" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        <StatCard label="Tickets" value={stats.totalOpenTickets} icon={MessageSquare} color="blue" subValue="Across teams" />
+                        <StatCard label="Activities" value={stats.totalActiveActivities} icon={Activity} color="indigo" subValue="In progress" />
+                        <StatCard label="Procurement" value={stats.pendingProcurement} icon={ShoppingCart} color="amber" subValue="To review" />
+                        <StatCard label="Spending" value={formatCurrency(stats.totalPurchaseThisMonth)} icon={TrendingUp} color="emerald" subValue="This Month" />
+                        <StatCard label="Inventory" value={stats.totalITAssets} icon={Database} color="purple" subValue="Items" />
+                        <StatCard label="Loans" value={stats.activeAssetLoans} icon={Box} color="sky" subValue="Out" />
+                        <StatCard label="Efficiency" value={stats.taskCompletionRate} icon={Zap} color="orange" subValue="Rate" />
                     </div>
 
-                    {/* Purchase Record Summary */}
+                    {/* 2. Purchase Record Summary */}
                     <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-card">
-                        <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+                        <CardHeader className="p-5 pb-3 flex flex-row items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                    <Wallet size={18} />
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                    <Wallet size={16} />
                                 </div>
                                 <div>
-                                    <CardTitle className="text-base font-bold">Purchase Record</CardTitle>
-                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Procurement & Financial Summary</p>
+                                    <CardTitle className="text-sm font-bold">Purchase Record</CardTitle>
+                                    <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Financial Summary</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase tracking-wider text-primary px-3 h-8" onClick={() => onNavigate('purchase-record')}>
-                                View All <ChevronRight size={12} className="ml-1" />
+                            <Button variant="ghost" size="sm" className="text-[9px] font-bold uppercase tracking-wider text-primary px-3 h-7" onClick={() => onNavigate('procurement')}>
+                                View All <ChevronRight size={10} className="ml-1" />
                             </Button>
                         </CardHeader>
-                        <CardContent className="px-6 pb-6 space-y-5">
-                            {/* Financial KPIs Row */}
+                        <CardContent className="px-5 pb-5 space-y-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Disbursed</p>
-                                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalDisbursed)}</p>
-                                    <p className="text-[8px] font-medium text-muted-foreground/60 uppercase mt-0.5">Verified & Settled</p>
+                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-center">
+                                    <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Disbursed</p>
+                                    <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalDisbursed)}</p>
                                 </div>
-                                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Liability</p>
-                                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalLiability)}</p>
-                                    <p className="text-[8px] font-medium text-muted-foreground/60 uppercase mt-0.5">{stats.purchaseSummary.pendingCount} Pending</p>
+                                <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg text-center">
+                                    <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Liability</p>
+                                    <p className="text-base font-bold text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalLiability)}</p>
                                 </div>
-                                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Fiscal Volume</p>
-                                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400 tracking-tight">{formatCurrency(stats.purchaseSummary.fiscalVolume)}</p>
-                                    <p className="text-[8px] font-medium text-muted-foreground/60 uppercase mt-0.5">Gross Total</p>
+                                <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg text-center">
+                                    <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Volume</p>
+                                    <p className="text-base font-bold text-blue-600 dark:text-blue-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalDisbursed + stats.purchaseSummary.totalLiability)}</p>
                                 </div>
-                                <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl">
-                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Records</p>
-                                    <p className="text-lg font-bold text-primary tracking-tight">{stats.purchaseSummary.totalRecords}</p>
-                                    <p className="text-[8px] font-medium text-muted-foreground/60 uppercase mt-0.5">Transactions</p>
+                                <div className="p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-lg text-center">
+                                    <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Records</p>
+                                    <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 tracking-tight">{stats.purchaseSummary.totalRecords}</p>
                                 </div>
                             </div>
 
-                            {/* Breakdown Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Top Categories */}
-                                <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Tag size={13} className="text-indigo-500" />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cost Breakdown</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Tag size={11} className="text-indigo-500" />
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Top Categories</span>
                                     </div>
-                                    <div className="space-y-2.5">
-                                        {stats.purchaseSummary.topCategories.length === 0 ? (
-                                            <p className="text-[10px] text-muted-foreground/50 font-medium text-center py-4">No data</p>
-                                        ) : stats.purchaseSummary.topCategories.map((cat, idx) => (
-                                            <div key={cat.name} className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-indigo-500' : 'bg-muted-foreground/30'}`} />
-                                                    <span className="text-[10px] font-semibold text-muted-foreground truncate uppercase">{cat.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-[10px] font-bold text-foreground">{formatCurrency(cat.total)}</span>
-                                                    <span className="text-[9px] font-bold text-indigo-500 w-7 text-right">{cat.percentage}%</span>
-                                                </div>
+                                    <div className="space-y-1.5">
+                                        {stats.purchaseSummary.topCategories.map((cat) => (
+                                            <div key={cat.name} className="flex items-center justify-between text-[9px] font-semibold text-muted-foreground uppercase">
+                                                <span>{cat.name}</span>
+                                                <span className="text-foreground font-bold">{formatCurrency(cat.total)}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* Top Departments */}
-                                <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Briefcase size={13} className="text-emerald-500" />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Department Spend</span>
+                                <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Briefcase size={11} className="text-emerald-500" />
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Department Spend</span>
                                     </div>
-                                    <div className="space-y-2.5">
-                                        {stats.purchaseSummary.topDepartments.length === 0 ? (
-                                            <p className="text-[10px] text-muted-foreground/50 font-medium text-center py-4">No data</p>
-                                        ) : stats.purchaseSummary.topDepartments.map((dept, idx) => (
-                                            <div key={dept.name} className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
-                                                    <span className="text-[10px] font-semibold text-muted-foreground truncate uppercase">{dept.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-[10px] font-bold text-foreground">{formatCurrency(dept.total)}</span>
-                                                    <span className="text-[9px] font-bold text-emerald-500 w-7 text-right">{dept.percentage}%</span>
-                                                </div>
+                                    <div className="space-y-1.5">
+                                        {stats.purchaseSummary.topDepartments.map((dept) => (
+                                            <div key={dept.name} className="flex items-center justify-between text-[9px] font-semibold text-muted-foreground uppercase">
+                                                <span>{dept.name}</span>
+                                                <span className="text-foreground font-bold">{formatCurrency(dept.total)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -768,314 +756,298 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                         </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* 3. Support Dynamics Chart */}
+                    <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-card">
+                        <CardHeader className="p-5 pb-0 flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="text-sm font-bold uppercase tracking-tight">Support Dynamics</CardTitle>
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase">Resolution Velocity</p>
+                            </div>
+                            <Select defaultValue="last7days">
+                                <SelectTrigger className="w-[120px] rounded-lg bg-muted/40 border-border/50 font-bold uppercase text-[9px] tracking-wider h-8">
+                                    <SelectValue placeholder="Period" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="last7days">Last 7 Days</SelectItem>
+                                    <SelectItem value="monthly">This Month</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </CardHeader>
+                        <CardContent className="p-5 h-[280px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={performanceData}>
+                                    <defs>
+                                        <linearGradient id="colorOpen" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="[&_line]:stroke-border" strokeOpacity={0.1} />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }} />
+                                    <ReTooltip contentStyle={{ borderRadius: '8px', border: 'none', background: 'hsl(var(--card))', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }} />
+                                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorOpen)" name="New Tickets" />
+                                    <Area type="monotone" dataKey="value2" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResolved)" name="Resolved" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
 
-                        {/* 2. Ticket Overview (Chart) */}
-                        <Card className="lg:col-span-8 rounded-xl border-border shadow-sm overflow-hidden bg-card">
-                            <CardHeader className="p-8 pb-0 flex flex-row items-center justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Live Feed</span>
-                                    </div>
-                                    <CardTitle className="text-xl font-bold uppercase tracking-tight">Support Dynamics</CardTitle>
-                                    <p className="text-[10px] font-medium text-muted-foreground uppercase opacity-80">Ticket resolution velocity</p>
-                                </div>
-                                <Select defaultValue="last7days">
-                                    <SelectTrigger className="w-[160px] rounded-lg bg-muted/40 border-border/50 font-bold uppercase text-[10px] tracking-wider h-10">
-                                        <SelectValue placeholder="Period" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="last7days">Last 7 Days</SelectItem>
-                                        <SelectItem value="monthly">This Month</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                    {/* 4. Activity & Inventory Side-by-Side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <Card className="lg:col-span-8 rounded-xl border-border shadow-sm bg-card overflow-hidden">
+                            <CardHeader className="p-5 pb-2">
+                                <CardTitle className="text-xs font-bold flex items-center gap-2 uppercase tracking-tight">
+                                    <Activity size={12} className="text-emerald-500" />
+                                    Platform Activity
+                                </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-8 h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={performanceData}>
-                                        <defs>
-                                            <linearGradient id="colorOpen" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
-                                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="[&_line]:stroke-border" stroke="currentColor" strokeOpacity={0.1} />
-                                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} dy={15} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }} />
-                                        <ReTooltip
-                                            contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', fontWeight: 600, fontSize: '11px', padding: '12px', color: 'hsl(var(--foreground))' }}
-                                        />
-                                        <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2.5} fillOpacity={1} fill="url(#colorOpen)" name="New Tickets" />
-                                        <Area type="monotone" dataKey="value2" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorResolved)" name="Resolved" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                            <CardContent className="p-5 pt-0">
+                                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                                    <div className="xl:col-span-9 overflow-x-auto no-scrollbar">
+                                        <div className="flex gap-[2px] pt-2">
+                                            <div className="flex flex-col">
+                                                {/* Heatmap implementation */}
+                                                {(() => {
+                                                    const weeks: any[] = [];
+                                                    const monthLabels: { label: string; offset: number }[] = [];
+                                                    const totalWeeks = 38;
+                                                    const today = new Date();
+
+                                                    // Find the Sunday of the week totalWeeks ago
+                                                    const startDate = new Date(today);
+                                                    startDate.setDate(today.getDate() - (totalWeeks * 7));
+                                                    startDate.setDate(startDate.getDate() - startDate.getDay());
+
+                                                    let currentMonth = -1;
+
+                                                    for (let w = 0; w < totalWeeks; w++) {
+                                                        const week: any[] = [];
+                                                        const weekDate = new Date(startDate);
+                                                        weekDate.setDate(startDate.getDate() + (w * 7));
+
+                                                        // Track month changes for labels
+                                                        if (weekDate.getMonth() !== currentMonth) {
+                                                            currentMonth = weekDate.getMonth();
+                                                            monthLabels.push({
+                                                                label: weekDate.toLocaleDateString('en-US', { month: 'short' }),
+                                                                offset: w
+                                                            });
+                                                        }
+
+                                                        for (let d = 0; d < 7; d++) {
+                                                            const dayDate = new Date(weekDate);
+                                                            dayDate.setDate(weekDate.getDate() + d);
+                                                            const key = dayDate.toISOString().split('T')[0];
+                                                            week.push({ count: stats.activityHeatmap[key] || 0 });
+                                                        }
+                                                        weeks.push(week);
+                                                    }
+
+                                                    return (
+                                                        <div className="flex flex-col gap-1 select-none">
+                                                            {/* Month Labels */}
+                                                            <div className="flex relative h-5 mb-2">
+                                                                {monthLabels.map((m, i) => (
+                                                                    <span key={i} className="absolute text-[11px] font-semibold text-muted-foreground/50" style={{ left: `${m.offset * 17}px` }}>
+                                                                        {m.label}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+
+                                                            <div className="flex gap-3 items-start">
+                                                                {/* Day Labels */}
+                                                                <div className="flex flex-col gap-[3px] pt-[3px] h-[116px] justify-between text-[9px] font-bold text-muted-foreground/30 uppercase">
+                                                                    <span className="h-[14px] flex items-center">Mon</span>
+                                                                    <span className="h-[14px] flex items-center">Wed</span>
+                                                                    <span className="h-[14px] flex items-center">Fri</span>
+                                                                </div>
+
+                                                                {/* Grid */}
+                                                                <div className="flex gap-[3px]">
+                                                                    {weeks.map((week, wIdx) => (
+                                                                        <div key={wIdx} className="flex flex-col gap-[3px]">
+                                                                            {week.map((day: any, dIdx: number) => (
+                                                                                <div
+                                                                                    key={dIdx}
+                                                                                    title={`${day.count} activities`}
+                                                                                    className={`w-[14px] h-[14px] rounded-[3px] transition-colors duration-300 ${day.count === 0 ? 'bg-slate-200 dark:bg-slate-900/50' :
+                                                                                        day.count < 3 ? 'bg-emerald-200 dark:bg-emerald-950/40 text-emerald-300' :
+                                                                                            day.count < 6 ? 'bg-emerald-400 dark:bg-emerald-700' :
+                                                                                                day.count < 10 ? 'bg-emerald-500 dark:bg-emerald-500' :
+                                                                                                    'bg-emerald-600 dark:bg-emerald-400'
+                                                                                        } border border-transparent hover:border-primary/40 cursor-pointer shadow-sm`}
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Footer: Learn more & Legend */}
+                                                            <div className="flex items-center justify-between mt-4 px-1">
+                                                                <span className="text-[10px] text-muted-foreground/30 hover:text-primary/60 transition-colors cursor-help italic">
+                                                                    Learn how we count contributions
+                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] text-muted-foreground/30">Less</span>
+                                                                    <div className="flex gap-[3px]">
+                                                                        <div className="w-[12px] h-[12px] rounded-[2px] bg-slate-200 dark:bg-slate-900/50" />
+                                                                        <div className="w-[12px] h-[12px] rounded-[2px] bg-emerald-200 dark:bg-emerald-950/40" />
+                                                                        <div className="w-[12px] h-[12px] rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
+                                                                        <div className="w-[12px] h-[12px] rounded-[2px] bg-emerald-500 dark:bg-emerald-500" />
+                                                                        <div className="w-[12px] h-[12px] rounded-[2px] bg-emerald-600 dark:bg-emerald-400" />
+                                                                    </div>
+                                                                    <span className="text-[10px] text-muted-foreground/30">More</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="xl:col-span-3 space-y-3 border-l border-border/50 pl-5">
+                                        <h4 className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Recent Logs</h4>
+                                        <div className="space-y-2.5">
+                                            {listData.orgActivities.slice(0, 5).map((act, i) => (
+                                                <div key={i} className="flex gap-2 min-w-0">
+                                                    <div className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                                    <p className="text-[9px] font-semibold text-foreground truncate leading-tight uppercase">{act.activity_name || act.category}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
-                        {/* 3. Activity Performance & 5. Asset Overview */}
-                        <div className="lg:col-span-4 space-y-6">
-
-                            {/* Activity Heatmap (GitHub-style) */}
-                            <Card className="rounded-xl border-border shadow-sm bg-card">
-                                <CardHeader className="p-5 pb-3">
-                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                        <Activity size={14} className="text-emerald-500" />
-                                        Activity Map
-                                    </CardTitle>
-                                    <p className="text-[10px] font-medium text-muted-foreground">
-                                        {stats.activityTotal} contributions across platform
-                                    </p>
-                                </CardHeader>
-                                <CardContent className="px-5 pb-5">
-                                    <div className="overflow-x-auto no-scrollbar">
-                                        <div className="flex gap-[3px] min-w-0">
-                                            {(() => {
-                                                const weeks: { date: Date; count: number }[][] = [];
-                                                const today = new Date();
-                                                const totalWeeks = 20;
-                                                // Build grid: each column = 1 week (7 days)
-                                                for (let w = totalWeeks - 1; w >= 0; w--) {
-                                                    const week: { date: Date; count: number }[] = [];
-                                                    for (let d = 0; d < 7; d++) {
-                                                        const date = new Date(today);
-                                                        date.setDate(today.getDate() - (w * 7 + (6 - d)));
-                                                        const key = date.toISOString().split('T')[0];
-                                                        week.push({ date, count: stats.activityHeatmap[key] || 0 });
-                                                    }
-                                                    weeks.push(week);
-                                                }
-
-                                                // Find max for color scaling
-                                                const maxCount = Math.max(1, ...Object.values(stats.activityHeatmap));
-
-                                                const getColor = (count: number) => {
-                                                    if (count === 0) return 'bg-muted dark:bg-slate-800';
-                                                    const ratio = count / maxCount;
-                                                    if (ratio <= 0.25) return 'bg-emerald-200 dark:bg-emerald-900/60';
-                                                    if (ratio <= 0.5) return 'bg-emerald-400 dark:bg-emerald-700';
-                                                    if (ratio <= 0.75) return 'bg-emerald-500 dark:bg-emerald-500';
-                                                    return 'bg-emerald-600 dark:bg-emerald-400';
-                                                };
-
-                                                // Month labels
-                                                const monthLabels: { label: string; col: number }[] = [];
-                                                let lastMonth = -1;
-                                                weeks.forEach((week, colIdx) => {
-                                                    const firstDay = week[0];
-                                                    if (firstDay && firstDay.date.getMonth() !== lastMonth) {
-                                                        lastMonth = firstDay.date.getMonth();
-                                                        monthLabels.push({
-                                                            label: firstDay.date.toLocaleDateString('en-US', { month: 'short' }),
-                                                            col: colIdx
-                                                        });
-                                                    }
-                                                });
-
-                                                return (
-                                                    <div className="flex flex-col gap-0">
-                                                        {/* Month labels */}
-                                                        <div className="flex gap-[4px] mb-2 ml-[32px]">
-                                                            {weeks.map((_, colIdx) => {
-                                                                const label = monthLabels.find(m => m.col === colIdx);
-                                                                return (
-                                                                    <div key={colIdx} className="w-[15px] shrink-0">
-                                                                        {label && <span className="text-[9px] font-bold text-muted-foreground/80">{label.label}</span>}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                        {/* Grid rows */}
-                                                        {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
-                                                            <div key={dayIdx} className="flex items-center gap-[4px]">
-                                                                <span className="w-[28px] text-[9px] font-bold text-muted-foreground/60 text-right shrink-0">
-                                                                    {dayIdx === 1 ? 'Mon' : dayIdx === 3 ? 'Wed' : dayIdx === 5 ? 'Fri' : ''}
-                                                                </span>
-                                                                {weeks.map((week, colIdx) => {
-                                                                    const cell = week[dayIdx];
-                                                                    if (!cell) return <div key={colIdx} className="w-[15px] h-[15px]" />;
-                                                                    return (
-                                                                        <div
-                                                                            key={colIdx}
-                                                                            className={`w-[15px] h-[15px] rounded-[3px] ${getColor(cell.count)} border border-white/5 dark:border-black/10 transition-all hover:scale-110`}
-                                                                            title={`${cell.date.toLocaleDateString()}: ${cell.count} activities`}
-                                                                        />
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                    {/* Legend */}
-                                    <div className="flex items-center justify-end gap-1.5 mt-3">
-                                        <span className="text-[8px] font-medium text-muted-foreground/50">Less</span>
-                                        <div className="w-[10px] h-[10px] rounded-[2px] bg-muted dark:bg-slate-800" />
-                                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-200 dark:bg-emerald-900/60" />
-                                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
-                                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-500 dark:bg-emerald-500" />
-                                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-600 dark:bg-emerald-400" />
-                                        <span className="text-[8px] font-medium text-muted-foreground/50">More</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* 5. Asset Overview */}
-                            <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-card">
-                                <CardHeader className="p-6 pb-2">
-                                    <CardTitle className="text-base font-semibold">Inventory</CardTitle>
-                                </CardHeader>
-                                <CardContent className="px-6 pb-6 flex flex-col items-center">
-                                    <div className="w-full h-44 relative">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={Object.entries(stats.assetBreakdown.categories).map(([name, value], idx) => ({
-                                                        name,
-                                                        value,
-                                                        color: [
-                                                            'hsl(var(--primary))',
-                                                            '#10b981',
-                                                            '#3b82f6',
-                                                            '#f59e0b',
-                                                            '#8b5cf6',
-                                                            '#ec4899',
-                                                            '#06b6d4'
-                                                        ][idx % 7]
-                                                    }))}
-                                                    innerRadius={55}
-                                                    outerRadius={75}
-                                                    paddingAngle={3}
-                                                    dataKey="value"
-                                                    stroke="none"
-                                                >
-                                                    {Object.entries(stats.assetBreakdown.categories).map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={[
-                                                            'hsl(var(--primary))',
-                                                            '#10b981',
-                                                            '#3b82f6',
-                                                            '#f59e0b',
-                                                            '#8b5cf6',
-                                                            '#ec4899',
-                                                            '#06b6d4'
-                                                        ][index % 7]} />
-                                                    ))}
-                                                </Pie>
-                                                <ReTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-xl font-bold tracking-tight">{stats.totalITAssets}</span>
-                                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Total</span>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full mt-4">
-                                        {Object.entries(stats.assetBreakdown.categories).map(([name, value], idx) => (
-                                            <div key={name} className="flex flex-col">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-1.5 h-1.5 rounded-full" style={{
-                                                        backgroundColor: [
-                                                            'hsl(var(--primary))',
-                                                            '#10b981',
-                                                            '#3b82f6',
-                                                            '#f59e0b',
-                                                            '#8b5cf6',
-                                                            '#ec4899',
-                                                            '#06b6d4'
-                                                        ][idx % 7]
-                                                    }} />
-                                                    <p className="text-sm font-bold">{value as number}</p>
-                                                </div>
-                                                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground truncate">{name}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* 4. Procurement Overview Table */}
-                        <Card className="lg:col-span-12 rounded-xl border-border shadow-sm overflow-hidden bg-card">
-                            <CardHeader className="p-6 flex flex-row items-center justify-between border-b border-border/50 bg-muted/20">
-                                <div>
-                                    <CardTitle className="text-lg font-bold">Project Initiatives</CardTitle>
-                                    <p className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">Tracking departmental progress</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="relative group hidden md:block">
-                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={12} />
-                                        <input
-                                            type="text"
-                                            placeholder="Search items..."
-                                            value={projectSearch}
-                                            onChange={(e) => setProjectSearch(e.target.value)}
-                                            className="h-8 w-40 bg-background border border-border rounded-lg pl-8 pr-3 text-[11px] focus:ring-1 focus:ring-primary/20 transition-all outline-none"
-                                        />
-                                    </div>
-                                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={fetchData}>
-                                        <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
-                                    </Button>
-                                </div>
+                        <Card className="lg:col-span-4 rounded-xl border-border shadow-sm overflow-hidden bg-card">
+                            <CardHeader className="p-5 pb-1">
+                                <CardTitle className="text-xs font-bold uppercase tracking-tight">Inventory</CardTitle>
                             </CardHeader>
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader className="bg-muted/30">
-                                        <TableRow className="border-border/50">
-                                            <TableHead className="pl-6 h-12 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Project Name</TableHead>
-                                            <TableHead className="h-12 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Owner</TableHead>
-                                            <TableHead className="h-12 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                                            <TableHead className="h-12 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Progress</TableHead>
-                                            <TableHead className="text-right pr-6 h-12 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Due Date</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedProjects.map((project) => (
-                                            <TableRow key={project.id} className="border-border/20 hover:bg-muted/30 transition-all group">
-                                                <TableCell className="pl-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary font-bold text-xs">{project.name.charAt(0)}</div>
-                                                        <span className="text-sm font-semibold tracking-tight">{project.name}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell><UserAvatar name={project.owner} size="sm" /></TableCell>
-                                                <TableCell><StatusBadge status={project.status} /></TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[120px]">
-                                                            <motion.div
-                                                                initial={{ width: 0 }}
-                                                                animate={{ width: `${project.progress}%` }}
-                                                                transition={{ duration: 1, delay: 0.2 }}
-                                                                className="h-full bg-primary"
-                                                            />
-                                                        </div>
-                                                        <span className="text-[11px] font-bold tabular-nums">{project.progress}%</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right pr-6">
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">{new Date(project.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                            <div className="p-6 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6 bg-muted/20">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Showing {paginatedProjects.length} of {filteredProjects.length} results</p>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" className="h-8 px-4 rounded-lg font-bold text-xs" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}>Prev</Button>
-                                    <div className="px-3 text-xs font-bold uppercase text-muted-foreground">Page {currentPage} of {totalPages}</div>
-                                    <Button variant="outline" size="sm" className="h-8 px-4 rounded-lg font-bold text-xs" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}>Next</Button>
+                            <CardContent className="p-5 flex flex-col items-center">
+                                <div className="w-full h-32 relative mb-4">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={Object.entries(stats.assetBreakdown.categories).map(([name, value], idx) => ({ name, value, color: ['hsl(var(--primary))', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'][idx % 5] }))}
+                                                innerRadius={40} outerRadius={55} paddingAngle={2} dataKey="value" stroke="none"
+                                            >
+                                                {Object.entries(stats.assetBreakdown.categories).map((_, index) => (
+                                                    <Cell key={`cell-${index}`} fill={['hsl(var(--primary))', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 5]} />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span className="text-lg font-bold leading-none">{stats.totalITAssets}</span>
+                                        <span className="text-[7px] font-bold text-muted-foreground uppercase">Total</span>
+                                    </div>
                                 </div>
-                            </div>
+                                <div className="grid grid-cols-2 gap-2 w-full">
+                                    {Object.entries(stats.assetBreakdown.categories).slice(0, 4).map(([name, value], idx) => (
+                                        <div key={name} className="flex items-center gap-1.5 min-w-0">
+                                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ['hsl(var(--primary))', '#10b981', '#3b82f6', '#f59e0b'][idx % 4] }} />
+                                            <div className="min-w-0">
+                                                <p className="text-[9px] font-bold leading-none">{value as number}</p>
+                                                <p className="text-[7px] font-bold uppercase text-muted-foreground truncate">{name}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
                         </Card>
                     </div>
+
+                    {/* 5. Recent Projects Table */}
+                    <Card className="rounded-xl border-border shadow-sm overflow-hidden bg-card">
+                        <CardHeader className="p-5 border-b border-border/50 flex flex-row items-center justify-between">
+                            <CardTitle className="text-xs font-bold uppercase tracking-tight">Project Initiatives</CardTitle>
+                            <div className="flex gap-2">
+                                <div className="relative">
+                                    <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search projects..."
+                                        className="h-8 w-[200px] pl-8 text-[10px] rounded-lg bg-muted/40 border-border/50 font-medium"
+                                        value={projectSearch}
+                                        onChange={(e) => setProjectSearch(e.target.value)}
+                                    />
+                                </div>
+                                <Button variant="outline" size="sm" className="h-8 px-2.5 rounded-lg border-border/50 text-muted-foreground">
+                                    <RefreshCcw size={12} />
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader className="bg-muted/30">
+                                    <TableRow className="hover:bg-transparent border-border/50">
+                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Project Name</TableHead>
+                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Department</TableHead>
+                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Status</TableHead>
+                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Timeline</TableHead>
+                                        <TableHead className="text-right text-[9px] font-bold uppercase tracking-widest h-10">Priority</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedProjects.length > 0 ? paginatedProjects.map((item, idx) => (
+                                        <TableRow key={item.id} className="hover:bg-muted/20 border-border/50 transition-colors">
+                                            <TableCell className="py-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] ${idx % 2 === 0 ? 'bg-indigo-500/10 text-indigo-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                                        {item.name?.charAt(0) || 'P'}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-bold truncate uppercase">{item.name}</p>
+                                                        <p className="text-[8px] text-muted-foreground uppercase font-medium">Ref: PJ-{2000 + item.id}</p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-[10px] font-bold text-muted-foreground uppercase">{item.department || 'GENERAL'}</TableCell>
+                                            <TableCell>
+                                                <StatusBadge status={item.status} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1.5 w-24">
+                                                    <div className="flex justify-between text-[8px] font-bold text-muted-foreground uppercase">
+                                                        <span>Progress</span>
+                                                        <span>{item.progress}%</span>
+                                                    </div>
+                                                    <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                                                        <motion.div initial={{ width: 0 }} animate={{ width: `${item.progress}%` }} transition={{ duration: 1 }} className={`h-full rounded-full ${item.progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${item.priority === 'High' ? 'bg-red-500/10 text-red-500' : 'bg-slate-500/10 text-slate-500'}`}>
+                                                    {item.priority || 'Normal'}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="py-10 text-center text-muted-foreground text-[10px] font-bold uppercase tracking-widest">
+                                                No projects found
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                            <div className="p-4 border-t border-border/50 flex items-center justify-between">
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase">Showing {paginatedProjects.length} of {filteredProjects.length} initiatives</p>
+                                <div className="flex gap-1">
+                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}><ChevronRight size={12} className="rotate-180" /></Button>
+                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md bg-primary/10 border-primary/20 text-primary font-bold text-[10px]">{currentPage}</Button>
+                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}><ChevronRight size={12} /></Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             )}
         </div>
