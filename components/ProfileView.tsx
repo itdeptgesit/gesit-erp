@@ -4,12 +4,44 @@ import React, { useState, useEffect } from 'react';
 import {
     User, Mail, Phone, MapPin, Shield, Key, Save,
     LogOut, Lock, Building2, Loader2, CheckCircle2,
-    Briefcase, ShieldCheck, Globe
+    Briefcase, ShieldCheck, Globe, Camera, Edit3, X,
+    Calendar, Trash2, Bell, Settings
 } from 'lucide-react';
 import { UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { useLanguage } from '../translations';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Badge } from './ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Textarea } from './ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "./ui/select";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "./ui/tabs";
+import { Switch } from "./ui/switch";
+import { Separator } from "./ui/separator";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "./ui/table";
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileViewProps {
     onLogout: () => void;
@@ -39,6 +71,56 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
+    // Real Session Info State
+    const [sessionInfo, setSessionInfo] = useState({
+        device: 'Desktop',
+        browser: 'Chrome',
+        ip: '0.0.0.0',
+        lastUpdated: ''
+    });
+
+    // Detect Current Session Metadata
+    useEffect(() => {
+        const detectSession = async () => {
+            // IP Detection
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                setSessionInfo(prev => ({ ...prev, ip: data.ip }));
+            } catch (err) {
+                setSessionInfo(prev => ({ ...prev, ip: '127.0.0.1' }));
+            }
+
+            // OS/Browser Detection
+            const ua = navigator.userAgent;
+            let device = "Windows PC";
+            if (ua.includes("Mac OS X")) device = "Macintosh (macOS)";
+            else if (ua.includes("iPhone")) device = "iPhone (iOS)";
+            else if (ua.includes("Android")) device = "Smartphone (Android)";
+            else if (ua.includes("Linux")) device = "Linux PC";
+
+            let browser = "Chrome";
+            if (ua.includes("Firefox")) browser = "Firefox";
+            else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+            else if (ua.includes("Edg")) browser = "Edge";
+
+            setSessionInfo(prev => ({
+                ...prev,
+                device,
+                browser,
+                lastUpdated: new Date().toLocaleString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                })
+            }));
+        };
+        detectSession();
+    }, []);
 
     // Sinkronisasi data saat user prop berubah atau mode edit aktif
     useEffect(() => {
@@ -113,8 +195,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         if (!file || !user) return;
 
         setIsUploading(true);
-        const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
-        const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+        const cloudName = 'dmr8bxdos';
+        const uploadPreset = 'gesit_erp_preset';
 
         const uploadData = new FormData();
         uploadData.append('file', file);
@@ -127,15 +209,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
             });
             const data = await response.json();
 
-            if (!response.ok) {
-                console.error('Cloudinary Error Detail:', data);
-                throw new Error(data.error?.message || 'Upload failed');
-            }
+            if (!response.ok) throw new Error(data.error?.message || 'Upload failed');
 
             if (data.secure_url) {
                 setAvatarUrl(data.secure_url);
 
-                // Auto sync to DB
                 await supabase
                     .from('user_accounts')
                     .update({ avatar_url: data.secure_url })
@@ -153,269 +231,313 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         }
     };
 
-    // Styling Kelas Bawaan
-    const inputClass = "w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none disabled:bg-slate-50 dark:disabled:bg-slate-900/40 disabled:text-slate-400 text-sm font-semibold shadow-sm";
-    const labelClass = "text-[10px] font-black text-slate-400 dark:text-slate-500 mb-2 block ml-1 uppercase tracking-widest";
-
     return (
-        <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
-            {/* Profil Header Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] shadow-2xl shadow-blue-500/5 overflow-hidden mb-10 relative group">
-                {/* Mesh Background */}
-                <div className="h-48 bg-slate-900 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-violet-800 opacity-90"></div>
-                    <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[140%] bg-blue-400 rounded-full blur-[100px] opacity-20 animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[140%] bg-indigo-400 rounded-full blur-[100px] opacity-20"></div>
-                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                </div>
-
-                <div className="px-10 pb-10">
-                    <div className="flex flex-col md:flex-row items-end gap-8 -mt-16 relative z-10">
-                        <div className="w-36 h-36 rounded-[2.5rem] bg-white dark:bg-slate-900 p-2 shadow-2xl border border-slate-100 dark:border-white/[0.05] relative group/avatar overflow-hidden">
-                            <div className="w-full h-full rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-5xl font-black text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 overflow-hidden relative shadow-inner">
-                                {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
-                                ) : (
-                                    userInitial
-                                )}
-
-                                {isUploading && (
-                                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-20">
-                                        <Loader2 size={32} className="text-white animate-spin" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <label className="absolute inset-x-2 bottom-2 h-10 bg-slate-900/80 backdrop-blur-md rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-all transform translate-y-2 group-hover/avatar:translate-y-0 flex items-center justify-center cursor-pointer text-white z-10 border border-white/10">
-                                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
-                                <Save size={16} className="mr-2" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Update</span>
-                            </label>
-                        </div>
-
-                        <div className="flex-1 mb-2">
-                            <div className="flex flex-wrap items-center gap-3 mb-2">
-                                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{formData.fullName || 'User'}</h1>
-                                <div className="px-4 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 border border-blue-400/20">
-                                    {userRole}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 font-bold text-[11px] uppercase tracking-widest">
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                    <Mail size={12} className="text-blue-500" /> {userEmail}
-                                </div>
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                    <ShieldCheck size={12} className="text-emerald-500" /> Document Verified
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 mb-2">
-                            {!isEditing ? (
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="px-8 py-3.5 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-blue-700 transition-all flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95"
-                                >
-                                    <User size={16} strokeWidth={3} /> Edit Profile
-                                </button>
-                            ) : (
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="px-8 py-3.5 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all active:scale-95"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="px-8 py-3.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-3 shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95"
-                                    >
-                                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} strokeWidth={3} />}
-                                        Save Changes
-                                    </button>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
+            {/* 1. Header Card - Direct from Image */}
+            <Card className="rounded-3xl border-slate-200 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 overflow-hidden mb-6">
+                <div className="p-8 sm:p-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                    {/* Avatar with Camera Icon Overlay */}
+                    <div className="relative group flex-shrink-0">
+                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-slate-800 shadow-lg relative bg-slate-100 dark:bg-slate-800">
+                            <Avatar className="w-full h-full rounded-none">
+                                <AvatarImage src={avatarUrl} className="object-cover" />
+                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 capitalize">
+                                    {userInitial}
+                                </AvatarFallback>
+                            </Avatar>
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                                    <Loader2 className="w-8 h-8 text-white animate-spin" />
                                 </div>
                             )}
                         </div>
+                        <label className="absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center cursor-pointer shadow-md border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all z-10">
+                            <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
+                            <Camera size={16} className="text-slate-600 dark:text-white" />
+                        </label>
+                    </div>
+
+                    {/* Identity Information */}
+                    <div className="flex-1 text-center md:text-left space-y-4">
+                        <div className="flex flex-col md:flex-row items-center gap-3">
+                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none capitalize">
+                                {formData.fullName || 'User Profile'}
+                            </h1>
+                            {userRole && (
+                                <Badge variant="secondary" className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-3 py-1 font-bold text-[10px] rounded-lg">
+                                    {userRole} Member
+                                </Badge>
+                            )}
+                        </div>
+
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">
+                            {formData.jobTitle || 'N/A Level Personnel'}
+                        </p>
+
+                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                                <Mail size={16} className="text-slate-400" />
+                                <span>{userEmail}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <MapPin size={16} className="text-slate-400" />
+                                <span>{formData.address || 'San Francisco, CA'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-slate-400" />
+                                <span>Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Edit Profile Button */}
+                    <div className="flex-shrink-0">
+                        <Button
+                            onClick={() => setIsEditing(!isEditing)}
+                            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-6 rounded-xl font-bold transition-all shadow-sm"
+                        >
+                            {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                        </Button>
                     </div>
                 </div>
-            </div>
+            </Card>
 
-            {saveMessage && (
-                <div className={`mb-6 p-4 rounded-2xl border flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${saveMessage.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400'}`}>
-                    {saveMessage.type === 'success' ? <CheckCircle2 size={18} /> : <ShieldCheck size={18} />}
-                    <span className="text-sm font-semibold">{saveMessage.text}</span>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Organization Details */}
-                <div className="space-y-8">
-                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-8 shadow-2xl shadow-blue-500/5 transition-all hover:shadow-blue-500/10">
-                        <div className="flex items-center gap-4 mb-8 border-b border-slate-50 dark:border-white/5 pb-6">
-                            <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner">
-                                <Building2 size={20} strokeWidth={2.5} />
-                            </div>
-                            <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Work Organization</h3>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="relative group">
-                                <label className={labelClass}>Company Name</label>
-                                <div className="relative">
-                                    <select
-                                        className={inputClass}
-                                        value={formData.company}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                    >
-                                        <option value="">-- Select Company --</option>
-                                        {companyList.map(c => (
-                                            <option key={c.id} value={c.name}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                    <Building2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <label className={labelClass}>Department Cluster</label>
-                                <div className="relative">
-                                    <select
-                                        className={inputClass}
-                                        value={formData.department}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                    >
-                                        <option value="">-- Select Dept --</option>
-                                        {departmentList.map((d, i) => (
-                                            <option key={i} value={d.name}>{d.name}</option>
-                                        ))}
-                                    </select>
-                                    <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <label className={labelClass}>Job Designation</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={formData.jobTitle}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                                        className={inputClass}
-                                        placeholder="e.g. Infrastructure Lead"
-                                    />
-                                    <Briefcase size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-8 shadow-2xl shadow-blue-500/5">
-                        <div className="flex items-center gap-4 mb-8 border-b border-slate-50 dark:border-white/5 pb-6">
-                            <div className="p-3 bg-slate-50 dark:bg-white/5 text-slate-500 rounded-2xl">
-                                <Key size={20} strokeWidth={2.5} />
-                            </div>
-                            <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Security Access</h3>
-                        </div>
-                        <button
-                            onClick={() => setIsPasswordModalOpen(true)}
-                            className="w-full py-4 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/10 transition-all flex items-center justify-center gap-3 active:scale-95 shadow-sm"
-                        >
-                            <Lock size={16} strokeWidth={2.5} /> Reset Passcode
-                        </button>
-                    </section>
+            {/* 2. Custom Tabs - Direct from Image */}
+            <Tabs defaultValue="account" className="w-full">
+                <div className="bg-slate-100/80 dark:bg-white/5 p-1.5 rounded-2xl mb-8 flex justify-center">
+                    <TabsList className="bg-transparent h-12 gap-2 w-full max-w-2xl px-1.5">
+                        <TabsTrigger value="personal" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Personal</TabsTrigger>
+                        <TabsTrigger value="account" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Account</TabsTrigger>
+                        <TabsTrigger value="security" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Security</TabsTrigger>
+                        <TabsTrigger value="notifications" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Notifications</TabsTrigger>
+                    </TabsList>
                 </div>
 
-                {/* Personal Information */}
-                <div className="lg:col-span-2 space-y-8">
-                    <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.05] p-10 shadow-2xl shadow-blue-500/5">
-                        <div className="flex items-center justify-between mb-10 border-b border-slate-50 dark:border-white/5 pb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner">
-                                    <User size={20} strokeWidth={2.5} />
+                {/* Account Tab Content - Primary Focus from Image */}
+                <TabsContent value="account">
+                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="p-8 sm:p-12 space-y-12">
+                            {/* Section: Header */}
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Account Settings</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your account preferences and security.</p>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Section: Account Status */}
+                            <div className="flex items-center justify-between group">
+                                <div className="space-y-1">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Status</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Your account is currently active</p>
                                 </div>
-                                <h3 className="font-black text-slate-900 dark:text-white text-[10px] uppercase tracking-[0.2em]">Personnel Identity</h3>
+                                <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-none px-4 py-1.5 font-bold rounded-lg shadow-none">
+                                    Active
+                                </Badge>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Section: Account Visibility */}
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Visibility</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Make your profile visible to other users</p>
+                                </div>
+                                <Switch defaultChecked className="data-[state=checked]:bg-slate-900 dark:data-[state=checked]:bg-blue-600" />
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Section: Data Export */}
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Data Export</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Download a copy of your data</p>
+                                </div>
+                                <Button variant="outline" className="rounded-xl font-bold h-12 px-8 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                                    Export Data
+                                </Button>
                             </div>
                         </div>
+                    </Card>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="md:col-span-2 relative">
-                                <label className={labelClass}>Full Legal Name</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
+                    {/* Danger Zone Card */}
+                    <Card className="mt-8 rounded-3xl border-rose-100 dark:border-rose-900/30 bg-white dark:bg-slate-900 overflow-hidden shadow-sm border">
+                        <div className="p-8 sm:p-12 space-y-8">
+                            <div>
+                                <h3 className="text-xl font-bold text-rose-600 mb-1">Danger Zone</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Irreversible and destructive actions</p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                                <div className="space-y-1 text-center sm:text-left">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Delete Account</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Permanently delete your account and all data</p>
+                                </div>
+                                <Button variant="destructive" className="rounded-xl font-bold h-14 px-8 bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200 dark:shadow-rose-900/10 flex items-center gap-2">
+                                    <Trash2 size={18} /> Delete Account
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                {/* Personal Tab - Adapting previous fields into new UI style */}
+                <TabsContent value="personal">
+                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="p-8 sm:p-12 space-y-10">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Personal Details</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Update your identity and contact information.</p>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Full Name</Label>
+                                    <Input
                                         value={formData.fullName}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                        className={inputClass}
-                                        placeholder="Enter full name"
+                                        className="h-14 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 font-bold focus:ring-slate-900 focus:ring-offset-2"
                                     />
-                                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
                                 </div>
-                            </div>
-
-                            <div className="relative">
-                                <label className={labelClass}>Primary Email</label>
-                                <div className="relative">
-                                    <input type="text" value={userEmail} disabled className={inputClass} />
-                                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                </div>
-                            </div>
-
-                            <div className="relative">
-                                <label className={labelClass}>Mobile Number</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Phone Terminal</Label>
+                                    <Input
                                         value={formData.phone}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className={inputClass}
-                                        placeholder="+62 ..."
+                                        className="h-14 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 font-bold"
                                     />
-                                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
                                 </div>
-                            </div>
-
-                            <div className="md:col-span-2 relative">
-                                <label className={labelClass}>Site Office Address</label>
-                                <div className="relative">
-                                    <textarea
-                                        rows={4}
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Worksite Address</Label>
+                                    <Textarea
                                         value={formData.address}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className={`${inputClass} pl-11 resize-none leading-relaxed`}
-                                        placeholder="Detail location of current assignment"
+                                        className="rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 py-4 font-bold min-h-[120px]"
                                     />
-                                    <MapPin size={16} className="absolute left-4 top-6 text-slate-400 dark:text-slate-600" />
+                                </div>
+                            </div>
+
+                            {isEditing && (
+                                <div className="flex justify-end pt-4">
+                                    <Button onClick={handleSave} disabled={isSaving} className="bg-slate-900 dark:bg-blue-600 text-white px-10 h-14 rounded-xl font-bold flex items-center gap-2">
+                                        {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+                                        Save Information
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                {/* Security Tab */}
+                <TabsContent value="security">
+                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="p-8 sm:p-12 space-y-10">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Security Protocols</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your passcode and accessibility keys.</p>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Change Passcode</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Update your security key for system access</p>
+                                </div>
+                                <Button
+                                    onClick={() => setIsPasswordModalOpen(true)}
+                                    variant="outline"
+                                    className="rounded-xl font-bold h-14 px-8 border-slate-200 dark:border-white/10 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center gap-2"
+                                >
+                                    <Lock size={18} /> Update Key
+                                </Button>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Session Control</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Sign out from all active terminals</p>
+                                </div>
+                                <Button
+                                    onClick={onLogout}
+                                    variant="ghost"
+                                    className="rounded-xl font-bold h-14 px-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center gap-2"
+                                >
+                                    <LogOut size={18} /> Terminate All Sessions
+                                </Button>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Section: Active Sessions / Login Devices - Updated to Match Provided Image Style */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">Active Sessions</h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs text-opacity-70 font-medium">Manage and secure your active login sessions across devices.</p>
+                                </div>
+
+                                <div className="border border-slate-100 dark:border-white/5 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
+                                    <Table>
+                                        <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b-0">
+                                            <TableRow className="hover:bg-transparent border-b">
+                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Device</TableHead>
+                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</TableHead>
+                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Last Updated</TableHead>
+                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Application</TableHead>
+                                                <TableHead className="py-4 px-6 text-right"></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {/* Real Session Row - Current Device */}
+                                            <TableRow className="border-b border-slate-100/50 dark:border-white/5 bg-blue-50/20 dark:bg-blue-600/5 hover:bg-blue-50/30 dark:hover:bg-blue-600/10 transition-colors">
+                                                <TableCell className="py-6 px-6">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-slate-900 dark:text-white text-sm">{sessionInfo.device}</span>
+                                                            <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm">Current</Badge>
+                                                        </div>
+                                                        <span className="text-xs text-slate-400 font-medium">{sessionInfo.browser}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{sessionInfo.ip}</TableCell>
+                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{sessionInfo.lastUpdated}</TableCell>
+                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">GESIT WORK</TableCell>
+                                                <TableCell className="py-6 px-6 text-right">
+                                                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
+                                                        Active Now
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             </div>
                         </div>
-                    </section>
+                    </Card>
+                </TabsContent>
 
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6 px-4 py-8 bg-slate-50 dark:bg-white/[0.02] rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner group">
-                                <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
+                <TabsContent value="notifications">
+                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="p-8 sm:p-12 space-y-10 text-center py-20">
+                            <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Bell size={32} className="text-slate-300" />
                             </div>
-                            <div className="flex flex-col">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Authentication Logged</p>
-                                <p className="text-xs text-slate-900 dark:text-white font-bold">
-                                    {user?.lastLogin ? new Date(user.lastLogin).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Session Active'}
-                                </p>
-                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Notification Configurer</h3>
+                            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This module is currently initializing. Alert synchronization preferences will be available shortly.</p>
                         </div>
-                        <button
-                            onClick={onLogout}
-                            className="bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-3 backdrop-blur-sm"
-                        >
-                            <LogOut size={16} /> Terminate Session
-                        </button>
-                    </div>
-                </div>
-            </div>
+                    </Card>
+                </TabsContent>
+            </Tabs>
 
             <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
         </div>

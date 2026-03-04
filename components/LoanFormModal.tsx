@@ -102,8 +102,8 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({
     const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 block ml-0.5 uppercase tracking-wider";
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-visible animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-xl max-h-[95vh] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="px-6 py-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
@@ -121,7 +121,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-8">
                             <div className="relative">
