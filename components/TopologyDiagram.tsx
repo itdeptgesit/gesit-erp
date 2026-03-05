@@ -1099,53 +1099,66 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             )}
 
             {/* Infrastructure Legend */}
-            <div className="absolute top-24 left-6 z-[90] bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-700 hidden lg:block">
-                <div className="flex flex-col gap-4">
+            <div className="absolute top-24 left-6 z-[90] bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-700 hidden lg:block w-56">
+                <div className="flex flex-col gap-6">
                     <div>
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">Carrier Tiers</span>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                <span className="text-[9px] font-bold text-slate-300">ISP Backbone</span>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-3 bg-blue-500 rounded-full" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Network Map Key</span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[9px] font-bold text-slate-300">ISP Uplink</span>
+                                </div>
+                                <span className="text-[8px] font-mono text-slate-500">1 Gbps+</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                                <span className="text-[9px] font-bold text-slate-300">Intranet Link</span>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                    <span className="text-[9px] font-bold text-slate-300">Distribution</span>
+                                </div>
+                                <span className="text-[8px] font-mono text-slate-500">Trunk</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                    <span className="text-[9px] font-bold text-rose-500">Overload</span>
+                                </div>
+                                <span className="text-[8px] font-mono text-rose-500">{'>'}85%</span>
                             </div>
                         </div>
                     </div>
+
+                    <div className="h-[1px] bg-white/5 w-full" />
+
                     <div>
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">Logic Load (Heatmap)</span>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 opacity-60">
-                                <div className="w-3 h-0.5 rounded-full bg-slate-500" />
-                                <span className="text-[8px] font-bold text-slate-400">Normal (0-60%)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-0.5 rounded-full bg-amber-500" />
-                                <span className="text-[9px] font-bold text-amber-500/80">Heavy (60-85%)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-0.5 rounded-full bg-rose-500 animate-pulse" />
-                                <span className="text-[9px] font-bold text-rose-500">Critical ({'>'}85%)</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-2">VLAN Segregation</span>
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-3">VLAN Segregation</span>
+                        <div className="grid grid-cols-1 gap-2.5">
                             {[
-                                { id: 10, name: 'MGMT', color: 'bg-cyan-400' },
-                                { id: 20, name: 'OFFICE', color: 'bg-amber-400' },
-                                { id: 30, name: 'CCTV', color: 'bg-pink-400' },
-                                { id: 60, name: 'IOT', color: 'bg-purple-400' }
+                                { id: 10, name: 'MGMT / IT', color: 'bg-cyan-400', label: 'VLAN 10' },
+                                { id: 20, name: 'OPERATIONAL', color: 'bg-amber-400', label: 'VLAN 20' },
+                                { id: 30, name: 'IP CAMERA', color: 'bg-pink-400', label: 'VLAN 30' },
+                                { id: 60, name: 'IOT / SMART', color: 'bg-purple-400', label: 'VLAN 60' }
                             ].map(v => (
-                                <div key={v.id} className="flex items-center gap-2">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${v.color}`} />
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase">{v.name}</span>
+                                <div key={v.id} className="flex items-center justify-between group cursor-pointer">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${v.color} group-hover:scale-125 transition-transform`} />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase group-hover:text-white transition-colors">{v.name}</span>
+                                    </div>
+                                    <span className="text-[8px] font-mono text-slate-600 font-bold">{v.label}</span>
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="mt-2 p-3 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Info size={10} className="text-blue-400" />
+                            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Map Status</span>
+                        </div>
+                        <p className="text-[8px] text-slate-500 leading-relaxed font-bold uppercase tracking-tight">Sync active with Supabase Realtime Hub.</p>
                     </div>
                 </div>
             </div>
@@ -1164,22 +1177,34 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     }}
                 >
                     {/* Layer Tier Labels */}
-                    <div className="absolute left-[850px] top-[1000px] flex flex-col pointer-events-none space-y-[150px] opacity-10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-[1px] bg-emerald-500" />
-                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.5em]">L1 Core Gateway</span>
+                    <div className="absolute left-[850px] top-[1000px] flex flex-col pointer-events-none space-y-[200px] opacity-20">
+                        <div className="flex items-center gap-6 group">
+                            <div className="w-24 h-[2px] bg-gradient-to-r from-emerald-500 to-transparent" />
+                            <div>
+                                <span className="text-[12px] font-black text-emerald-500 uppercase tracking-[0.6em] block">L1 • Edge Gateway</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">External Connectivity & Firewall</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-[1px] bg-blue-500" />
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">L2 Core Switching</span>
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-[2px] bg-gradient-to-r from-blue-500 to-transparent" />
+                            <div>
+                                <span className="text-[12px] font-black text-blue-500 uppercase tracking-[0.6em] block">L2 • Core Infrastructure</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">High-Speed Backbone Switching</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-[1px] bg-indigo-500" />
-                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.5em]">L3 Access Layer</span>
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-[2px] bg-gradient-to-r from-indigo-500 to-transparent" />
+                            <div>
+                                <span className="text-[12px] font-black text-indigo-500 uppercase tracking-[0.6em] block">L3 • Distribution Layer</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Mid-Tier Branching & Segmenting</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-[1px] bg-slate-500" />
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">Terminal Assets</span>
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-[2px] bg-gradient-to-r from-slate-500 to-transparent" />
+                            <div>
+                                <span className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] block">L4 • Access Endpoint</span>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Terminal Devices & AP Management</span>
+                            </div>
                         </div>
                     </div>
                     <DiagramNode

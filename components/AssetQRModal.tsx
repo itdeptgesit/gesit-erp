@@ -71,27 +71,32 @@ export const AssetQRModal: React.FC<AssetQRModalProps> = ({ isOpen, onClose, ass
         <div className="p-6 flex flex-col items-center">
           {/* Physical Label Simulation */}
           <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-6 bg-white flex flex-col items-center w-full max-w-[280px] shadow-sm relative">
-            <div className="flex flex-col items-center gap-1 opacity-40 mb-6">
+            {/* Header Labels */}
+            <div className="flex flex-col items-center gap-1 opacity-50 mb-7">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck size={10} className="text-slate-900" />
-                <span className="text-[7px] font-bold text-slate-900 uppercase tracking-widest">Inventory Control</span>
+                <ShieldCheck size={12} className="text-slate-900" />
+                <span className="text-[8px] font-black text-slate-900 uppercase tracking-widest">Inventory Control</span>
               </div>
-              <span className="text-[7px] font-bold text-slate-900 uppercase tracking-widest">Registry v4.3</span>
+              <span className="text-[7px] font-bold text-slate-500 uppercase tracking-[0.2em]">Registry v4.3</span>
             </div>
 
-            <div className="flex flex-col items-center w-full gap-6 mb-6">
-              <div className="bg-slate-900 px-4 py-1.5 rounded-lg shadow-sm z-10">
-                <h4 className="font-mono font-bold text-base text-white tracking-[0.2em] leading-none">{asset.assetId}</h4>
-              </div>
-
-              <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-sm w-full max-w-[180px] aspect-square flex items-center justify-center relative z-0">
-                <canvas ref={canvasRef} className="rounded-md w-full h-full" />
-              </div>
+            {/* Asset ID Badge */}
+            <div className="bg-slate-900 px-5 py-2.5 rounded-xl shadow-md mb-6 relative">
+              <h4 className="font-mono font-black text-base text-white tracking-[0.2em] leading-none">{asset.assetId}</h4>
+              {/* Subtle design element */}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-blue-500 rounded-full blur-[2px] opacity-50"></div>
             </div>
 
-            <div className="text-center mt-2">
-              <p className="font-bold text-sm text-slate-900 uppercase leading-tight mb-1 tracking-tight px-2">{asset.item}</p>
-              <p className="text-[9px] font-semibold text-slate-500 truncate max-w-[200px] uppercase tracking-wider">{asset.company || 'IT OPERATIONS'}</p>
+            {/* QR Code Canvas Container */}
+            <div className="p-4 bg-white rounded-2xl border-2 border-slate-50 shadow-inner w-full max-w-[190px] aspect-square flex items-center justify-center mb-6 ring-8 ring-slate-50/50">
+              <canvas ref={canvasRef} className="rounded-lg w-full h-full" />
+            </div>
+
+            {/* Asset Details */}
+            <div className="text-center w-full space-y-1.5 px-2">
+              <p className="font-black text-[13px] text-slate-900 uppercase leading-snug tracking-tight line-clamp-2">{asset.item}</p>
+              <div className="h-0.5 w-8 bg-slate-200 mx-auto rounded-full"></div>
+              <p className="text-[9px] font-bold text-slate-400 truncate uppercase tracking-[0.15em]">{asset.company || 'IT OPERATIONS'}</p>
             </div>
           </div>
 
