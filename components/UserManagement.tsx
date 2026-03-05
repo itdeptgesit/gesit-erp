@@ -241,9 +241,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                   </TableCell>
                   <TableCell className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></TableCell>
                   <TableCell className="px-6 py-4">
-                    <div className="space-y-1">
-                      {user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[9px] font-bold"><ShieldCheck size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
-                      {user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold"><Target size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-[10px] font-bold">
+                        <Clock size={10} /> {formatRelativeTime(user.lastLogin)}
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[8px] font-black uppercase tracking-tighter"><ShieldCheck size={9} className="shrink-0" /> SV: {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
+                        {user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-tighter"><Target size={9} className="shrink-0" /> MG: {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="px-6 py-4 text-center">
