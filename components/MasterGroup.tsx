@@ -11,6 +11,9 @@ import { trackActivity } from '../lib/auditLogger';
 import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface MasterGroupProps {
     currentUser: UserAccount | null;
@@ -133,75 +136,70 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
                     <div className="relative max-w-md">
-                        <input
-                            type="text"
+                        <Input
                             placeholder="Search group..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 font-medium transition-all text-slate-900 dark:text-slate-200"
+                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
-                            <tr>
-                                <th className="px-6 py-4 w-12 text-center">ID</th>
-                                <th className="px-6 py-4">Group Name</th>
-                                <th className="px-6 py-4">Description</th>
-                                <th className="px-6 py-4">Accessible Menus</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <div className="overflow-x-auto">
+                    <Table className="w-full">
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                <TableHead className="w-16 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">ID</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Group Name</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Accessible Menus</TableHead>
+                                <TableHead className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {isLoading ? (
-                                <tr><td colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                                <TableRow><TableCell colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></TableCell></TableRow>
                             ) : filteredGroups.length === 0 ? (
-                                <tr><td colSpan={5} className="text-center py-20 text-slate-300 dark:text-slate-700 text-xs font-medium">No group records found.</td></tr>
+                                <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-500 font-medium">No group records found.</TableCell></TableRow>
                             ) : filteredGroups.map((group) => (
-                                <tr key={group.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/50 transition-all group">
-                                    <td className="px-6 py-4 text-slate-300 dark:text-slate-700 font-mono text-xs text-center">{group.id}</td>
-                                    <td className="px-6 py-4">
+                                <TableRow key={group.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                    <TableCell className="text-slate-500 font-mono text-xs text-center">{group.id}</TableCell>
+                                    <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
                                                 <Layers size={16} />
                                             </div>
-                                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-tight">{group.name}</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{group.name}</span>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">{group.description}</p>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    </TableCell>
+                                    <TableCell>
+                                        <p className="text-xs font-medium text-slate-500 leading-relaxed max-w-xs">{group.description}</p>
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex flex-wrap gap-1 max-w-xs">
                                             {group.allowedMenus.slice(0, 4).map(m => (
-                                                <span key={m} className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 rounded-lg text-[9px] uppercase font-black">
+                                                <Badge key={m} variant="outline" className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 text-[9px] uppercase font-bold">
                                                     {m}
-                                                </span>
+                                                </Badge>
                                             ))}
                                             {group.allowedMenus.length > 4 && (
-                                                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-bold">
+                                                <Badge variant="outline" className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-[9px] font-bold">
                                                     +{group.allowedMenus.length - 4} More
-                                                </span>
+                                                </Badge>
                                             )}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
+                                    </TableCell>
+                                    <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(group)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Edit Permissions">
-                                                <ShieldCheck size={16} />
-                                            </button>
-                                            <button onClick={() => setDeleteGroup(group)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all hover:bg-rose-50 dark:hover:bg-rose-900/20">
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(group)} className="h-8 w-8 text-slate-500 hover:text-blue-600"><ShieldCheck size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteGroup(group)} className="h-8 w-8 text-slate-500 hover:text-rose-600"><Trash2 size={14} /></Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
 

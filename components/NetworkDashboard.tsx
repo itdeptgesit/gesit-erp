@@ -22,6 +22,9 @@ import { DeviceProfileDrawer } from './DeviceProfileDrawer';
 import { NetworkSummaryBar } from './NetworkSummaryBar';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -589,7 +592,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             <button key={tab.id} onClick={() => startTransition(() => setActiveTab(tab.id as any))} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'} ${isPending ? 'opacity-50 grayscale' : ''}`}><tab.icon size={12} />{tab.label}</button>
                         ))}
                     </div>
-                    <div className="relative flex-1 md:w-64"><input type="text" placeholder="Filter nodes..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-slate-800 dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>
+                    <div className="relative flex-1 md:w-64"><Input placeholder="Filter nodes..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-slate-800 dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>
                 </div>
                 <div className="p-0 flex-1 min-h-[600px] relative">
                     {isLoading ? (
@@ -634,15 +637,37 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
                             ) : (
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800"><tr><th className="px-6 py-4">Node Identity</th><th className="px-6 py-4">IP Config</th><th className="px-6 py-4">Site Location</th><th className="px-6 py-4 text-center">Load</th><th className="px-6 py-4 text-center">Protocol</th></tr></thead>
-                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">{filteredSwitches.map(sw => (
-                                            <tr key={sw.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"><td className="px-6 py-4"><p className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-tight">{sw.name}</p><p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1 tracking-widest">{sw.model}</p></td><td className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 text-[11px] font-bold">{sw.ip}</td><td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase">{sw.location}</td><td className="px-6 py-4 text-center"><span className={`px-2 py-0.5 rounded text-[9px] font-black border ${sw.ports.filter(p => p.status === PortStatus.ACTIVE).length > sw.totalPorts * 0.8 ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100'}`}>{sw.ports.filter(p => p.status === PortStatus.ACTIVE).length} / {sw.totalPorts}</span></td><td className="px-6 py-4"><div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {canManage && <button onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="p-1.5 text-slate-400 hover:text-blue-600"><Pencil size={14} /></button>}
-                                                {canDelete && <button onClick={() => setDeleteDevice(sw)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></button>}
-                                            </div></td></tr>
-                                        ))}</tbody>
-                                    </table>
+                                    <Table className="w-full">
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Node Identity</TableHead>
+                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">IP Config</TableHead>
+                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Site Location</TableHead>
+                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Load</TableHead>
+                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Protocol</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                            {filteredSwitches.map(sw => (
+                                                <TableRow key={sw.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
+                                                    <TableCell className="px-6 py-4"><p className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-tight">{sw.name}</p><p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1 tracking-widest">{sw.model}</p></TableCell>
+                                                    <TableCell className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 text-[11px] font-bold">{sw.ip}</TableCell>
+                                                    <TableCell className="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase">{sw.location}</TableCell>
+                                                    <TableCell className="px-6 py-4 text-center">
+                                                        <Badge variant="outline" className={`px-2 py-0.5 rounded text-[9px] font-black border ${sw.ports.filter(p => p.status === PortStatus.ACTIVE).length > sw.totalPorts * 0.8 ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100'}`}>
+                                                            {sw.ports.filter(p => p.status === PortStatus.ACTIVE).length} / {sw.totalPorts}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-4">
+                                                        <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="h-8 w-8 text-slate-400 hover:text-blue-600"><Pencil size={14} /></Button>}
+                                                            {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="h-8 w-8 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></Button>}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
                         </div>

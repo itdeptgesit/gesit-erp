@@ -47,6 +47,7 @@ import { Button } from "@/components/ui/button";
 import { FileSpreadsheet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Input } from "@/components/ui/input";
 
 
 /* ===========================
@@ -777,7 +778,7 @@ export const ExtensionDirectory = ({
             {variant === 'integrated' && (
                 <div className="mb-8">
                     <PageHeader
-                        title="Corporate Directory"
+                        title="Phone Directory"
                         description="GESIT Companies Network Registry • Floors 26 & 27"
                     />
                 </div>
@@ -786,7 +787,7 @@ export const ExtensionDirectory = ({
             {/* Dashboard Header (Admin/Standalone) */}
             {variant === 'standalone' && (
                 <div className="mb-6 pt-4">
-                    <PageHeader title="Extension Directory" description="The City Tower & Infrastructure Registry">
+                    <PageHeader title="Phone Directory" description="The City Tower & Infrastructure Registry">
                         <Button variant="outline" onClick={handleExportExcel}>
                             <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
                         </Button>
@@ -847,12 +848,11 @@ export const ExtensionDirectory = ({
                     {/* Search Bar */}
                     <div className="relative flex-1 md:w-80 group">
                         <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
-                        <input
-                            type="text"
+                        <Input
                             placeholder="Find name or extension..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl text-xs font-bold text-foreground dark:text-slate-100 placeholder:text-muted-foreground/50 dark:placeholder:text-slate-500 focus:ring-0 outline-none transition-all min-w-0"
+                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl font-bold focus-visible:ring-0 outline-none transition-all min-w-0 shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50 dark:placeholder:text-slate-500"
                         />
                         {searchTerm && (
                             <button
@@ -1056,10 +1056,10 @@ export const ExtensionDirectory = ({
             {/* Admin Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-500">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 relative">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-lg overflow-hidden border border-slate-200 dark:border-slate-800 relative">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/20">
+                                <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
                                     {editingExt ? <Pencil size={18} /> : <Plus size={18} />}
                                 </div>
                                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -1071,12 +1071,12 @@ export const ExtensionDirectory = ({
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="p-8 space-y-5">
+                        <form onSubmit={handleSave} className="p-6 space-y-4">
                             <div>
                                 <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Identity Name</label>
-                                <input
+                                <Input
                                     required
-                                    className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-700/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                    className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:bg-white dark:focus-visible:bg-slate-700/50 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 transition-all shadow-inner"
                                     value={formData.name}
                                     placeholder="Full name..."
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -1141,8 +1141,8 @@ export const ExtensionDirectory = ({
                                             </div>
                                         </div>
 
-                                        <input
-                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-700/50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                                        <Input
+                                            className="w-full px-4 border-slate-200 dark:border-slate-700 text-xs font-medium focus-visible:bg-white dark:focus-visible:bg-slate-700/50 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all"
                                             value={formData.photo_url || ''}
                                             placeholder="https://..."
                                             onChange={e => setFormData({ ...formData, photo_url: e.target.value })}
@@ -1155,9 +1155,9 @@ export const ExtensionDirectory = ({
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Extension Code</label>
-                                    <input
+                                    <Input
                                         required
-                                        className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                        className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-black text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                         value={formData.ext}
                                         placeholder="Ext"
                                         onChange={e => setFormData({ ...formData, ext: e.target.value })}
@@ -1166,7 +1166,7 @@ export const ExtensionDirectory = ({
                                 <div>
                                     <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Floor Level</label>
                                     <select
-                                        className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                        className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
                                         value={formData.floor}
                                         onChange={e => setFormData({ ...formData, floor: parseInt(e.target.value) })}
                                     >
@@ -1177,9 +1177,9 @@ export const ExtensionDirectory = ({
                             </div>
                             <div>
                                 <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Departmental Cluster</label>
-                                <input
+                                <Input
                                     required
-                                    className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                    className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.dept}
                                     placeholder="Cluster..."
                                     onChange={e => setFormData({ ...formData, dept: e.target.value })}
@@ -1187,38 +1187,37 @@ export const ExtensionDirectory = ({
                             </div>
                             <div>
                                 <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Role Designation</label>
-                                <input
-                                    className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
+                                <Input
+                                    className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value })}
                                 />
                             </div>
                             <div>
                                 <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Pin Code</label>
-                                <input
-                                    className="w-full px-5 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner font-mono"
+                                <Input
+                                    className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner font-mono"
                                     value={formData.pin}
                                     placeholder="Enter pin..."
                                     onChange={e => setFormData({ ...formData, pin: e.target.value })}
                                 />
                             </div>
 
-                            <div className="flex gap-4 pt-4">
-                                <button
+                            <div className="flex gap-3 pt-4 justify-end">
+                                <Button
                                     type="button"
+                                    variant="outline"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 px-6 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                                 >
                                     Cancel
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-6 py-4 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                    {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : <Check size={16} className="mr-2" />}
                                     {editingExt ? 'Save Changes' : 'Create Entry'}
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>

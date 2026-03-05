@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
@@ -759,7 +760,48 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="py-24 text-center"><RefreshCcw className="animate-spin text-primary mx-auto" size={32} /></TableCell></TableRow>
+                                Array.from({ length: 10 }).map((_, idx) => (
+                                    <TableRow key={idx}>
+                                        <TableCell className="py-5">
+                                            <div className="flex flex-col gap-2">
+                                                <Skeleton className="h-5 w-24 rounded-md" />
+                                                <Skeleton className="h-3 w-16" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <div className="flex flex-col gap-2 max-w-[280px]">
+                                                <Skeleton className="h-4 w-full" />
+                                                <div className="flex gap-2">
+                                                    <Skeleton className="h-4 w-16 rounded-full" />
+                                                    <Skeleton className="h-4 w-12 rounded-full" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-5 text-right flex flex-col items-end gap-2">
+                                            <Skeleton className="h-4 w-24" />
+                                            <Skeleton className="h-3 w-16" />
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <div className="flex flex-col gap-2">
+                                                <Skeleton className="h-3 w-20" />
+                                                <Skeleton className="h-3 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <Skeleton className="h-6 w-16 rounded-full" />
+                                        </TableCell>
+                                        <TableCell className="py-5 flex justify-center">
+                                            <Skeleton className="h-8 w-8 rounded-full" />
+                                        </TableCell>
+                                        <TableCell className="py-5 pr-8">
+                                            <div className="flex justify-end gap-2">
+                                                <Skeleton className="h-8 w-8 rounded-xl" />
+                                                <Skeleton className="h-8 w-8 rounded-xl" />
+                                                <Skeleton className="h-8 w-8 rounded-xl" />
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
                             ) : filteredRecords.length === 0 ? (
                                 <TableRow><TableCell colSpan={7} className="py-32 text-center text-muted-foreground font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</TableCell></TableRow>
                             ) : paginatedRecords.map(record => (

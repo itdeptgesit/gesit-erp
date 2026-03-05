@@ -10,6 +10,8 @@ import { StatCard } from './StatCard';
 import { UserAccount } from '../types';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface FileItem { id: string; name: string; type: 'pdf' | 'doc' | 'sheet' | 'image' | 'folder'; updatedAt: string; gdriveUrl: string; category?: string; }
 
@@ -106,13 +108,10 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 <StatCard label="RESOURCES" value={files.filter(f => f.type === 'sheet' || f.type === 'image').length} subValue="Sheets & Diagrams" icon={FileSpreadsheet} color="emerald" />
             </div>
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
-                <div className="relative flex-1 w-full"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" /><input type="text" placeholder="Filter library items..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/5 transition-all font-bold dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+                <div className="relative flex-1 w-full"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
+                    <Input type="text" placeholder="Filter library items..." className="w-full pl-11 pr-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold dark:text-slate-200 focus-visible:ring-0 shadow-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="flex gap-2 w-full md:w-auto">
-                    {canManage && (
-                        <button onClick={() => { setEditingFile(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/10 whitespace-nowrap">
-                            <Plus size={14} /> Upload Link
-                        </button>
-                    )}
+
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                         <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}><LayoutGrid size={16} /></button>
                         <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}><List size={16} /></button>
@@ -137,18 +136,45 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                     </div>
                 ))}</div>
             ) : (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
+                <div className="bg-card dark:bg-slate-900/20 rounded-2xl border border-border/10 dark:border-white/[0.03] overflow-hidden shadow-sm flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold text-[9px] uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800"><tr><th className="px-6 py-4">Document Title</th><th className="px-6 py-4">Cluster</th><th className="px-6 py-4">Registry Date</th><th className="px-6 py-4 text-center">Actions</th></tr></thead>
-                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">{paginatedFiles.map(f => (
-                                <tr key={f.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800 transition-all group"><td className="px-6 py-4"><div className="flex items-center gap-3"><div className="text-slate-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors">{f.type === 'sheet' ? <FileSpreadsheet size={16} /> : <FileText size={16} />}</div><span className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight">{f.name}</span></div></td><td className="px-6 py-4"><span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700">{f.category || 'Global'}</span></td><td className="px-6 py-4 font-mono text-[10px] text-slate-400 font-bold">{f.updatedAt}</td><td className="px-6 py-4"><div className="flex justify-center gap-2 opacity-40 group-hover:opacity-100 transition-all">
-                                    <a href={f.gdriveUrl} target="_blank" rel="noreferrer" className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg"><ExternalLink size={16} /></a>
-                                    {isAdmin && <button onClick={() => { setEditingFile(f); setIsModalOpen(true); }} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg"><Pencil size={16} /></button>}
-                                    {canDelete && <button onClick={() => setDeleteFile(f)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg"><Trash2 size={16} /></button>}
-                                </div></td></tr>
-                            ))}</tbody>
-                        </table>
+                        <Table>
+                            <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+                                <TableRow className="border-border/10">
+                                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Document Title</TableHead>
+                                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Cluster</TableHead>
+                                    <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Registry Date</TableHead>
+                                    <TableHead className="text-center font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedFiles.map(f => (
+                                    <TableRow key={f.id} className="group transition-colors border-border/10 dark:border-white/[0.03] hover:bg-primary/5">
+                                        <TableCell className="py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-muted-foreground/70 group-hover:text-primary transition-colors">{f.type === 'sheet' ? <FileSpreadsheet size={16} /> : <FileText size={16} />}</div>
+                                                <span className="font-bold text-foreground text-sm tracking-tight">{f.name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-4">
+                                            <span className="text-[10px] font-bold uppercase text-muted-foreground/80 bg-muted/50 dark:bg-slate-800/40 px-2 py-0.5 rounded border border-border/10">{f.category || 'Global'}</span>
+                                        </TableCell>
+                                        <TableCell className="py-4 font-mono text-[10px] font-bold text-muted-foreground">
+                                            {f.updatedAt}
+                                        </TableCell>
+                                        <TableCell className="text-center py-4">
+                                            <div className="flex justify-center gap-2 opacity-40 group-hover:opacity-100 transition-all">
+                                                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
+                                                    <a href={f.gdriveUrl} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a>
+                                                </Button>
+                                                {isAdmin && <Button variant="ghost" size="icon" onClick={() => { setEditingFile(f); setIsModalOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil size={16} /></Button>}
+                                                {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteFile(f)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 size={16} /></Button>}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                     <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredFiles.length} documents)</p>

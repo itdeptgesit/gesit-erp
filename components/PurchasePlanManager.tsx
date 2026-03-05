@@ -19,6 +19,7 @@ import { FileSpreadsheet } from 'lucide-react';
 import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface PurchasePlanManagerProps {
@@ -257,12 +258,44 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                     <th className="px-6 py-5 text-center">Protocol</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">{loading && !paginatedPlans.length ? (<tr><td colSpan={6} className="py-24 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={28} /></td></tr>) : paginatedPlans.length === 0 ? (<tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">Registry empty.</td></tr>) : paginatedPlans.map(plan => {
-                                const isMyTurn = isMyTurnToApprove(plan);
-                                const requesterProfile = getRequesterProfile(plan.requester);
-                                return (<tr key={plan.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-top ${isMyTurn ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}><td className="px-6 py-5"><div className="flex flex-col max-w-xs"><span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight mb-1 leading-tight">{plan.item}</span><span className="text-[10px] text-slate-400 dark:text-slate-600 line-clamp-1 italic">{plan.specs}</span></div></td><td className="px-6 py-5 text-center font-mono text-[11px] text-slate-500 dark:text-slate-400 font-bold">{plan.quantity}x</td><td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatIDR(plan.totalPrice)}</td><td className="px-6 py-5">{getStatusDisplay(plan)}</td><td className="px-6 py-5"><div className="flex flex-col"><div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{requesterProfile?.fullName || plan.requester}</p><Fingerprint size={10} className="text-blue-500 opacity-20" /></div><p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 font-mono">{plan.requestDate}</p></div></td><td className="px-6 py-5 text-center"><div className="flex items-center justify-center gap-1.5"><button onClick={() => { const profile = getRequesterProfile(plan.requester); setApproverNames({ spv: allUsers.find(u => u.id.toString() === profile?.supervisorId)?.fullName || '', manager: allUsers.find(u => u.id.toString() === profile?.managerId)?.fullName || '' }); setSelectedRequesterProfile(profile); setSelectedPlan(plan); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg" title="View Registry Entry"><Eye size={16} /></button>
-                                    {isMyTurn ? (<><button onClick={() => handleApprove(plan)} disabled={isActionLoading} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90" title="Authorize"><Check size={16} strokeWidth={3} /></button><button onClick={() => setRejectTarget(plan)} disabled={isActionLoading} className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90" title="Deny"><X size={16} strokeWidth={3} /></button></>) : (canDelete && <button onClick={() => setDeletePlan(plan)} className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100" title="Purge Node"><Trash2 size={16} /></button>)}</div></td></tr>);
-                            })}</tbody>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                {loading && !paginatedPlans.length ? (
+                                    Array.from({ length: 10 }).map((_, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-2 max-w-xs">
+                                                    <Skeleton className="h-4 w-3/4 rounded-md" />
+                                                    <Skeleton className="h-3 w-1/2" />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5 text-center flex justify-center">
+                                                <Skeleton className="h-4 w-8 rounded-md" />
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <Skeleton className="h-4 w-20 ml-auto rounded-md" />
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <Skeleton className="h-4 w-24 rounded-full" />
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-2">
+                                                    <Skeleton className="h-3 w-24" />
+                                                    <Skeleton className="h-3 w-16" />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5 flex justify-center">
+                                                <Skeleton className="h-8 w-8 rounded-lg" />
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : paginatedPlans.length === 0 ? (
+                                    <tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">Registry empty.</td></tr>
+                                ) : paginatedPlans.map(plan => {
+                                    const isMyTurn = isMyTurnToApprove(plan);
+                                    const requesterProfile = getRequesterProfile(plan.requester);
+                                    return (<tr key={plan.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-top ${isMyTurn ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}><td className="px-6 py-5"><div className="flex flex-col max-w-xs"><span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight mb-1 leading-tight">{plan.item}</span><span className="text-[10px] text-slate-400 dark:text-slate-600 line-clamp-1 italic">{plan.specs}</span></div></td><td className="px-6 py-5 text-center font-mono text-[11px] text-slate-500 dark:text-slate-400 font-bold">{plan.quantity}x</td><td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatIDR(plan.totalPrice)}</td><td className="px-6 py-5">{getStatusDisplay(plan)}</td><td className="px-6 py-5"><div className="flex flex-col"><div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{requesterProfile?.fullName || plan.requester}</p><Fingerprint size={10} className="text-blue-500 opacity-20" /></div><p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 font-mono">{plan.requestDate}</p></div></td><td className="px-6 py-5 text-center"><div className="flex items-center justify-center gap-1.5"><button onClick={() => { const profile = getRequesterProfile(plan.requester); setApproverNames({ spv: allUsers.find(u => u.id.toString() === profile?.supervisorId)?.fullName || '', manager: allUsers.find(u => u.id.toString() === profile?.managerId)?.fullName || '' }); setSelectedRequesterProfile(profile); setSelectedPlan(plan); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg" title="View Registry Entry"><Eye size={16} /></button>
+                                        {isMyTurn ? (<><button onClick={() => handleApprove(plan)} disabled={isActionLoading} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90" title="Authorize"><Check size={16} strokeWidth={3} /></button><button onClick={() => setRejectTarget(plan)} disabled={isActionLoading} className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90" title="Deny"><X size={16} strokeWidth={3} /></button></>) : (canDelete && <button onClick={() => setDeletePlan(plan)} className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100" title="Purge Node"><Trash2 size={16} /></button>)}</div></td></tr>);
+                                })}</tbody>
                         </table>
                     )}
                 </div>

@@ -6,6 +6,9 @@ import { ITAsset, AssetCategory } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { useToast } from './ToastProvider';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface AssetFormModalProps {
     isOpen: boolean;
@@ -138,8 +141,8 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
         onSubmit({ ...formData, specs });
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
-    const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1";
+    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all font-bold placeholder:text-slate-400 shadow-none";
+    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
 
     const categoryName = formData.category?.toLowerCase() || '';
     const needsSpecs = categoryName.includes('laptop') ||
@@ -150,22 +153,22 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-4xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-white/20 dark:border-slate-800">
-                <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-4xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
                             {initialData ? t('editAsset') : t('addAsset')}
                         </h2>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Asset Lifecycle Registration</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400"><X size={20} /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400"><X size={20} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <form onSubmit={handleSubmit} id="assetForm" className="space-y-8">
 
                         {/* Asset ID Preview Banner */}
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8 flex items-center justify-between group">
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-5 mb-8 flex items-center justify-between group">
                             <div>
                                 <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">Generated Asset Identity</p>
                                 <div className="flex items-center gap-3">
@@ -245,7 +248,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
 
                             <div className="lg:col-span-2">
                                 <label className={labelClass}>Item Name</label>
-                                <input type="text" className={inputClass} value={formData.item || ''} onChange={(e) => setFormData({ ...formData, item: e.target.value })} required placeholder="e.g. ThinkPad X1 Carbon Gen 10" />
+                                <Input className={inputClass} value={formData.item || ''} onChange={(e) => setFormData({ ...formData, item: e.target.value })} required placeholder="e.g. ThinkPad X1 Carbon Gen 10" />
                             </div>
                             <div>
                                 <label className={labelClass}>Category</label>
@@ -261,11 +264,11 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
                             <div>
                                 <label className={labelClass}>Serial Number (S/N)</label>
-                                <input type="text" className={inputClass} value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Unique hardware ID" />
+                                <Input className={inputClass} value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Unique hardware ID" />
                             </div>
                             <div>
                                 <label className={labelClass}>Brand / Manufacturer</label>
-                                <input type="text" className={inputClass} value={formData.brand || ''} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g. Lenovo, Dell, HP" />
+                                <Input className={inputClass} value={formData.brand || ''} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g. Lenovo, Dell, HP" />
                             </div>
                             <div>
                                 <label className={labelClass}>Condition</label>
@@ -307,26 +310,26 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                             <div>
                                 <label className={labelClass}>Purchase Date</label>
-                                <input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
+                                <Input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
                             </div>
                         </div>
 
-                        <div className="p-6 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100/50 dark:border-blue-900/20">
+                        <div className="p-5 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 dark:border-blue-900/20">
                             <p className="text-[9px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                 <Shield size={12} /> PROCUREMENT & LIFECYCLE
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className={labelClass}>Vendor / Supplier</label>
-                                    <input type="text" className={inputClass} value={formData.vendor || ''} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="Store or vendor name" />
+                                    <Input className={inputClass} value={formData.vendor || ''} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="Store or vendor name" />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Purchase Price (IDR)</label>
-                                    <input type="number" className={inputClass} value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} placeholder="0" />
+                                    <Input type="number" className={inputClass} value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} placeholder="0" />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Warranty Expiration</label>
-                                    <input type="date" className={inputClass} value={formData.warrantyExp || ''} onChange={(e) => setFormData({ ...formData, warrantyExp: e.target.value })} />
+                                    <Input type="date" className={inputClass} value={formData.warrantyExp || ''} onChange={(e) => setFormData({ ...formData, warrantyExp: e.target.value })} />
                                 </div>
                             </div>
                         </div>
@@ -334,32 +337,32 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
                             <div>
                                 <label className={labelClass}>Site Location</label>
-                                <input type="text" className={inputClass} value={formData.location || ''} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required placeholder="Floor, Room, or Data Center Rack" />
+                                <Input className={inputClass} value={formData.location || ''} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required placeholder="Floor, Room, or Data Center Rack" />
                             </div>
                             <div>
                                 <label className={labelClass}>Current User / Custodian</label>
-                                <input type="text" className={inputClass} value={formData.user || ''} onChange={(e) => setFormData({ ...formData, user: e.target.value })} placeholder="Name of employee assigned" />
+                                <Input className={inputClass} value={formData.user || ''} onChange={(e) => setFormData({ ...formData, user: e.target.value })} placeholder="Name of employee assigned" />
                             </div>
                         </div>
 
                         {needsSpecs && (
-                            <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-inner">
+                            <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 shadow-inner">
                                 <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                     <Shield size={12} /> Hardware Architecture Specs
                                 </p>
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div><label className={labelClass}>Processor</label><input type="text" className={inputClass} value={specs.processor} onChange={(e) => setSpecs({ ...specs, processor: e.target.value })} placeholder="i7-12700H" /></div>
-                                    <div><label className={labelClass}>Memory (RAM)</label><input type="text" className={inputClass} value={specs.ram} onChange={(e) => setSpecs({ ...specs, ram: e.target.value })} placeholder="32GB DDR5" /></div>
-                                    <div><label className={labelClass}>Storage</label><input type="text" className={inputClass} value={specs.storage} onChange={(e) => setSpecs({ ...specs, storage: e.target.value })} placeholder="1TB NVMe" /></div>
-                                    <div><label className={labelClass}>Graphic (VGA)</label><input type="text" className={inputClass} value={specs.vga} onChange={(e) => setSpecs({ ...specs, vga: e.target.value })} placeholder="RTX 3060" /></div>
+                                    <div><label className={labelClass}>Processor</label><Input className={inputClass} value={specs.processor} onChange={(e) => setSpecs({ ...specs, processor: e.target.value })} placeholder="i7-12700H" /></div>
+                                    <div><label className={labelClass}>Memory (RAM)</label><Input className={inputClass} value={specs.ram} onChange={(e) => setSpecs({ ...specs, ram: e.target.value })} placeholder="32GB DDR5" /></div>
+                                    <div><label className={labelClass}>Storage</label><Input className={inputClass} value={specs.storage} onChange={(e) => setSpecs({ ...specs, storage: e.target.value })} placeholder="1TB NVMe" /></div>
+                                    <div><label className={labelClass}>Graphic (VGA)</label><Input className={inputClass} value={specs.vga} onChange={(e) => setSpecs({ ...specs, vga: e.target.value })} placeholder="RTX 3060" /></div>
                                 </div>
                             </div>
                         )}
 
                         <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
                             <label className={labelClass}>Administrative Remarks / Notes</label>
-                            <textarea
-                                rows={3} className={`${inputClass} resize-none`}
+                            <Textarea
+                                rows={3} className={`${inputClass} resize-none min-h-[5rem]`}
                                 value={formData.remarks || ''}
                                 onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                                 placeholder="Condition, warranty info, or historical deployment notes..."
@@ -368,9 +371,13 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                     </form>
                 </div>
 
-                <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-[2rem] flex justify-end gap-3 shrink-0">
-                    <button type="button" onClick={onClose} className="px-6 py-2.5 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700">{t('cancel')}</button>
-                    <button type="submit" form="assetForm" className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95">{t('save')}</button>
+                <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-3 shrink-0">
+                    <Button type="button" variant="outline" onClick={onClose}>
+                        {t('cancel')}
+                    </Button>
+                    <Button type="submit" form="assetForm" className="min-w-[120px]">
+                        {t('save')}
+                    </Button>
                 </div>
             </div>
         </div>

@@ -12,6 +12,9 @@ import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface AuditLogManagerProps {
     currentUser: UserAccount | null;
@@ -156,10 +159,9 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4">
                 <div className="relative flex-1 w-full">
                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
+                    <Input
                         placeholder="Search by user, action or details..."
-                        className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-blue-500/20 rounded-xl text-sm font-semibold dark:text-slate-200 outline-none transition-all"
+                        className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/20 rounded-xl font-semibold dark:text-slate-200"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -185,25 +187,25 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold text-[9px] uppercase tracking-[0.15em] border-b border-slate-100 dark:border-slate-800">
-                                <th className="px-6 py-4">Timestamp</th>
-                                <th className="px-6 py-4">Security Principal</th>
-                                <th className="px-6 py-4">Action Event</th>
-                                <th className="px-6 py-4">Module Context</th>
-                                <th className="px-6 py-4">Technical Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <div className="overflow-x-auto">
+                    <Table className="w-full">
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                <TableHead className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">Timestamp</TableHead>
+                                <TableHead className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">Security Principal</TableHead>
+                                <TableHead className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">Action Event</TableHead>
+                                <TableHead className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">Module Context</TableHead>
+                                <TableHead className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500">Technical Details</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {isLoading ? (
-                                <tr><td colSpan={5} className="px-6 py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                                <TableRow><TableCell colSpan={5} className="py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></TableCell></TableRow>
                             ) : paginatedLogs.length === 0 ? (
-                                <tr><td colSpan={5} className="px-6 py-24 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No activity sequences identified.</td></tr>
+                                <TableRow><TableCell colSpan={5} className="py-24 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No activity sequences identified.</TableCell></TableRow>
                             ) : paginatedLogs.map((log) => (
-                                <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-all group align-top">
-                                    <td className="px-6 py-5 whitespace-nowrap">
+                                <TableRow key={log.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 align-top">
+                                    <TableCell className="py-5 whitespace-nowrap">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300">
                                                 {new Date(log.createdAt).toLocaleDateString('en-GB')}
@@ -212,8 +214,8 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
                                                 {new Date(log.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                             </span>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-5">
+                                    </TableCell>
+                                    <TableCell className="py-5">
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[10px] uppercase border border-blue-100/50 dark:border-blue-800/50">
                                                 {log.userName.substring(0, 2)}
@@ -223,29 +225,29 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{log.userRole}</span>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-5">
+                                    </TableCell>
+                                    <TableCell className="py-5">
                                         <span className={`inline-flex px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${getActionColor(log.action)}`}>
                                             {log.action}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-5">
+                                    </TableCell>
+                                    <TableCell className="py-5">
                                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                                             <div className="p-1.5 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-100 dark:border-slate-700">
                                                 {getModuleIcon(log.module)}
                                             </div>
                                             <span className="text-[10px] font-bold uppercase tracking-widest">{log.module}</span>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-5">
+                                    </TableCell>
+                                    <TableCell className="py-5">
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-md line-clamp-2 italic">
                                             {log.details || 'System operation executed successfully.'}
                                         </p>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">

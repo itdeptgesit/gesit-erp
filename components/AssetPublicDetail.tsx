@@ -32,9 +32,9 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
     return (
         <motion.li
             whileHover={{ y: -1 }}
-            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group list-none"
+            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group list-none"
         >
-            <div className="p-2 bg-slate-50 dark:bg-blue-500/10 rounded-xl text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 transition-all">
+            <div className="p-2 bg-slate-50 dark:bg-blue-500/10 rounded-lg text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 transition-all">
                 <Icon size={16} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
@@ -148,7 +148,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
         return (
             <div className={`${theme} min-h-screen bg-white dark:bg-[#020617] flex flex-col items-center justify-center p-6`}>
                 <div className="w-full max-w-4xl grid lg:grid-cols-2 gap-12 items-center">
-                    <div className="aspect-square bg-slate-50 dark:bg-white/5 animate-pulse rounded-[3rem]"></div>
+                    <div className="aspect-square bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl"></div>
                     <div className="space-y-6">
                         <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full"></div>
                         <div className="h-12 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
@@ -225,7 +225,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[60px] opacity-40 group-hover:opacity-60 transition-opacity"></div>
 
                                 {hasImage ? (
-                                    <div className="relative z-10 w-full aspect-square p-2 bg-white rounded-[3rem] border border-slate-100 dark:border-white/[0.1] shadow-2xl overflow-hidden group/img flex items-center justify-center">
+                                    <div className="relative z-10 w-full aspect-square p-2 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden group/img flex items-center justify-center">
                                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-700"></div>
                                         <img
                                             src={asset.image_url}
@@ -287,14 +287,14 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 </ul>
                             </section>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 dark:border-white/[0.03] rounded-[2rem] p-8 text-center">
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center">
                                 <AlertTriangle size={32} className="text-slate-200 dark:text-slate-800 mb-4" />
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Non-Technical Asset Class</p>
                             </div>
                         )}
 
                         <div className="mt-auto pt-12">
-                            <div className="p-6 rounded-3xl bg-slate-900 dark:bg-white/[0.03] text-white dark:text-slate-100 border border-transparent dark:border-white/[0.05] shadow-2xl shadow-blue-500/10">
+                            <div className="p-6 rounded-xl bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-100 border border-transparent dark:border-slate-700 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60 dark:text-slate-400">IT Support Hotline</span>
                                     <ShieldCheck size={16} className="dark:text-blue-400" />

@@ -11,6 +11,10 @@ import { trackActivity } from '../lib/auditLogger';
 import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserManagementProps {
   onUpdateSuccess?: () => void;
@@ -156,7 +160,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
 
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <input type="text" placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold placeholder:text-slate-400 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-500/5 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Input placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-semibold placeholder:text-slate-400 dark:text-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
         </div>
         <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-xl">
@@ -167,25 +171,54 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-5">User Identity</th>
-                <th className="px-6 py-5">Security Role</th>
-                <th className="px-6 py-5">Communication</th>
-                <th className="px-6 py-5 text-center">Protocol</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+        <div className="overflow-x-auto">
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="bg-white dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-900">
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Object Id</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">User Identity</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Security Role</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Communication</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Last Access</TableHead>
+                <TableHead className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Protocol</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                Array.from({ length: itemsPerPage }).map((_, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="px-6 py-4 text-center"><Skeleton className="h-4 w-4 rounded-full mx-auto" /></TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-9 rounded-xl" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-6 w-16 rounded-lg" /></TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-center"><Skeleton className="h-8 w-16 mx-auto rounded-lg" /></TableCell>
+                  </TableRow>
+                ))
               ) : paginatedUsers.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-20 text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] text-[10px]">Registry Empty.</td></tr>
+                <TableRow><TableCell colSpan={6} className="text-center py-20 text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] text-[10px]">Registry Empty.</TableCell></TableRow>
               ) : paginatedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800 transition-all group">
-                  <td className="px-6 py-4 text-center"><div className={`w-2 h-2 rounded-full mx-auto shadow-sm ${user.status === 'Active' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-300 dark:bg-slate-700'}`}></div></td>
-                  <td className="px-6 py-4">
+                <TableRow key={user.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800 transition-all group">
+                  <TableCell className="px-6 py-4 text-center"><div className={`w-2 h-2 rounded-full mx-auto shadow-sm ${user.status === 'Active' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-300 dark:bg-slate-700'}`}></div></TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-blue-900/20 border border-slate-200 dark:border-blue-500/20 flex items-center justify-center text-slate-500 dark:text-blue-400 font-bold text-xs overflow-hidden">
                         {user.avatarUrl ? (
@@ -199,35 +232,30 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                         <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">{user.email}</p>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 tracking-tight">{user.company || 'Unknown Entity'}</span>
                       <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{user.department || 'Global'}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></td>
-                  <td className="px-6 py-4"><div className="space-y-1">{user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[9px] font-bold"><ShieldCheck size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}{user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold"><Target size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}</div></td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <Clock size={12} className={`shrink-0 ${user.lastLogin !== 'Never' && (new Date().getTime() - new Date(user.lastLogin).getTime() < 300000) ? 'text-emerald-500 animate-pulse' : 'opacity-60 text-slate-400'}`} />
-                        <span className={`text-[10px] font-bold tracking-tighter uppercase ${user.lastLogin !== 'Never' && (new Date().getTime() - new Date(user.lastLogin).getTime() < 300000) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                          {formatRelativeTime(user.lastLogin)}
-                        </span>
-                      </div>
-                      {user.lastLogin !== 'Never' && (
-                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-600 ml-5">
-                          {new Date(user.lastLogin).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(user.lastLogin).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        </span>
-                      )}
+                  </TableCell>
+                  <TableCell className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="space-y-1">
+                      {user.supervisorId ? (<div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-[9px] font-bold"><ShieldCheck size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.supervisorId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
+                      {user.managerId ? (<div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold"><Target size={10} className="shrink-0" /> {users.find(u => u.id.toString() === user.managerId)?.fullName?.split(' ')[0] || '...'}</div>) : null}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-center"><div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all"><button onClick={() => handleEditUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all"><Pencil size={16} /></button><button onClick={() => setDeleteUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all"><Trash2 size={16} /></button></div></td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400"><Pencil size={14} /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteUser(user)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400"><Trash2 size={14} /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">

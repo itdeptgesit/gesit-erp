@@ -17,7 +17,10 @@ import * as XLSX from 'xlsx';
 import { StatCard } from './StatCard';
 import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/button';
-
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AssetManagerProps {
   currentUser: UserAccount | null;
@@ -351,7 +354,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
         <div className="relative flex-1 w-full">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-          <input type="text" placeholder="Filter item name or custodian..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/5 transition-all font-semibold dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Input placeholder="Filter item name or custodian..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all font-semibold dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
           <select className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
@@ -382,25 +385,46 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-5">Node Profile</th>
-                <th className="px-6 py-5">Cluster</th>
-                <th className="px-6 py-5">Assignment / Site</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5 text-center">Protocol</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+        <div className="overflow-x-auto">
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900">
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Node Profile</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Cluster</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Assignment / Site</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Status</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] text-center">Protocol</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-50 dark:divide-slate-800">
               {isLoading ? (
-                <tr><td colSpan={5} className="px-6 py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                Array.from({ length: itemsPerPage }).map((_, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                        <div className="flex flex-col gap-2 w-full">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/3" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex flex-col gap-2">
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-3 w-1/3" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-8 w-24 mx-auto rounded-lg" /></TableCell>
+                  </TableRow>
+                ))
               ) : paginatedAssets.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-20 text-center text-slate-400 dark:text-slate-600 text-[10px] font-bold tracking-widest uppercase">No entries detected.</td></tr>
+                <TableRow><TableCell colSpan={5} className="px-6 py-20 text-center text-slate-400 dark:text-slate-600 text-[10px] font-bold tracking-widest uppercase">No entries detected.</TableCell></TableRow>
               ) : paginatedAssets.map((asset) => (
-                <tr key={asset.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
-                  <td className="px-6 py-4">
+                <TableRow key={asset.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
+                  <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
                         onClick={() => { setDetailAsset(asset); setIsDetailOpen(true); }}
@@ -419,38 +443,38 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                         <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1.5 tracking-wider uppercase">{asset.assetId}</span>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4"><span className="text-slate-600 dark:text-slate-400 text-[10px] font-semibold">{asset.category}</span></td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4"><span className="text-slate-600 dark:text-slate-400 text-[10px] font-semibold">{asset.category}</span></TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">{asset.user || 'Unassigned'}</span>
                       <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{asset.location}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
                     {getStatusIcon(asset.status)}
-                  </td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
-                      <button onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all" title="Label"><QrCode size={16} /></button>
+                      <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400" title="Label"><QrCode size={14} /></Button>
 
                       {canManage && (
-                        <button onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all" title="Edit">
-                          <Pencil size={16} />
-                        </button>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400" title="Edit">
+                          <Pencil size={14} />
+                        </Button>
                       )}
 
                       {canDelete && (
-                        <button onClick={() => setDeleteAsset(asset)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all" title="Delete">
-                          <Trash2 size={16} />
-                        </button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteAsset(asset)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400" title="Delete">
+                          <Trash2 size={14} />
+                        </Button>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">

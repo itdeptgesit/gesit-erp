@@ -159,9 +159,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                     hour: 'numeric', minute: 'numeric', hour12: true
                                 }),
                                 sessionToken: s.session_token,
-                                isCurrent: s.session_token === token
+                                isCurrent: s.session_token === token,
+                                location: 'Identifying...'
                             }));
                             setActiveSessions(formattedSessions);
+
+                            // Fetch locations dynamically
+                            const sessionsWithLocations = await Promise.all(formattedSessions.map(async (sess) => {
+                                if (!sess.ip || sess.ip === '127.0.0.1' || sess.ip === 'localhost') return { ...sess, location: 'Local Network' };
+                                try {
+                                    const res = await fetch(`https://get.geojs.io/v1/ip/geo/${sess.ip}.json`);
+                                    if (res.ok) {
+                                        const locData = await res.json();
+                                        const locString = [locData.city, locData.country].filter(Boolean).join(', ');
+                                        return { ...sess, location: locString || 'Unknown Region' };
+                                    }
+                                } catch (e) {
+                                    console.log('Location fetch failed:', e);
+                                }
+                                return { ...sess, location: 'Unknown Location' };
+                            }));
+                            setActiveSessions(sessionsWithLocations);
                         }
                     };
 
@@ -173,10 +191,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                 } catch (err: any) {
                     console.log("Session DB failed or table missing. Using local session fallback.", err?.message);
-                    setActiveSessions([{ ...currentSession, isCurrent: true }]);
+                    setActiveSessions([{ ...currentSession, isCurrent: true, location: 'Local Network' }]);
                 }
             } else {
-                setActiveSessions([{ ...currentSession, isCurrent: true }]);
+                setActiveSessions([{ ...currentSession, isCurrent: true, location: 'Local Network' }]);
             }
         };
 
@@ -337,17 +355,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                         </div>
 
                         <p className="text-slate-500 dark:text-slate-400 font-medium">
-                            {formData.jobTitle || 'N/A Level Personnel'}
+                            {formData.jobTitle || 'N/A Level Personnel'} {formData.department && `• ${formData.department}`} {formData.company && `• ${formData.company}`}
                         </p>
 
                         <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
                             <div className="flex items-center gap-2">
                                 <Mail size={16} className="text-slate-400" />
                                 <span>{userEmail}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin size={16} className="text-slate-400" />
-                                <span>{formData.address || 'San Francisco, CA'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Calendar size={16} className="text-slate-400" />
@@ -467,7 +481,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.fullName}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                        className="h-14 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 font-bold focus:ring-slate-900 focus:ring-offset-2"
+                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Job Title</Label>
+                                    <Input
+                                        value={formData.jobTitle}
+                                        disabled={!isEditing}
+                                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -476,17 +499,38 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.phone}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-14 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 font-bold"
+                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
                                     />
                                 </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Worksite Address</Label>
-                                    <Textarea
-                                        value={formData.address}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 py-4 font-bold min-h-[120px]"
-                                    />
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Department</Label>
+                                    <Select disabled={!isEditing} value={formData.department} onValueChange={(val) => setFormData({ ...formData, department: val })}>
+                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold">
+                                            <SelectValue placeholder="Select division" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="IT">Information Technology</SelectItem>
+                                            <SelectItem value="HR">Human Resources</SelectItem>
+                                            <SelectItem value="Finance">Finance</SelectItem>
+                                            <SelectItem value="Operations">Operations</SelectItem>
+                                            {departmentList.map(dept => (
+                                                <SelectItem key={dept.name} value={dept.name}>{dept.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Company</Label>
+                                    <Select disabled={!isEditing} value={formData.company} onValueChange={(val) => setFormData({ ...formData, company: val })}>
+                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold">
+                                            <SelectValue placeholder="Select company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {companyList.map(comp => (
+                                                <SelectItem key={comp.id} value={comp.name}>{comp.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
@@ -559,7 +603,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                                 <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Device</TableHead>
                                                 <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</TableHead>
                                                 <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Last Updated</TableHead>
-                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Application</TableHead>
+                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Location</TableHead>
                                                 <TableHead className="py-4 px-6 text-right"></TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -579,7 +623,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                                     </TableCell>
                                                     <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.ip}</TableCell>
                                                     <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.lastUpdated}</TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">GESIT WORK</TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-900 dark:text-slate-200 text-sm flex items-center gap-2">
+                                                        {session.location === 'Identifying...' ? <Loader2 size={14} className="animate-spin text-slate-400" /> : <Globe size={14} className="text-slate-400" />}
+                                                        {session.location}
+                                                    </TableCell>
                                                     <TableCell className="py-6 px-6 text-right">
                                                         {session.isCurrent ? (
                                                             <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">

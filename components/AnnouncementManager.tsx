@@ -6,6 +6,18 @@ import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 interface Announcement {
@@ -25,6 +37,7 @@ export const AnnouncementManager: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const [formData, setFormData] = useState<Announcement>({
         title: '',
@@ -80,14 +93,16 @@ export const AnnouncementManager: React.FC = () => {
         }
     };
 
-    const deleteAnnouncement = async (id: number) => {
-        if (!confirm("Are you sure you want to terminate this broadcast?")) return;
+    const confirmDelete = async () => {
+        if (deleteId === null) return;
         try {
-            const { error } = await supabase.from('announcements').delete().eq('id', id);
+            const { error } = await supabase.from('announcements').delete().eq('id', deleteId);
             if (error) throw error;
             fetchData();
         } catch (err) {
             showToast("Failed to delete record", "error");
+        } finally {
+            setDeleteId(null);
         }
     };
 
@@ -96,7 +111,8 @@ export const AnnouncementManager: React.FC = () => {
             <PageHeader title="System Broadcasts" description="Emergency & Info Center">
                 <Button
                     onClick={() => setIsFormOpen(!isFormOpen)}
-                    className="bg-slate-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg active:scale-95 transition-all"
+                    variant={isFormOpen ? "outline" : "default"}
+                    className="font-bold text-xs"
                 >
                     {isFormOpen ? 'Cancel Protocol' : <><Plus className="mr-2 h-4 w-4" /> New Broadcast</>}
                 </Button>
@@ -110,25 +126,25 @@ export const AnnouncementManager: React.FC = () => {
             )}
 
             {isFormOpen && (
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl animate-in zoom-in-95 duration-200">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md animate-in zoom-in-95 duration-200">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Broadcast Title</label>
-                                    <input
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Broadcast Title</label>
+                                    <Input
                                         required
                                         type="text"
                                         placeholder="Identification of the message..."
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50"
                                         value={formData.title}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Signal Type</label>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Signal Type</label>
                                     <select
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="w-full h-10 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md text-sm outline-none focus:ring-1 focus:ring-slate-950 dark:focus:ring-slate-300"
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                                     >
@@ -140,26 +156,26 @@ export const AnnouncementManager: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Message Content</label>
-                                <textarea
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Message Content</label>
+                                <Textarea
                                     required
                                     rows={5}
                                     placeholder="Enter full protocol details..."
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 resize-none min-h-[8rem]"
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                 />
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
-                            <button
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                                className="min-w-[150px]"
                             >
-                                {isSaving ? <Clock className="animate-spin" size={14} /> : <Send size={14} />}
+                                {isSaving ? <Clock className="animate-spin mr-2" size={16} /> : <Send size={16} className="mr-2" />}
                                 Initiate Broadcast
-                            </button>
+                            </Button>
                         </div>
                     </form>
                 </div>
@@ -185,7 +201,7 @@ export const AnnouncementManager: React.FC = () => {
                                     {ann.type} Signal
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                    <button onClick={() => deleteAnnouncement(ann.id!)} className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors"><Trash2 size={14} /></button>
+                                    <button onClick={() => setDeleteId(ann.id!)} className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors"><Trash2 size={14} /></button>
                                 </div>
                             </div>
                             <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight mb-2 uppercase">{ann.title}</h3>
@@ -208,6 +224,21 @@ export const AnnouncementManager: React.FC = () => {
                     </div>
                 ))}
             </div>
+
+            <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently terminate this broadcast and remove the data from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-rose-500 hover:bg-rose-600 text-white">Terminate</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

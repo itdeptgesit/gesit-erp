@@ -7,6 +7,8 @@ import { trackActivity } from '../lib/auditLogger';
 import { UserAccount } from '../types';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SystemSettingsProps {
     currentUser: UserAccount | null;
@@ -319,47 +321,47 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">App Name</label>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={settings.appName}
                                             onChange={(e) => setSettings({ ...settings, appName: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Tagline</label>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={settings.appTagline}
                                             onChange={(e) => setSettings({ ...settings, appTagline: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Logo URL</label>
                                         <div className="flex gap-3">
-                                            <input
+                                            <Input
                                                 type="text"
                                                 value={settings.logoUrl}
                                                 onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
-                                                className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                                className="flex-1 bg-slate-50 dark:bg-slate-800"
                                             />
-                                            <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2">
-                                                <img src={settings.logoUrl} alt="Logo" className="max-w-full h-auto" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/40")} />
+                                            <div className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                                <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/40")} />
                                             </div>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Favicon URL</label>
                                         <div className="flex gap-3">
-                                            <input
+                                            <Input
                                                 type="text"
                                                 value={settings.faviconUrl}
                                                 onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
-                                                className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                                className="flex-1 bg-slate-50 dark:bg-slate-800"
                                             />
-                                            <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2">
-                                                <img src={settings.faviconUrl} alt="Favicon" className="max-w-full h-auto" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/32")} />
+                                            <div className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                                <img src={settings.faviconUrl} alt="Favicon" className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/32")} />
                                             </div>
                                         </div>
                                     </div>
@@ -380,42 +382,42 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Support Email</label>
-                                        <input
+                                        <Input
                                             type="email"
                                             value={settings.supportEmail}
                                             onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
                                             placeholder="support@company.com"
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Support Phone</label>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={settings.supportPhone}
                                             onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
                                             placeholder="1001"
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Website URL</label>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={settings.companyWebsite}
                                             onChange={(e) => setSettings({ ...settings, companyWebsite: e.target.value })}
                                             placeholder="https://company.com"
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Office Address</label>
-                                        <textarea
+                                        <Textarea
                                             value={settings.companyAddress}
                                             onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
                                             rows={2}
                                             placeholder="Jl. Sudirman No. 1, Jakarta"
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 resize-none min-h-[5rem]"
                                         />
                                     </div>
                                 </div>
@@ -517,20 +519,20 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Welcome Title</label>
-                                        <input
+                                        <Input
                                             type="text"
                                             value={settings.loginTitle}
                                             onChange={(e) => setSettings({ ...settings, loginTitle: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Welcome Message</label>
-                                        <textarea
+                                        <Textarea
                                             value={settings.loginMessage}
                                             onChange={(e) => setSettings({ ...settings, loginMessage: e.target.value })}
                                             rows={2}
-                                            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 resize-none min-h-[5rem]"
                                         />
                                     </div>
                                 </div>
@@ -648,14 +650,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                                 <p className="text-xs text-slate-500">Download CSV report</p>
                                             </div>
                                         </div>
-                                        <button
+                                        <Button
+                                            variant="outline"
                                             onClick={handleExportLogs}
                                             disabled={isExporting}
-                                            className="w-full py-2.5 bg-white dark:bg-slate-900 border-2 border-emerald-500/20 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                                         >
-                                            {isExporting ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
+                                            {isExporting ? <RefreshCw size={16} className="animate-spin mr-2" /> : <Download size={16} className="mr-2" />}
                                             {isExporting ? 'Exporting...' : 'Download CSV'}
-                                        </button>
+                                        </Button>
                                     </div>
                                     <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-xl">
                                         <div className="flex items-center gap-3 mb-4">
@@ -667,14 +670,15 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                                 <p className="text-xs text-slate-500">Remove temporary data</p>
                                             </div>
                                         </div>
-                                        <button
+                                        <Button
+                                            variant="outline"
                                             onClick={handleClearCache}
                                             disabled={isClearing}
-                                            className="w-full py-2.5 bg-white dark:bg-slate-900 border-2 border-rose-500/20 rounded-lg text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            className="w-full border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                                         >
-                                            <Trash2 size={16} className={isClearing ? 'animate-bounce' : ''} />
+                                            <Trash2 size={16} className={`mr-2 ${isClearing ? 'animate-bounce' : ''}`} />
                                             {isClearing ? 'Clearing...' : 'Clear & Reload'}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -684,16 +688,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
             </div >
 
             {/* Floating Save Button */}
-            < div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50" >
-                <button
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+                <Button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-2xl shadow-primary/30 hover:shadow-primary/40 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"
+                    size="lg"
+                    className="px-8 rounded-full shadow-2xl shadow-primary/30"
                 >
-                    {isSaving ? <RefreshCw size={20} className="animate-spin" /> : <Save size={20} />}
+                    {isSaving ? <RefreshCw size={20} className="animate-spin mr-2" /> : <Save size={20} className="mr-2" />}
                     {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
-            </div >
+                </Button>
+            </div>
         </div >
     );
 };

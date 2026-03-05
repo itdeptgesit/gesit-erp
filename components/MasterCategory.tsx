@@ -11,6 +11,9 @@ import { trackActivity } from '../lib/auditLogger';
 import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface MasterCategoryProps {
     currentUser: UserAccount | null;
@@ -123,10 +126,9 @@ export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) =
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
                     <div className="relative max-w-md">
-                        <input
-                            type="text"
+                        <Input
                             placeholder="Search classification..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 font-medium transition-all text-slate-900 dark:text-slate-200"
+                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -134,51 +136,51 @@ export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) =
                     </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
-                            <tr>
-                                <th className="px-6 py-4 w-12 text-center">ID</th>
-                                <th className="px-6 py-4">Code</th>
-                                <th className="px-6 py-4">Category Name</th>
-                                <th className="px-6 py-4">Description</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <div className="overflow-x-auto">
+                    <Table className="w-full">
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                <TableHead className="w-16 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">ID</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Code</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Category Name</TableHead>
+                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</TableHead>
+                                <TableHead className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {isLoading ? (
-                                <tr><td colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></td></tr>
+                                <TableRow><TableCell colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></TableCell></TableRow>
                             ) : filteredCategories.length === 0 ? (
-                                <tr><td colSpan={5} className="text-center py-20 text-slate-300 dark:text-slate-700 text-xs font-medium uppercase tracking-widest">No entries found.</td></tr>
+                                <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-500 font-medium">No records found.</TableCell></TableRow>
                             ) : filteredCategories.map((cat) => (
-                                <tr key={cat.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800/50 transition-all group">
-                                    <td className="px-6 py-4 text-slate-300 dark:text-slate-700 font-mono text-xs text-center">{cat.id}</td>
-                                    <td className="px-6 py-4">
-                                        <span className="inline-flex px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-bold text-[10px] border border-slate-200 dark:border-slate-700 uppercase tracking-tighter">
+                                <TableRow key={cat.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                    <TableCell className="text-slate-500 font-mono text-xs text-center">{cat.id}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-mono font-bold text-[10px] uppercase bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                             {cat.code || 'N/A'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
                                                 <Layers size={16} />
                                             </div>
-                                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-tight">{cat.name}</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{cat.name}</span>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed truncate max-w-xs">{cat.description || '-'}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
+                                    </TableCell>
+                                    <TableCell>
+                                        <p className="text-xs font-medium text-slate-500 leading-relaxed truncate max-w-xs">{cat.description || '-'}</p>
+                                    </TableCell>
+                                    <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(cat)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20"><Pencil size={16} /></button>
-                                            <button onClick={() => setDeleteCategory(cat)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all hover:bg-rose-50 dark:hover:bg-rose-900/20"><Trash2 size={16} /></button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(cat)} className="h-8 w-8 text-slate-500 hover:text-blue-600"><Pencil size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteCategory(cat)} className="h-8 w-8 text-slate-500 hover:text-rose-600"><Trash2 size={14} /></Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
 

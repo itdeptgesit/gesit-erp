@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Cpu, Server, PhoneCall, Video, Radio, Database, HardDrive, Hash, Layers, Save, Cable, MapPin, ListOrdered, Shield, Link2 } from 'lucide-react';
 import { NetworkSwitch, SwitchPort, PortStatus, DeviceType, DeviceStatus } from '../types';
 import { supabase } from '../lib/supabaseClient';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SwitchFormModalProps {
     isOpen: boolean;
@@ -181,21 +184,21 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
         }
     };
 
-    const inputClass = "w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-slate-50/50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed";
-    const labelClass = "block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1";
+    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-none";
+    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
 
     return (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white/20 flex flex-col my-8">
-                <div className="bg-slate-950 px-8 py-6 text-white shrink-0">
-                    <div className="flex justify-between items-start mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800 flex flex-col my-8">
+                <div className="bg-slate-950 dark:bg-slate-950 px-6 py-5 text-white shrink-0 border-b border-slate-800">
+                    <div className="flex justify-between items-start mb-5">
                         <div>
                             <h2 className="text-xl font-bold tracking-tight uppercase">
                                 {initialData ? 'Update' : 'Provision'} <span className="text-blue-500">Node</span>
                             </h2>
                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Infrastructure Database Entry</p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-500"><X size={20} /></button>
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-all text-slate-500"><X size={20} /></button>
                     </div>
 
                     <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
@@ -218,32 +221,32 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-8 bg-white">
-                    <section className="space-y-6">
-                        <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
                             <Shield size={14} className="text-blue-500" />
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Hardware Identity</h3>
+                            <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Hardware Identity</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className={labelClass}>Identity Name</label>
-                                <input type="text" required className={inputClass} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. CORE-SW-01 or AP-Lobby-01" />
+                                <Input required className={inputClass} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. CORE-SW-01 or AP-Lobby-01" />
                             </div>
                             <div>
                                 <label className={labelClass}>Hardware Model</label>
-                                <input type="text" required className={inputClass} value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} placeholder="e.g. Cisco C9200L or UniFi 6 Pro" />
+                                <Input required className={inputClass} value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} placeholder="e.g. Cisco C9200L or UniFi 6 Pro" />
                             </div>
                             <div>
                                 <label className={labelClass}>Management IP</label>
-                                <input type="text" className={inputClass} value={formData.ip} onChange={e => setFormData({ ...formData, ip: e.target.value })} placeholder="192.168.1.x" />
+                                <Input className={inputClass} value={formData.ip} onChange={e => setFormData({ ...formData, ip: e.target.value })} placeholder="192.168.1.x" />
                             </div>
                             <div>
                                 <label className={labelClass}>Serial Number / Asset ID</label>
-                                <input type="text" className={inputClass} value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="SN-XXXXXXX" />
+                                <Input className={inputClass} value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="SN-XXXXXXX" />
                             </div>
                             <div>
                                 <label className={labelClass}>Site Location</label>
-                                <input type="text" required className={inputClass} value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} placeholder="Server Room A" />
+                                <Input required className={inputClass} value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} placeholder="Server Room A" />
                             </div>
                             <div>
                                 <label className={labelClass}>Uplink Connection (Parent)</label>
@@ -257,10 +260,10 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                         </div>
                     </section>
 
-                    <section className="space-y-6">
-                        <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
                             <Layers size={14} className="text-blue-500" />
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Interface Configuration</h3>
+                            <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Interface Configuration</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -283,7 +286,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                     </div>
                                     <div>
                                         <label className={labelClass}>Default VLAN</label>
-                                        <input type="number" className={inputClass} value={formData.vlanDefault} onChange={e => setFormData({ ...formData, vlanDefault: e.target.value })} placeholder="10" />
+                                        <Input type="number" className={inputClass} value={formData.vlanDefault} onChange={e => setFormData({ ...formData, vlanDefault: e.target.value })} placeholder="10" />
                                     </div>
                                 </>
                             )}
@@ -302,7 +305,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                     </div>
                                     <div>
                                         <label className={labelClass}>Storage Capacity</label>
-                                        <input type="text" className={inputClass} value={formData.storage} onChange={e => setFormData({ ...formData, storage: e.target.value })} placeholder="e.g. 8TB" />
+                                        <Input className={inputClass} value={formData.storage} onChange={e => setFormData({ ...formData, storage: e.target.value })} placeholder="e.g. 8TB" />
                                     </div>
                                 </>
                             )}
@@ -311,11 +314,11 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                 <>
                                     <div>
                                         <label className={labelClass}>LSA/Pair Density</label>
-                                        <input type="number" className={inputClass} value={formData.pairs} onChange={e => setFormData({ ...formData, pairs: e.target.value })} placeholder="50" />
+                                        <Input type="number" className={inputClass} value={formData.pairs} onChange={e => setFormData({ ...formData, pairs: e.target.value })} placeholder="50" />
                                     </div>
                                     <div>
                                         <label className={labelClass}>Extension Range</label>
-                                        <input type="text" className={inputClass} value={formData.extRange} onChange={e => setFormData({ ...formData, extRange: e.target.value })} placeholder="100-199" />
+                                        <Input className={inputClass} value={formData.extRange} onChange={e => setFormData({ ...formData, extRange: e.target.value })} placeholder="100-199" />
                                     </div>
                                 </>
                             )}
@@ -340,19 +343,19 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                             </div>
                             <div className="md:col-span-2">
                                 <label className={labelClass}>Documentation Notes</label>
-                                <textarea className={`${inputClass} h-24 resize-none`} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Add technical notes, port assignment rules, or maintenance history..." />
+                                <Textarea className={`${inputClass} min-h-[5rem] resize-none pb-2 pt-3`} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Add technical notes, port assignment rules, or maintenance history..." />
                             </div>
                         </div>
                     </section>
 
-                    <div className="pt-6 border-t border-slate-100 flex gap-3">
-                        <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-3 justify-end mt-4">
+                        <Button type="button" variant="outline" onClick={onClose}>
                             Cancel
-                        </button>
-                        <button type="submit" className="flex-[2] py-3.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95">
-                            {initialData ? <Save size={16} /> : <Cpu size={16} />}
+                        </Button>
+                        <Button type="submit" className="min-w-[150px]">
+                            {initialData ? <Save size={16} className="mr-2" /> : <Cpu size={16} className="mr-2" />}
                             {initialData ? 'Save Changes' : 'Initialize Node Record'}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
