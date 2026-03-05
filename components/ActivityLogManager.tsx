@@ -375,10 +375,10 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={() => setIsDarkTheme(!isDarkTheme)} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                        <button onClick={() => setIsDarkTheme(!isDarkTheme)} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                             {isDarkTheme ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
                         </button>
-                        <button onClick={toggleFullScreen} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                        <button onClick={toggleFullScreen} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                             {isFullScreen ? <Minimize2 size={20} strokeWidth={2.5} /> : <Maximize2 size={20} strokeWidth={2.5} />}
                         </button>
                         <button onClick={() => setIsPresenting(false)} className="px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-[13px] hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 flex items-center gap-2">
@@ -456,14 +456,14 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 )}
 
                 <div className="absolute bottom-16 flex items-center gap-10">
-                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + filteredActivities.length) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
-                    <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-full border border-white/20">
+                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + filteredActivities.length) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
+                    <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-slate-800/50">
                         {filteredActivities.slice(0, 8).map((_, idx) => (
                             <div key={idx} onClick={() => setCurrentSlideIndex(idx)} className={`rounded-full transition-all duration-500 cursor-pointer ${idx === currentSlideIndex ? 'w-10 h-3 bg-blue-600 shadow-lg shadow-blue-500/40' : 'w-3 h-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300'}`} />
                         ))}
                         {filteredActivities.length > 8 && <span className="text-[11px] font-black text-slate-400 ml-2 uppercase tracking-widest leading-none">+{filteredActivities.length - 8} MORE</span>}
                     </div>
-                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
                 </div>
             </div>
         );

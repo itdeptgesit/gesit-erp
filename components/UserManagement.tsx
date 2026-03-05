@@ -37,8 +37,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
   const itemsPerPage = 10;
 
   const formatRelativeTime = (dateStr: string | null) => {
-    if (!dateStr || dateStr === 'Never') return 'Never active';
+    if (!dateStr || dateStr === 'Never') return 'Offline';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Offline';
+
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInSecs = Math.floor(diffInMs / 1000);
@@ -50,7 +52,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
     if (diffInMins < 60) return `${diffInMins}m ago`;
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   const fetchData = async () => {
@@ -175,12 +177,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           <Table className="w-full">
             <TableHeader>
               <TableRow className="bg-white dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-900">
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Object Id</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Status</TableHead>
                 <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">User Identity</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Security Role</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Communication</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Last Access</TableHead>
-                <TableHead className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Protocol</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Organization / Team</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Global Role</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Last Session</TableHead>
+                <TableHead className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -217,7 +219,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                 <TableRow><TableCell colSpan={6} className="text-center py-20 text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] text-[10px]">Registry Empty.</TableCell></TableRow>
               ) : paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-blue-50/30 dark:hover:bg-slate-800 transition-all group">
-                  <TableCell className="px-6 py-4 text-center"><div className={`w-2 h-2 rounded-full mx-auto shadow-sm ${user.status === 'Active' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-300 dark:bg-slate-700'}`}></div></TableCell>
+                  <TableCell className="px-6 py-4 text-center">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className={`w-2 h-2 rounded-full shadow-sm ${user.status === 'Active' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                      <span className="text-[7px] font-black uppercase tracking-tighter opacity-40">{user.status}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-blue-900/20 border border-slate-200 dark:border-blue-500/20 flex items-center justify-center text-slate-500 dark:text-blue-400 font-bold text-xs overflow-hidden">
@@ -253,8 +260,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                   </TableCell>
                   <TableCell className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400"><Pencil size={14} /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteUser(user)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400"><Trash2 size={14} /></Button>
+                      <button onClick={() => handleEditUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Pencil size={14} /></button>
+                      <button onClick={() => setDeleteUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"><Trash2 size={14} /></button>
                     </div>
                   </TableCell>
                 </TableRow>

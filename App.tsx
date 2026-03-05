@@ -307,6 +307,12 @@ const InternalApp: React.FC = () => {
         };
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
+
+        // Update last login timestamp in DB
+        await supabase
+          .from('user_accounts')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', data.id);
       } else {
         // Auto-registration for missing internal accounts
         console.log("App.tsx: User not found in database, creating new account for", email);
