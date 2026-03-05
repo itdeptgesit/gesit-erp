@@ -63,7 +63,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
       const { data: groupData, error: groupError } = await supabase.from('user_groups').select('*').order('name');
       if (groupError) throw groupError;
       if (userData) {
-        setUsers(userData.map((u: any) => ({
+        const usersMapped = userData.map((u: any) => ({
           id: u.id,
           authId: u.auth_id,
           username: u.username,
@@ -82,7 +82,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           lastLogin: u.last_login ? u.last_login : 'Never',
           avatarUrl: u.avatar_url,
           isHelpdeskSupport: u.is_helpdesk_support
-        })));
+        }));
+        setUsers(usersMapped);
+
+        // Audit check
+        const marchUsers = usersMapped.filter(u => u.lastLogin.includes('2026-03'));
+        if (marchUsers.length > 0) {
+          console.log(`UserManagement: Found ${marchUsers.length} users active in March 2026`);
+        } else {
+          console.warn("UserManagement: No March 2026 active users found in database!");
+        }
       }
       if (groupData) {
         setGroups(groupData.map((g: any) => ({ id: g.id, name: g.name, description: g.description, allowedMenus: g.allowed_menus || [] })));
