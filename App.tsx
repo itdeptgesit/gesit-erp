@@ -277,6 +277,10 @@ const InternalApp: React.FC = () => {
   const handleLogin = async (email: string) => {
     console.log("App.tsx: Handling login for", email);
     try {
+      // 1. Update timestamp first
+      await supabase.from('user_accounts').update({ last_login: new Date().toISOString() }).eq('email', email);
+
+      // 2. Then fetch
       const { data, error } = await supabase
         .from('user_accounts')
         .select('*')
@@ -302,23 +306,14 @@ const InternalApp: React.FC = () => {
           managerId: data.manager_id?.toString(),
           avatarUrl: data.avatar_url,
           company: data.company,
+          lastLogin: data.last_login,
           isHelpdeskSupport: data.is_helpdesk_support,
           createdAt: data.created_at
         };
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
 
-        // Update last login timestamp in DB
-        const { error: updateError } = await supabase
-          .from('user_accounts')
-          .update({ last_login: new Date().toISOString() })
-          .or(`id.eq.${data.id},email.eq.${email}`);
-
-        if (updateError) {
-          console.error("App.tsx: Failed to update last_login:", updateError);
-        } else {
-          console.log("App.tsx: last_login updated successfully for", email);
-        }
+        setIsAuthenticated(true);
       } else {
         // Auto-registration for missing internal accounts
         console.log("App.tsx: User not found in database, creating new account for", email);

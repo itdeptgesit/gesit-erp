@@ -39,7 +39,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
   const formatRelativeTime = (dateStr: string | null) => {
     if (!dateStr || dateStr === 'Never') return 'Offline';
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return 'Offline';
+    if (isNaN(date.getTime())) return `Invalid: ${dateStr}`;
 
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
