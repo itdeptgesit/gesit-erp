@@ -15,7 +15,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
     onLogin,
-    appName = 'GESIT WORK',
+    appName = 'TASKPLUS',
     logoUrl = '/image/logo.png',
     primaryColor = '#0a2558'
 }) => {
@@ -269,7 +269,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.6em] font-display">
-                                    © 2026 THE GESIT COMPANIES
+                                    © 2026 TASKPLUS ECOSYSTEM
                                 </p>
                                 <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
                                     {appName} v3.0.1 — CLOUD INFRASTRUCTURE

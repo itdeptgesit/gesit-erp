@@ -77,22 +77,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         device: 'Desktop',
         browser: 'Chrome',
         ip: '0.0.0.0',
-        lastUpdated: ''
+        lastUpdated: '',
+        sessionToken: ''
     });
+    const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
     // Detect Current Session Metadata
     useEffect(() => {
-        const detectSession = async () => {
-            // IP Detection
+        const detectAndRegisterSession = async () => {
+            let currentIp = '127.0.0.1';
             try {
                 const response = await fetch('https://api.ipify.org?format=json');
                 const data = await response.json();
-                setSessionInfo(prev => ({ ...prev, ip: data.ip }));
+                currentIp = data.ip;
             } catch (err) {
-                setSessionInfo(prev => ({ ...prev, ip: '127.0.0.1' }));
+                // Keep default
             }
 
-            // OS/Browser Detection
             const ua = navigator.userAgent;
             let device = "Windows PC";
             if (ua.includes("Mac OS X")) device = "Macintosh (macOS)";
@@ -105,22 +106,87 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
             else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
             else if (ua.includes("Edg")) browser = "Edge";
 
-            setSessionInfo(prev => ({
-                ...prev,
-                device,
-                browser,
-                lastUpdated: new Date().toLocaleString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true
-                })
-            }));
+            const lastUpdatedDate = new Date();
+            const lastUpdated = lastUpdatedDate.toLocaleString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: 'numeric', minute: 'numeric', hour12: true
+            });
+
+            // Get or create device session token
+            let token = localStorage.getItem('device_session_token');
+            if (!token) {
+                try {
+                    token = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Math.random().toString(36).substring(2)}${Date.now()}`;
+                } catch (e) {
+                    token = `${Math.random().toString(36).substring(2)}${Date.now()}`;
+                }
+                localStorage.setItem('device_session_token', token);
+            }
+
+            const currentSession = { device, browser, ip: currentIp, lastUpdated, sessionToken: token };
+            setSessionInfo(currentSession);
+
+            if (user?.id) {
+                try {
+                    // Try to update session in DB
+                    const { error: upsertError } = await supabase
+                        .from('user_sessions')
+                        .upsert({
+                            user_id: user.id,
+                            device,
+                            browser,
+                            ip: currentIp,
+                            last_updated: lastUpdatedDate.toISOString(),
+                            session_token: token
+                        }, { onConflict: 'session_token' });
+
+                    if (upsertError) throw upsertError;
+
+                    const fetchSessions = async () => {
+                        const { data: sessions, error: fetchError } = await supabase
+                            .from('user_sessions')
+                            .select('*')
+                            .eq('user_id', user.id)
+                            .order('last_updated', { ascending: false });
+
+                        if (!fetchError && sessions) {
+                            const formattedSessions = sessions.map(s => ({
+                                device: s.device,
+                                browser: s.browser,
+                                ip: s.ip,
+                                lastUpdated: new Date(s.last_updated).toLocaleString('en-GB', {
+                                    day: 'numeric', month: 'short', year: 'numeric',
+                                    hour: 'numeric', minute: 'numeric', hour12: true
+                                }),
+                                sessionToken: s.session_token,
+                                isCurrent: s.session_token === token
+                            }));
+                            setActiveSessions(formattedSessions);
+                        }
+                    };
+
+                    await fetchSessions();
+
+                    // Optional: setup a quick interval to poll for changes
+                    const interval = setInterval(fetchSessions, 5000); // 5 seconds poll
+                    return () => clearInterval(interval);
+
+                } catch (err: any) {
+                    console.log("Session DB failed or table missing. Using local session fallback.", err?.message);
+                    setActiveSessions([{ ...currentSession, isCurrent: true }]);
+                }
+            } else {
+                setActiveSessions([{ ...currentSession, isCurrent: true }]);
+            }
         };
-        detectSession();
-    }, []);
+
+        const cleanup = detectAndRegisterSession();
+        return () => {
+            cleanup.then(clean => {
+                if (clean && typeof clean === 'function') clean();
+            });
+        }
+    }, [user?.id]);
 
     // Sinkronisasi data saat user prop berubah atau mode edit aktif
     useEffect(() => {
@@ -232,10 +298,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
+        <div className="max-w-4xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
             {/* 1. Header Card - Direct from Image */}
             <Card className="rounded-3xl border-slate-200 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 overflow-hidden mb-6">
-                <div className="p-8 sm:p-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                <div className="p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
                     {/* Avatar with Camera Icon Overlay */}
                     <div className="relative group flex-shrink-0">
                         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-slate-800 shadow-lg relative bg-slate-100 dark:bg-slate-800">
@@ -304,19 +370,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
             {/* 2. Custom Tabs - Direct from Image */}
             <Tabs defaultValue="account" className="w-full">
-                <div className="bg-slate-100/80 dark:bg-white/5 p-1.5 rounded-2xl mb-8 flex justify-center">
-                    <TabsList className="bg-transparent h-12 gap-2 w-full max-w-2xl px-1.5">
-                        <TabsTrigger value="personal" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Personal</TabsTrigger>
-                        <TabsTrigger value="account" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Account</TabsTrigger>
-                        <TabsTrigger value="security" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Security</TabsTrigger>
-                        <TabsTrigger value="notifications" className="rounded-xl flex-1 font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8">Notifications</TabsTrigger>
+                <div className="bg-slate-100/80 dark:bg-white/5 p-1.5 rounded-2xl mb-6 sm:mb-8 flex justify-start sm:justify-center overflow-x-auto no-scrollbar">
+                    <TabsList className="bg-transparent h-12 gap-1 sm:gap-2 w-full max-w-2xl px-1.5 min-w-max flex-nowrap inline-flex">
+                        <TabsTrigger value="personal" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Personal</TabsTrigger>
+                        <TabsTrigger value="account" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Account</TabsTrigger>
+                        <TabsTrigger value="security" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Security</TabsTrigger>
+                        <TabsTrigger value="notifications" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Notifications</TabsTrigger>
                     </TabsList>
                 </div>
 
                 {/* Account Tab Content - Primary Focus from Image */}
                 <TabsContent value="account">
                     <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-                        <div className="p-8 sm:p-12 space-y-12">
+                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-12">
                             {/* Section: Header */}
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Account Settings</h3>
@@ -350,12 +416,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <Separator className="bg-slate-100 dark:bg-white/5" />
 
                             {/* Section: Data Export */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Data Export</h4>
                                     <p className="text-slate-500 dark:text-slate-400 text-xs">Download a copy of your data</p>
                                 </div>
-                                <Button variant="outline" className="rounded-xl font-bold h-12 px-8 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                                <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold h-12 px-8 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
                                     Export Data
                                 </Button>
                             </div>
@@ -370,12 +436,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Irreversible and destructive actions</p>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                                <div className="space-y-1 text-center sm:text-left">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+                                <div className="space-y-1 text-left">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Delete Account</h4>
                                     <p className="text-slate-500 dark:text-slate-400 text-xs">Permanently delete your account and all data</p>
                                 </div>
-                                <Button variant="destructive" className="rounded-xl font-bold h-14 px-8 bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200 dark:shadow-rose-900/10 flex items-center gap-2">
+                                <Button variant="destructive" className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200 dark:shadow-rose-900/10 flex items-center justify-center gap-2">
                                     <Trash2 size={18} /> Delete Account
                                 </Button>
                             </div>
@@ -386,7 +452,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                 {/* Personal Tab - Adapting previous fields into new UI style */}
                 <TabsContent value="personal">
                     <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-                        <div className="p-8 sm:p-12 space-y-10">
+                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Personal Details</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Update your identity and contact information.</p>
@@ -426,7 +492,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                             {isEditing && (
                                 <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSave} disabled={isSaving} className="bg-slate-900 dark:bg-blue-600 text-white px-10 h-14 rounded-xl font-bold flex items-center gap-2">
+                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto bg-slate-900 dark:bg-blue-600 text-white px-10 h-14 rounded-xl font-bold flex justify-center items-center gap-2">
                                         {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
                                         Save Information
                                     </Button>
@@ -439,7 +505,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                 {/* Security Tab */}
                 <TabsContent value="security">
                     <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-                        <div className="p-8 sm:p-12 space-y-10">
+                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Security Protocols</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your passcode and accessibility keys.</p>
@@ -447,7 +513,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Change Passcode</h4>
                                     <p className="text-slate-500 dark:text-slate-400 text-xs">Update your security key for system access</p>
@@ -455,7 +521,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 <Button
                                     onClick={() => setIsPasswordModalOpen(true)}
                                     variant="outline"
-                                    className="rounded-xl font-bold h-14 px-8 border-slate-200 dark:border-white/10 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center gap-2"
+                                    className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 border-slate-200 dark:border-white/10 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Lock size={18} /> Update Key
                                 </Button>
@@ -463,7 +529,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Session Control</h4>
                                     <p className="text-slate-500 dark:text-slate-400 text-xs">Sign out from all active terminals</p>
@@ -471,7 +537,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 <Button
                                     onClick={onLogout}
                                     variant="ghost"
-                                    className="rounded-xl font-bold h-14 px-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center gap-2"
+                                    className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center gap-2"
                                 >
                                     <LogOut size={18} /> Terminate All Sessions
                                 </Button>
@@ -486,8 +552,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                     <p className="text-slate-500 dark:text-slate-400 text-xs text-opacity-70 font-medium">Manage and secure your active login sessions across devices.</p>
                                 </div>
 
-                                <div className="border border-slate-100 dark:border-white/5 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
-                                    <Table>
+                                <div className="border border-slate-100 dark:border-white/5 rounded-2xl overflow-x-auto bg-white dark:bg-slate-900/50">
+                                    <Table className="min-w-[600px]">
                                         <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b-0">
                                             <TableRow className="hover:bg-transparent border-b">
                                                 <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Device</TableHead>
@@ -498,26 +564,45 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {/* Real Session Row - Current Device */}
-                                            <TableRow className="border-b border-slate-100/50 dark:border-white/5 bg-blue-50/20 dark:bg-blue-600/5 hover:bg-blue-50/30 dark:hover:bg-blue-600/10 transition-colors">
-                                                <TableCell className="py-6 px-6">
-                                                    <div className="flex flex-col">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-slate-900 dark:text-white text-sm">{sessionInfo.device}</span>
-                                                            <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm">Current</Badge>
+                                            {activeSessions.map((session, index) => (
+                                                <TableRow key={session.sessionToken || index} className={`border-b border-slate-100/50 dark:border-white/5 ${session.isCurrent ? 'bg-blue-50/20 dark:bg-blue-600/5 hover:bg-blue-50/30 dark:hover:bg-blue-600/10' : 'hover:bg-slate-50/50 dark:hover:bg-white/5'} transition-colors`}>
+                                                    <TableCell className="py-6 px-6">
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-slate-900 dark:text-white text-sm">{session.device}</span>
+                                                                {session.isCurrent && (
+                                                                    <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm">Current</Badge>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-xs text-slate-400 font-medium">{session.browser}</span>
                                                         </div>
-                                                        <span className="text-xs text-slate-400 font-medium">{sessionInfo.browser}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{sessionInfo.ip}</TableCell>
-                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{sessionInfo.lastUpdated}</TableCell>
-                                                <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">GESIT WORK</TableCell>
-                                                <TableCell className="py-6 px-6 text-right">
-                                                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
-                                                        Active Now
-                                                    </span>
-                                                </TableCell>
-                                            </TableRow>
+                                                    </TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.ip}</TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.lastUpdated}</TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">GESIT WORK</TableCell>
+                                                    <TableCell className="py-6 px-6 text-right">
+                                                        {session.isCurrent ? (
+                                                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
+                                                                Active Now
+                                                            </span>
+                                                        ) : (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 px-3 py-1.5 h-auto rounded-lg"
+                                                                onClick={async () => {
+                                                                    if (session.sessionToken) {
+                                                                        await supabase.from('user_sessions').delete().eq('session_token', session.sessionToken);
+                                                                        setActiveSessions(prev => prev.filter(s => s.sessionToken !== session.sessionToken));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Revoke
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -528,7 +613,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                 <TabsContent value="notifications">
                     <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-                        <div className="p-8 sm:p-12 space-y-10 text-center py-20">
+                        <div className="p-6 sm:p-12 space-y-10 text-center py-20">
                             <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Bell size={32} className="text-slate-300" />
                             </div>

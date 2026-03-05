@@ -273,6 +273,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                             <option value={5}>5 Ports</option>
                                             <option value={8}>8 Ports</option>
                                             <option value={10}>10 Ports</option>
+                                            <option value={13}>13 Ports (Mikrotik)</option>
                                             <option value={16}>16 Ports</option>
                                             <option value={24}>24 Ports</option>
                                             <option value={28}>28 Ports</option>

@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemaps (Optional)
-# Sitemap: https://it.gesit.co.id/sitemap.xml

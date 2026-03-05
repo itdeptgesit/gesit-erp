@@ -1,5 +1,5 @@
 
-export const APP_NAME = 'Gesit ERP';
+export const APP_NAME = 'TASKPLUS';
 
 // For demo purposes, we simulate the logged-in user's groups if not found in DB
 export const CURRENT_USER_GROUPS = ['admin'];

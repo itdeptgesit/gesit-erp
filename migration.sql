@@ -2,7 +2,8 @@
 ALTER TABLE purchase_records 
 ADD COLUMN IF NOT EXISTS payment_method TEXT,
 ADD COLUMN IF NOT EXISTS evidence_link TEXT,
-ADD COLUMN IF NOT EXISTS input_by TEXT;
+ADD COLUMN IF NOT EXISTS input_by TEXT,
+ADD COLUMN IF NOT EXISTS category TEXT;
 
 -- Comment for documentation
 COMMENT ON COLUMN purchase_records.payment_method IS 'Transfer, VA, or Debit/CC';

@@ -261,6 +261,7 @@ export interface WeeklyPlan {
   priority: 'Low' | 'Medium' | 'High';
   status: 'To Do' | 'In Progress' | 'Pending' | 'Done';
   dueDate: string;
+  startDate?: string;
   startTime?: string;
   week: string;
   category: string;
