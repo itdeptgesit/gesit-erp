@@ -309,10 +309,16 @@ const InternalApp: React.FC = () => {
         setIsAuthenticated(true);
 
         // Update last login timestamp in DB
-        await supabase
+        const { error: updateError } = await supabase
           .from('user_accounts')
           .update({ last_login: new Date().toISOString() })
-          .eq('id', data.id);
+          .or(`id.eq.${data.id},email.eq.${email}`);
+
+        if (updateError) {
+          console.error("App.tsx: Failed to update last_login:", updateError);
+        } else {
+          console.log("App.tsx: last_login updated successfully for", email);
+        }
       } else {
         // Auto-registration for missing internal accounts
         console.log("App.tsx: User not found in database, creating new account for", email);
