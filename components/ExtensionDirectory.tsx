@@ -108,7 +108,7 @@ const InstructionPanel = () => {
                                 <div className="space-y-4 relative z-10">
                                     {[
                                         { label: 'Pickup Incoming', code: '#70 + Ext' },
-                                        { label: 'Call to 26th Floor', code: '## + PIN + Ext lt.26' },
+                                        { label: 'Call to 26th Floor', code: '## + Ext lt.26' },
                                         { label: 'Outgoing Call', code: '* + PIN + 9 + PHONE NUMBER' }
                                     ].map((item, i) => (
                                         <div key={i} className="flex justify-between items-center group/item">
