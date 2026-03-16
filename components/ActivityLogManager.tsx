@@ -185,6 +185,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isDarkTheme, setIsDarkTheme] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
+    const [departments, setDepartments] = useState<string[]>([]);
 
     // RBAC Logic
     const isAdmin = currentUser?.role === 'Admin';
@@ -225,26 +226,44 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 setActivities(formattedData);
             }
 
-            const { data: userData } = await supabase
-                .from('user_accounts')
-                .select('username, full_name, avatar_url');
+            const [extDataRes, deptDataRes, userDataRes] = await Promise.all([
+                supabase.from('phone_extensions').select('name, dept, photo_url'),
+                supabase.from('departments').select('name').order('name'),
+                supabase.from('user_accounts').select('username, full_name, avatar_url')
+            ]);
 
-            if (userData) {
-                const avatarMap: Record<string, string> = {};
-                const userList: any[] = [];
-                userData.forEach((u: any) => {
+            const avatarMap: Record<string, string> = {};
+            const userList: any[] = [];
+
+            if (extDataRes.data) {
+                extDataRes.data.forEach((u: any) => {
                     userList.push({
-                        name: u.full_name || u.username,
-                        department: u.department || 'Staff',
-                        avatarUrl: u.avatar_url
+                        name: u.name,
+                        department: u.dept || 'Staff',
+                        avatarUrl: u.photo_url
                     });
-                    if (u.avatar_url) {
-                        avatarMap[u.username] = u.avatar_url;
-                        avatarMap[u.full_name] = u.avatar_url;
+                    if (u.photo_url) {
+                        avatarMap[u.name] = u.photo_url;
                     }
                 });
-                setUserAvatars(avatarMap);
-                setUsers(userList);
+            }
+
+            if (userDataRes.data) {
+                userDataRes.data.forEach((u: any) => {
+                    if (u.avatar_url) {
+                        avatarMap[u.username] = u.avatar_url;
+                        if (u.full_name) {
+                            avatarMap[u.full_name] = u.avatar_url;
+                        }
+                    }
+                });
+            }
+
+            setUserAvatars(avatarMap);
+            setUsers(userList);
+
+            if (deptDataRes.data) {
+                setDepartments(deptDataRes.data.map((d: any) => d.name));
             }
 
         } catch (error: any) {
@@ -789,7 +808,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 initialData={selectedActivity}
                 currentUserName={currentUser?.fullName || currentUser?.username}
                 users={users}
-                departments={['IT', 'Finance', 'HR', 'Operations', 'Sales', 'Marketing', 'Production', 'Logistics', 'Security']}
+                departments={departments.length > 0 ? departments : ['IT', 'Finance', 'HR', 'Operations', 'Sales', 'Marketing', 'Production', 'Logistics', 'Security']}
             />
             <DangerConfirmModal
                 isOpen={!!deleteActivity}

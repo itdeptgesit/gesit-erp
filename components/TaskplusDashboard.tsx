@@ -205,7 +205,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             const myOverdueTotal = overdueTasksCount + overdueActivitiesCount;
 
             const personalAlerts: string[] = [];
-            if (myOverdueTotal > 0) personalAlerts.push(`${myOverdueTotal} activity overdue`);
+            if (myOverdueTotal > 0) personalAlerts.push(`${myOverdueTotal} planner overdue`);
             const oldProcurement = myProcurements.find(p => (p.status === 'In Review' || p.status === 'Draft') && p.request_date && new Date(p.request_date) < fiveDaysAgo);
             if (oldProcurement) personalAlerts.push(`1 procurement pending > 5 hari`);
             const nearDueLoan = myLoans.find(a => a.due_date && (new Date(a.due_date).getTime() - new Date().getTime()) < 3 * 24 * 3600 * 1000);
@@ -233,7 +233,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             const oldOrgProc = pendingProc.filter(p => p.request_date && new Date(p.request_date) < sevenDaysAgo).length;
             if (oldOrgProc >= 2) orgAlerts.push(`${oldOrgProc} procurement pending > 7 hari`);
             const overdueTotal = (weeklyPlans || []).filter(w => (w.status !== 'Done' && w.status !== 'Completed') && w.due_date && w.due_date < today).length;
-            if (overdueTotal >= 4) orgAlerts.push(`${overdueTotal} activity overdue`);
+            if (overdueTotal >= 4) orgAlerts.push(`${overdueTotal} planner overdue`);
 
             // Dummy SLA & Rating Calculation based on ticket counts to make it feel alive
             const totalHelpTicketsCount = Math.max(helpTickets?.length || 0, 1);
@@ -459,7 +459,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             <Target size={16} className="animate-pulse" />
                         </div>
                         <Badge variant="outline" className="text-[10px] font-semibold tracking-wider uppercase border-primary/20 text-primary bg-primary/5 px-2.5 py-0.5 rounded-full">
-                            {activeMode === 'PERSONAL' ? 'Operation Hub' : 'System Nexus'}
+                            {activeMode === 'PERSONAL' ? 'Operation Hub' : 'System Gesit'}
                         </Badge>
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -552,7 +552,15 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             {stats.personalAlerts.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {stats.personalAlerts.map((alert, i) => (
-                                        <div key={i} className="p-4 bg-destructive/5 border border-destructive/10 rounded-xl flex items-center gap-3 animate-in fade-in duration-500">
+                                        <div key={i}
+                                            onClick={() => {
+                                                const lower = alert.toLowerCase();
+                                                if (lower.includes('procurement')) onNavigate('procurement');
+                                                else if (lower.includes('loan')) onNavigate('asset-loan');
+                                                else onNavigate('activities');
+                                            }}
+                                            className="p-4 bg-destructive/5 hover:bg-destructive/10 border border-destructive/10 rounded-xl flex items-center gap-3 animate-in fade-in duration-500 cursor-pointer transition-colors"
+                                        >
                                             <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive">
                                                 <Info size={16} />
                                             </div>
@@ -691,7 +699,16 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {stats.orgCritical.map((alert, i) => (
-                                    <div key={i} className="px-3 py-1.5 rounded-lg bg-destructive/20 border border-destructive/30 font-bold text-[9px] uppercase tracking-wider text-destructive">
+                                    <div
+                                        key={i}
+                                        onClick={() => {
+                                            const lower = alert.toLowerCase();
+                                            if (lower.includes('procurement')) onNavigate('procurement');
+                                            else if (lower.includes('ticket')) onNavigate('ticket');
+                                            else onNavigate('activities');
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 font-bold text-[9px] uppercase tracking-wider text-destructive cursor-pointer transition-colors"
+                                    >
                                         {alert}
                                     </div>
                                 ))}
