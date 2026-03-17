@@ -113,9 +113,9 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                         </div>
                         <div className="text-left">
                             <DialogTitle className="text-xl font-bold uppercase tracking-tight">
-                                Purchase Audit Detail
+                                Purchase Record Detail
                             </DialogTitle>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5 opacity-60">Secured Document Traceability</p>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5 opacity-60">View purchase details and documentation</p>
                         </div>
                     </div>
                 </DialogHeader>
@@ -129,12 +129,12 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <ShieldCheck className="text-primary-foreground" size={28} />
                                 </div>
                                 <div className="text-left">
-                                    <h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Purchase Invoice</h1>
+                                    <h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Purchase Details</h1>
                                     <p className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mt-2">IT Asset Management</p>
                                 </div>
                             </div>
                             <div className="text-left md:text-right space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Audit Ledger Entry</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Transaction ID</p>
                                 <p className="text-2xl font-mono font-bold text-primary leading-none tracking-tighter">{record.transactionId}</p>
                                 <div className="flex md:justify-end gap-2 pt-1">
                                     <Badge variant="outline" className="font-mono text-[9px] uppercase tracking-widest bg-muted/20 border-none px-2 py-0.5">{record.purchaseDate}</Badge>
@@ -149,11 +149,11 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-6">
                                         <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-b pb-3 flex items-center gap-2">
-                                            <User size={12} className="text-primary" /> Requester & Entity
+                                            <User size={12} className="text-primary" /> Basic Information
                                         </h3>
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Full Name</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Requester Name</p>
                                                 <p className="text-xl font-bold text-foreground uppercase tracking-tight">{record.user}</p>
                                             </div>
                                             <div className="flex flex-col gap-3">
@@ -185,7 +185,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                         </h3>
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Authorized Vendor</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Vendor</p>
                                                 <p className="text-xl font-bold text-foreground uppercase tracking-tight">{record.vendor}</p>
                                             </div>
                                             <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border w-fit">
@@ -210,7 +210,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 border-b pb-2">
                                         <div className="w-1 h-4 bg-primary rounded-full"></div>
-                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">Procurement Overview</h3>
+                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">Description</h3>
                                     </div>
                                     <div className="p-6 bg-muted/5 rounded-xl border relative overflow-hidden">
                                         <div className="absolute top-0 left-0 w-1 h-full bg-primary/20"></div>
@@ -222,7 +222,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                 {record.items && record.items.length > 0 && (
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-                                            <Tag size={12} className="text-primary" /> Itemized Ledger Breakdown
+                                            <Tag size={12} className="text-primary" /> Items
                                         </h3>
                                         <div className="border rounded-xl overflow-hidden shadow-sm bg-muted/5">
                                             <table className="w-full text-left text-sm border-collapse">
@@ -267,7 +267,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                             <div className="w-8 h-8 bg-primary/20 text-primary rounded-lg flex items-center justify-center border border-primary/20">
                                                 <CreditCard size={16} />
                                             </div>
-                                            <h3 className="text-[9px] font-bold uppercase tracking-widest text-white/70">Audit Ledger</h3>
+                                            <h3 className="text-[9px] font-bold uppercase tracking-widest text-white/70">Financial Summary</h3>
                                         </div>
 
                                         <div className="space-y-3">
@@ -280,7 +280,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                                 <span className="font-medium">{record.paymentDate || record.purchaseDate}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
-                                                <span className="opacity-40 font-bold uppercase tracking-wider text-[9px]">Audit Status</span>
+                                                <span className="opacity-40 font-bold uppercase tracking-wider text-[9px]">Status</span>
                                                 <div className={cn("flex items-center gap-2 font-bold uppercase text-[10px]", statusCfg.color)}>
                                                     {statusCfg.icon && React.isValidElement(statusCfg.icon)
                                                         ? React.cloneElement(statusCfg.icon as React.ReactElement<any>, { size: 12 })
@@ -292,7 +292,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
 
                                         <div className="pt-5 border-t border-white/5 flex items-center justify-between">
                                             <div className="space-y-1">
-                                                <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">Verified Liability</p>
+                                                <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">Total Amount</p>
                                                 <p className="text-2xl font-mono font-bold text-primary tracking-tighter">{formatFullIDR(record.subtotal || 0)}</p>
                                             </div>
                                         </div>
@@ -307,7 +307,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                                 <ShieldAlert size={16} />
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest opacity-70">Internal Audit Remarks</p>
+                                                <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest opacity-70">Remarks / Notes</p>
                                                 <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">"{record.remarks}"</p>
                                             </div>
                                         </div>
@@ -317,7 +317,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                 {/* Compliance Matrix */}
                                 <div className="bg-emerald-600/5 p-8 rounded-xl border border-emerald-600/10 space-y-6">
                                     <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <ShieldCheck size={16} /> Documentation Matrix
+                                        <ShieldCheck size={16} /> Checklist / Documents
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
                                         {Object.entries({
