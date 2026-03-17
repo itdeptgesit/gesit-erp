@@ -1,6 +1,6 @@
 
 // TODO: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7rkDLrTsuWpizF97wybaW2_iSMOTgxWnQr765dR3yzklUYPwJuQGFHCI6ioDesrQHSQ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyMhduh1yY7WCMK6rbLq3dDV1FMQ6TcGDTHjlBEGevFw-GPkqj0VZ20m_UHjmXWrRNFqQ/exec';
 
 export const sendToGoogleSheet = async (record: any) => {
     if (!GOOGLE_SCRIPT_URL) {
