@@ -135,6 +135,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 year: dateObj.getFullYear()
             });
             showToast(editingRecord ? 'Record updated successfully!' : 'New entry saved successfully!');
+
+            // Log activity for Dashboard timeline
+            await supabase.from('activity_logs').insert([{
+                activity_name: editingRecord ? `Updated Purchase: ${formData.description}` : `New Purchase: ${formData.description}`,
+                category: 'Procurement',
+                requester: formData.user || 'System',
+                department: formData.department || 'General',
+                it_personnel: currentUser?.fullName || 'IT Dept',
+                type: (formData.totalVa || 0) > 10000000 ? 'Critical' : 'Minor',
+                status: 'Completed',
+                remarks: `Purchase of ${formData.description} via ${formData.platform || 'Unknown'}. Total: ${formData.totalVa}`,
+                created_at: new Date().toISOString()
+            }]);
         } catch (err) {
             showToast('Failed to save record', 'error');
         } finally { setIsActionLoading(false); }

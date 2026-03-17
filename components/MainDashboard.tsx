@@ -59,6 +59,12 @@ interface DashboardStats {
     upcomingLoans: any[];
     activeAnnouncements: Announcement[];
     vendors: VendorStat[];
+    purchaseCategoryData: { name: string; value: number }[];
+    budgetUtilization: {
+        total: number;
+        paid: number;
+        utilizationRate: number;
+    };
 }
 
 interface MainDashboardProps {
@@ -116,7 +122,9 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         deptSpending: {},
         assetStatuses: { operational: 0, maintenance: 0, retired: 0 },
         personalTasks: [], upcomingLoans: [], activeAnnouncements: [],
-        vendors: []
+        vendors: [],
+        purchaseCategoryData: [],
+        budgetUtilization: { total: 0, paid: 0, utilizationRate: 0 }
     });
 
     const fetchData = async () => {
@@ -216,7 +224,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 personalTasks: pTasks || [],
                 upcomingLoans: loans || [],
                 activeAnnouncements: announcements || [],
-                vendors: vendorList
+                vendors: vendorList,
+                purchaseCategoryData: Object.entries((purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
+                    const cat = curr.category || 'Other';
+                    acc[cat] = (acc[cat] || 0) + (curr.total_va || 0);
+                    return acc;
+                }, {} as Record<string, number>)).map(([name, value]) => ({ name, value: value as number })).sort((a, b) => b.value - a.value),
+                budgetUtilization: (() => {
+                    const total = (purchaseRecords || []).reduce((sum: number, r: any) => sum + (Number(r.total_va) || 0), 0);
+                    const paid = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((sum: number, r: any) => sum + (Number(r.total_va) || 0), 0);
+                    return {
+                        total,
+                        paid,
+                        utilizationRate: total > 0 ? Math.round((paid / total) * 100) : 0
+                    };
+                })()
             });
 
 
@@ -399,17 +421,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 <Activity size={14} className="text-muted-foreground" />
                             </div>
                             <div className="space-y-6">
-                                {stats.recentActivities.slice(0, 3).map((act, i) => (
+                                {stats.recentActivities.length > 0 ? stats.recentActivities.slice(0, 3).map((act, i) => (
                                     <div key={i} className="flex gap-4">
                                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 transition-colors">
-                                            <LifeBuoy size={18} />
+                                            <Activity size={18} />
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-foreground">{act.activityName}</p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleTimeString()}</p>
+                                            <p className="text-[10px] text-muted-foreground mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="text-center py-10">
+                                        <p className="text-xs text-muted-foreground">No recent activities found.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -451,23 +477,48 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
                     {/* Row 2 - Analysis Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Ticket Overview Chart */}
+                        {/* Budget Utilization Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Ticket Overview</h3>
-                                <Activity size={14} className="text-muted-foreground" />
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-base font-semibold text-foreground">Budget Utilization</h3>
+                                <PieChart size={14} className="text-muted-foreground" />
                             </div>
-                            <div className="h-56 w-full">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-4 opacity-70">Paid vs Total Commitment</p>
+                            
+                            <div className="h-48 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ReBarChart data={[
-                                        { m: 'Mon', open: 4, wip: 2, closed: 3 }, { m: 'Tue', open: 7, wip: 1, closed: 4 },
-                                        { m: 'Wed', open: 5, wip: 3, closed: 2 }, { m: 'Thu', open: 2, wip: 1, closed: 5 }
-                                    ]}>
-                                        <Bar dataKey="open" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                        <Bar dataKey="wip" stackId="a" fill="#ffd700" />
-                                        <Bar dataKey="closed" stackId="a" fill="#e2e8f0" />
-                                    </ReBarChart>
+                                    <RePieChart>
+                                        <Pie
+                                            data={[
+                                                { name: 'Paid', value: stats.budgetUtilization.paid },
+                                                { name: 'Pending', value: Math.max(0, stats.budgetUtilization.total - stats.budgetUtilization.paid) }
+                                            ]}
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            <Cell fill="#10b981" />
+                                            <Cell fill="#e2e8f0" />
+                                        </Pie>
+                                        <ReTooltip />
+                                    </RePieChart>
                                 </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-2xl font-bold text-foreground">{stats.budgetUtilization.utilizationRate}%</span>
+                                    <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60">Utilized</span>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-4 flex justify-between items-center bg-muted/30 p-3 rounded-xl">
+                                <div>
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Paid Amount</p>
+                                    <p className="text-xs font-bold text-emerald-600">{formatCurrency(stats.budgetUtilization.paid)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Total Committed</p>
+                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatCurrency(stats.budgetUtilization.total)}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -495,24 +546,49 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                         </div>
 
-                        {/* Purchase Overview Area Chart */}
+                        {/* Purchase by Category Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Purchase Overview</h3>
-                                <Activity size={14} className="text-muted-foreground" />
+                                <h3 className="text-base font-semibold text-foreground">Top Spend by Category</h3>
+                                <TrendingUp size={14} className="text-muted-foreground" />
                             </div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-4">Snapshot</p>
-                            <h4 className="text-3xl font-bold text-foreground mb-8">$37.5K <Badge variant="secondary" className="text-emerald-500 ml-2 py-0">+4.5%</Badge></h4>
-                            <div className="h-32 w-full">
+                            <div className="h-56 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={[{ v: 10 }, { v: 25 }, { v: 30 }, { v: 45 }, { v: 35 }, { v: 50 }, { v: 60 }]}>
-                                        <Area type="monotone" dataKey="v" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} />
-                                    </AreaChart>
+                                    <ReBarChart
+                                        layout="vertical"
+                                        data={stats.purchaseCategoryData.slice(0, 5)}
+                                        margin={{ left: 10, right: 30 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.1} />
+                                        <XAxis type="number" hide />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            width={100}
+                                            tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                                        />
+                                        <ReTooltip
+                                            formatter={(value: number) => formatCurrency(value)}
+                                            contentStyle={{
+                                                borderRadius: '12px',
+                                                border: 'none',
+                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold'
+                                            }}
+                                        />
+                                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                            {stats.purchaseCategoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e'][index % 5]} />
+                                            ))}
+                                        </Bar>
+                                    </ReBarChart>
                                 </ResponsiveContainer>
                             </div>
-                            <div className="flex justify-between items-center mt-6">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">LAST MONTH</p>
-                                <p className="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1">TARGET <ArrowUpRight size={10} /> 52.5%</p>
+                            <div className="mt-4 text-center border-t pt-2">
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Based on Verified Payments</p>
                             </div>
                         </div>
                     </div>
@@ -547,37 +623,29 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                         </div>
 
-                        {/* Recent Activity Mini-Timeline */}
+                        {/* Recent Purchase Activities */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-2">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-sm font-semibold text-foreground">Activity Timeline</h3>
+                                <h3 className="text-sm font-semibold text-foreground">Recent Activities</h3>
                                 <Activity size={14} className="text-muted-foreground" />
                             </div>
-                            <div className="space-y-6">
-                                <div className="flex gap-4">
-                                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-primary shrink-0">
-                                        <LayoutGrid size={16} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-sm font-semibold">Meeting HR</p>
-                                            <span className="text-[10px] font-bold text-muted-foreground">10:00 AM</span>
+                            <div className="space-y-4">
+                                {stats.recentActivities.length > 0 ? stats.recentActivities.map((act, i) => (
+                                    <div key={i} className="flex gap-4 p-3 bg-muted/20 rounded-xl hover:bg-muted/40 transition-all border border-transparent hover:border-border">
+                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                            <Activity size={18} />
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">Maintenance</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-4 p-3 bg-destructive/5 rounded-xl border border-destructive/10">
-                                    <div className="w-9 h-9 rounded-lg bg-background flex items-center justify-center text-destructive shrink-0">
-                                        <AlertCircle size={16} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-sm font-semibold text-destructive">Procurement Approval</p>
-                                            <span className="text-[10px] font-bold text-destructive/70">Yesterday</span>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <p className="text-sm font-bold text-foreground truncate">{act.activityName}</p>
+                                                <span className="text-[10px] font-bold text-muted-foreground shrink-0">{new Date(act.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{act.itPersonnel}</p>
                                         </div>
-                                        <p className="text-[10px] text-destructive/60 uppercase tracking-wider">Urgent</p>
                                     </div>
-                                </div>
+                                )) : (
+                                    <div className="py-10 text-center opacity-30 italic text-xs">No ledger movement detected</div>
+                                )}
                             </div>
                         </div>
 
