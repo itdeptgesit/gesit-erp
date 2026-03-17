@@ -762,26 +762,26 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50 border-b">
-                                <TableHead className="font-bold py-4">Audit Identity</TableHead>
-                                <TableHead className="font-bold py-4">Item & Procurement Details</TableHead>
-                                <TableHead className="text-right font-bold py-4">Fiscal Value</TableHead>
-                                <TableHead className="font-bold py-4">Corporate entity</TableHead>
-                                <TableHead className="font-bold py-4">Ledger Status</TableHead>
-                                <TableHead className="text-center font-bold py-4">Audit Docs</TableHead>
-                                <TableHead className="text-right font-bold pr-8 py-4">Control</TableHead>
+                                <TableHead className="font-bold py-5 px-6">Audit Identity</TableHead>
+                                <TableHead className="font-bold py-5 px-6">Item & Procurement Details</TableHead>
+                                <TableHead className="text-right font-bold py-5 px-6">Fiscal Value</TableHead>
+                                <TableHead className="font-bold py-5 px-6">Corporate entity</TableHead>
+                                <TableHead className="font-bold py-5 px-6">Ledger Status</TableHead>
+                                <TableHead className="text-center font-bold py-5 px-6">Audit Docs</TableHead>
+                                <TableHead className="text-right font-bold pr-10 py-5 px-6">Control</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 Array.from({ length: 10 }).map((_, idx) => (
                                     <TableRow key={idx}>
-                                        <TableCell className="py-5">
+                                        <TableCell className="py-7 px-6">
                                             <div className="flex flex-col gap-2">
                                                 <Skeleton className="h-5 w-24 rounded-md" />
                                                 <Skeleton className="h-3 w-16" />
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-5">
+                                        <TableCell className="py-7 px-6">
                                             <div className="flex flex-col gap-2 max-w-[280px]">
                                                 <Skeleton className="h-4 w-full" />
                                                 <div className="flex gap-2">
@@ -790,23 +790,23 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-5 text-right flex flex-col items-end gap-2">
+                                        <TableCell className="py-7 px-6 text-right flex flex-col items-end gap-2">
                                             <Skeleton className="h-4 w-24" />
                                             <Skeleton className="h-3 w-16" />
                                         </TableCell>
-                                        <TableCell className="py-5">
+                                        <TableCell className="py-7 px-6">
                                             <div className="flex flex-col gap-2">
                                                 <Skeleton className="h-3 w-20" />
                                                 <Skeleton className="h-3 w-24" />
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-5">
+                                        <TableCell className="py-7 px-6">
                                             <Skeleton className="h-6 w-16 rounded-full" />
                                         </TableCell>
-                                        <TableCell className="py-5 flex justify-center">
+                                        <TableCell className="py-7 px-6 flex justify-center">
                                             <Skeleton className="h-8 w-8 rounded-full" />
                                         </TableCell>
-                                        <TableCell className="py-5 pr-8">
+                                        <TableCell className="py-7 pr-10 px-6">
                                             <div className="flex justify-end gap-2">
                                                 <Skeleton className="h-8 w-8 rounded-xl" />
                                                 <Skeleton className="h-8 w-8 rounded-xl" />
@@ -819,30 +819,30 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 <TableRow><TableCell colSpan={7} className="py-32 text-center text-muted-foreground font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</TableCell></TableRow>
                             ) : paginatedRecords.map(record => (
                                 <TableRow key={record.id} className="group transition-colors hover:bg-muted/30">
-                                    <TableCell className="py-5">
-                                        <div className="flex flex-col gap-1.5 align-middle">
-                                            <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md w-fit tracking-tighter border border-primary/20">{record.transactionId}</span>
+                                    <TableCell className="py-7 px-6">
+                                        <div className="flex flex-col gap-2 align-middle">
+                                            <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md w-fit tracking-tighter border border-primary/20 shadow-sm">{record.transactionId}</span>
                                             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
                                                 <Calendar size={11} className="opacity-70" />
                                                 {record.purchaseDate}
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-5">
-                                        <div className="flex flex-col gap-1 max-w-[280px]">
-                                            <p className="font-bold text-foreground text-sm tracking-tight leading-tight truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Badge variant="outline" className="text-[9px] font-bold px-1.5 py-0 h-4 bg-muted/50">{record.vendor}</Badge>
+                                    <TableCell className="py-7 px-6">
+                                        <div className="flex flex-col gap-1.5 max-w-[320px]">
+                                            <p className="font-bold text-foreground text-[13px] tracking-tight leading-snug truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
+                                            <div className="flex items-center gap-2.5 mt-0.5">
+                                                <Badge variant="outline" className="text-[9px] font-bold px-2 py-0 h-4 bg-muted/50 border-muted-foreground/10">{record.vendor}</Badge>
                                                 <span className="text-[10px] font-bold text-blue-500/80 uppercase tracking-tighter">{record.paymentMethod || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-5 text-right">
-                                        <p className="font-mono font-bold text-sm text-foreground tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
+                                    <TableCell className="py-7 px-6 text-right">
+                                        <p className="font-mono font-bold text-[13px] text-foreground tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Gross total</span>
                                     </TableCell>
-                                    <TableCell className="py-5">
-                                        <div className="flex flex-col gap-0.5">
+                                    <TableCell className="py-7 px-6">
+                                        <div className="flex flex-col gap-1">
                                             <p className="text-[10px] font-black text-foreground/80 uppercase tracking-widest">{record.company}</p>
                                             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold">
                                                 <Building2 size={11} className="text-primary/70" />
@@ -850,11 +850,11 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-5">
+                                    <TableCell className="py-7 px-6">
                                         <Badge
                                             variant="outline"
                                             className={cn(
-                                                "text-[9px] font-bold uppercase tracking-widest gap-1.5 border-transparent px-2.5 py-0.5",
+                                                "text-[9px] font-bold uppercase tracking-widest gap-1.5 border-transparent px-3 py-1 shadow-sm",
                                                 record.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
                                                     record.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
                                                         'bg-rose-500/10 text-rose-600 border-rose-500/20'
@@ -864,28 +864,28 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                             {record.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="py-5 text-center">
+                                    <TableCell className="py-7 px-6 text-center">
                                         <div className="flex justify-center">
                                             {Object.values(record.docs || {}).filter(v => v).length > 0 ? (
                                                 <div className="flex flex-col items-center gap-1">
-                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold border border-primary/20">
+                                                    <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold border border-primary/20">
                                                         {Object.values(record.docs || {}).filter(v => v).length}/7
                                                     </span>
                                                     <span className="text-[8px] font-black text-primary/70 uppercase tracking-tighter">Verified</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-center gap-1 opacity-40">
-                                                    <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-md text-[10px] font-bold">0/7</span>
+                                                    <span className="px-2.5 py-0.5 bg-muted text-muted-foreground rounded-md text-[10px] font-bold">0/7</span>
                                                     <span className="text-[8px] font-black uppercase tracking-tighter">Missing</span>
                                                 </div>
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-5 text-right pr-6">
-                                        <div className="inline-flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-primary"><Eye size={14} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-amber-500"><Pencil size={14} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></Button>
+                                    <TableCell className="py-7 text-right pr-10 px-6">
+                                        <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl"><Eye size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="h-9 w-9 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/5 rounded-xl"><Pencil size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-xl"><Trash2 size={15} /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
