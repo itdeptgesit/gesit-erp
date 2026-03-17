@@ -7,6 +7,10 @@ import {
     Clock, CheckCircle2, XCircle, Search, ChevronLeft, ChevronRight,
     ListFilter, BarChart3, UserCheck, ShieldCheck, Zap, Fingerprint, Eye
 } from 'lucide-react';
+import {
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+    Cell, PieChart, Pie
+} from 'recharts';
 import { PurchasePlan, UserAccount } from '../types';
 import { PurchaseRequestModal } from './PurchaseRequestModal';
 import { PurchaseDetailModal } from './PurchaseDetailModal';
@@ -145,6 +149,27 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         return filteredPlans.slice(start, start + itemsPerPage);
     }, [filteredPlans, currentPage]);
 
+    const analyticsData = useMemo(() => {
+        const statuses = plans.reduce((acc, p) => {
+            acc[p.status] = (acc[p.status] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const vendors = plans.reduce((acc, p) => {
+            const v = p.vendor || 'Unknown';
+            acc[v] = (acc[v] || 0) + p.totalPrice;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const statusChart = Object.entries(statuses).map(([name, value]) => ({ name, value }));
+        const vendorChart = Object.entries(vendors)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+
+        return { statusChart, vendorChart };
+    }, [plans]);
+
     const handleApprove = async (plan: PurchasePlan) => {
         setIsActionLoading(true);
         try {
@@ -245,7 +270,80 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 </div>
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
                     {activeTab === 'analytics' ? (
-                        <div className="p-20 text-center flex flex-col items-center justify-center opacity-30 grayscale"><BarChart3 size={48} className="mb-4 text-slate-400" /><h3 className="text-sm font-bold text-slate-500">Analytics processing</h3><p className="text-[10px] text-slate-400 mt-1 font-medium">Syncing cost distribution trends...</p></div>
+                        <div className="p-8 space-y-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Status Distribution */}
+                                <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <Clock size={14} /> Workflow Distribution
+                                    </h3>
+                                    <div className="h-64 w-full relative">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={analyticsData.statusChart}
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {analyticsData.statusChart.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][index % 5]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip 
+                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '10px', fontWeight: 'bold' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{plans.length}</span>
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Requests</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                        {analyticsData.statusChart.map((s, idx) => (
+                                            <div key={idx} className="flex items-center gap-2 p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][idx % 5] }} />
+                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase truncate">{s.name}</span>
+                                                <span className="ml-auto text-xs font-bold">{s.value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Top Vendors Spending */}
+                                <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <ShoppingCart size={14} /> Top Projected Spend by Vendor
+                                    </h3>
+                                    <div className="h-64 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={analyticsData.vendorChart} margin={{ top: 0, right: 30, left: 10, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
+                                                <YAxis hide />
+                                                <Tooltip 
+                                                    formatter={(value: number) => formatIDR(value)}
+                                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '10px', fontWeight: 'bold' }}
+                                                />
+                                                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                                    {analyticsData.vendorChart.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill="#3b82f6" fillOpacity={1 - (index * 0.15)} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <p className="text-[9px] text-center text-slate-400 font-bold uppercase mt-4 tracking-tighter italic">Aggregated cost from all request types</p>
+                                </div>
+                            </div>
+
+                            {/* Recent Activity Mini Feed Placeholder or High Level Trend */}
+                            <div className="p-12 text-center border-t border-slate-100 dark:border-slate-800 border-dashed">
+                                <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">Full Audit Trail Synced with Corporate Ledger</p>
+                            </div>
+                        </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
