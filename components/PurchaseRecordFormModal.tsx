@@ -297,7 +297,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                     <SelectValue placeholder={`- ${t('pilih')} -`} />
                                                 </SelectTrigger>
                                                 <SelectContent className="rounded-lg">
-                                                    {['Hardware', 'Software & License', 'Cloud & Hosting', 'Network & Internet', 'Maintenance & Support', 'IT Services', 'Security', 'Subscription'].map(cat => (
+                                                    {['Hardware', 'Accessories', 'Cloud & Hosting', 'Subscription', 'Maintenance & Support', 'IT Services'].map(cat => (
                                                         <SelectItem key={cat} value={cat} className="font-medium">{cat}</SelectItem>
                                                     ))}
                                                 </SelectContent>
