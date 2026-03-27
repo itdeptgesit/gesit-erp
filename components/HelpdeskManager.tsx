@@ -1310,12 +1310,19 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             }
 
             // Notify Requester
-            if (nextStatus === 'Resolved' && selectedTicket?.requesterEmail) {
+            if (selectedTicket?.requesterEmail) {
+                const statusLabels: Record<string, string> = {
+                    'Resolved': 'marked as solved',
+                    'In Progress': 'in progress',
+                    'Pending': 'placed on hold'
+                };
+                const actionText = statusLabels[nextStatus] || `updated to ${nextStatus}`;
+                
                 await sendNotificationToUser(
                     { email: selectedTicket.requesterEmail },
-                    'Ticket Resolved',
-                    `Your technical request "${selectedTicket.subject}" has been marked as solved.`,
-                    'Success',
+                    `Ticket ${nextStatus}`,
+                    `Your technical request "${selectedTicket.subject}" is now ${actionText}.`,
+                    nextStatus === 'Resolved' ? 'Success' : 'Info',
                     'helpdesk'
                 );
             }
@@ -1358,6 +1365,18 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             }).eq('id', ticketId);
             if (error) throw error;
             showToast(staffName ? `Assigned to ${staffName}` : 'Unassigned');
+            
+            // Notify Assigned Staff
+            if (staffName && staff?.email) {
+                await sendNotificationToUser(
+                    { email: staff.email },
+                    'New Assignment',
+                    `You have been assigned to ticket: ${selectedTicket?.subject}`,
+                    'Info',
+                    'helpdesk'
+                );
+            }
+
             setSelectedTicket((prev: any) => prev ? { ...prev, assignedTo: staffName, assignedToEmail: staff?.email } : null);
             setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assignedTo: staffName } : t));
         } catch (err: any) {
