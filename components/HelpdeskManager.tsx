@@ -1075,6 +1075,17 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 'helpdesk'
             );
 
+            // Notify Requester
+            if (currentUser?.email) {
+                await sendNotificationToUser(
+                    { email: currentUser.email, id: currentUser.id },
+                    'Ticket Submitted',
+                    `Your ticket #${ticketId} has been successfully established and placed in the IT queue.`,
+                    'Success',
+                    'helpdesk'
+                );
+            }
+
             // Notify IT Operation via Email
             await sendTicketNotificationEmail({
                 ticketId: ticketId,
