@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { sendNotificationToAdmins } from '../utils/NotificationSystemUtils';
+import { sendNotificationToAdmins, sendNotificationToUser } from '../utils/NotificationSystemUtils';
 import { sendTicketNotificationEmail } from '../utils/EmailSystemUtils';
 import { UserAccount } from '../types';
 import { useLanguage } from '../translations';
@@ -981,24 +981,24 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
             // Notifications logic...
             if (isSupport && selectedTicket.requesterEmail) {
-                await supabase.from('notifications').insert([{
-                    user_email: selectedTicket.requesterEmail,
-                    title: 'Support Response',
-                    message: `IT Support has replied to your ticket: ${selectedTicket.subject}`,
-                    type: 'Success',
-                    link: 'helpdesk'
-                }]);
+                await sendNotificationToUser(
+                    { email: selectedTicket.requesterEmail },
+                    'Support Response',
+                    `IT Support has replied to your ticket: ${selectedTicket.subject}`,
+                    'Success',
+                    'helpdesk'
+                );
             } else if (!isSupport) {
                 // Notify IT or Admin if user replies
                 const targetEmail = selectedTicket.assignedToEmail;
                 if (targetEmail) {
-                    await supabase.from('notifications').insert([{
-                        user_email: targetEmail,
-                        title: 'User Response',
-                        message: `${currentUser?.fullName} replied to: ${selectedTicket.subject}`,
-                        type: 'Info',
-                        link: 'helpdesk'
-                    }]);
+                    await sendNotificationToUser(
+                        { email: targetEmail },
+                        'User Response',
+                        `${currentUser?.fullName} replied to: ${selectedTicket.subject}`,
+                        'Info',
+                        'helpdesk'
+                    );
                 }
             }
 
@@ -1300,13 +1300,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
             // Notify Requester
             if (nextStatus === 'Resolved' && selectedTicket?.requesterEmail) {
-                await supabase.from('notifications').insert([{
-                    user_email: selectedTicket.requesterEmail,
-                    title: 'Ticket Resolved',
-                    message: `Your technical request "${selectedTicket.subject}" has been marked as solved.`,
-                    type: 'Success',
-                    link: 'helpdesk'
-                }]);
+                await sendNotificationToUser(
+                    { email: selectedTicket.requesterEmail },
+                    'Ticket Resolved',
+                    `Your technical request "${selectedTicket.subject}" has been marked as solved.`,
+                    'Success',
+                    'helpdesk'
+                );
             }
         } catch (err: any) {
             console.error("[HelpdeskUpdate] FATAL ERROR:", err);

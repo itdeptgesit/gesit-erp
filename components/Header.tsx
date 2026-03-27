@@ -173,8 +173,22 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const markAllAsRead = async () => {
-    if (!user?.email) return;
-    const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_email', user.email).eq('is_read', false);
+    if (!user) return;
+    
+    const email = user.email?.toLowerCase();
+    
+    let query = supabase.from('notifications').update({ is_read: true });
+    if (user.id && email) {
+      query = query.or(`user_id.eq.${user.id},user_email.ilike.${email}`);
+    } else if (user.id) {
+      query = query.eq('user_id', user.id);
+    } else if (email) {
+      query = query.ilike('user_email', email);
+    } else {
+      return;
+    }
+
+    const { error } = await query.eq('is_read', false);
     if (!error) setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 

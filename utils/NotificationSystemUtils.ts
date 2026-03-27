@@ -63,3 +63,59 @@ export const sendNotificationToAdmins = async (
         console.error('[NotificationSystem] Critical error:', err);
     }
 };
+/**
+ * Sends a notification to a specific user by email or account ID.
+ */
+export const sendNotificationToUser = async (
+    target: { email?: string; id?: number | string },
+    title: string, 
+    message: string, 
+    type: 'Info' | 'Success' | 'Warning' | 'Alert' = 'Info', 
+    link?: string
+) => {
+    try {
+        let userId = target.id;
+        let userEmail = target.email?.toLowerCase();
+
+        // 1. If we only have email, fetch the ID for database integrity
+        if (!userId && userEmail) {
+            const { data: userAccount } = await supabase
+                .from('user_accounts')
+                .select('id, email')
+                .ilike('email', userEmail)
+                .maybeSingle();
+            
+            if (userAccount) {
+                userId = userAccount.id;
+                userEmail = userAccount.email.toLowerCase();
+            }
+        }
+
+        if (!userId && !userEmail) {
+            console.warn('[NotificationSystem] Cannot notify user: neither ID nor Email provided.');
+            return;
+        }
+
+        // 2. Insert notification
+        const { error: insertError } = await supabase
+            .from('notifications')
+            .insert([{
+                user_id: userId,
+                user_email: userEmail,
+                title,
+                message,
+                type,
+                link,
+                is_read: false,
+                created_at: new Date().toISOString()
+            }]);
+
+        if (insertError) {
+            console.error('[NotificationSystem] Error sending individual notification:', insertError);
+        } else {
+            console.log(`[NotificationSystem] Notification sent to ${userEmail || userId}.`);
+        }
+    } catch (err) {
+        console.error('[NotificationSystem] Generic notification error:', err);
+    }
+};
