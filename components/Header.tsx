@@ -60,6 +60,7 @@ interface HeaderProps {
   userRole?: string;
   groupDefinitions?: UserGroup[];
   user?: {
+    id?: string | number;
     name: string;
     role: string;
     email?: string;
@@ -120,10 +121,18 @@ export const Header: React.FC<HeaderProps> = ({
     });
 
     const fetchNotifications = async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .ilike('user_email', userEmail)
+      // Prioritize filtering by user_id if available, fallback to email
+      let query = supabase.from('notifications').select('*');
+      
+      if (user?.id) {
+        query = query.eq('user_id', user.id);
+      } else if (userEmail) {
+        query = query.ilike('user_email', userEmail);
+      } else {
+        return;
+      }
+
+      const { data } = await query
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -134,13 +143,15 @@ export const Header: React.FC<HeaderProps> = ({
 
     fetchNotifications();
 
+    // Real-time updates
     const channel = supabase
-      .channel(`notifications:${userEmail}`)
+      .channel(`notifications:${user?.id || userEmail}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: `user_email=eq.${userEmail}`
+        // Update filter to use id if available
+        filter: user?.id ? `user_id=eq.${user.id}` : `user_email=eq.${userEmail}`
       }, (payload) => {
         const mapped = mapNotification(payload.new);
         setNotifications(prev => [mapped, ...prev].slice(0, 20));

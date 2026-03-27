@@ -14,7 +14,7 @@ export const sendNotificationToAdmins = async (
         // 1. Fetch all users who should receive admin-level notifications
         const { data: allUsers, error: fetchError } = await supabase
             .from('user_accounts')
-            .select('email, role');
+            .select('id, email, role');
 
         if (fetchError) {
             console.error('[NotificationSystem] Error fetching admins:', fetchError);
@@ -38,10 +38,9 @@ export const sendNotificationToAdmins = async (
 
         // 2. Prepare notification records for all admins
         // Filter out duplicate emails just in case
-        const uniqueEmails = [...new Set(admins.map(a => a.email.toLowerCase()))];
-        
-        const notifications = uniqueEmails.map(email => ({
-            user_email: email,
+        const notifications = admins.map(a => ({
+            user_id: a.id,
+            user_email: a.email.toLowerCase(),
             title,
             message,
             type,
@@ -58,7 +57,7 @@ export const sendNotificationToAdmins = async (
         if (insertError) {
             console.error('[NotificationSystem] Error inserting notifications:', insertError);
         } else {
-            console.log(`[NotificationSystem] Successfully notified ${uniqueEmails.length} admins.`);
+            console.log(`[NotificationSystem] Successfully notified ${notifications.length} admins.`);
         }
     } catch (err) {
         console.error('[NotificationSystem] Critical error:', err);

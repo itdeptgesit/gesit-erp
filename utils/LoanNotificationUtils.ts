@@ -72,7 +72,7 @@ export const checkAssetLoanOverdue = async (currentUser: UserAccount | null) => 
             // 3. Find borrower email by looking up user_accounts by full_name
             const { data: borrowerAccount } = await supabase
                 .from('user_accounts')
-                .select('email')
+                .select('id, email')
                 .ilike('full_name', loan.borrower_name)
                 .maybeSingle();
 
@@ -97,6 +97,7 @@ export const checkAssetLoanOverdue = async (currentUser: UserAccount | null) => 
             // 5. Create notification for Borrower
             if (borrowerEmail) {
                 const { error: notifError } = await supabase.from('notifications').insert([{
+                    user_id: borrowerAccount.id,
                     user_email: borrowerEmail.toLowerCase(),
                     title: 'Asset Return Overdue',
                     message: `Reminder: The asset "${assetLabel}" (${loan.it_assets?.asset_id || loan.asset_id}) was scheduled to be returned on ${new Date(loan.expected_return_date).toLocaleDateString()}. Please return it as soon as possible.`,
@@ -124,6 +125,7 @@ export const checkAssetLoanOverdue = async (currentUser: UserAccount | null) => 
 
             if (!existingAdminNotif || existingAdminNotif.length === 0) {
                 const { error: adminNotifError } = await supabase.from('notifications').insert([{
+                    user_id: currentUser.id,
                     user_email: currentUser.email.toLowerCase(),
                     title: 'Overdue Asset Warning',
                     message: `${loan.borrower_name} is overdue for returning "${assetLabel}". Status updated to Overdue.`,

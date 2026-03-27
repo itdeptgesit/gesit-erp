@@ -98,6 +98,7 @@ const PublicLayout: React.FC<{
           groupDefinitions={groupDefinitions}
           currentView={location.pathname.substring(1)}
           user={currentUser ? {
+            id: currentUser.id,
             name: currentUser.fullName,
             role: currentUser.role,
             email: currentUser.email,
@@ -711,6 +712,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
           userRole={currentUser?.role}
           groupDefinitions={groupDefinitions}
           user={currentUser ? {
+            id: currentUser.id,
             name: currentUser.fullName,
             role: currentUser.role,
             email: currentUser.email,
