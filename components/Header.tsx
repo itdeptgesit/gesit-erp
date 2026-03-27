@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     const mapNotification = (n: any): NotificationItem => ({
       id: n.id,
-      userId: n.user_email,
+      userId: n.user_id || n.user_email,
       title: n.title,
       message: n.message,
       type: n.type,
@@ -121,10 +121,12 @@ export const Header: React.FC<HeaderProps> = ({
     });
 
     const fetchNotifications = async () => {
-      // Prioritize filtering by user_id if available, fallback to email
+      // Support both user_id and user_email for backwards compatibility
       let query = supabase.from('notifications').select('*');
       
-      if (user?.id) {
+      if (user?.id && userEmail) {
+        query = query.or(`user_id.eq.${user.id},user_email.ilike.${userEmail}`);
+      } else if (user?.id) {
         query = query.eq('user_id', user.id);
       } else if (userEmail) {
         query = query.ilike('user_email', userEmail);
@@ -149,12 +151,14 @@ export const Header: React.FC<HeaderProps> = ({
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'notifications',
-        // Update filter to use id if available
-        filter: user?.id ? `user_id=eq.${user.id}` : `user_email=eq.${userEmail}`
+        table: 'notifications'
       }, (payload) => {
-        const mapped = mapNotification(payload.new);
-        setNotifications(prev => [mapped, ...prev].slice(0, 20));
+        // Only add if it belongs to this user
+        const n = payload.new;
+        if (n.user_id === user?.id || (userEmail && n.user_email?.toLowerCase() === userEmail)) {
+           const mapped = mapNotification(n);
+           setNotifications(prev => [mapped, ...prev].slice(0, 20));
+        }
       })
       .subscribe();
 
