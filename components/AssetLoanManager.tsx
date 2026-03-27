@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
     Search, Plus, Pencil, RefreshCcw, Trash2, Package, CheckCircle2, History,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ITAssetLoan, UserAccount, ITAsset } from '../types';
 import { supabase } from '../lib/supabaseClient';
+import { sendNotificationToAdmins } from '../utils/NotificationSystemUtils';
 import { useLanguage } from '../translations';
 import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
@@ -84,6 +85,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                     borrowerName: item.borrower_name,
                     borrowerDept: item.borrower_dept,
                     borrowerPhone: item.borrower_phone,
+                    borrowerEmail: item.borrower_email,
                     loanDate: item.loan_date,
                     expectedReturnDate: item.expected_return_date,
                     actualReturnDate: item.actual_return_date,
@@ -756,6 +758,16 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                     }).eq('id', formData.assetId);
                                 }
                                 await supabase.from('it_asset_loans').insert([payload]);
+                                
+                                // Notify admins if this was a new request (usually Pending status)
+                                if (payload.status === 'Pending') {
+                                    await sendNotificationToAdmins(
+                                        'New Asset Loan Request',
+                                        `A new loan request from ${payload.borrower_name} is waiting for approval.`,
+                                        'Info',
+                                        'asset-loan'
+                                    );
+                                }
                             }
 
                             setIsModalOpen(false);

@@ -1,5 +1,5 @@
 
-export const APP_NAME = 'TASKPLUS';
+export const APP_NAME = 'GESIT PORTAL';
 
 // For demo purposes, we simulate the logged-in user's groups if not found in DB
 export const CURRENT_USER_GROUPS = ['admin'];

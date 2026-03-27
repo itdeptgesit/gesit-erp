@@ -5,7 +5,7 @@ import {
     Database, Activity, Megaphone,
     ShoppingCart, Box, Shield,
     MessageSquare, RefreshCcw, ChevronRight, Info, Phone, Search, ArrowUpRight, Target,
-    Wallet, CheckCircle2 as CheckCircle2Icon, Clock, Briefcase, Tag
+    Wallet, CheckCircle2 as CheckCircle2Icon, Clock, Briefcase, Tag, Star
 } from 'lucide-react';
 import {
     XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -88,6 +88,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 // ─── Component ────────────────────────────────────────────────────────────
 
 export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate, userName, userRole = 'User', currentUser }) => {
+    const { t } = useLanguage();
     const [isLoading, setIsLoading] = useState(true);
     const [projectSearch, setProjectSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -140,6 +141,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
         // Activity Heatmap
         activityHeatmap: {} as Record<string, number>,
         activityTotal: 0,
+        activeAssetLoanCount: 0,
+        overdueAssetLoanCount: 0,
+        topHandlers: [] as {name: string, count: number}[]
     });
 
     const [listData, setListData] = useState({
@@ -168,7 +172,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 { data: activities },
                 { data: itAssets },
                 { data: announcementsData },
-                { data: purchaseRecords }
+                { data: purchaseRecords },
+                { count: activeLoanCount },
+                { count: overdueCount }
             ] = await Promise.all([
                 supabase.from('weekly_plans').select('*').order('due_date', { ascending: true }),
                 supabase.from('purchase_plans').select('*').order('request_date', { ascending: false }),
@@ -176,7 +182,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 supabase.from('activity_logs').select('*').order('created_at', { ascending: false }),
                 supabase.from('it_assets').select('*'),
                 supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
-                supabase.from('purchase_records').select('id, subtotal, status, category, department, purchase_date, vendor').order('purchase_date', { ascending: false })
+                supabase.from('purchase_records').select('id, subtotal, status, category, department, purchase_date, vendor').order('purchase_date', { ascending: false }),
+                supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
+                supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).neq('status', 'Returned').lt('expected_return_date', new Date().toISOString())
             ]);
 
             const currentUserName = currentUser?.fullName || '';
@@ -210,6 +218,10 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             if (oldProcurement) personalAlerts.push(`1 procurement pending > 5 hari`);
             const nearDueLoan = myLoans.find(a => a.due_date && (new Date(a.due_date).getTime() - new Date().getTime()) < 3 * 24 * 3600 * 1000);
             if (nearDueLoan) personalAlerts.push(`1 loan hampir jatuh tempo`);
+            
+            // Add actual overdue loans to personal alerts if any
+            const myOverdueLoans = (itAssets || []).filter(a => a.user_assigned === currentUserName && a.status === 'Overdue').length;
+            if (myOverdueLoans > 0) personalAlerts.push(`${myOverdueLoans} asset overdue`);
 
             // --- ORGANIZATION CALCULATIONS ---
             const totalTickets = (helpTickets || []).filter(t => t.status !== 'Closed' && t.status !== 'Resolved');
@@ -227,20 +239,78 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             const completionRate = weeklyPlans && weeklyPlans.length > 0 ?
                 `${Math.round((weeklyPlans.filter(w => w.status === 'Done' || w.status === 'Completed').length / weeklyPlans.length) * 100)}%` : '0%';
 
+            // --- SLA & RATING CALCULATIONS (NEW) ---
+            const resolvedTickets = (helpTickets || []).filter(t => t.status === 'Resolved' || t.status === 'Closed');
+            
+            let totalSlaHours = 0;
+            let resolvedWithDates = 0;
+            
+            resolvedTickets.forEach(t => {
+                if (t.created_at && t.resolved_at) {
+                    const start = new Date(t.created_at);
+                    const end = new Date(t.resolved_at);
+                    const diffMs = end.getTime() - start.getTime();
+                    // Convert ms to hours
+                    const diffHours = diffMs / (1000 * 60 * 60);
+                    if (diffHours >= 0) {
+                        totalSlaHours += diffHours;
+                        resolvedWithDates++;
+                    }
+                }
+            });
+            
+            const avgSlaHours = resolvedWithDates > 0 ? (totalSlaHours / resolvedWithDates).toFixed(1) : '0';
+            
+            const ratedTickets = (helpTickets || []).filter(t => t.rating && t.rating > 0);
+            const totalRating = ratedTickets.reduce((acc, t) => acc + (t.rating || 0), 0);
+            const avgRating = ratedTickets.length > 0 ? (totalRating / ratedTickets.length).toFixed(1) : '0';
+
+            // --- TOP HANDLERS ---
+            const validStaff = new Set<string>();
+            (activities || []).forEach(a => {
+                if (a.itPersonnel && typeof a.itPersonnel === 'string' && a.itPersonnel.trim() !== '' && a.itPersonnel !== 'undefined' && a.itPersonnel !== 'null') validStaff.add(a.itPersonnel);
+                if (a.assigned_to && typeof a.assigned_to === 'string' && a.assigned_to.trim() !== '' && a.assigned_to !== 'undefined' && a.assigned_to !== 'null') validStaff.add(a.assigned_to);
+            });
+            (helpTickets || []).forEach(t => {
+                if (t.assigned_to && typeof t.assigned_to === 'string' && t.assigned_to.trim() !== '' && t.assigned_to !== 'undefined' && t.assigned_to !== 'null') validStaff.add(t.assigned_to);
+                if (t.resolved_by && typeof t.resolved_by === 'string' && t.resolved_by.trim() !== '' && t.resolved_by !== 'undefined' && t.resolved_by !== 'null') validStaff.add(t.resolved_by);
+            });
+
+            if (validStaff.size === 0) {
+                validStaff.add(currentUserName || 'IT Technician');
+            }
+
+            const activeTickets = (helpTickets || []).filter(t => t.status === 'Open' || t.status === 'In Progress');
+            const handlerMap: Record<string, number> = {};
+            
+            validStaff.forEach(staff => handlerMap[staff] = 0);
+
+            activeTickets.forEach(t => {
+                const handler = t.assigned_to || t.assignedTo || t.resolved_by;
+                if (handler && typeof handler === 'string' && handlerMap[handler] !== undefined) {
+                    handlerMap[handler] += 1;
+                }
+            });
+
+            const topHandlersList = Object.entries(handlerMap)
+                .map(([name, count]) => ({name, count}))
+                .filter(h => h.name && h.name.length > 0)
+                .sort((a,b) => b.count - a.count)
+                .slice(0, 3);
+
             const orgAlerts: string[] = [];
             const oldTickets = totalTickets.filter(t => new Date(t.created_at) < threeDaysAgo).length;
             if (oldTickets >= 3) orgAlerts.push(`${oldTickets} tickets > 3 hari belum close`);
             const oldOrgProc = pendingProc.filter(p => p.request_date && new Date(p.request_date) < sevenDaysAgo).length;
             if (oldOrgProc >= 2) orgAlerts.push(`${oldOrgProc} procurement pending > 7 hari`);
             const overdueTotal = (weeklyPlans || []).filter(w => (w.status !== 'Done' && w.status !== 'Completed') && w.due_date && w.due_date < today).length;
-            if (overdueTotal >= 4) orgAlerts.push(`${overdueTotal} planner overdue`);
+            if (overdueTotal > 0) orgAlerts.push(`${overdueTotal} items overdue`);
+            
+            // Add Overdue Loans to Org Alerts
+            const totalOverdueLoans = overdueCount || 0;
+            if (totalOverdueLoans > 0) orgAlerts.push(`${totalOverdueLoans} asset loans overdue`);
 
-            // Dummy SLA & Rating Calculation based on ticket counts to make it feel alive
-            const totalHelpTicketsCount = Math.max(helpTickets?.length || 0, 1);
-            const resolvedTicketsCount = helpTickets?.filter(t => t.status === 'Resolved' || t.status === 'Closed').length || 0;
-            const slaVal = Math.min(Math.round((resolvedTicketsCount / totalHelpTicketsCount) * 100) + 15, 98); // Base + boost but cap at 98%
-            const ratingVal = (Math.min((resolvedTicketsCount / totalHelpTicketsCount) * 5, 4.8) + 1.2).toFixed(1); // 1.2 to 5.0 range
-            const finalRating = Number(ratingVal) > 5 ? 4.9 : Number(ratingVal);
+            // --- PROJECTS DATA (FROM WEEKLY PLANS) ---
 
             // --- PROJECTS DATA (FROM WEEKLY PLANS) ---
             const projectPlans = (weeklyPlans || []).filter(w => w.category === 'Project');
@@ -306,12 +376,15 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 pendingProcurement: pendingProc.length,
                 totalPurchaseThisMonth: totalPurchaseVal,
                 totalITAssets: totalAssets,
-                activeAssetLoans: activeLoans,
+                activeAssetLoans: activeLoanCount || 0,
                 taskCompletionRate: completionRate,
                 totalHighPriority: (weeklyPlans || []).filter(w => w.priority === 'High' && w.status !== 'Done' && w.status !== 'Completed').length,
-                totalOverdueOrg: overdueTotal,
-                supportSLA: slaVal > 100 ? 98 : slaVal,
-                supportRating: finalRating > 0 ? finalRating : 4.8,
+                totalOverdueOrg: overdueCount || 0,
+                activeAssetLoanCount: activeLoanCount || 0,
+                overdueAssetLoanCount: overdueCount || 0,
+                supportSLA: Number(avgSlaHours),
+                supportRating: Number(avgRating),
+                topHandlers: topHandlersList,
 
                 procurementStats: {
                     pending: myProcurements.filter(p => p.status === 'In Review').length,
@@ -422,7 +495,22 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
         }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { 
+        fetchData(); 
+
+        // Real-time subscription to auto-refresh dashboard when data changes
+        const channel = supabase
+            .channel('dashboard-auto-refresh')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'it_asset_loans' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'helpdesk_tickets' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_plans' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_plans' }, () => fetchData())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const filteredProjects = useMemo(() => {
         return listData.allProjects.filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
@@ -683,42 +771,51 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 </div>
             ) : (
                 /* 🏢 CONTROL TOWER (ORGANIZATION) */
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
-
-                    {/* 6. Critical Alerts Panel */}
-                    {stats.orgCritical.length > 0 && (
-                        <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive">
-                                    <Shield size={24} className="animate-pulse" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold uppercase tracking-tight leading-none text-destructive">Alert Tower</h3>
-                                    <p className="text-xs font-medium mt-1.5 text-destructive/80">Security protocols detected {stats.orgCritical.length} critical items.</p>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {stats.orgCritical.map((alert, i) => (
-                                    <div
-                                        key={i}
-                                        onClick={() => {
-                                            const lower = alert.toLowerCase();
-                                            if (lower.includes('procurement')) onNavigate('procurement');
-                                            else if (lower.includes('ticket')) onNavigate('ticket');
-                                            else onNavigate('activities');
-                                        }}
-                                        className="px-3 py-1.5 rounded-lg bg-destructive/20 hover:bg-destructive/30 border border-destructive/30 font-bold text-[9px] uppercase tracking-wider text-destructive cursor-pointer transition-colors"
-                                    >
-                                        {alert}
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                    
+                    {/* --- [NEW] MAJOR ALERTS FOR ADMINS --- */}
+                    {(stats.totalOverdueOrg > 0 || stats.totalOpenTickets > 0) && (
+                        <div className="flex flex-col md:flex-row gap-4 mb-2">
+                            {stats.totalOverdueOrg > 0 && (
+                                <div 
+                                    onClick={() => onNavigate('asset-loan')}
+                                    className="flex-1 bg-rose-500/10 border border-rose-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-rose-500/20 transition-all shadow-sm"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                                            <Shield size={20} className="animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Aset Terlambat!</h4>
+                                            <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{stats.totalOverdueOrg} barang belum dikembalikan tepat waktu.</p>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
+                                    <ChevronRight size={18} className="text-rose-500 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            )}
+
+                            {stats.totalOpenTickets > 0 && (
+                                <div 
+                                    onClick={() => onNavigate('helpdesk')}
+                                    className="flex-1 bg-blue-500/10 border border-blue-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/20 transition-all shadow-sm"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                            <MessageSquare size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Tiket Masuk!</h4>
+                                            <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-1.5">{stats.totalOpenTickets} tiket baru butuh balasan kamu.</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={18} className="text-blue-500 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* 1. Summary Cards (Global KPI) */}
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                        <StatCard label="Tickets" value={stats.totalOpenTickets} icon={MessageSquare} color="blue" subValue="Across teams" />
                         <StatCard label="Activities" value={stats.totalActiveActivities} icon={Activity} color="indigo" subValue="In progress" />
                         <StatCard label="Procurement" value={stats.pendingProcurement} icon={ShoppingCart} color="amber" subValue="To review" />
                         <StatCard label="Spending" value={formatCurrency(stats.totalPurchaseThisMonth)} icon={TrendingUp} color="emerald" subValue="This Month" />
@@ -838,40 +935,68 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             </CardContent>
                         </Card>
 
-                        <Card className="lg:col-span-4 rounded-xl border-border shadow-sm overflow-hidden bg-emerald-500/5 flex flex-col items-center justify-center p-8 relative isolate">
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-500/10 pointer-events-none" />
-                            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-emerald-300 via-emerald-500 to-emerald-300 pointer-events-none" />
+                        <Card className="lg:col-span-4 rounded-xl border-border shadow-sm overflow-hidden bg-primary/5 flex flex-col items-center justify-between p-7 relative isolate h-full">
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/10 pointer-events-none" />
+                            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-300 via-primary to-blue-300 pointer-events-none" />
 
-                            <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-foreground mb-1 text-center">Service Analytics</h4>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-10 text-center">Ticketing SLA & Rating</p>
+                            <div className="flex-none mb-6 text-center">
+                                <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-foreground mb-1">{t('ticketingAnalytics')}</h4>
+                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t('itServicePerformance')}</p>
+                            </div>
 
-                            <div className="w-full flex justify-between items-center mb-8 px-4">
-                                <div className="flex flex-col items-center gap-1.5 w-1/2 border-r border-border/60">
-                                    <div className="bg-emerald-500/10 p-2.5 rounded-full mb-1">
-                                        <Activity size={18} className="text-emerald-500" strokeWidth={2.5} />
+                            <div className="w-full flex-1 flex flex-col justify-center mb-6">
+                                <div className="flex justify-between items-center px-2">
+                                    <div className="flex flex-col items-center gap-1.5 w-1/2 border-r border-border/60">
+                                        <div className="bg-rose-500/10 p-2.5 rounded-full mb-1">
+                                            <Clock size={16} className="text-rose-500" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="text-[24px] font-black text-foreground drop-shadow-sm leading-none">{stats.supportSLA}h</span>
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider text-center">{t('avgSla')}</span>
                                     </div>
-                                    <span className="text-[28px] font-black text-foreground drop-shadow-sm leading-none">{stats.supportSLA}%</span>
-                                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Target SLA Met</span>
-                                </div>
 
-                                <div className="flex flex-col items-center gap-1.5 w-1/2">
-                                    <div className="bg-amber-500/10 p-2.5 rounded-full mb-1 flex items-center justify-center gap-0.5">
-                                        <Activity size={18} className="text-amber-500" strokeWidth={2.5} />
+                                    <div className="flex flex-col items-center gap-1.5 w-1/2">
+                                        <div className="bg-amber-500/10 p-2.5 rounded-full mb-1 flex items-center justify-center gap-0.5">
+                                            <Star size={16} className="text-amber-500 fill-amber-500" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="text-[24px] font-black text-foreground drop-shadow-sm leading-none flex items-baseline gap-1">
+                                            {stats.supportRating} <span className="text-[12px] text-muted-foreground/50">/ 5</span>
+                                        </span>
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider text-center">{t('userRating')}</span>
                                     </div>
-                                    <span className="text-[28px] font-black text-foreground drop-shadow-sm leading-none flex items-baseline gap-1">
-                                        {stats.supportRating} <span className="text-[14px] text-muted-foreground/50">/ 5</span>
-                                    </span>
-                                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Avg User Rating</span>
                                 </div>
                             </div>
 
-                            <div className="w-full bg-card/60 backdrop-blur-sm border border-border/50 rounded-lg p-3 flex flex-col mt-auto relative z-10 shadow-sm">
+                            <div className="w-full font-sans mb-5 z-10">
+                                <div className="flex items-center gap-2 mb-3 px-1 border-b border-border/50 pb-2">
+                                    <Target size={12} className="text-primary" />
+                                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-foreground">{t('topHandlers')}</h5>
+                                </div>
+                                <div className="space-y-2.5">
+                                    {stats.topHandlers.map((handler, i) => (
+                                        <div key={i} className="flex justify-between items-center bg-card/40 border border-border/40 p-2 rounded-lg backdrop-blur-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary">
+                                                    {handler.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <span className="text-[10px] font-semibold text-foreground">{handler.name}</span>
+                                            </div>
+                                            <Badge variant={handler.count > 0 ? 'default' : 'outline'} className={`text-[9px] h-5 opacity-80 ${handler.count === 0 ? 'border-primary/20 text-muted-foreground bg-primary/5' : 'bg-primary/20 text-primary'}`}>
+                                                {handler.count} {t('activeTickets')}
+                                            </Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="w-full bg-card/80 backdrop-blur-md border border-border/50 rounded-lg p-3 flex flex-col flex-none relative z-10 shadow-sm">
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-[9px] font-bold uppercase text-foreground/70">Support Health</span>
-                                    <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">EXCELLENT</span>
+                                    <span className="text-[9px] font-bold uppercase text-foreground/70">{t('serviceHealth')}</span>
+                                    <span className="text-[9px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-md">
+                                        {Number(stats.supportRating) >= 4 ? t('excellent') : t('good')}
+                                    </span>
                                 </div>
                                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full" style={{ width: `${stats.supportSLA}%` }} />
+                                    <div className="h-full bg-gradient-to-r from-blue-400 to-primary rounded-full transition-all duration-1000" style={{ width: `${Math.min((Number(stats.supportRating) / 5) * 100, 100)}%` }} />
                                 </div>
                             </div>
                         </Card>

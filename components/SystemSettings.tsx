@@ -66,7 +66,7 @@ type TabType = 'general' | 'appearance' | 'security' | 'system';
 export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) => {
     const [activeTab, setActiveTab] = useState<TabType>('general');
     const [settings, setSettings] = useState<SystemSettings>({
-        appName: 'GESIT WORK',
+        appName: 'GESIT PORTAL',
         logoUrl: '/image/logo.png',
         maintenanceMode: false,
         primaryColor: '#2563eb',
@@ -97,7 +97,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                 if (error && error.code !== 'PGRST116') throw error;
                 if (data) {
                     setSettings({
-                        appName: data.app_name || 'GESIT WORK',
+                        appName: data.app_name || 'GESIT PORTAL',
                         logoUrl: data.logo_url || '/image/logo.png',
                         maintenanceMode: data.maintenance_mode || false,
                         primaryColor: data.primary_color || '#2563eb',

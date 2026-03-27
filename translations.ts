@@ -285,7 +285,16 @@ export const translations = {
     digitalSignature: 'Digital Signature Verified',
     printReceipt: 'Save as PDF',
     closeReceipt: 'Close Receipt',
-    receiptNote: 'This document is a formal record of asset distribution from the IT department.'
+    receiptNote: 'This document is a formal record of asset distribution from the IT department.',
+    ticketingAnalytics: 'Ticketing Analytics',
+    itServicePerformance: 'IT Service Performance',
+    avgSla: 'Avg. SLA',
+    userRating: 'Avg User Rating',
+    serviceHealth: 'Service Health',
+    excellent: 'EXCELLENT',
+    good: 'GOOD',
+    topHandlers: 'Top Handlers',
+    activeTickets: 'Active Tickets'
   },
   id: {
     // General
@@ -568,7 +577,16 @@ export const translations = {
     digitalSignature: 'Tanda Tangan Digital Terverifikasi',
     printReceipt: 'Cetak Bukti',
     closeReceipt: 'Tutup Bukti',
-    receiptNote: 'Dokumen ini adalah rekaman resmi distribusi aset dari departemen IT.'
+    receiptNote: 'Dokumen ini adalah rekaman resmi distribusi aset dari departemen IT.',
+    ticketingAnalytics: 'Analitik Tiket',
+    itServicePerformance: 'Performa Layanan IT',
+    avgSla: 'Rata-rata SLA',
+    userRating: 'Rating Kepuasan',
+    serviceHealth: 'Status Kesehatan Layanan',
+    excellent: 'LUAR BIASA',
+    good: 'BAIK',
+    topHandlers: 'Teknisi Utama',
+    activeTickets: 'Tiket Aktif'
   }
 };
 

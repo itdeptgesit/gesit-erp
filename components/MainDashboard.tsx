@@ -108,7 +108,9 @@ type DashboardMode = 'personal' | 'organization';
 
 export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User', currentUser }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [activeMode, setActiveMode] = useState<DashboardMode>('personal');
+    const effectiveRole = (currentUser?.role || userRole || '').toLowerCase();
+    const isAdmin = effectiveRole === 'admin' || effectiveRole === 'super admin' || effectiveRole === 'staff';
+    const [activeMode, setActiveMode] = useState<DashboardMode>(isAdmin ? 'organization' : 'personal');
     const [stats, setStats] = useState<DashboardStats>({
         totalAssets: 0, activeAssets: 0,
         openTickets: 0, resolvedTickets: 0,
@@ -145,7 +147,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 { data: activities },
                 { data: pTasks },
                 { data: loans },
-                { data: announcements }
+                { data: announcements },
+                { count: totalOverdueLoans }
             ] = await Promise.all([
                 supabase.from('it_assets').select('status, category'),
                 isAdmin ? supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open') : supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open').eq('requester_email', currentUser?.email),
@@ -161,11 +164,12 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 supabase.from('activity_logs').select('*').order('id', { ascending: false }).limit(5),
                 supabase.from('weekly_plans').select('*').eq('assignee', userName || 'IT Support').neq('status', 'Done').order('due_date', { ascending: true }).limit(5),
                 supabase.from('it_asset_loans').select('*, it_assets(item_name)').eq('status', 'Active').order('expected_return_date', { ascending: true }).limit(5),
-                supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
+                supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+                supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).neq('status', 'Returned').lt('expected_return_date', new Date().toISOString())
             ]);
 
             // Process Data
-            const overdueLoans = (loans || []).filter((l: any) => new Date(l.expected_return_date) < new Date()).length;
+            const overdueLoans = totalOverdueLoans || 0;
 
             const deptSpending = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
                 const dept = curr.department || 'General';
@@ -252,10 +256,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
     useEffect(() => { fetchData(); }, []);
 
-    // --- Role Based View Logic ---
-
-    const isSuperAdmin = userRole === 'Super Admin';
-    const isAdmin = userRole === 'Admin' || isSuperAdmin;
+    // Already calculated: isAdmin, activeMode
 
     return (
         <div className="pb-12 space-y-8 animate-in fade-in duration-500">
@@ -451,6 +452,47 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         </div>
                     </div>
 
+                    {/* Critical Alerts - MOVED TO TOP FOR VISIBILITY */}
+                    {(stats.overdueLoans > 0 || stats.openTickets > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-500">
+                            {stats.overdueLoans > 0 && (
+                                <div 
+                                    onClick={() => onNavigate('asset-loan')}
+                                    className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-[2rem] flex items-center justify-between group cursor-pointer hover:bg-rose-500/15 transition-all"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                                            <ShieldAlert size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Overdue Assets Detected</h4>
+                                            <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{stats.overdueLoans} asset loans are past their return date.</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={18} className="text-rose-500 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            )}
+
+                            {stats.openTickets > 0 && (
+                                <div 
+                                    onClick={() => onNavigate('helpdesk')}
+                                    className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-[2rem] flex items-center justify-between group cursor-pointer hover:bg-blue-500/15 transition-all"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                            <LifeBuoy size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Active Support Tickets</h4>
+                                            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{stats.openTickets} tickets are currently waiting for response.</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={18} className="text-blue-500 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Stat Cards - Row 1 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
@@ -528,21 +570,32 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 <h3 className="text-base font-semibold text-foreground">Critical Alerts</h3>
                             </div>
                             <div className="space-y-3">
-                                <div className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/30 flex items-center gap-3">
-                                    <AlertCircle size={14} className="text-rose-500" />
-                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">2 tickets are overdue for more than 3 days</span>
-                                </div>
+                                {stats.overdueLoans > 0 && (
+                                    <div 
+                                        onClick={() => onNavigate('asset-loan')}
+                                        className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/30 flex items-center gap-3 cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all"
+                                    >
+                                        <ShieldAlert size={14} className="text-rose-500" />
+                                        <span className="text-xs font-bold text-rose-700 dark:text-rose-400">
+                                            {stats.overdueLoans} asset loans are currently overdue
+                                        </span>
+                                    </div>
+                                )}
+                                
                                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/30 flex items-center gap-3">
                                     <AlertCircle size={14} className="text-amber-500" />
-                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Loaned asset Laptop ID 841 is due in 2 days</span>
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{stats.openTickets} tickets are currently open</span>
                                 </div>
-                                <div className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/30 flex items-center gap-3">
-                                    <AlertCircle size={14} className="text-rose-500" />
-                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">1 procurement request pending review for 7 days</span>
-                                </div>
+                                
+                                {stats.overdueLoans === 0 && stats.openTickets === 0 && (
+                                    <div className="py-8 text-center">
+                                        <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-2 opacity-20" />
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">No critical alerts</p>
+                                    </div>
+                                )}
                             </div>
                             <div className="mt-8 text-center border-t pt-4">
-                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-8">View All</Button>
+                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-8" onClick={() => onNavigate('asset-loan')}>View All Asset Loans</Button>
                             </div>
                         </div>
 

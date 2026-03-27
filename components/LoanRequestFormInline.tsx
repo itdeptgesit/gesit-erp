@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sendNotificationToAdmins } from '../utils/NotificationSystemUtils';
 
 interface LoanRequestFormInlineProps {
     currentUser: UserAccount | null;
@@ -69,15 +70,23 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                 borrower_name: formData.borrowerName,
                 borrower_dept: formData.borrowerDept,
                 borrower_phone: formData.borrowerPhone,
+                borrower_email: currentUser?.email,
                 loan_date: formData.loanDate,
                 expected_return_date: formData.expectedReturnDate,
                 status: formData.status,
                 remarks: formData.remarks,
                 it_personnel: 'Pending Approval'
             };
-
             const { error } = await supabase.from('it_asset_loans').insert([payload]);
             if (error) throw error;
+
+            // Send notification to all admins
+            await sendNotificationToAdmins(
+                'New Asset Loan Request',
+                `A new loan request for "${formData.assetId}" has been submitted by ${formData.borrowerName}.`,
+                'Info',
+                'asset-loan'
+            );
 
             // Reset form
             setFormData({

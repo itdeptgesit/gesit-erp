@@ -226,6 +226,7 @@ export interface ITAssetLoan {
   borrowerName: string;
   borrowerDept: string;
   borrowerPhone?: string;
+  borrowerEmail?: string; // New field for notifications
   loanDate: string;
   expectedReturnDate: string;
   actualReturnDate?: string;

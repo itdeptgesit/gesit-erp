@@ -5,17 +5,20 @@ import { Eye, EyeOff, AlertCircle, LifeBuoy, ChevronRight, Mail, Lock, ShieldChe
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { sendPasswordResetNotificationEmail } from '../utils/EmailSystemUtils';
 
 interface LoginPageProps {
     onLogin: (email: string) => void;
     appName?: string;
     logoUrl?: string;
     primaryColor?: string;
+    userGroups?: string[];
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
     onLogin,
-    appName = 'TASKPLUS',
+    userGroups = [],
+    appName = 'GESIT PORTAL',
     logoUrl = '/image/logo.png',
     primaryColor = '#0a2558'
 }) => {
@@ -94,6 +97,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 redirectTo: 'https://it.gesit.co.id',
             });
             if (error) throw error;
+            
+            // Send additional explicit notification via Resend API
+            await sendPasswordResetNotificationEmail(identifier);
+            
             setResetSent(true);
         } catch (err: any) {
             setError(err.message || "Could not send reset link.");
@@ -110,6 +117,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.origin + '/login',
+                    queryParams: {
+                        prompt: 'select_account' // Forces Google to show the account picker
+                    }
                 }
             });
             if (error) throw error;
@@ -267,14 +277,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 <div className="w-2 h-2 rounded-full bg-white/10"></div>
                                 <div className="w-2 h-2 rounded-full bg-white/10"></div>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.6em] font-display">
-                                    © 2026 TASKPLUS ECOSYSTEM
-                                </p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
-                                    {appName} v3.0.1 — CLOUD INFRASTRUCTURE
+                            <div className="mt-auto text-center pt-8">
+                                <p className="text-[10px] font-bold text-white/50 tracking-[0.2em] font-display uppercase">
+                                    © 2026 GESIT PORTAL ECOSYSTEM
                                 </p>
                             </div>
+                            <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] font-display">
+                                {appName} v3.0.1 — CLOUD INFRASTRUCTURE
+                            </p>
                         </motion.div>
                     </div>
                 </div>
@@ -497,6 +507,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                     >
                                                         Contact Support Team
                                                     </button>
+                                                    <div className="flex justify-center gap-4 mt-2">
+                                                        <a href="/privacy" className="text-[9px] font-bold text-slate-400 hover:text-primary transition-all duration-300">Privacy Policy</a>
+                                                        <span className="text-[9px] text-slate-200 dark:text-slate-800">•</span>
+                                                        <a href="/terms" className="text-[9px] font-bold text-slate-400 hover:text-primary transition-all duration-300">Terms of Service</a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

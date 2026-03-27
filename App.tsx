@@ -18,6 +18,8 @@ import {
   Settings, Megaphone, Loader2, CheckCircle2
 } from 'lucide-react';
 
+import { checkAssetLoanOverdue } from './utils/LoanNotificationUtils';
+
 // Lazy Load Managers
 const MainDashboard = React.lazy(() => import('./components/MainDashboard').then(m => ({ default: m.MainDashboard })));
 const NetworkDashboard = React.lazy(() => import('./components/NetworkDashboard').then(m => ({ default: m.NetworkDashboard })));
@@ -45,6 +47,8 @@ const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetai
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 const TaskplusDashboard = React.lazy(() => import('./components/TaskplusDashboard').then(m => ({ default: m.TaskplusDashboard })));
 const WorknestDashboard = React.lazy(() => import('./components/WorknestDashboard').then(m => ({ default: m.default })));
+const PrivacyPolicy = React.lazy(() => import('./components/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfService = React.lazy(() => import('./components/TermsOfService').then(m => ({ default: m.TermsOfService })));
 
 const PublicLayout: React.FC<{
   children: React.ReactNode;
@@ -124,7 +128,7 @@ const InternalApp: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [groupDefinitions, setGroupDefinitions] = useState<UserGroup[]>(MOCK_GROUPS);
   const [appSettings, setAppSettings] = useState({
-    name: 'TASKPLUS',
+    name: 'GESIT PORTAL',
     logo: '/image/logo.png',
     primaryColor: '#2563eb',
     fontFamily: 'Inter'
@@ -204,13 +208,15 @@ const InternalApp: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("App.tsx: Auth state changed:", _event, !!session);
       if (session?.user?.email) {
-        // Enforce internal domain restriction
+        /* 
+        // Domain restriction removed per user request to allow Gmail/external logins
         if (!session.user.email.endsWith('@gesit.co.id')) {
           console.warn("App.tsx: Access denied for non-internal email:", session.user.email);
           await supabase.auth.signOut();
           showToast(t('accessRestricted'), 'error');
           return;
         }
+        */
         handleLogin(session.user.email);
       } else if (_event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
@@ -230,7 +236,7 @@ const InternalApp: React.FC = () => {
         const { data } = await supabase.from('system_settings').select('*').single();
         if (data) {
           const newSettings = {
-            name: data.app_name || 'GESIT WORK',
+            name: data.app_name || 'GESIT PORTAL',
             logo: data.logo_url || '/image/logo.png',
             primaryColor: data.primary_color || '#2563eb',
             fontFamily: data.font_family || 'Inter'
@@ -273,6 +279,16 @@ const InternalApp: React.FC = () => {
     };
     if (isAuthenticated) fetchGroups();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (currentUser) {
+      console.log('App.tsx: Checking role for overdue trigger:', currentUser.role);
+      const roleLower = currentUser.role?.toLowerCase();
+      if (roleLower === 'admin' || roleLower === 'staff') {
+        checkAssetLoanOverdue(currentUser);
+      }
+    }
+  }, [currentUser]);
 
   const handleLogin = async (email: string) => {
     console.log("App.tsx: Handling login for", email);
@@ -490,6 +506,16 @@ const InternalApp: React.FC = () => {
                         primaryColor={appSettings.primaryColor}
                       />
                     ) : <Navigate to="/" />}
+                  </motion.div>
+                } />
+                <Route path="/privacy" element={
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                    <PrivacyPolicy />
+                  </motion.div>
+                } />
+                <Route path="/terms" element={
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                    <TermsOfService />
                   </motion.div>
                 } />
 

@@ -1,7 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { sendNotificationToAdmins } from '../utils/NotificationSystemUtils';
+import { sendTicketNotificationEmail } from '../utils/EmailSystemUtils';
 import { UserAccount } from '../types';
 import { useLanguage } from '../translations';
 import {
@@ -639,8 +641,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         return prev;
                     });
                 } else if (payload.eventType === 'DELETE') {
-                    setTickets(prev => prev.filter(t => t.id === payload.old.id));
-                    setSelectedTicket(prev => prev && prev.id === payload.old.id ? null : prev);
+                    setTickets(prev => prev.filter(t => String(t.id) !== String(payload.old.id)));
+                    setSelectedTicket(prev => prev && String(prev.id) === String(payload.old.id) ? null : prev);
+                    // Absolute safety: Fetch latest data to ensure UI is in sync
+                    fetchTickets();
                 }
             })
             .subscribe();
@@ -711,8 +715,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
     const performUpload = (file: File, resourceType: string): Promise<string> => {
         return new Promise((resolve, reject) => {
-            const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
-            const uploadPreset = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
+            const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dmr8bxdos';
+            const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'gesit_erp_preset';
 
             const xhr = new XMLHttpRequest();
             const formData = new FormData();
@@ -1062,18 +1066,25 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
             if (dbError) throw dbError;
 
-            // Notify Admins
-            const { data: admins } = await supabase.from('user_accounts').select('email').eq('role', 'Admin');
-            if (admins) {
-                const notifications = admins.map(a => ({
-                    user_email: a.email,
-                    title: 'New Service Ticket',
-                    message: `${currentUser?.fullName} reported: ${newTicketData.subject}`,
-                    type: 'Info',
-                    link: 'helpdesk'
-                }));
-                await supabase.from('notifications').insert(notifications);
-            }
+            // Notify Admins via Global System
+            await sendNotificationToAdmins(
+                'New Service Ticket',
+                `${currentUser?.fullName} reported: ${newTicketData.subject}`,
+                'Info',
+                'helpdesk'
+            );
+
+            // Notify IT Operation via Email
+            await sendTicketNotificationEmail({
+                ticketId: ticketId,
+                requesterName: currentUser?.fullName || 'User',
+                requesterEmail: currentUser?.email || '-',
+                department: newTicketData.department,
+                subject: newTicketData.subject,
+                priority: newTicketData.priority,
+                category: 'General Support',
+                description: newTicketData.description
+            });
 
             showToast(`Ticket ${ticketId} established.`);
             setLastCreatedTicketId(ticketId);
@@ -1186,9 +1197,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             }
 
             showToast('Ticket deleted successfully');
-            setTickets(prev => prev.filter(t => t.id !== ticketId));
+            setTickets(prev => prev.filter(t => String(t.id) !== String(ticketId)));
             setSelectedTicket(null);
             setIsDeleteConfirmOpen(false);
+            // Safety sync
+            fetchTickets();
         } catch (err: any) {
             console.error("[HelpdeskDelete] FATAL ERROR:", err);
             showToast(err.message || "Failed to delete ticket", 'error');

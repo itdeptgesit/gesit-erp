@@ -73,7 +73,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onMenuClick, onLogout, onNavigate,
-  user, appName = 'GESIT WORK', logoUrl, forceShowLogo
+  user, appName = 'GESIT PORTAL', logoUrl, forceShowLogo
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: `user_email=eq.${user.email}`
+        filter: `user_email=eq.${user.email.toLowerCase()}`
       }, (payload) => {
         setNotifications(prev => [payload.new as any, ...prev].slice(0, 10));
       })
@@ -197,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex flex-col min-w-0">
             <h1 className="text-xs sm:text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-none truncate">
-              {(appName || 'GESIT WORK').split(' ')[0]}<span className="text-primary dark:text-blue-400 font-black ml-0.5 hidden xs:inline sm:inline">{(appName || 'GESIT WORK').split(' ').slice(1).join(' ')}</span>
+              {(appName || 'GESIT PORTAL').split(' ')[0]}<span className="text-primary dark:text-blue-400 font-black ml-0.5 hidden xs:inline sm:inline">{(appName || 'GESIT PORTAL').split(' ').slice(1).join(' ')}</span>
             </h1>
           </div>
         </div>
