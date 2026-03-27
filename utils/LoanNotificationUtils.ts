@@ -73,20 +73,37 @@ export const checkAssetLoanOverdue = async (currentUser: UserAccount | null) => 
             const { data: borrowerAccount } = await supabase
                 .from('user_accounts')
                 .select('email')
-                .eq('full_name', loan.borrower_name)
+                .ilike('full_name', loan.borrower_name)
                 .maybeSingle();
 
             const borrowerEmail = borrowerAccount?.email;
             console.log('[DEBUG OVERDUE] Borrower found in accounts?', !!borrowerEmail, 'Email:', borrowerEmail);
 
-            // 4. Create notification for Borrower
+            // 4. Check if notification already exists for this loan (prevent duplicates)
+            const assetLabel = loan.it_assets?.item_name || 'Asset';
+            const { data: existingNotif } = await supabase
+                .from('notifications')
+                .select('id')
+                .eq('title', 'Asset Return Overdue')
+                .ilike('message', `%${loan.it_assets?.asset_id || loan.asset_id}%`)
+                .ilike('user_email', borrowerEmail || currentUser.email)
+                .limit(1);
+
+            if (existingNotif && existingNotif.length > 0) {
+                console.log('[DEBUG OVERDUE] Notification already exists for loan', loan.loan_id, '- skipping.');
+                continue;
+            }
+
+            // 5. Create notification for Borrower
             if (borrowerEmail) {
                 const { error: notifError } = await supabase.from('notifications').insert([{
-                    user_email: borrowerEmail,
+                    user_email: borrowerEmail.toLowerCase(),
                     title: 'Asset Return Overdue',
-                    message: `Reminder: The asset "${loan.it_assets?.item_name || 'Asset'}" (${loan.it_assets?.asset_id || loan.asset_id}) was scheduled to be returned on ${new Date(loan.expected_return_date).toLocaleDateString()}. Please return it as soon as possible.`,
+                    message: `Reminder: The asset "${assetLabel}" (${loan.it_assets?.asset_id || loan.asset_id}) was scheduled to be returned on ${new Date(loan.expected_return_date).toLocaleDateString()}. Please return it as soon as possible.`,
                     type: 'Alert',
-                    link: 'asset-loan'
+                    link: 'asset-loan',
+                    is_read: false,
+                    created_at: new Date().toISOString()
                 }]);
                 
                 if (notifError) console.error('[DEBUG OVERDUE] Borrower notification FAILED:', notifError);
@@ -96,17 +113,29 @@ export const checkAssetLoanOverdue = async (currentUser: UserAccount | null) => 
                 await triggerEmailNotification(borrowerEmail, loan);
             }
 
-            // 5. Create notification for Admin
-            const { error: adminNotifError } = await supabase.from('notifications').insert([{
-                user_email: currentUser.email,
-                title: 'Overdue Asset Warning',
-                message: `${loan.borrower_name} is overdue for returning "${loan.it_assets?.item_name || 'Asset'}". Status updated to Overdue.`,
-                type: 'Warning',
-                link: 'asset-loan'
-            }]);
+            // 6. Create notification for Admin
+            const { data: existingAdminNotif } = await supabase
+                .from('notifications')
+                .select('id')
+                .eq('title', 'Overdue Asset Warning')
+                .ilike('message', `%${loan.it_assets?.asset_id || loan.asset_id}%`)
+                .ilike('user_email', currentUser.email)
+                .limit(1);
 
-            if (adminNotifError) console.error('[DEBUG OVERDUE] Admin notification FAILED:', adminNotifError);
-            else console.log('[DEBUG OVERDUE] Admin notification created for', currentUser.email);
+            if (!existingAdminNotif || existingAdminNotif.length === 0) {
+                const { error: adminNotifError } = await supabase.from('notifications').insert([{
+                    user_email: currentUser.email.toLowerCase(),
+                    title: 'Overdue Asset Warning',
+                    message: `${loan.borrower_name} is overdue for returning "${assetLabel}". Status updated to Overdue.`,
+                    type: 'Warning',
+                    link: 'asset-loan',
+                    is_read: false,
+                    created_at: new Date().toISOString()
+                }]);
+
+                if (adminNotifError) console.error('[DEBUG OVERDUE] Admin notification FAILED:', adminNotifError);
+                else console.log('[DEBUG OVERDUE] Admin notification created for', currentUser.email);
+            }
         }
         
     } catch (error) {

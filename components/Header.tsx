@@ -106,39 +106,44 @@ export const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     if (!user?.email) return;
 
+    const userEmail = user.email.toLowerCase();
+
+    const mapNotification = (n: any): NotificationItem => ({
+      id: n.id,
+      userId: n.user_email,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.is_read ?? false,
+      createdAt: n.created_at,
+      link: n.link
+    });
+
     const fetchNotifications = async () => {
       const { data } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_email', user.email)
+        .ilike('user_email', userEmail)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
 
       if (data) {
-        setNotifications(data.map((n: any) => ({
-          id: n.id,
-          userId: n.user_email,
-          title: n.title,
-          message: n.message,
-          type: n.type,
-          isRead: n.is_read,
-          createdAt: n.created_at,
-          link: n.link
-        })));
+        setNotifications(data.map(mapNotification));
       }
     };
 
     fetchNotifications();
 
     const channel = supabase
-      .channel('public:notifications')
+      .channel(`notifications:${userEmail}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: `user_email=eq.${user.email.toLowerCase()}`
+        filter: `user_email=eq.${userEmail}`
       }, (payload) => {
-        setNotifications(prev => [payload.new as any, ...prev].slice(0, 10));
+        const mapped = mapNotification(payload.new);
+        setNotifications(prev => [mapped, ...prev].slice(0, 20));
       })
       .subscribe();
 

@@ -481,7 +481,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         rating: t.rating,
         feedback: t.feedback,
         attachments: t.attachments || [],
-        resolvedAt: t.resolved_at
+        resolvedAt: t.resolved_at,
+        respondedAt: t.responded_at
     });
 
     const fetchTickets = async () => {
@@ -1112,12 +1113,17 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         }
     };
 
-    const handleUpdateStatus = async (ticketId: number, nextStatus: string) => {
-        if (isActionLoading || isSolved) return;
+    const handleUpdateStatus = async (ticketId: number, nextStatus: string, forcedNote?: string) => {
+        if (isActionLoading) return;
+        
+        // Block if trying to resolve an already resolved ticket
+        if (isSolved && nextStatus === 'Resolved') return;
+
         if (!isOwner) {
             showToast('Only the ticket owner can change status', 'error');
             return;
         }
+
         if (nextStatus === 'Resolved') {
             let finalNote = resolutionNote.trim();
 
@@ -1137,7 +1143,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             setIsSolveConfirmOpen(true);
             return;
         }
-        executeStatusUpdate(ticketId, nextStatus);
+        
+        // For Reopening or regular updates
+        executeStatusUpdate(ticketId, nextStatus, forcedNote);
     };
 
     const handleConvertToActivity = async () => {
@@ -1240,9 +1248,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
             if (nextStatus === 'Resolved') {
                 payload.resolved_at = new Date().toISOString();
-            } else if (['Open', 'In Progress', 'Pending'].includes(nextStatus)) {
-                // If reopened, clear the resolved_at but it's optional
-                // payload.resolved_at = null; 
+            } else if (nextStatus === 'In Progress' && !selectedTicket?.respondedAt) {
+                // First time picked up/started
+                payload.responded_at = new Date().toISOString();
             }
 
             console.log(`[HelpdeskUpdate] Payload:`, payload);
@@ -1358,16 +1366,51 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
     // Analytics Dashboard Data
     const analyticsData = useMemo(() => {
-        // Simple mock data for 7-day trend since we lack historical snapshot
-        const trendData = [...Array(7)].map((_, i) => {
+        // Real trend data for 7-day trend
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
             d.setDate(d.getDate() - (6 - i));
-            return {
-                name: d.toLocaleDateString([], { weekday: 'short' }),
-                requests: Math.floor(Math.random() * 15) + 5,
-                resolved: Math.floor(Math.random() * 10) + 2
-            };
+            return d.toISOString().split('T')[0];
         });
+
+        const trendData = last7Days.map(date => {
+            const dayLabel = new Date(date).toLocaleDateString([], { weekday: 'short' });
+            const requests = tickets.filter(t => t.createdAt?.split('T')[0] === date).length;
+            const resolved = tickets.filter(t => (t.status === 'Resolved' || t.status === 'Closed') && t.resolvedAt?.split('T')[0] === date).length;
+            return { name: dayLabel, requests, resolved };
+        });
+
+        const resolvedTickets = tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed');
+        let totalSlaHours = 0;
+        let resolvedWithDates = 0;
+        resolvedTickets.forEach(t => {
+            // Priority: Start from respondedAt (Process time) to Resolved
+            const startTime = t.respondedAt || t.createdAt;
+            if (startTime && t.resolvedAt) {
+                const start = new Date(startTime);
+                const end = new Date(t.resolvedAt);
+                const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                if (diffHours >= 0) {
+                    totalSlaHours += diffHours;
+                    resolvedWithDates++;
+                }
+            }
+        });
+        const avgSla = resolvedWithDates > 0 ? (totalSlaHours / resolvedWithDates).toFixed(1) : '0';
+
+        const ratedTickets = tickets.filter(t => t.rating && t.rating > 0);
+        const totalRating = ratedTickets.reduce((acc, t) => acc + (t.rating || 0), 0);
+        const avgRating = ratedTickets.length > 0 ? (totalRating / ratedTickets.length).toFixed(1) : '0';
+
+        // SLA Compliance (Resolved within 24h)
+        const slaCompliantCount = resolvedTickets.filter(t => {
+            if (t.createdAt && t.resolvedAt) {
+                const diff = (new Date(t.resolvedAt).getTime() - new Date(t.createdAt).getTime()) / (1000 * 60 * 60);
+                return diff <= 24;
+            }
+            return false;
+        }).length;
+        const slaCompliance = resolvedTickets.length > 0 ? ((slaCompliantCount / resolvedTickets.length) * 100).toFixed(1) : '100';
 
         // Current real status data
         const statusData = [
@@ -1389,7 +1432,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             count: categoryCounts[key]
         })).sort((a, b) => b.count - a.count).slice(0, 5); // Top 5 categories
 
-        return { trendData, statusData, categoryData };
+        return { trendData, statusData, categoryData, avgSla, avgRating, slaCompliance };
     }, [tickets]);
 
     // Perform Search for Client View
@@ -1821,16 +1864,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Avg Resolution Time</p>
-                                            <h3 className="text-3xl font-black text-foreground tracking-tight">1.2<span className="text-lg font-bold text-muted-foreground ml-1">hrs</span></h3>
+                                            <h3 className="text-3xl font-black text-foreground tracking-tight">{analyticsData.avgSla}<span className="text-lg font-bold text-muted-foreground ml-1">hrs</span></h3>
                                         </div>
                                         <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500">
                                             <Clock size={20} />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
-                                        <ArrowRight className="rotate-90" size={12} />
-                                        15% faster than last week
-                                    </div>
+                                        SLA target benchmark: 24h
                                 </div>
                             </Card>
 
@@ -1840,16 +1880,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">SLA Compliance</p>
-                                            <h3 className="text-3xl font-black text-foreground tracking-tight">94.5<span className="text-lg font-bold text-muted-foreground ml-1">%</span></h3>
+                                            <h3 className="text-3xl font-black text-foreground tracking-tight">{analyticsData.slaCompliance}<span className="text-lg font-bold text-muted-foreground ml-1">%</span></h3>
                                         </div>
                                         <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500">
                                             <ShieldCheck size={20} />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
-                                        <ArrowRight className="-rotate-45" size={12} />
-                                        On track for monthly target
-                                    </div>
+                                        Target: 90% resolution rate
                                 </div>
                             </Card>
 
@@ -1859,7 +1896,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">CSAT Score</p>
-                                            <h3 className="text-3xl font-black text-foreground tracking-tight">4.8<span className="text-lg font-bold text-muted-foreground ml-1">/ 5</span></h3>
+                                            <h3 className="text-3xl font-black text-foreground tracking-tight">{analyticsData.avgRating}<span className="text-lg font-bold text-muted-foreground ml-1">/ 5</span></h3>
                                         </div>
                                         <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
                                             <Star size={20} />
@@ -2657,13 +2694,23 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                             >Hold</button>
                                                         </div>
                                                     )}
-                                                    <button
-                                                        disabled={isActionLoading || !isOwner || isSolved}
-                                                        onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                                                        className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                                    >
-                                                        <CheckCircle2 size={16} /> Mark Resolved
-                                                    </button>
+                                                    {isSolved ? (
+                                                        <button
+                                                            disabled={isActionLoading || !isOwner}
+                                                            onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress', 'Ticket reopened for further investigation.')}
+                                                            className="w-full h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
+                                                        >
+                                                            <RefreshCcw size={16} /> Reopen Ticket
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            disabled={isActionLoading || !isOwner}
+                                                            onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
+                                                            className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                                        >
+                                                            <CheckCircle2 size={16} /> Mark Resolved
+                                                        </button>
+                                                    )}
                                                 </>
                                             )}
                                             {isSolved && (

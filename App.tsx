@@ -281,13 +281,23 @@ const InternalApp: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (currentUser) {
-      console.log('App.tsx: Checking role for overdue trigger:', currentUser.role);
-      const roleLower = currentUser.role?.toLowerCase();
-      if (roleLower === 'admin' || roleLower === 'staff') {
-        checkAssetLoanOverdue(currentUser);
-      }
-    }
+    if (!currentUser) return;
+
+    const roleLower = currentUser.role?.toLowerCase();
+    if (roleLower !== 'admin' && roleLower !== 'staff') return;
+
+    console.log('App.tsx: Starting overdue check cycle for:', currentUser.role);
+
+    // Run immediately on login
+    checkAssetLoanOverdue(currentUser);
+
+    // Then re-check every 5 minutes to catch newly overdue items
+    const interval = setInterval(() => {
+      console.log('App.tsx: Periodic overdue check...');
+      checkAssetLoanOverdue(currentUser);
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, [currentUser]);
 
   const handleLogin = async (email: string) => {

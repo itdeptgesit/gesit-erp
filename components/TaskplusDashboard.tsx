@@ -239,19 +239,19 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             const completionRate = weeklyPlans && weeklyPlans.length > 0 ?
                 `${Math.round((weeklyPlans.filter(w => w.status === 'Done' || w.status === 'Completed').length / weeklyPlans.length) * 100)}%` : '0%';
 
-            // --- SLA & RATING CALCULATIONS (NEW) ---
+            // --- SLA & RATING CALCULATIONS (Consistent with HelpdeskManager) ---
             const resolvedTickets = (helpTickets || []).filter(t => t.status === 'Resolved' || t.status === 'Closed');
             
             let totalSlaHours = 0;
             let resolvedWithDates = 0;
             
             resolvedTickets.forEach(t => {
-                if (t.created_at && t.resolved_at) {
-                    const start = new Date(t.created_at);
+                // Use responded_at (actual processing start) with fallback to created_at
+                const startTime = t.responded_at || t.created_at;
+                if (startTime && t.resolved_at) {
+                    const start = new Date(startTime);
                     const end = new Date(t.resolved_at);
-                    const diffMs = end.getTime() - start.getTime();
-                    // Convert ms to hours
-                    const diffHours = diffMs / (1000 * 60 * 60);
+                    const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
                     if (diffHours >= 0) {
                         totalSlaHours += diffHours;
                         resolvedWithDates++;
