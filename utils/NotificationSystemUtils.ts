@@ -14,7 +14,7 @@ export const sendNotificationToAdmins = async (
         // 1. Fetch all users who should receive admin-level notifications
         const { data: allUsers, error: fetchError } = await supabase
             .from('user_accounts')
-            .select('id, email, role');
+            .select('id, email, role, job_title');
 
         if (fetchError) {
             console.error('[NotificationSystem] Error fetching admins:', fetchError);
@@ -23,7 +23,8 @@ export const sendNotificationToAdmins = async (
 
         const admins = allUsers?.filter(u => {
             const r = u.role?.toLowerCase();
-            return r === 'admin' || r === 'super admin' || r === 'staff';
+            const isSupport = r === 'admin' || r === 'super admin' || r === 'staff' || (u as any).job_title?.toLowerCase().includes('it');
+            return isSupport;
         });
 
         if (fetchError) {
