@@ -73,7 +73,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             className={`
                 relative flex items-center p-4
                 bg-card text-card-foreground border border-border shadow-sm
-                rounded-xl
+                rounded-lg
                 transition-all duration-300 cursor-pointer group
             `}
         >

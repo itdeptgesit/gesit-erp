@@ -74,7 +74,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onMenuClick, onLogout, onNavigate,
-  user, appName = 'GESIT PORTAL', logoUrl, forceShowLogo
+  user, appName: propAppName, logoUrl, forceShowLogo
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -82,6 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { language, setLanguage, t } = useLanguage();
 
   const userName = user?.name || 'User';
+  const appName = propAppName || 'GESIT PORTAL';
   const LOGO_URL = "/image/logo.png";
 
   useEffect(() => {
@@ -369,7 +370,6 @@ export const Header: React.FC<HeaderProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-
       </div>
     </header>
   );

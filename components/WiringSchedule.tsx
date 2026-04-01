@@ -51,82 +51,87 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-b-2xl overflow-hidden flex flex-col min-h-[400px]">
+        <div className="bg-white dark:bg-slate-950 rounded-b-2xl overflow-hidden flex flex-col min-h-[400px]">
             {/* Table Toolbar */}
-            <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={14} />
+            <div className="px-6 py-5 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
+                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-600" size={14} />
                     <Input
                         placeholder="Search by target, IP, or patch port..."
-                        className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 shadow-sm"
+                        className="w-full pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300 transition-all font-medium"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter size={14} className="text-slate-400 dark:text-slate-500" />
-                    <select
-                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer shadow-sm"
-                        value={deviceFilter}
-                        onChange={e => setDeviceFilter(e.target.value)}
-                    >
-                        <option value="All">All Source Hardware</option>
-                        {switches.map(sw => (
-                            <option key={sw.id} value={sw.id}>{sw.name}</option>
-                        ))}
-                    </select>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                        <Filter size={14} className="text-slate-400" />
+                        <select
+                            className="bg-transparent text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer"
+                            value={deviceFilter}
+                            onChange={e => setDeviceFilter(e.target.value)}
+                        >
+                            <option value="All">All Source Hardware</option>
+                            {switches.map(sw => (
+                                <option key={sw.id} value={sw.id}>{sw.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <div className="flex-1 overflow-auto custom-scrollbar max-h-[500px]">
                 <Table className="w-full">
-                    <TableHeader className="bg-white dark:bg-slate-900 sticky top-0 z-10 shadow-sm transition-colors">
-                        <TableRow className="border-b border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900">
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Source Device</TableHead>
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Circuit ID</TableHead>
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Patch Location</TableHead>
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 text-center">Status</TableHead>
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Connection Target</TableHead>
-                            <TableHead className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Infrastructure</TableHead>
+                    <TableHeader className="bg-white dark:bg-slate-950 sticky top-0 z-10">
+                        <TableRow className="border-b border-slate-100 dark:border-slate-800 hover:bg-transparent">
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Source Device</TableHead>
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Circuit ID</TableHead>
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Patch Location</TableHead>
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400 text-center">Status</TableHead>
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Connection Target</TableHead>
+                            <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Infrastructure</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    <TableBody className="divide-y divide-slate-50 dark:divide-slate-900">
                         {filteredConnections.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="px-6 py-20 text-center text-slate-300 dark:text-slate-700 text-[10px] font-bold uppercase tracking-widest">No connections found matching filters.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={6} className="px-6 py-24 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">No connections found matching filters.</TableCell></TableRow>
                         ) : filteredConnections.map((conn, idx) => (
-                            <TableRow key={`${conn.switchId}-${conn.port.id}-${idx}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group">
+                            <TableRow key={`${conn.switchId}-${conn.port.id}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors group">
                                 <TableCell className="px-6 py-4">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className={`p-1.5 rounded-lg border ${conn.switchName.toLowerCase().includes('nvr') || conn.switchName.toLowerCase().includes('dvr') ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                             {getSourceIcon(conn.switchName, conn.switchModel)}
                                         </div>
-                                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[12px] uppercase tracking-tight">{conn.switchName}</span>
+                                        <div>
+                                            <div className="font-bold text-slate-900 dark:text-slate-100 text-xs uppercase tracking-tight leading-none">{conn.switchName}</div>
+                                            <div className="text-[9px] text-slate-400 font-bold uppercase mt-1 leading-none">{conn.switchModel}</div>
+                                        </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-6 py-4 font-mono text-slate-500 dark:text-slate-400 text-[11px] font-bold">P-{conn.port.portNumber.toString().padStart(2, '0')}</TableCell>
                                 <TableCell className="px-6 py-4">
-                                    <span className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-lg font-mono text-[10px] font-black border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md font-mono text-[10px] font-bold border border-slate-200 dark:border-slate-700">
                                         {conn.port.patchPanelPort || 'N/A'}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-6 py-4 text-center">
-                                    <div className={`w-2 h-2 mx-auto rounded-full ${conn.port.status === PortStatus.ACTIVE ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                                    <div className={`w-2 h-2 mx-auto rounded-full ${conn.port.status === PortStatus.ACTIVE ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
                                     {conn.uplink ? (
-                                        <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-black text-[10px] bg-blue-50/50 dark:bg-blue-900/20 px-2.5 py-1 rounded-lg w-fit border border-blue-100 dark:border-blue-900/30 uppercase tracking-tight">
-                                            <ShieldCheck size={12} /> Link: {conn.uplink}
-                                        </span>
+                                        <div className="inline-flex items-center gap-2 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg font-bold text-[9px] border border-indigo-100/50 dark:border-indigo-500/20 uppercase">
+                                            <ShieldCheck size={10} /> {conn.uplink}
+                                        </div>
                                     ) : (
                                         <div className="flex flex-col">
-                                            <span className="text-slate-800 dark:text-slate-200 font-bold text-[12px] uppercase leading-none">{conn.port.deviceConnected || 'UNASSIGNED'}</span>
-                                            {conn.port.ipAddress && <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 mt-1.5 font-bold uppercase tracking-widest">{conn.port.ipAddress}</span>}
+                                            <span className="text-slate-900 dark:text-slate-100 font-bold text-xs uppercase leading-none tracking-tight">{conn.port.deviceConnected || 'UNASSIGNED'}</span>
+                                            {conn.port.ipAddress && <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{conn.port.ipAddress}</span>}
                                         </div>
                                     )}
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
-                                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                                        <Cable size={12} className={conn.port.cableType === 'Coaxial' ? 'text-indigo-500' : 'text-blue-500'} />
+                                    <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <Cable size={12} className="opacity-50" />
                                         {conn.port.cableType || conn.port.cableLength || 'Cat6'}
                                     </div>
                                 </TableCell>
@@ -135,9 +140,9 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
                     </TableBody>
                 </Table>
             </div>
-            <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/30 text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest flex justify-between items-center border-t border-slate-100 dark:border-slate-800 transition-colors">
-                <span className="flex items-center gap-2"><Network size={12} /> Total Segments: {filteredConnections.length}</span>
-                <span className="text-slate-300 dark:text-slate-700">Audit Verified: {new Date().toLocaleDateString()}</span>
+            <div className="px-6 py-4 bg-white dark:bg-slate-950 text-[9px] text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center border-t border-slate-100 dark:border-slate-800">
+                <span className="flex items-center gap-2"><Network size={12} /> Segments Found: {filteredConnections.length}</span>
+                <span className="opacity-50">Authorized Infrastructure Report</span>
             </div>
         </div>
     );

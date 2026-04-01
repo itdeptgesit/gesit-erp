@@ -5,7 +5,7 @@ import {
     LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
     Network, Folder, Shield, ChevronDown, X, Users, Building2,
     Briefcase, Layers, Zap, PanelLeftClose, PanelLeft, Phone,
-    Settings, Megaphone, Search, ChevronRight, Plus
+    Settings, Megaphone, Search, ChevronRight, Plus, Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { APP_MENU_STRUCTURE } from '../constants';
@@ -36,7 +36,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Zap: Zap,
     Phone: Phone,
     Settings: Settings,
-    Megaphone: Megaphone
+    Megaphone: Megaphone,
+    Key: Key
 };
 
 interface SidebarProps {

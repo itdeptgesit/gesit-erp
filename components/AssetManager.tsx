@@ -21,6 +21,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 interface AssetManagerProps {
   currentUser: UserAccount | null;
@@ -314,27 +322,33 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           onChange={handleImportExcel}
         />
         {isAdmin && (
-          <>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={handleDownloadTemplate}
-              className="text-[10px] font-black uppercase tracking-widest rounded-xl"
+              className="text-[10px] font-bold uppercase tracking-widest h-9"
               title="Download Blank Template"
             >
-              <Download className="mr-2 h-4 w-4" /> Template
+              <Download className="mr-2 h-3.5 w-3.5" /> Template
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
-              className="border-2 border-dashed border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="border-dashed h-9 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <FileSpreadsheet className={`mr-2 h-4 w-4 ${isImporting ? 'animate-bounce' : ''}`} /> {isImporting ? 'Processing...' : 'Bulk Import'}
+              <FileSpreadsheet className={`mr-2 h-3.5 w-3.5 ${isImporting ? 'animate-bounce' : ''}`} /> {isImporting ? 'Processing...' : 'Bulk Import'}
             </Button>
-          </>
+          </div>
         )}
-        <Button onClick={handleExportExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20">
-          <Download className="mr-2 h-4 w-4" /> Export Excel
+        <Button 
+          size="sm"
+          onClick={handleExportExcel} 
+          className="bg-emerald-600 h-9 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest shadow-sm"
+        >
+          <Download className="mr-2 h-3.5 w-3.5" /> Export Excel
         </Button>
       </PageHeader>
 
@@ -351,35 +365,49 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         <StatCard label="Standby stock" value={assets.filter(a => a.status === 'Idle').length} icon={History} color="indigo" />
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
+      <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
         <div className="relative flex-1 w-full">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-          <Input placeholder="Filter item name or custodian..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all font-semibold dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input 
+            placeholder="Filter item name or custodian..." 
+            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <select className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Used">Used</option>
-            <option value="Idle">Idle</option>
-            <option value="Broken">Broken</option>
-            <option value="Repair">In Repair</option>
-            <option value="Disposed">Disposed</option>
-          </select>
-          <button
+        <div className="flex gap-2 w-full md:w-auto shrink-0">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-[150px] h-11 bg-background border-muted font-semibold text-[10px] uppercase tracking-wider">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All" className="text-[10px] uppercase font-bold">All Status</SelectItem>
+              <SelectItem value="Active" className="text-[10px] uppercase font-bold">Active</SelectItem>
+              <SelectItem value="Used" className="text-[10px] uppercase font-bold">Used</SelectItem>
+              <SelectItem value="Idle" className="text-[10px] uppercase font-bold">Idle</SelectItem>
+              <SelectItem value="Repair" className="text-[10px] uppercase font-bold">Repair</SelectItem>
+              <SelectItem value="Broken" className="text-[10px] uppercase font-bold">Broken</SelectItem>
+              <SelectItem value="Disposed" className="text-[10px] uppercase font-bold">Disposed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            size="icon"
             onClick={resetFilters}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:border-rose-200 transition-all flex items-center justify-center"
+            className="h-11 w-11 text-muted-foreground hover:text-destructive border-muted-foreground/10"
             title="Reset Filters"
           >
             <RotateCcw size={16} />
-          </button>
+          </Button>
 
           {canManage && (
-            <div className="flex gap-2">
-              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/10 whitespace-nowrap">
-                <Plus size={14} /> Add Asset
-              </button>
-            </div>
+            <Button 
+              onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} 
+              className="h-11 px-6 font-bold uppercase text-[10px] tracking-widest shadow-sm gap-2"
+            >
+              <Plus size={14} /> Add Asset
+            </Button>
           )}
         </div>
       </div>
@@ -428,7 +456,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                     <div className="flex items-center gap-3">
                       <div
                         onClick={() => { setDetailAsset(asset); setIsDetailOpen(true); }}
-                        className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:shadow-lg transition-all active:scale-95 border-dashed"
+                        className="w-10 h-10 rounded-md bg-muted/50 border border-border flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:shadow-md transition-all active:scale-95 border-dashed"
                       >
                         {asset.image_url ? (
                           <img src={asset.image_url} alt={asset.item} className="w-full h-full object-cover" />
@@ -480,8 +508,26 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredAssets.length} assets)</p>
           <div className="flex items-center gap-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              disabled={currentPage === 1} 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+            >
+              <ChevronLeft size={16} />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              disabled={currentPage === totalPages || totalPages === 0} 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+            >
+              <ChevronRight size={16} />
+            </Button>
+          </div>
           </div>
         </div>
       </div>

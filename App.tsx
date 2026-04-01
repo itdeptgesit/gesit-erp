@@ -41,6 +41,8 @@ const SystemSettings = React.lazy(() => import('./components/SystemSettings').th
 const AnnouncementManager = React.lazy(() => import('./components/AnnouncementManager').then(m => ({ default: m.AnnouncementManager })));
 const ExtensionDirectory = React.lazy(() => import('./components/ExtensionDirectory').then(m => ({ default: m.ExtensionDirectory })));
 const AuditLogManager = React.lazy(() => import('./components/AuditLogManager').then(m => ({ default: m.AuditLogManager })));
+const CredentialManager = React.lazy(() => import('@/components/CredentialManager'));
+
 const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
 const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
@@ -740,6 +742,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
                   <Route path="files" element={<FileManager currentUser={currentUser} />} />
                   <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={floorFilter} onFloorFilterChange={onFloorFilterChange} />} />
                   <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
+                  <Route path="credential" element={<CredentialManager currentUser={currentUser} />} />
                   <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
                   <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
                   <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />

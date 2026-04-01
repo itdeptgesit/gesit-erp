@@ -24,7 +24,10 @@ import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
 
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
@@ -226,20 +229,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 title="Procurement Center"
                 description="Managed investment & equipment audit log"
             >
-                <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md shadow-sm">
-                    {[{ id: 'registry', icon: ListFilter, label: 'REGISTRY' }, { id: 'approvals', icon: UserCheck, label: `TASKS (${stats.actionsCount})` }, { id: 'analytics', icon: BarChart3, label: 'REPORTS' }].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={cn(
-                                "flex items-center gap-2 px-6 py-2 rounded-[0.9rem] text-[10px] font-black uppercase tracking-widest transition-all",
-                                activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                            )}
-                        >
-                            <tab.icon size={14} /> {tab.label}
-                        </button>
-                    ))}
-                </div>
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
+                    <TabsList className="grid grid-cols-3 w-[400px] h-10 p-1 bg-muted/50 rounded-lg">
+                        <TabsTrigger value="registry" className="text-[10px] font-bold uppercase tracking-widest gap-2">
+                            <ListFilter size={14} /> REGISTRY
+                        </TabsTrigger>
+                        <TabsTrigger value="approvals" className="text-[10px] font-bold uppercase tracking-widest gap-2">
+                            <UserCheck size={14} /> TASKS ({stats.actionsCount})
+                        </TabsTrigger>
+                        <TabsTrigger value="analytics" className="text-[10px] font-bold uppercase tracking-widest gap-2">
+                            <BarChart3 size={14} /> REPORTS
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
             </PageHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -249,23 +251,45 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 <StatCard label="Fulfilled" value={stats.approvedCount} icon={CheckCircle2} color="blue" subValue="Completed nodes" />
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[550px]">
-                <div className="px-6 py-5 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900 sticky top-0 z-20">
-                    <div className="relative flex-1 w-full md:max-w-md"><input type="text" placeholder="Search by hardware or account..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-transparent focus:border-blue-500/20 rounded-2xl text-xs font-semibold dark:text-slate-200 transition-all outline-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" /></div>
+            <div className="bg-card rounded-lg border shadow-sm overflow-hidden flex flex-col min-h-[550px]">
+                <div className="px-6 py-4 border-b flex flex-col md:flex-row justify-between items-center gap-4 bg-card sticky top-0 z-20">
+                    <div className="relative flex-1 w-full md:max-w-md">
+                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by hardware or account..." 
+                            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11" 
+                            value={searchTerm} 
+                            onChange={e => setSearchTerm(e.target.value)} 
+                        />
+                    </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="flex gap-2">
-                            <button
+                            <Button
+                                variant="outline"
+                                size="icon"
                                 onClick={handleExportExcel}
-                                className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-emerald-500 hover:text-emerald-600 transition-all shadow-sm active:scale-95 group"
+                                className="h-11 w-11 text-emerald-600 hover:text-emerald-700 border-muted-foreground/10"
                                 title="Export Excel"
                             >
-                                <FileSpreadsheet size={18} className="group-hover:scale-110 transition-transform" />
-                            </button>
-                            <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95 group">
-                                <RefreshCcw size={18} className={loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                            </button>
+                                <FileSpreadsheet size={18} />
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                size="icon"
+                                onClick={fetchData} 
+                                className="h-11 w-11 text-muted-foreground hover:text-primary border-muted-foreground/10"
+                            >
+                                <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
+                            </Button>
                         </div>
-                        {canManage && <button onClick={() => setIsModalOpen(true)} className="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20">New request</button>}
+                        {canManage && (
+                            <Button 
+                                onClick={() => setIsModalOpen(true)} 
+                                className="h-11 px-6 font-bold uppercase text-[10px] tracking-widest shadow-sm gap-2"
+                            >
+                                New request
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
@@ -273,7 +297,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         <div className="p-8 space-y-8">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Status Distribution */}
-                                <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                <div className="bg-muted/20 p-6 rounded-lg border">
+
                                     <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <Clock size={14} /> Workflow Distribution
                                     </h3>
@@ -303,7 +328,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-4">
                                         {analyticsData.statusChart.map((s, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                            <div key={idx} className="flex items-center gap-2 p-2 bg-background rounded-md border text-foreground">
+
                                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][idx % 5] }} />
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase truncate">{s.name}</span>
                                                 <span className="ml-auto text-xs font-bold">{s.value}</span>
@@ -313,7 +339,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 </div>
 
                                 {/* Top Vendors Spending */}
-                                <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                <div className="bg-muted/20 p-6 rounded-lg border">
+
                                     <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <ShoppingCart size={14} /> Top Projected Spend by Vendor
                                     </h3>
@@ -397,7 +424,30 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         </table>
                     )}
                 </div>
-                <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0"><p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Page {currentPage} of {totalPages || 1} • {filteredPlans.length} records</p><div className="flex items-center gap-2"><button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-20 transition-all active:scale-90"><ChevronLeft size={16} /></button><button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-20 transition-all active:scale-90"><ChevronRight size={16} /></button></div></div>
+                <div className="px-6 py-4 bg-muted/20 border-t flex items-center justify-between shrink-0">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Page {currentPage} of {totalPages || 1} • {filteredPlans.length} records</p>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            disabled={currentPage === 1} 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                        >
+                            <ChevronLeft size={16} />
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            disabled={currentPage === totalPages || totalPages === 0} 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                        >
+                            <ChevronRight size={16} />
+                        </Button>
+                    </div>
+                </div>
+
             </div>
 
             <PurchaseRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={async (formData) => { try { const payload = { item: formData.item, specs: formData.specs, quantity: formData.quantity, unit_price: formData.unitPrice, total_price: formData.totalPrice, vendor: formData.vendor, status: formData.status || 'Pending Approval', requester: currentUser?.username || formData.requester, request_date: formData.requestDate, justification: formData.justification }; const { error } = await supabase.from('purchase_plans').insert([payload]); if (error) throw error; setIsModalOpen(false); showToast("Request submitted successfully", "success"); fetchData(); } catch (err: any) { showToast("Submission failed: " + err.message, "error"); } }} currentUserName={currentUser?.fullName} currentUser={currentUser} />

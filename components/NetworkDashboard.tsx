@@ -530,41 +530,44 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     };
 
     const handleViewProfile = (device: NetworkSwitch) => {
-        setProfileDevice(device);
-        setIsProfileOpen(true);
+        startTransition(() => {
+            setActiveTab('status');
+            setSelectedSwitch(device);
+        });
+        showToast(`Viewing hardware profile: ${device.name}`, 'info');
     };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
             <PageHeader
                 title="Infrastructure Engine"
-                description="Real-time network intelligence & topology map"
+                description="Integrated network orchestration & asset management"
             >
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2">
+                    <div className="flex bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 mr-2">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleExportSwitches}
-                            className="h-9 w-9 text-emerald-600 dark:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg"
+                            className="h-8 w-8 text-slate-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-800"
                             title="Export Nodes"
                         >
-                            <FileSpreadsheet size={18} />
+                            <FileSpreadsheet size={16} />
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleExportWiring}
-                            className="h-9 w-9 text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg"
+                            className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800"
                             title="Export Wiring"
                         >
-                            <Server size={18} />
+                            <Server size={16} />
                         </Button>
                     </div>
                     {canManage && (
                         <Button
                             onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }}
-                            className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20"
+                            className="h-10 px-5 bg-slate-900 dark:bg-slate-100 text-white dark:text-black font-semibold text-xs rounded-xl"
                         >
                             <Plus size={14} className="mr-2" /> Provision Node
                         </Button>
@@ -573,10 +576,10 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         <Button
                             onClick={handleSaveLayout}
                             disabled={isSaving}
-                            className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 animate-bounce"
+                            className="h-10 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-500/20"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin mr-2" /> : <Save size={14} className="mr-2" />}
-                            Save Layout
+                            Sync Geometry
                         </Button>
                     )}
                 </div>
@@ -586,13 +589,32 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
             <NetworkSummaryBar switches={switches.filter(sw => !sw.id.startsWith('port-device-') && sw.id !== 'internet')} />
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 w-full md:w-auto overflow-x-auto">
+                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
                         {[{ id: 'topology', label: 'Topology', icon: GitBranch }, { id: 'status', label: 'Nodes', icon: Layout }, { id: 'wiring', label: 'Wiring', icon: Cable }, { id: 'devices', label: 'Hardware', icon: Server }].map(tab => (
-                            <button key={tab.id} onClick={() => startTransition(() => setActiveTab(tab.id as any))} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'} ${isPending ? 'opacity-50 grayscale' : ''}`}><tab.icon size={12} />{tab.label}</button>
+                            <button 
+                                key={tab.id} 
+                                onClick={() => startTransition(() => setActiveTab(tab.id as any))} 
+                                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap 
+                                    ${activeTab === tab.id 
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' 
+                                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                                    } ${isPending ? 'opacity-50 grayscale' : ''}`}
+                            >
+                                <tab.icon size={12} />
+                                {tab.label}
+                            </button>
                         ))}
                     </div>
-                    <div className="relative flex-1 md:w-64"><Input placeholder="Filter nodes..." className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-4 focus:ring-blue-500/5 transition-all font-medium text-slate-800 dark:text-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /><Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>
+                    <div className="relative flex-1 md:max-w-xs">
+                        <Input 
+                            placeholder="Filter registry..." 
+                            className="w-full pl-9 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300" 
+                            value={searchTerm} 
+                            onChange={e => setSearchTerm(e.target.value)} 
+                        />
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    </div>
                 </div>
                 <div className="p-0 flex-1 min-h-[600px] relative">
                     {isLoading ? (
@@ -636,31 +658,34 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             ) : activeTab === 'wiring' ? (
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
                             ) : (
-                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+                                <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
                                     <Table className="w-full">
                                         <TableHeader>
-                                            <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Node Identity</TableHead>
-                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">IP Config</TableHead>
-                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Site Location</TableHead>
-                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Load</TableHead>
-                                                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Protocol</TableHead>
+                                            <TableRow className="bg-white dark:bg-slate-950 hover:bg-transparent">
+                                                <TableHead className="px-6 h-12 text-[10px] font-bold uppercase tracking-widest text-slate-400">Node Identity</TableHead>
+                                                <TableHead className="px-6 h-12 text-[10px] font-bold uppercase tracking-widest text-slate-400">IP Config</TableHead>
+                                                <TableHead className="px-6 h-12 text-[10px] font-bold uppercase tracking-widest text-slate-400">Site Location</TableHead>
+                                                <TableHead className="px-6 h-12 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Load</TableHead>
+                                                <TableHead className="px-6 h-12 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Protocol</TableHead>
                                             </TableRow>
                                         </TableHeader>
-                                        <TableBody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                        <TableBody className="divide-y divide-slate-50 dark:divide-slate-900 font-medium">
                                             {filteredSwitches.map(sw => (
-                                                <TableRow key={sw.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
-                                                    <TableCell className="px-6 py-4"><p className="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-tight">{sw.name}</p><p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1 tracking-widest">{sw.model}</p></TableCell>
+                                                <TableRow key={sw.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all group">
+                                                    <TableCell className="px-6 py-4">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-tight leading-none">{sw.name}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1.5 leading-none tracking-widest">{sw.model}</p>
+                                                    </TableCell>
                                                     <TableCell className="px-6 py-4 font-mono text-blue-600 dark:text-blue-400 text-[11px] font-bold">{sw.ip}</TableCell>
-                                                    <TableCell className="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase">{sw.location}</TableCell>
+                                                    <TableCell className="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-tight">{sw.location}</TableCell>
                                                     <TableCell className="px-6 py-4 text-center">
-                                                        <Badge variant="outline" className={`px-2 py-0.5 rounded text-[9px] font-black border ${sw.ports.filter(p => p.status === PortStatus.ACTIVE).length > sw.totalPorts * 0.8 ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100'}`}>
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border ${sw.ports.filter(p => p.status === PortStatus.ACTIVE).length > sw.totalPorts * 0.8 ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100 dark:border-rose-900/30' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/30'}`}>
                                                             {sw.ports.filter(p => p.status === PortStatus.ACTIVE).length} / {sw.totalPorts}
-                                                        </Badge>
+                                                        </span>
                                                     </TableCell>
                                                     <TableCell className="px-6 py-4">
                                                         <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="h-8 w-8 text-slate-400 hover:text-blue-600"><Pencil size={14} /></Button>}
+                                                            {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="h-8 w-8 text-slate-400 hover:text-slate-900 dark:hover:text-white"><Pencil size={14} /></Button>}
                                                             {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="h-8 w-8 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></Button>}
                                                         </div>
                                                     </TableCell>

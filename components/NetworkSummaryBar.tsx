@@ -50,83 +50,69 @@ export const NetworkSummaryBar: React.FC<NetworkSummaryBarProps> = ({ switches }
         .sort(([, a], [, b]) => b - a)
         .slice(0, 6);
 
-    return (
-        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-lg mb-6">
-            {/* Header with Total Count */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Infrastructure Overview</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Real-time device inventory and status</p>
-                </div>
-                <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-3">
-                    <Server className="text-blue-600 dark:text-blue-400" size={20} />
-                    <div>
-                        <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Total Devices</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">{summary.total}</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Status Distribution */}
-            <div className="grid grid-cols-4 gap-3 mb-5">
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="text-emerald-600 dark:text-emerald-400" size={18} />
-                    </div>
-                    <div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Active</div>
-                        <div className="text-xl font-black text-slate-900 dark:text-white">{summary.byStatus.active}</div>
-                    </div>
-                </div>
-                <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                        <Clock className="text-yellow-600 dark:text-yellow-400" size={18} />
-                    </div>
-                    <div>
-                        <div className="text-[10px] text-yellow-600 dark:text-yellow-400 font-bold uppercase tracking-wider">Spare</div>
-                        <div className="text-xl font-black text-slate-900 dark:text-white">{summary.byStatus.spare}</div>
-                    </div>
-                </div>
-                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center">
-                        <Wrench className="text-orange-600 dark:text-orange-400" size={18} />
-                    </div>
-                    <div>
-                        <div className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider">Maintenance</div>
-                        <div className="text-xl font-black text-slate-900 dark:text-white">{summary.byStatus.maintenance}</div>
-                    </div>
-                </div>
-                <div className="bg-slate-100 dark:bg-slate-500/10 border border-slate-200 dark:border-slate-500/20 rounded-xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-200 dark:bg-slate-500/20 rounded-lg flex items-center justify-center">
-                        <XCircle className="text-slate-600 dark:text-slate-400" size={18} />
-                    </div>
-                    <div>
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">Decommissioned</div>
-                        <div className="text-xl font-black text-slate-900 dark:text-white">{summary.byStatus.decommissioned}</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Device Type Breakdown */}
-            <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Device Types</h3>
-                <div className="grid grid-cols-6 gap-2">
-                    {topTypes.map(([type, count]) => {
-                        const Icon = getTypeIcon(type);
-                        return (
-                            <div key={type} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 flex flex-col items-center gap-2 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500/50 transition-all">
-                                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center">
-                                    <Icon className="text-blue-600 dark:text-blue-400" size={16} />
-                                </div>
-                                <div className="text-center w-full">
-                                    <div className="text-lg font-black text-slate-900 dark:text-white">{count}</div>
-                                    <div className="text-[8px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider truncate">{type}</div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+  return (
+    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm mb-8">
+      {/* Header with Total Count */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Infrastructure Intelligence</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Real-time asset visibility and operational status</p>
         </div>
-    );
+        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-6 py-4">
+          <div className="w-10 h-10 bg-slate-900 dark:bg-slate-100 rounded-lg flex items-center justify-center text-white dark:text-black">
+            <Server size={20} />
+          </div>
+          <div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Total Inventory</div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white">{summary.total}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Distribution Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: 'Active', count: summary.byStatus.active, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+          { label: 'Spare', count: summary.byStatus.spare, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+          { label: 'Maintenance', count: summary.byStatus.maintenance, icon: Wrench, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
+          { label: 'Retired', count: summary.byStatus.decommissioned, icon: XCircle, color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-500/10' }
+        ].map((item) => (
+          <div key={item.label} className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl flex items-center gap-4 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+            <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center ${item.color}`}>
+              <item.icon size={18} />
+            </div>
+            <div>
+              <div className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-widest leading-none mb-1">{item.label}</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-white leading-none">{item.count}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Device Type Breakdown */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1" />
+          <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-600">Distribution by Taxonomy</h3>
+          <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1" />
+        </div>
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          {topTypes.map(([type, count]) => {
+            const Icon = getTypeIcon(type);
+            return (
+              <div key={type} className="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-default">
+                <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-600 group-hover:text-white rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors">
+                  <Icon size={16} />
+                </div>
+                <div className="text-center w-full">
+                  <div className="text-base font-bold text-slate-900 dark:text-white leading-none mb-1">{count}</div>
+                  <div className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider truncate px-1">{type}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 };

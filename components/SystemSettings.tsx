@@ -9,6 +9,21 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
 
 interface SystemSettingsProps {
     currentUser: UserAccount | null;
@@ -268,437 +283,433 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
             >
                 <div className="flex items-center gap-3">
                     {statusMsg && (
-                        <div className={`px-4 py-2 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-right-2 ${statusMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+                        <div className={`px-4 py-2 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-right-2 ${statusMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
                             {statusMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                             <span className="text-xs font-bold uppercase tracking-wider">{statusMsg.text}</span>
                         </div>
                     )}
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="font-bold uppercase tracking-widest text-[10px] px-6"
+                    >
+                        {isSaving ? <RefreshCw size={16} className="animate-spin mr-2" /> : <Save size={16} className="mr-2" />}
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </Button>
                 </div>
             </PageHeader>
 
-            {/* Tabs */}
-            <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 -mt-6 mb-8">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex gap-2">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${activeTab === tab.id
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                        }`}
+            {/* Tabs & Content Container */}
+            <div className="max-w-7xl mx-auto px-6 mb-32">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="space-y-8">
+                    <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b -mx-6 px-6 py-4 mb-2">
+                        <TabsList className="h-11 p-1 bg-muted rounded-lg w-fit">
+                            {tabs.map((tab) => (
+                                <TabsTrigger 
+                                    key={tab.id} 
+                                    value={tab.id}
+                                    className="px-6 rounded-md font-bold text-[10px] uppercase tracking-widest h-9"
                                 >
-                                    <Icon size={14} />
+                                    <tab.icon size={14} className="mr-2" />
                                     {tab.label}
-                                </button>
-                            );
-                        })}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
                     </div>
-                </div>
-            </div>
 
-
-            {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                {/* General Tab */}
-                {
-                    activeTab === 'general' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* App Identity */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <TabsContent value="general" className="space-y-6 animate-in fade-in duration-300">
+                        {/* App Identity */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary">
                                         <Globe size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">App Identity</h3>
-                                        <p className="text-sm text-slate-500">Application branding and identity</p>
+                                        <CardTitle className="text-base font-bold">App Identity</CardTitle>
+                                        <CardDescription>Application branding and identity</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">App Name</label>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">App Name</Label>
                                         <Input
-                                            type="text"
                                             value={settings.appName}
                                             onChange={(e) => setSettings({ ...settings, appName: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Tagline</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tagline</Label>
                                         <Input
-                                            type="text"
                                             value={settings.appTagline}
                                             onChange={(e) => setSettings({ ...settings, appTagline: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Logo URL</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Logo URL</Label>
                                         <div className="flex gap-3">
                                             <Input
-                                                type="text"
                                                 value={settings.logoUrl}
                                                 onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
-                                                className="flex-1 bg-slate-50 dark:bg-slate-800"
+                                                className="bg-muted/20"
                                             />
-                                            <div className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                            <div className="w-10 h-10 shrink-0 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
                                                 <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/40")} />
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Favicon URL</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Favicon URL</Label>
                                         <div className="flex gap-3">
                                             <Input
-                                                type="text"
                                                 value={settings.faviconUrl}
                                                 onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
-                                                className="flex-1 bg-slate-50 dark:bg-slate-800"
+                                                className="bg-muted/20"
                                             />
-                                            <div className="w-10 h-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                                            <div className="w-10 h-10 shrink-0 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
                                                 <img src={settings.faviconUrl} alt="Favicon" className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/32")} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Organization */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                        {/* Organization */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-orange-500/10 flex items-center justify-center text-orange-500">
                                         <Building2 size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Organization</h3>
-                                        <p className="text-sm text-slate-500">Company information and contact details</p>
+                                        <CardTitle className="text-base font-bold">Organization</CardTitle>
+                                        <CardDescription>Company information and contact details</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Support Email</label>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Support Email</Label>
                                         <Input
                                             type="email"
                                             value={settings.supportEmail}
                                             onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
                                             placeholder="support@company.com"
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Support Phone</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Support Phone</Label>
                                         <Input
-                                            type="text"
                                             value={settings.supportPhone}
                                             onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
                                             placeholder="1001"
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Website URL</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Website URL</Label>
                                         <Input
-                                            type="text"
                                             value={settings.companyWebsite}
                                             onChange={(e) => setSettings({ ...settings, companyWebsite: e.target.value })}
                                             placeholder="https://company.com"
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Office Address</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Office Address</Label>
                                         <Textarea
                                             value={settings.companyAddress}
                                             onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
-                                            rows={2}
+                                            rows={3}
                                             placeholder="Jl. Sudirman No. 1, Jakarta"
-                                            className="w-full bg-slate-50 dark:bg-slate-800 resize-none min-h-[5rem]"
+                                            className="bg-muted/20 resize-none"
                                         />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )
-                }
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                {/* Appearance Tab */}
-                {
-                    activeTab === 'appearance' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* Theme Color */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <TabsContent value="appearance" className="space-y-6 animate-in fade-in duration-300">
+                        {/* Theme Color */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary">
                                         <Palette size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Theme Color</h3>
-                                        <p className="text-sm text-slate-500">Customize your brand color</p>
+                                        <CardTitle className="text-base font-bold">Theme Color</CardTitle>
+                                        <CardDescription>Customize your brand color</CardDescription>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 flex-wrap">
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex gap-4 flex-wrap">
                                     {colorPresets.map((preset) => (
                                         <button
                                             key={preset.value}
                                             onClick={() => setSettings({ ...settings, primaryColor: preset.value })}
-                                            className={`w-16 h-16 rounded-xl transition-all hover:scale-110 border-4 ${settings.primaryColor === preset.value ? 'border-slate-900 dark:border-white scale-110' : 'border-transparent'
-                                                }`}
+                                            className={cn(
+                                                "w-12 h-12 rounded-lg transition-all hover:scale-105 border-2 shadow-sm",
+                                                settings.primaryColor === preset.value ? "border-primary scale-110 shadow-md ring-2 ring-primary/20 ring-offset-2" : "border-transparent"
+                                            )}
                                             style={{ backgroundColor: preset.value }}
                                             title={preset.name}
                                         />
                                     ))}
-                                    <div className="relative">
+                                    <div className="relative group">
                                         <input
                                             type="color"
                                             value={settings.primaryColor}
                                             onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                                            className="w-16 h-16 opacity-0 absolute inset-0 cursor-pointer"
+                                            className="w-12 h-12 opacity-0 absolute inset-0 cursor-pointer z-10"
                                         />
-                                        <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center">
-                                            <Palette size={24} className="text-slate-400" />
+                                        <div className="w-12 h-12 rounded-lg bg-muted border-2 flex items-center justify-center transition-all group-hover:scale-105">
+                                            <Palette size={20} className="text-muted-foreground" />
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Typography */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+                        {/* Typography */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-violet-500/10 flex items-center justify-center text-violet-500">
                                         <LayoutTemplate size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Typography</h3>
-                                        <p className="text-sm text-slate-500">Choose your font family</p>
+                                        <CardTitle className="text-base font-bold">Typography</CardTitle>
+                                        <CardDescription>Choose your font family</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-3">
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {fontPresets.map(font => (
                                         <button
                                             key={font.value}
                                             onClick={() => setSettings({ ...settings, fontFamily: font.value })}
-                                            className={`p-4 rounded-xl border-2 transition-all text-left ${settings.fontFamily === font.value
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                                                }`}
+                                            className={cn(
+                                                "p-4 rounded-lg border-2 text-left transition-all hover:bg-muted/50",
+                                                settings.fontFamily === font.value ? "border-primary bg-primary/5" : "border-muted"
+                                            )}
                                         >
-                                            <span className="text-xs font-medium text-slate-500 block mb-2">{font.name}</span>
-                                            <span className="text-2xl text-slate-900 dark:text-white block" style={{ fontFamily: font.value }}>Aa</span>
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase block mb-1 tracking-wider">{font.name}</span>
+                                            <span className="text-2xl font-bold" style={{ fontFamily: font.value }}>Aa</span>
                                         </button>
                                     ))}
                                 </div>
-                                <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl" style={{ fontFamily: settings.fontFamily }}>
-                                    <h4 className="font-bold text-slate-900 dark:text-white mb-2">Preview</h4>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">The quick brown fox jumps over the lazy dog</p>
+                                <Separator className="my-6" />
+                                <div className="p-6 bg-muted/30 rounded-lg border border-dashed" style={{ fontFamily: settings.fontFamily }}>
+                                    <h4 className="text-sm font-bold opacity-70 mb-3 uppercase tracking-widest">Global Font Preview</h4>
+                                    <h1 className="text-3xl font-black mb-2 uppercase">The Enterprise Work Platform</h1>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        Your digital asset ecosystem has never looked this professional. This preview uses the 
+                                        <strong> {settings.fontFamily}</strong> type family which will be applied globally across the portal.
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
-                    )
-                }
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                {/* Security Tab */}
-                {
-                    activeTab === 'security' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* Login Settings */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+                    <TabsContent value="security" className="space-y-6 animate-in fade-in duration-300">
+                        {/* Login Settings */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-violet-500/10 flex items-center justify-center text-violet-500">
                                         <Eye size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Login Interface</h3>
-                                        <p className="text-sm text-slate-500">Customize login page</p>
+                                        <CardTitle className="text-base font-bold">Login Interface</CardTitle>
+                                        <CardDescription>Customize login page aesthetic</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Welcome Title</label>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Welcome Title</Label>
                                         <Input
-                                            type="text"
                                             value={settings.loginTitle}
                                             onChange={(e) => setSettings({ ...settings, loginTitle: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800"
+                                            className="bg-muted/20"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Welcome Message</label>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Welcome Message</Label>
                                         <Textarea
                                             value={settings.loginMessage}
                                             onChange={(e) => setSettings({ ...settings, loginMessage: e.target.value })}
                                             rows={2}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 resize-none min-h-[5rem]"
+                                            className="bg-muted/20 resize-none"
                                         />
                                     </div>
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Security Policies */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
+                        {/* Security Policies */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center text-red-500">
                                         <Lock size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Security Policies</h3>
-                                        <p className="text-sm text-slate-500">Access control and protection</p>
+                                        <CardTitle className="text-base font-bold">Security Policies</CardTitle>
+                                        <CardDescription>Access control and registry protection</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <div className="flex justify-between mb-2">
-                                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Session Timeout</label>
-                                            <span className="text-sm font-bold text-primary">{settings.sessionTimeout}m</span>
+                            </CardHeader>
+                            <CardContent className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Session Timeout</Label>
+                                            <Badge variant="secondary" className="font-mono text-xs">{settings.sessionTimeout}m</Badge>
                                         </div>
-                                        <input
-                                            type="range"
-                                            min="5"
-                                            max="120"
-                                            step="5"
-                                            value={settings.sessionTimeout}
-                                            onChange={(e) => setSettings({ ...settings, sessionTimeout: parseInt(e.target.value) })}
-                                            className="w-full accent-primary"
+                                        <Slider
+                                            min={5}
+                                            max={120}
+                                            step={5}
+                                            value={[settings.sessionTimeout]}
+                                            onValueChange={(v) => setSettings({ ...settings, sessionTimeout: v[0] })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Max Login Attempts</label>
-                                        <div className="flex items-center gap-2">
-                                            <button
+                                    <div className="space-y-4">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Max Login Attempts</Label>
+                                        <div className="flex items-center gap-2 h-10 border rounded-md bg-muted/20 px-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 hover:bg-muted"
                                                 onClick={() => setSettings({ ...settings, maxLoginAttempts: Math.max(1, settings.maxLoginAttempts - 1) })}
-                                                className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
-                                            >-</button>
-                                            <div className="flex-1 text-center font-bold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                                                {settings.maxLoginAttempts}
-                                            </div>
-                                            <button
+                                            >-</Button>
+                                            <div className="flex-1 text-center font-bold">{settings.maxLoginAttempts}</div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 hover:bg-muted"
                                                 onClick={() => setSettings({ ...settings, maxLoginAttempts: Math.min(10, settings.maxLoginAttempts + 1) })}
-                                                className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
-                                            >+</button>
+                                            >+</Button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                        <div>
-                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Strong Passwords</h4>
-                                            <p className="text-xs text-slate-500">Require special chars</p>
+                                    <div className="flex items-center justify-between p-4 bg-muted/20 rounded-md border">
+                                        <div className="space-y-0.5">
+                                            <h4 className="text-sm font-bold uppercase tracking-tighter">Strong Passwords</h4>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold">Require special chars</p>
                                         </div>
-                                        <button
-                                            onClick={() => setSettings({ ...settings, requireSpecialChars: !settings.requireSpecialChars })}
-                                            className={`w-12 h-6 rounded-full transition-all relative ${settings.requireSpecialChars ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                        >
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.requireSpecialChars ? 'left-7' : 'left-1'}`}></div>
-                                        </button>
+                                        <Switch 
+                                            checked={settings.requireSpecialChars}
+                                            onCheckedChange={(checked) => setSettings({ ...settings, requireSpecialChars: checked })}
+                                        />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )
-                }
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                {/* System Tab */}
-                {
-                    activeTab === 'system' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* System Control */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
+                    <TabsContent value="system" className="space-y-6 animate-in fade-in duration-300">
+                        {/* System Control */}
+                        <Card className="rounded-lg shadow-sm border-destructive/20">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-destructive/10 flex items-center justify-center text-destructive">
                                         <Shield size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">System Control</h3>
-                                        <p className="text-sm text-slate-500">Global system state</p>
+                                        <CardTitle className="text-base font-bold">System Control</CardTitle>
+                                        <CardDescription>Global system state and accessibility</CardDescription>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                    <div>
-                                        <h4 className="font-semibold text-slate-900 dark:text-white">Maintenance Mode</h4>
-                                        <p className="text-sm text-slate-500 mt-1">Lock system access for maintenance</p>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-center justify-between p-6 bg-destructive/[0.03] rounded-md border border-destructive/10">
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold text-destructive">Maintenance Mode</h4>
+                                        <p className="text-sm text-muted-foreground">Locks system access for all non-admin authorized nodes</p>
                                     </div>
-                                    <button
-                                        onClick={() => setSettings({ ...settings, maintenanceMode: !settings.maintenanceMode })}
-                                        className={`w-14 h-8 rounded-full transition-all relative ${settings.maintenanceMode ? 'bg-rose-500 shadow-lg shadow-rose-500/40' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                    >
-                                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-md ${settings.maintenanceMode ? 'left-7' : 'left-1'}`}></div>
-                                    </button>
+                                    <Switch 
+                                        checked={settings.maintenanceMode}
+                                        onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
+                                        className="data-[state=checked]:bg-destructive"
+                                    />
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Data Management */}
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        {/* Data Management */}
+                        <Card className="rounded-lg shadow-sm">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                                         <Database size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Data Management</h3>
-                                        <p className="text-sm text-slate-500">System maintenance and logs</p>
+                                        <CardTitle className="text-base font-bold">Data Management</CardTitle>
+                                        <CardDescription>System maintenance and audit logging</CardDescription>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                                <ShieldAlert size={20} />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="p-6 rounded-md border space-y-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-9 h-9 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                                <ShieldAlert size={18} />
                                             </div>
-                                            <div>
-                                                <h4 className="font-semibold text-slate-900 dark:text-white">Export Audit Logs</h4>
-                                                <p className="text-xs text-slate-500">Download CSV report</p>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold uppercase leading-none">Export Audit Logs</span>
+                                                <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Full Transaction Trace</span>
                                             </div>
                                         </div>
                                         <Button
                                             variant="outline"
                                             onClick={handleExportLogs}
                                             disabled={isExporting}
-                                            className="w-full border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                            className="w-full h-11 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 font-bold uppercase tracking-widest text-[10px]"
                                         >
                                             {isExporting ? <RefreshCw size={16} className="animate-spin mr-2" /> : <Download size={16} className="mr-2" />}
-                                            {isExporting ? 'Exporting...' : 'Download CSV'}
+                                            {isExporting ? 'Exporting...' : 'Download CSV Registry'}
                                         </Button>
                                     </div>
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
-                                                <RefreshCw size={20} />
+                                    <div className="p-6 rounded-md border space-y-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-9 h-9 rounded-md bg-destructive/10 flex items-center justify-center text-destructive">
+                                                <RefreshCw size={18} />
                                             </div>
-                                            <div>
-                                                <h4 className="font-semibold text-slate-900 dark:text-white">Clear System Cache</h4>
-                                                <p className="text-xs text-slate-500">Remove temporary data</p>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold uppercase leading-none">Clear System Cache</span>
+                                                <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Purge Local Data</span>
                                             </div>
                                         </div>
                                         <Button
                                             variant="outline"
                                             onClick={handleClearCache}
                                             disabled={isClearing}
-                                            className="w-full border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                                            className="w-full h-11 border-destructive/20 text-destructive hover:bg-destructive/5 font-bold uppercase tracking-widest text-[10px]"
                                         >
-                                            <Trash2 size={16} className={`mr-2 ${isClearing ? 'animate-bounce' : ''}`} />
-                                            {isClearing ? 'Clearing...' : 'Clear & Reload'}
+                                            <Trash2 size={16} className={cn("mr-2", isClearing && "animate-bounce")} />
+                                            {isClearing ? 'Clearing...' : 'Clear & Hard Reload'}
                                         </Button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )
-                }
-            </div >
-
-            {/* Floating Save Button */}
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    size="lg"
-                    className="px-8 rounded-full shadow-2xl shadow-primary/30"
-                >
-                    {isSaving ? <RefreshCw size={20} className="animate-spin mr-2" /> : <Save size={20} className="mr-2" />}
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
-        </div >
+        </div>
     );
 };

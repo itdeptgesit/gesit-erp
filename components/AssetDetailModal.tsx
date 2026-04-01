@@ -1,9 +1,19 @@
 import React from 'react';
 import {
     X, Package, Tag, Building2, Cpu, MapPin, ShieldCheck,
-    Info, User, Calendar, FileText
+    Calendar, FileText, User, HardDrive, Monitor, Zap
 } from 'lucide-react';
 import { ITAsset } from '../types';
+import {
+    Dialog,
+    DialogContent,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface AssetDetailModalProps {
     isOpen: boolean;
@@ -12,130 +22,157 @@ interface AssetDetailModalProps {
 }
 
 export const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ isOpen, onClose, asset }) => {
-    if (!isOpen || !asset) return null;
+    if (!asset) return null;
 
-    const statusConfig: Record<string, { color: string, label: string }> = {
-        'Active': { color: 'bg-emerald-500', label: 'OPERATIONAL' },
-        'Used': { color: 'bg-blue-600', label: 'IN PRODUCTION' },
-        'Idle': { color: 'bg-amber-500', label: 'STANDBY' },
-        'Broken': { color: 'bg-rose-500', label: 'OFFLINE' },
-        'Disposed': { color: 'bg-slate-700', label: 'DECOMMISSIONED' }
+    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
+        'Active': { variant: 'default', label: 'OPERATIONAL' },
+        'Used': { variant: 'default', label: 'IN PRODUCTION' },
+        'Idle': { variant: 'secondary', label: 'STANDBY' },
+        'Broken': { variant: 'destructive', label: 'OFFLINE' },
+        'Disposed': { variant: 'outline', label: 'DECOMMISSIONED' }
     };
 
-    const currentStatus = statusConfig[asset.status] || { color: 'bg-slate-500', label: asset.status.toUpperCase() };
+    const currentStatus = statusConfig[asset.status] || { variant: 'outline', label: asset.status.toUpperCase() };
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 dark:border-slate-800 max-h-[90vh] flex flex-col">
-
-                {/* Header */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
-                    <div>
-                        <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tighter text-sm">Asset Intelligence</h3>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">Detailed Node Specification</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className={`px-3 py-1 rounded-full text-white text-[9px] font-bold uppercase tracking-widest ${currentStatus.color}`}>
-                            {currentStatus.label}
-                        </div>
-                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                            <X size={18} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="p-8 overflow-y-auto custom-scrollbar">
-                    {/* Hero Section */}
-                    <div className="flex flex-col items-center text-center mb-10">
-                        <div className="w-full max-w-sm h-64 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner p-4">
-                            {asset.image_url ? (
-                                <img src={asset.image_url} alt={asset.item} className="w-full h-full object-contain" />
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 opacity-20">
-                                    <Package size={64} className="text-slate-400" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">No Image Proxy</span>
-                                </div>
-                            )}
-                        </div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-2 uppercase">{asset.item}</h1>
-                        <p className="text-blue-600 dark:text-blue-400 font-mono text-sm font-bold tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-800 mb-2">
-                            {asset.assetId}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">S/N: {asset.serialNumber || 'N/A'}</p>
-                    </div>
-
-                    {/* Main Grid info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <InfoRow icon={Tag} label="Category" value={asset.category} />
-                        <InfoRow icon={Building2} label="Company" value={asset.company} />
-                        <InfoRow icon={Cpu} label="Brand" value={asset.brand} />
-                        <InfoRow icon={MapPin} label="Location" value={asset.location} />
-                        <InfoRow icon={ShieldCheck} label="Condition" value={asset.condition} />
-                        <InfoRow icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />
-                        <InfoRow icon={Building2} label="Vendor" value={asset.vendor} />
-                        <InfoRow icon={Calendar} label="Warranty Exp" value={asset.warrantyExp} />
-                        <InfoRow icon={FileText} label="Remarks" value={asset.remarks} />
-                    </div>
-
-                    {/* Specs Section */}
-                    {asset.specs && (Object.values(asset.specs).some(v => !!v)) && (
-                        <div className="bg-slate-900 rounded-2xl p-6 text-white space-y-4 mb-8">
-                            <h3 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                                <ShieldCheck size={14} /> System Vitals
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <SpecEntry label="Processor" value={asset.specs.processor} />
-                                <SpecEntry label="Memory" value={asset.specs.ram} />
-                                <SpecEntry label="Storage" value={asset.specs.storage} />
-                                <SpecEntry label="Visual" value={asset.specs.vga} />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* User Assignment */}
-                    <div className="border-t border-slate-100 dark:border-slate-800 pt-8">
-                        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <div className="w-12 h-12 bg-slate-900 dark:bg-slate-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {asset.user?.charAt(0).toUpperCase() || '?'}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent showCloseButton={false} className="sm:max-w-3xl p-0 overflow-hidden border bg-background shadow-lg rounded-lg outline-none">
+                <div className="flex flex-col max-h-[82vh] h-full">
+                    {/* Standard Shadcn Header */}
+                    <div className="px-6 py-4 border-b flex items-center justify-between shrink-0 bg-muted/20">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <Package size={16} className="text-primary" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Assigned Personnel</p>
-                                <p className="text-base font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">{asset.user || 'POOL SYSTEM'}</p>
-                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-tighter">{asset.department}</p>
+                                <h3 className="text-[11px] font-semibold text-foreground uppercase tracking-wider">Asset Intelligence</h3>
+                                <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{asset.assetId}</p>
                             </div>
                         </div>
+                        <div className="flex items-center gap-3">
+                            <Badge variant={currentStatus.variant as any} className="font-semibold text-[9px] tracking-widest h-6">
+                                {currentStatus.label}
+                            </Badge>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClose}
+                                className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <X size={16} />
+                            </Button>
+                        </div>
                     </div>
-                </div>
 
-                {/* Footer */}
-                <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end shrink-0">
-                    <button
-                        onClick={onClose}
-                        className="py-2.5 px-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95 shadow-sm"
-                    >
-                        Close View
-                    </button>
+                    <ScrollArea className="flex-1 w-full bg-background overflow-hidden">
+                        <div className="p-6 space-y-8">
+                            {/* Hero Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                                <div className="md:col-span-12 lg:col-span-5">
+                                    <div className="relative w-full aspect-square bg-muted/30 rounded-lg border flex items-center justify-center overflow-hidden p-6">
+                                        {asset.image_url ? (
+                                            <img src={asset.image_url} alt={asset.item} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 opacity-20">
+                                                <Package size={80} className="text-muted-foreground" />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">No Image</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-12 lg:col-span-7 space-y-6">
+                                    <div className="space-y-1">
+                                        <h1 className="text-2xl font-bold text-foreground tracking-tight uppercase leading-none">{asset.item}</h1>
+                                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">S/N: {asset.serialNumber || 'UNIDENTIFIED'}</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-2">
+                                        <DataPoint icon={Tag} label="Classification" value={asset.category} />
+                                        <DataPoint icon={Building2} label="Operating Entity" value={asset.company} />
+                                        <DataPoint icon={Cpu} label="Hardware Model" value={asset.brand} />
+                                        <DataPoint icon={MapPin} label="Logical Location" value={asset.location} />
+                                        <DataPoint icon={ShieldCheck} label="Current Health" value={asset.condition} />
+                                        <DataPoint icon={Calendar} label="Lifecycle Start" value={asset.purchaseDate} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Secondary Details */}
+                            <div className="grid grid-cols-3 gap-6 py-6 border-y bg-muted/10 px-4 rounded-md">
+                                <ExtraDetail label="Vendor Access" value={asset.vendor} />
+                                <ExtraDetail label="Warranty Valid" value={asset.warrantyExp} />
+                                <ExtraDetail label="Physical Remarks" value={asset.remarks} />
+                            </div>
+
+                            {/* Technical Specs */}
+                            {asset.specs && (Object.values(asset.specs).some(v => !!v)) && (
+                                <Card className="border shadow-sm rounded-lg overflow-hidden">
+                                    <CardContent className="p-6 space-y-6">
+                                        <div className="flex items-center gap-2">
+                                            <Zap size={14} className="text-primary" />
+                                            <h3 className="text-[11px] font-bold text-foreground uppercase tracking-widest">Machine Core Profiling</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <Spec icon={Cpu} label="Processor" value={asset.specs.processor} />
+                                            <Spec icon={HardDrive} label="Memory" value={asset.specs.ram} />
+                                            <Spec icon={HardDrive} label="Storage" value={asset.specs.storage} />
+                                            <Spec icon={Monitor} label="Visual Engine" value={asset.specs.vga} />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Custodian Segment */}
+                            <div className="flex items-center gap-4 p-4 bg-muted/20 border rounded-lg">
+                                <Avatar className="w-12 h-12 rounded-md border bg-background">
+                                    <AvatarFallback className="font-bold text-muted-foreground uppercase">
+                                        {asset.user?.charAt(0).toUpperCase() || '?'}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-0.5">Personnel Assigned</span>
+                                    <h4 className="text-base font-bold text-foreground uppercase tracking-tight truncate leading-tight">{asset.user || 'SYSTEM POOL'}</h4>
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">{asset.department || 'GENERAL SECTOR'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </ScrollArea>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 
-const InfoRow = ({ icon: Icon, label, value }: any) => (
-    <div className="flex flex-col gap-1 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-            <Icon size={10} /> {label}
-        </span>
-        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase truncate" title={value || '-'}>
-            {(!value || value.toString().toLowerCase() === 'nan' || value === '-') ? '-' : value}
-        </span>
+const DataPoint = ({ icon: Icon, label, value }: any) => (
+    <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Icon size={12} />
+            <span className="text-[9px] font-semibold uppercase tracking-widest">{label}</span>
+        </div>
+        <p className="text-xs font-semibold text-foreground uppercase truncate">
+            {(!value || value === '-' || value.toString().toLowerCase() === 'nan') ? '--' : value}
+        </p>
     </div>
 );
 
-const SpecEntry = ({ label, value }: any) => (
-    <div className="flex justify-between items-center text-[11px] border-b border-white/5 pb-2">
-        <span className="text-slate-400 uppercase">{label}</span>
-        <span className="font-bold text-white uppercase">{value || 'N/A'}</span>
+const ExtraDetail = ({ label, value }: any) => (
+    <div className="space-y-1">
+        <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">{label}</span>
+        <p className="text-[10px] font-medium text-foreground uppercase truncate leading-tight">
+            {(!value || value === '-' || value.toString().toLowerCase() === 'nan') ? 'N/A' : value}
+        </p>
+    </div>
+);
+
+const Spec = ({ icon: Icon, label, value }: any) => (
+    <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center border">
+            <Icon size={14} className="text-muted-foreground" />
+        </div>
+        <div className="min-w-0">
+            <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest block mb-0.5">{label}</span>
+            <p className="text-[10px] font-semibold text-foreground uppercase truncate leading-tight">{value || 'UNSPECIFIED'}</p>
+        </div>
     </div>
 );

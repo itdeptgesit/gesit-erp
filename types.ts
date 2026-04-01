@@ -333,3 +333,17 @@ export interface Announcement {
   created_at?: string;
   expires_at?: string;
 }
+
+export interface Credential {
+  id: number | string;
+  title: string;
+  serviceUrl?: string;
+  username: string;
+  password?: string;
+  notes?: string;
+  category?: string;
+  metadata?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+}

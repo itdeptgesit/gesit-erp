@@ -17,11 +17,13 @@ interface NodeProps {
     snapToGrid: boolean;
     onDragEnd: (id: string, x: number, y: number) => void;
     onSelect: (id: string) => void;
+    onDoubleClick?: (sw: NetworkSwitch) => void;
     onRelink?: (sw: any) => void;
     isInternet?: boolean;
     searchTerm?: string;
     tier?: string;
     isWiringMode?: boolean;
+    isImpacted?: boolean;
 }
 
 // Minimalist Dimensions
@@ -43,7 +45,7 @@ const getIconForType = (type: string) => {
     return Server;
 };
 
-const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onRelink, isInternet, searchTerm = '', tier, isWiringMode }) => {
+const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onDoubleClick, onRelink, isInternet, searchTerm = '', tier, isWiringMode, isImpacted }) => {
     const [dragging, setDragging] = useState(false);
     const [localPos, setLocalPos] = useState({ x, y });
     const startMousePos = useRef({ x: 0, y: 0 });
@@ -158,9 +160,11 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
         >
             <div
                 className={`relative w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-500 group ${isSelected ? 'bg-blue-600 border-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-110 z-50' :
-                    isInternet ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] z-10' : 'border-white/10 bg-slate-900/60 hover:border-blue-500/50 hover:bg-slate-800/80 z-10'
+                    isImpacted ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.2)] z-30 animate-pulse' :
+                        isInternet ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] z-10' : 'border-white/10 bg-slate-900/60 hover:border-blue-500/50 hover:bg-slate-800/80 z-10'
                     }`}
                 onMouseDown={handleMouseDown}
+                onDoubleClick={() => onDoubleClick?.(switchData)}
             >
                 {/* Node Glow Backdrop */}
                 <div className={`absolute inset-0 rounded-2xl blur-xl opacity-20 transition-all ${isSelected ? 'bg-blue-500' : isInternet ? 'bg-emerald-500' : 'bg-transparent'}`} />
@@ -191,7 +195,7 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                     </svg>
                 )}
 
-                <div className={`relative z-10 ${isSelected ? 'text-white' : color}`}>
+                <div className={`relative z-10 ${isSelected ? 'text-white' : isImpacted ? 'text-rose-500 animate-pulse' : color}`}>
                     {isInternet ? (
                         <div className="relative">
                             <Icon size={36} strokeWidth={2.5} />
@@ -202,10 +206,10 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                             )}
                         </div>
                     ) : (
-                        <Icon size={28} strokeWidth={2.5} className={(isWireless || isChild) ? 'animate-pulse' : ''} />
+                        <Icon size={28} strokeWidth={2.5} className={(isWireless || isChild || isImpacted) ? 'animate-pulse' : ''} />
                     )}
-                    {(isWireless || isChild) && (
-                        <div className={`absolute -inset-4 border ${isWireless ? 'border-cyan-400/20' : 'border-blue-400/20'} rounded-full animate-ping pointer-events-none`}></div>
+                    {(isWireless || isChild || isImpacted) && (
+                        <div className={`absolute -inset-4 border ${isImpacted ? 'border-rose-500/30' : isWireless ? 'border-cyan-400/20' : 'border-blue-400/20'} rounded-full animate-ping pointer-events-none`}></div>
                     )}
                 </div>
 
@@ -453,6 +457,27 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
         }
         if (String(currentId) === 'internet') path.add('internet');
         return path;
+    }, [selectedNodeId, switches]);
+
+    // Impact Analysis: Calculate downstream nodes
+    const impactedNodeIds = useMemo(() => {
+        if (!selectedNodeId) return new Set<string>();
+        const impacted = new Set<string>();
+        const queue = [selectedNodeId];
+        const visited = new Set<string>([selectedNodeId]);
+
+        while (queue.length > 0) {
+            const currentId = queue.shift()!;
+            // Find all nodes that have this as their uplink
+            switches.forEach(sw => {
+                if (String(sw.uplinkId) === String(currentId) && !visited.has(String(sw.id))) {
+                    impacted.add(String(sw.id));
+                    visited.add(String(sw.id));
+                    queue.push(String(sw.id));
+                }
+            });
+        }
+        return impacted;
     }, [selectedNodeId, switches]);
 
     const nodeTiers = useMemo(() => {
@@ -1209,7 +1234,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     </div>
                     <DiagramNode
                         switchData={switches.find(s => coreNodeId && s.id.toString() === coreNodeId.toString()) || { id: 'internet', name: 'ISP CORE HUB', model: 'Gateway', ip: 'Public Static', totalPorts: 1, ports: [{ id: 'internet-p1', portNumber: 1, status: PortStatus.ACTIVE }], uptime: 'Online', location: 'External', rack: 'Core' } as NetworkSwitch}
-                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet' || (coreNodeId && selectedNodeId === coreNodeId)} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={handleNodeSelect} isInternet searchTerm={searchTerm} tier={nodeTiers.get('internet') || 'Main Hub'} isWiringMode={isWiringMode}
+                        x={internetPos.x} y={internetPos.y} scale={scale} isSelected={selectedNodeId === 'internet' || (coreNodeId && selectedNodeId === coreNodeId)} isLocked={isLocked} snapToGrid={snapToGrid} onDragEnd={handleNodeDragEnd} onSelect={handleNodeSelect} onDoubleClick={onViewProfile} isInternet searchTerm={searchTerm} tier={nodeTiers.get('internet') || 'Main Hub'} isWiringMode={isWiringMode}
                     />
 
                     {processedData.displaySwitches.map((sw: any) => {
@@ -1243,10 +1268,13 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                         handleNodeSelect(id);
                                     }
                                 }}
-                                onRelink={setRelinkingSwitch}
+                                onDoubleClick={onViewProfile}
+                                isInternet={String(sw.id) === 'internet' || (coreNodeId && String(sw.id) === String(coreNodeId))}
+                                isImpacted={impactedNodeIds.has(String(sw.id))}
                                 searchTerm={searchTerm}
                                 tier={nodeTiers.get(sw.id)}
                                 isWiringMode={isWiringMode}
+                                onRelink={() => setRelinkingSwitch(sw)}
                             />
                         );
                     })}
