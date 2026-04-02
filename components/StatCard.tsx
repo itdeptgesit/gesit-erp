@@ -84,7 +84,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
             {/* Content Section with refined typography */}
             <div className="ml-4 flex flex-col justify-center overflow-hidden">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 leading-none mb-1.5">
+                <p className="text-[10px] font-bold tracking-wide text-muted-foreground/80 leading-none mb-1.5">
                     {label}
                 </p>
                 <div className="flex items-baseline gap-1.5">
@@ -104,12 +104,12 @@ export const StatCard: React.FC<StatCardProps> = ({
                     <div className="flex items-center gap-2 mt-1.5">
                         {status === 'on-track' && (
                             <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 rounded">
-                                <CheckCircle2 size={9} className="text-emerald-500" />
-                                <span className="text-[8px] font-bold text-emerald-500 uppercase">Live</span>
+                                <CheckCircle2 size={9} className="text-emerald-400" />
+                                <span className="text-[8px] font-bold text-emerald-500">Live</span>
                             </div>
                         )}
                         {finalSubText && (
-                            <p className="text-[9px] font-medium text-muted-foreground/70 uppercase">
+                            <p className="text-[9px] font-medium text-muted-foreground/70">
                                 {finalSubText}
                             </p>
                         )}

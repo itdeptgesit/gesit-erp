@@ -1623,13 +1623,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         <div className="flex bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl w-fit mb-6 shadow-sm ring-1 ring-inset ring-slate-200/50 dark:ring-slate-800/50">
                             <button
                                 onClick={() => setManagementTab('queue')}
-                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all", managementTab === 'queue' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
+                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all", managementTab === 'queue' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
                             >
                                 <List size={14} /> Queue
                             </button>
                             <button
                                 onClick={() => setManagementTab('analytics')}
-                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all", managementTab === 'analytics' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
+                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all", managementTab === 'analytics' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
                             >
                                 <BarChart2 size={14} /> Analytics
                             </button>
@@ -2071,7 +2071,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             <button
                                                 key={st}
                                                 onClick={() => setStatusFilter(actualStatus)}
-                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
+                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
                                             >
                                                 {st === 'All' ? t('statusAll') : (st === 'Open' ? t('statusOpen') : (st === 'Active' ? t('statusActive') : t('statusDone')))}
                                             </button>
@@ -2083,21 +2083,21 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
                                     <button
                                         onClick={() => setSupportFilter('all')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
                                     >
-                                        {t('statusAll')}
+                                        All
                                     </button>
                                     <button
                                         onClick={() => setSupportFilter('assigned')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'assigned' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'assigned' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
                                     >
-                                        {t('myTasks')}
+                                        My Tasks
                                     </button>
                                     <button
                                         onClick={() => setSupportFilter('mine')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${supportFilter === 'mine' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'mine' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
                                     >
-                                        {t('myReports')}
+                                        My Reports
                                     </button>
                                 </div>
 
@@ -2217,7 +2217,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                             </div>
 
                             <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900 z-10">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none pt-0.5">{filteredTickets.length} Total Tickets</span>
+                                <span className="text-[10px] font-bold text-slate-400 tracking-wide leading-none pt-0.5">{filteredTickets.length} Total Tickets</span>
                                 <div className="flex items-center gap-1">
                                     <button
                                         disabled={currentPage === 1}

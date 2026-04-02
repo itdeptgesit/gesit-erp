@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastProvider } from './components/ToastProvider';
+import { LogoPreloader } from './components/LogoPreloader';
 
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
@@ -423,59 +424,11 @@ const InternalApp: React.FC = () => {
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <AnimatePresence mode="wait">
         {isCheckingSession ? (
-          <motion.div
-            key="preloader"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-white dark:bg-slate-950"
-          >
-            <div className="relative flex flex-col items-center gap-8">
-              {/* Minimalist Logo */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="flex items-center gap-3"
-              >
-                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Zap className="text-primary-foreground" size={24} fill="currentColor" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  GESIT<span className="text-primary">.</span>
-                </h1>
-              </motion.div>
-
-              {/* Clean Loading Indicator */}
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-48 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div
-                    animate={{
-                      x: ["-100%", "100%"]
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}
-                    className="w-1/2 h-full bg-primary"
-                  />
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={loadingMsgIdx}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
-                  >
-                    {LOADING_MESSAGES[loadingMsgIdx]}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
+          <LogoPreloader 
+            isVisible={isCheckingSession} 
+            appName={appSettings.name} 
+            logoUrl={appSettings.logo} 
+          />
         ) : (
           <motion.div
             key="app-content"

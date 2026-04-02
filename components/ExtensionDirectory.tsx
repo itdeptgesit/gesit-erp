@@ -79,10 +79,10 @@ const InstructionPanel = () => {
                             <PhoneOutgoing className="w-5 h-5" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col items-start leading-tight">
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-800 dark:text-slate-100">
+                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
                                 Dialing Protocol
                             </h3>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">Intercom Quick Guide</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">Intercom Quick Guide</p>
                         </div>
                     </div>
                     <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-primary rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
@@ -101,7 +101,7 @@ const InstructionPanel = () => {
                                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <Building2 size={80} />
                                 </div>
-                                <h4 className="text-xs font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-indigo-500 dark:text-indigo-400 flex items-center gap-2">
                                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                                     Floor 27 - City Tower
                                 </h4>
@@ -124,7 +124,7 @@ const InstructionPanel = () => {
                                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <MapPin size={80} />
                                 </div>
-                                <h4 className="text-xs font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center gap-2">
                                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                                     Floor 26 - Gesit Resources
                                 </h4>
@@ -206,23 +206,23 @@ const ExtensionCard: React.FC<{
 
             {/* Left Side: Info */}
             <div className={`flex-1 p-4 pr-2 flex flex-col justify-between relative z-10`}>
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-4">
                     <UserAvatar
                         name={ext.name}
                         url={ext.photo_url}
                         size="md"
-                        className="shadow-sm ring-2 ring-white/50 dark:ring-slate-800/50 shrink-0"
+                        className="shadow-sm ring-2 ring-white/50 dark:ring-slate-800/50 shrink-0 group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="min-w-0 pr-1 flex flex-col pt-1">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight truncate leading-none mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
-                            {ext.name}
+                    <div className="min-w-0 flex flex-col justify-center">
+                        <h3 className="text-[17px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
+                            {ext.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                         </h3>
-                        <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-300 truncate uppercase tracking-widest opacity-80" title={ext.dept}>
-                                {ext.dept}
+                        <div className="flex flex-col mt-0.5">
+                            <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400 truncate tracking-wide" title={ext.dept}>
+                                {ext.dept.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                             </p>
                             {ext.role && (
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate">
+                                <p className="text-[10px] text-slate-300 dark:text-slate-500 font-medium truncate mt-0.5">
                                     {ext.role}
                                 </p>
                             )}
@@ -233,8 +233,8 @@ const ExtensionCard: React.FC<{
                 <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/5">
                     <div className="flex items-center gap-2">
                         <MapPin size={10} className="text-primary/60" />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest">
-                            {ext.floor}th Floor
+                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
+                            Floor {ext.floor}
                         </span>
                     </div>
 
@@ -316,13 +316,13 @@ const ExtensionTable: React.FC<{
                 <Table>
                     <TableHeader className="bg-slate-50/50 dark:bg-slate-900/40">
                         <TableRow className="border-border/10 dark:border-white/[0.03]">
-                            <TableHead className="w-20 text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Identity</TableHead>
-                            <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Contact Details</TableHead>
-                            <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Extension Code</TableHead>
-                            <TableHead className="font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Department</TableHead>
-                            <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">Location</TableHead>
-                            {isAdmin && <TableHead className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/70">PIN</TableHead>}
-                            {(canEdit || isAdmin) && <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-muted-foreground/70 pr-6">Actions</TableHead>}
+                            <TableHead className="w-20 text-center font-bold text-[10px] text-muted-foreground/70">Identity</TableHead>
+                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">Contact</TableHead>
+                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">Extension</TableHead>
+                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">Department</TableHead>
+                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">Location</TableHead>
+                            {isAdmin && <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">PIN</TableHead>}
+                            {(canEdit || isAdmin) && <TableHead className="text-right font-bold text-[10px] text-muted-foreground/70 pr-6">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -340,8 +340,10 @@ const ExtensionTable: React.FC<{
                                 </TableCell>
                                 <TableCell className="py-5">
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black tracking-tight text-foreground transition-colors group-hover:text-primary uppercase">{ext.name}</span>
-                                        {ext.role && <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mt-1 italic">{ext.role}</span>}
+                                        <span className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
+                                            {ext.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                                        </span>
+                                        {ext.role && <span className="text-[10px] font-medium text-muted-foreground/70 mt-1 italic">{ext.role}</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
@@ -354,12 +356,12 @@ const ExtensionTable: React.FC<{
                                     </button>
                                 </TableCell>
                                 <TableCell className="py-5">
-                                    <span className="px-3 py-1 rounded-lg bg-muted/50 dark:bg-slate-800/40 text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest border border-border/10">
-                                        {ext.dept}
+                                    <span className="px-3 py-1 rounded-lg bg-muted/50 dark:bg-slate-800/40 text-[10px] font-bold text-muted-foreground/80 border border-border/10">
+                                        {ext.dept.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
-                                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em]
+                                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold
                                         ${ext.floor === 27
                                             ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
                                             : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}
@@ -425,7 +427,7 @@ export const ExtensionDirectory = ({
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(12);
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window !== "undefined") {
@@ -839,7 +841,7 @@ export const ExtensionDirectory = ({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
                 <div className="flex items-center gap-3">
                     <div className="w-1.5 h-6 rounded-full bg-primary" />
-                    <h2 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-[0.25em]">
+                    <h2 className="text-xs font-bold text-slate-700 dark:text-slate-200 tracking-wide">
                         Directory Registry
                     </h2>
                 </div>
@@ -868,7 +870,7 @@ export const ExtensionDirectory = ({
                     <div className="flex items-center gap-1.5 px-3 border-l border-slate-200 dark:border-slate-800">
                         <button
                             onClick={() => { setFloorFilter('All'); onFloorFilterChange?.('All'); }}
-                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 'All'
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 'All'
                                 ? 'bg-primary text-white shadow-lg shadow-primary/25'
                                 : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
                                 }`}
@@ -877,21 +879,21 @@ export const ExtensionDirectory = ({
                         </button>
                         <button
                             onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
-                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 26
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 26
                                 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
                                 : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
                                 }`}
                         >
-                            26F
+                            Floor 26
                         </button>
                         <button
                             onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
-                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${floorFilter === 27
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 27
                                 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                                 : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
                                 }`}
                         >
-                            27F
+                            Floor 27
                         </button>
                     </div>
 
@@ -924,7 +926,7 @@ export const ExtensionDirectory = ({
 
                 {/* Pagination Controls */}
                 <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300">
                         {filteredExtensions.length} Active
                     </span>
                     <div className="flex items-center gap-1">
@@ -1026,8 +1028,8 @@ export const ExtensionDirectory = ({
                         <Search size={40} className="text-slate-300 dark:text-slate-700 mx-auto" />
                     </div>
                     <div className="space-y-1">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">No Extension Found</h3>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verify the search name or extension number</p>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Extension Found</h3>
+                        <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">Verify the search name or extension number</p>
                     </div>
                 </motion.div>
             )}
@@ -1040,8 +1042,8 @@ export const ExtensionDirectory = ({
                             <Zap size={24} aria-hidden="true" />
                         </div>
                         <div>
-                            <h4 className="text-lg font-black text-amber-900 dark:text-amber-100 uppercase tracking-tight">System Initialization Required</h4>
-                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-bold">No records found. Sync with provided TGC parameters?</p>
+                            <h4 className="text-lg font-bold text-amber-900 dark:text-amber-100">System Initialization Required</h4>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">No records found. Sync with provided TGC parameters?</p>
                         </div>
                         <button
                             onClick={seedData}

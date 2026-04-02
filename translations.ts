@@ -292,8 +292,8 @@ export const translations = {
     avgSla: 'Avg. SLA',
     userRating: 'Avg User Rating',
     serviceHealth: 'Service Health',
-    excellent: 'EXCELLENT',
-    good: 'GOOD',
+    excellent: 'Excellent',
+    good: 'Good',
     topHandlers: 'Top Handlers',
     activeTickets: 'Active Tickets'
   },
@@ -585,8 +585,8 @@ export const translations = {
     avgSla: 'Rata-rata SLA',
     userRating: 'Rating Kepuasan',
     serviceHealth: 'Status Kesehatan Layanan',
-    excellent: 'LUAR BIASA',
-    good: 'BAIK',
+    excellent: 'Luar Biasa',
+    good: 'Baik',
     topHandlers: 'Teknisi Utama',
     activeTickets: 'Tiket Aktif'
   }

@@ -157,7 +157,7 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
 
     return (
         <div
-            className={`absolute z-20 transition-all ${isChild ? 'scale-90' : ''} ${!isMatched ? 'opacity-20 grayscale-[0.5]' : 'opacity-100'}`}
+            className={`absolute z-20 flex items-center justify-center transition-all ${isChild ? 'scale-90' : ''} ${!isMatched ? 'opacity-20 grayscale-[0.5]' : 'opacity-100'}`}
             style={{ left: localPos.x, top: localPos.y, width: NODE_WIDTH, height: NODE_HEIGHT }}
         >
             <div 
@@ -192,11 +192,11 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
             </div>
 
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 text-center pointer-events-none w-max max-w-[140px] flex flex-col items-center gap-0.5">
-                <span className={`text-[8px] font-bold uppercase tracking-[0.25em] transition-all px-2 ${isSelected
+                <span className={`text-[9px] font-bold tracking-wide transition-all px-2 ${isSelected
                     ? 'text-blue-400'
-                    : 'text-slate-400 opacity-50'
+                    : 'text-slate-400 opacity-70'
                     }`}>
-                    {switchData.name}
+                    {switchData.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                 </span>
                 {switchData.ip && switchData.ip !== '-' && isSelected && (
                     <span className="text-[7px] font-mono font-bold text-blue-500/50 transition-all animate-in fade-in slide-in-from-top-1">
@@ -1153,11 +1153,6 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             >
                 <div
                     className="min-w-[5000px] min-h-[5000px] p-[1000px] relative"
-                    style={{
-                        backgroundImage: scale > 0.6 ? `radial-gradient(rgba(59,130,246,0.15) 1.5px, transparent 1.5px)` : 'none',
-                        backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-                        backgroundPosition: '1000px 1000px'
-                    }}
                 >
                     {/* Layer Tier Labels */}
                     <div className="absolute left-[850px] top-[1000px] flex flex-col pointer-events-none space-y-[200px] opacity-20">
@@ -1280,7 +1275,6 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             {/* Minimap Overlay */}
             <div className="absolute bottom-6 right-6 hidden md:block z-[100]">
                 <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl overflow-hidden w-48 h-32 relative">
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.3)_0%,transparent_70%)]" />
                     <div className="w-full h-full relative" style={{ transform: `scale(0.04)`, transformOrigin: 'top left' }}>
                         <div
                             className="bg-emerald-500 rounded-full w-[NODE_WIDTH] h-[NODE_HEIGHT] absolute"
