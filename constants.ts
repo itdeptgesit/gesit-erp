@@ -19,7 +19,7 @@ export const APP_MENU_STRUCTURE = [
     { id: 'purchase-record', label: 'Purchase Record', iconName: 'Briefcase' },
     { id: 'assets', label: 'Asset Management', iconName: 'Cpu' },
     { id: 'asset-loan', label: 'Asset Loan', iconName: 'Briefcase' },
-    { id: 'network', label: 'Network & Wiring', iconName: 'Network' },
+    { id: 'network', label: 'Infrastructure', iconName: 'Network' },
     { id: 'files', label: 'Documents', iconName: 'FolderOpen' },
     { id: 'extension-directory', label: 'Ext. Directory', iconName: 'Phone' },
     { id: 'admin', label: 'Administration', iconName: 'Shield' },

@@ -41,7 +41,7 @@ const SystemSettings = React.lazy(() => import('./components/SystemSettings').th
 const AnnouncementManager = React.lazy(() => import('./components/AnnouncementManager').then(m => ({ default: m.AnnouncementManager })));
 const ExtensionDirectory = React.lazy(() => import('./components/ExtensionDirectory').then(m => ({ default: m.ExtensionDirectory })));
 const AuditLogManager = React.lazy(() => import('./components/AuditLogManager').then(m => ({ default: m.AuditLogManager })));
-const CredentialManager = React.lazy(() => import('@/components/CredentialManager'));
+const CredentialManager = React.lazy(() => import('./components/CredentialManager'));
 
 const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -727,7 +727,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
 
         <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar bg-slate-50 dark:bg-slate-950">
           <div className="flex-1 p-3 md:p-6 lg:p-8">
-            <div className="max-w-[1800px] mx-auto min-h-full">
+            <div className="w-full min-h-full">
               {children ? children : (
                 <Routes>
                   <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />

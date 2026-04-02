@@ -3,6 +3,7 @@
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { Router, Server, Wifi, Globe, Video, Download, Link2, X, Move, Plus, Minus, Maximize, Minimize, Info, Lock, Unlock, Grid3X3, Radio, HardDrive, Monitor, Printer, Smartphone, Phone, LayoutTemplate, Trash2, Search, Pencil } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NetworkSwitch, PortStatus, DeviceType } from '../types';
 import * as htmlToImage from 'html-to-image';
 import { useToast } from './ToastProvider';
@@ -24,6 +25,7 @@ interface NodeProps {
     tier?: string;
     isWiringMode?: boolean;
     isImpacted?: boolean;
+    onContextMenu?: (e: React.MouseEvent, id: string) => void;
 }
 
 // Minimalist Dimensions
@@ -45,7 +47,7 @@ const getIconForType = (type: string) => {
     return Server;
 };
 
-const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onDoubleClick, onRelink, isInternet, searchTerm = '', tier, isWiringMode, isImpacted }) => {
+const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, isSelected, isLocked, snapToGrid, onDragEnd, onSelect, onDoubleClick, onRelink, isInternet, searchTerm = '', tier, isWiringMode, isImpacted, onContextMenu }) => {
     const [dragging, setDragging] = useState(false);
     const [localPos, setLocalPos] = useState({ x, y });
     const startMousePos = useRef({ x: 0, y: 0 });
@@ -158,93 +160,46 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
             className={`absolute z-20 transition-all ${isChild ? 'scale-90' : ''} ${!isMatched ? 'opacity-20 grayscale-[0.5]' : 'opacity-100'}`}
             style={{ left: localPos.x, top: localPos.y, width: NODE_WIDTH, height: NODE_HEIGHT }}
         >
-            <div
-                className={`relative w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-500 group ${isSelected ? 'bg-blue-600 border-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-110 z-50' :
-                    isImpacted ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.2)] z-30 animate-pulse' :
-                        isInternet ? 'border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] z-10' : 'border-white/10 bg-slate-900/60 hover:border-blue-500/50 hover:bg-slate-800/80 z-10'
-                    }`}
+            <div 
+                className={`relative w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-700 group ${isSelected ? 'scale-125 z-50' : 'z-10'}`}
                 onMouseDown={handleMouseDown}
                 onDoubleClick={() => onDoubleClick?.(switchData)}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    onContextMenu?.(e, switchData.id);
+                }}
             >
-                {/* Node Glow Backdrop */}
-                <div className={`absolute inset-0 rounded-2xl blur-xl opacity-20 transition-all ${isSelected ? 'bg-blue-500' : isInternet ? 'bg-emerald-500' : 'bg-transparent'}`} />
+                {/* Minimalist Selection/Status Halo */}
+                <div className={`absolute inset-0 rounded-full transition-all duration-700 ${
+                    isSelected ? 'border-2 border-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.4)] bg-blue-500/10' : 
+                    isImpacted ? 'border border-rose-500/40 animate-pulse bg-rose-500/5' : 
+                    isInternet ? 'border border-emerald-500/30 bg-emerald-500/5' : 'border border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'
+                }`} />
 
-                {/* Search Highlight Pulse */}
-                {searchTerm && isMatched && (
-                    <div className="absolute -inset-2 border-2 border-blue-400 rounded-3xl animate-[ping_2s_infinite] opacity-40 pointer-events-none" />
-                )}
+                {/* Subtile Glow Layer */}
+                {isSelected && <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />}
 
-                {!isInternet && !isInternetNode && (
-                    <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
-                        <circle
-                            cx="40" cy="40" r={radius}
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            fill="transparent"
-                            className="text-slate-800"
-                        />
-                        <circle
-                            cx="40" cy="40" r={radius}
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            fill="transparent"
-                            strokeDasharray={circumference}
-                            style={{ strokeDashoffset, transition: 'stroke-dashoffset 1s ease-out' }}
-                            className={isChild ? 'text-blue-400' : usagePercent > 80 ? 'text-rose-500' : usagePercent > 40 ? 'text-amber-500' : 'text-blue-500'}
-                        />
-                    </svg>
-                )}
-
-                <div className={`relative z-10 ${isSelected ? 'text-white' : isImpacted ? 'text-rose-500 animate-pulse' : color}`}>
+                <div className={`relative z-10 transition-colors duration-500 ${isSelected ? 'text-blue-400' : isImpacted ? 'text-rose-500' : isInternet ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`}>
                     {isInternet ? (
-                        <div className="relative">
-                            <Icon size={36} strokeWidth={2.5} />
-                            {getIconForType(switchData.model) !== Icon && (
-                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-xl">
-                                    {React.createElement(getIconForType(switchData.model), { size: 12, className: "text-slate-900" })}
-                                </div>
-                            )}
-                        </div>
+                        <Icon size={32} strokeWidth={1.5} />
                     ) : (
-                        <Icon size={28} strokeWidth={2.5} className={(isWireless || isChild || isImpacted) ? 'animate-pulse' : ''} />
-                    )}
-                    {(isWireless || isChild || isImpacted) && (
-                        <div className={`absolute -inset-4 border ${isImpacted ? 'border-rose-500/30' : isWireless ? 'border-cyan-400/20' : 'border-blue-400/20'} rounded-full animate-ping pointer-events-none`}></div>
+                        <Icon size={24} strokeWidth={1.5} className={(isWireless || isChild || isImpacted) ? 'animate-pulse' : ''} />
                     )}
                 </div>
 
-                {isSelected && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-950"></div>
-                )}
-
-                {(switchData as any).isGroup && (
-                    <div className="absolute -top-4 -right-4 w-9 h-9 bg-blue-600 rounded-full border-4 border-slate-950 flex items-center justify-center shadow-2xl z-20 group-hover:scale-110 transition-transform">
-                        <span className="text-xs font-black text-white">{(switchData as any).totalPorts}</span>
-                    </div>
-                )}
-
-                {!isInternet && !isInternetNode && !isLocked && isSelected && !isChild && (
-                    <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRelink?.(switchData); }}
-                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition-all scale-75"
-                    >
-                        <Link2 size={14} />
-                    </button>
-                )}
+                {/* Status Indicator Dot */}
+                <div className={`absolute -top-0.5 right-4 w-1.5 h-1.5 rounded-full ${isInternet || !isChild ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-blue-400 opacity-60'} transition-all`} />
             </div>
 
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-center pointer-events-none w-max max-w-[140px] flex flex-col items-center gap-0.5">
-                {tier && (
-                    <span className="text-[6px] font-black uppercase tracking-[0.2em] text-blue-500/80 mb-0.5">{tier}</span>
-                )}
-                <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md backdrop-blur-sm transition-all shadow-sm ${isSelected
-                    ? 'text-blue-300 bg-blue-500/20 border border-blue-400/40'
-                    : 'text-slate-300 bg-slate-900/60 border border-slate-700/50'
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 text-center pointer-events-none w-max max-w-[140px] flex flex-col items-center gap-0.5">
+                <span className={`text-[8px] font-bold uppercase tracking-[0.25em] transition-all px-2 ${isSelected
+                    ? 'text-blue-400'
+                    : 'text-slate-400 opacity-50'
                     }`}>
                     {switchData.name}
                 </span>
-                {switchData.ip && switchData.ip !== '-' && (
-                    <span className="text-[7px] font-mono font-semibold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700/30 backdrop-blur-sm">
+                {switchData.ip && switchData.ip !== '-' && isSelected && (
+                    <span className="text-[7px] font-mono font-bold text-blue-500/50 transition-all animate-in fade-in slide-in-from-top-1">
                         {switchData.ip}
                     </span>
                 )}
@@ -297,9 +252,9 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
     }
     const isPathActive = (activePathNodeIds.has(String(sw.id)) && (isInternetLink ? (activePathNodeIds.has('internet') || (coreNodeId && activePathNodeIds.has(String(coreNodeId)))) : activePathNodeIds.has(String(sw.uplinkId)))) || isHovered;
 
-    const strokeWidth = isInternetLink ? 3 : (isPathActive ? 4 : (usagePercent > 70 ? 2.5 : 2));
-    const opacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-70');
-    const pulseScale = isPathActive ? 1.8 : 1;
+    const strokeWidth = isInternetLink ? 2 : (isPathActive ? 3 : (usagePercent > 70 ? 1.5 : 1.2));
+    const opacity = isInternetLink ? 'opacity-100' : (isPathActive ? 'opacity-100' : 'opacity-40');
+    const pulseScale = isPathActive ? 1.4 : 0.8;
 
     return (
         <g
@@ -317,10 +272,10 @@ const TopologyLink = React.memo(({ sw, internetPos, switches, activePathNodeIds,
             <path d={pathData} stroke={color} strokeWidth={strokeWidth} fill="none" className="opacity-100" filter="url(#link-glow-fx)" />
 
             {/* Travel Pulse (Data Packet Animation) */}
-            <circle r={2 * pulseScale} fill={color} filter="url(#link-glow-fx)">
+            <circle r={1.2 * pulseScale} fill={color} filter="url(#link-glow-fx)">
                 <animateMotion path={pathData} dur={animationDur} repeatCount="indefinite" />
             </circle>
-            <circle r={3 * pulseScale} fill={color} className="opacity-30">
+            <circle r={2 * pulseScale} fill={color} className="opacity-20">
                 <animateMotion path={pathData} dur={animationDur} repeatCount="indefinite" />
             </circle>
 
@@ -382,7 +337,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
     const [relinkingSwitch, setRelinkingSwitch] = useState<NetworkSwitch | null>(null);
     // Removed local selectedNodeId state as it's now a prop
 
-    const [scale, setScale] = useState(0.85);
+    const [scale, setScale] = useState(0.9);
     const [offset, setOffset] = useState({ x: 100, y: 100 });
     const [isPanning, setIsPanning] = useState(false);
     const [isUiLocked, setIsUiLocked] = useState(isLocked);
@@ -396,6 +351,18 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
     const [wiringStartNodeId, setWiringStartNodeId] = useState<string | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [draggedTemplate, setDraggedTemplate] = useState<DeviceType | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
+
+    const handleNodeContextMenu = (e: React.MouseEvent, id: string) => {
+        setContextMenu({ x: e.clientX, y: e.clientY, nodeId: id });
+    };
+
+    // Close context menu on click outside
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, []);
 
     const centerView = useCallback(() => {
         if (!diagramRef.current || !diagramRef.current.parentElement) return;
@@ -870,18 +837,18 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 ))}
             </div>
 
-            {/* Manual Assembly Palette */}
-            <div className="absolute top-24 bottom-24 left-6 z-[120] w-64 flex flex-col bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
-                <div className="p-4 border-b border-white/5 space-y-3">
+            {/* Manual Assembly Palette - NetVision Clean */}
+            <div className="absolute top-8 bottom-8 left-6 z-[120] w-64 flex flex-col bg-slate-950/40 backdrop-blur-3xl border border-white/[0.08] rounded-[32px] shadow-2xl overflow-hidden transition-all duration-500 hover:bg-slate-950/60">
+                <div className="p-5 border-b border-white/5 space-y-4 bg-white/[0.02]">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">Infrastructure Library</span>
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] leading-none">NetVision Library</span>
                     </div>
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <div className="relative group">
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Find nodes..."
-                            className="w-full pl-9 pr-3 py-2 bg-black/20 border border-white/5 rounded-xl text-[10px] text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                            placeholder="Search hardware..."
+                            className="w-full pl-10 pr-3 py-2.5 bg-black/30 border border-white/5 rounded-2xl text-[10px] text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
                             value={paletteSearch}
                             onChange={(e) => setPaletteSearch(e.target.value)}
                         />
@@ -932,7 +899,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                             <Icon size={16} />
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] font-black text-white truncate leading-tight uppercase">{node.name}</span>
+                                            <span className="text-[8px] font-bold text-white truncate leading-tight uppercase">{node.name}</span>
                                             <div className="flex items-center gap-1.5 opacity-60">
                                                 <span className="text-[7px] font-bold text-slate-400 truncate uppercase">{node.model}</span>
                                                 <span className="text-[7px] font-mono text-blue-400">{node.ip}</span>
@@ -946,72 +913,63 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 </div>
             </div>
 
-            {/* Floating Control Hub */}
-            <div className="absolute bottom-6 left-6 right-6 md:right-auto z-[100] flex flex-wrap md:flex-nowrap items-center justify-center md:justify-start gap-4">
-                <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
-                    <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 hover:bg-white/10 rounded-xl text-slate-400 transition-all active:scale-90"><Minus size={18} /></button>
-                    <div className="px-2 text-[11px] font-black text-blue-500 font-mono tracking-tighter w-14 text-center">{Math.round(scale * 100)}%</div>
-                    <button onClick={() => setScale(s => Math.min(s + 0.1, 4))} className="p-3 hover:bg-white/10 rounded-xl text-slate-400 transition-all active:scale-90"><Plus size={18} /></button>
+            {/* Floating Control Hub - NetVision Minimalist */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-slate-950/60 backdrop-blur-3xl p-2 rounded-[24px] border border-white/[0.08] shadow-2xl">
+                <div className="flex items-center bg-white/[0.03] rounded-2xl border border-white/5">
+                    <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 hover:bg-white/5 text-slate-400 hover:text-white transition-all"><Minus size={16} /></button>
+                    <div className="px-1 text-[10px] font-black text-blue-500 font-mono w-12 text-center tracking-tighter">{Math.round(scale * 100)}%</div>
+                    <button onClick={() => setScale(s => Math.min(s + 0.1, 4))} className="p-3 hover:bg-white/5 text-slate-400 hover:text-white transition-all"><Plus size={16} /></button>
                 </div>
 
-                <div className="flex items-center bg-slate-900/60 backdrop-blur-xl p-1 rounded-2xl border border-white/10 shadow-2xl">
-                    <button onClick={() => setIsUiLocked(!isUiLocked)} className={`p-3 rounded-xl transition-all active:scale-90 ${isUiLocked ? 'bg-amber-500/20 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
-                        {isUiLocked ? <Lock size={18} /> : <Unlock size={18} />}
+                <div className="h-6 w-px bg-white/10 mx-1" />
+
+                <div className="flex items-center gap-1">
+                    <button 
+                        onClick={() => setIsUiLocked(!isUiLocked)} 
+                        className={`p-3 rounded-xl transition-all ${isUiLocked ? 'bg-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/10' : 'text-slate-400 hover:bg-white/5'}`}
+                        title="Lock UI"
+                    >
+                        {isUiLocked ? <Lock size={16} /> : <Unlock size={16} />}
                     </button>
-                    <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
-                    <button onClick={() => setSnapToGrid(!snapToGrid)} className={`p-3 rounded-xl transition-all active:scale-90 ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-400 hover:bg-white/10'}`}>
-                        <Grid3X3 size={18} />
+                    <button 
+                        onClick={() => setSnapToGrid(!snapToGrid)} 
+                        className={`p-3 rounded-xl transition-all ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:bg-white/5'}`}
+                        title="Grid"
+                    >
+                        <Grid3X3 size={16} />
                     </button>
-                    <div className="w-[1px] h-6 bg-white/5 mx-1"></div>
-                    <button onClick={toggleWiringMode} className={`p-3 rounded-xl transition-all active:scale-90 ${isWiringMode ? 'bg-emerald-500/20 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'text-slate-400 hover:bg-white/10'}`} title="Wiring Mode">
-                        <Link2 size={18} />
+                    <button 
+                        onClick={toggleWiringMode} 
+                        className={`p-3 rounded-xl transition-all ${isWiringMode ? 'bg-emerald-500/20 text-emerald-500 shadow-lg shadow-emerald-500/10' : 'text-slate-400 hover:bg-white/5'}`} 
+                        title="Wiring Mode"
+                    >
+                        <Link2 size={16} />
                     </button>
                 </div>
 
-                <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
+                <div className="h-6 w-px bg-white/10 mx-1" />
 
                 <button
                     onClick={() => {
                         setViewMode(viewMode === 'simplified' ? 'detailed' : 'simplified');
                         setExpandedGroups(new Set());
-                        showToast(`Switched to ${viewMode === 'simplified' ? 'Detailed' : 'Simplified'} View`, 'info');
                     }}
-                    className={`group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl active:scale-95 border border-white/10 ${viewMode === 'simplified' ? 'text-blue-400 border-blue-500/50 shadow-[0_0_20px_rgba(37,99,235,0.2)]' : 'text-slate-300 hover:text-white hover:border-blue-500/50'}`}
+                    className={`p-3 rounded-xl transition-all ${viewMode === 'simplified' ? 'text-blue-400' : 'text-slate-400 hover:bg-white/5'}`}
+                    title={viewMode === 'simplified' ? 'Switch to Detailed' : 'Switch to Simplified'}
                 >
-                    {viewMode === 'simplified' ? <Maximize size={16} className="group-hover:scale-110 transition-transform" /> : <LayoutTemplate size={16} className="group-hover:scale-110 transition-transform" />}
-                    <span>{viewMode === 'simplified' ? 'Detailed View' : 'Simplified View'}</span>
+                    {viewMode === 'simplified' ? <Maximize size={16} /> : <LayoutTemplate size={16} />}
                 </button>
 
-                {viewMode === 'simplified' && expandedGroups.size > 0 && (
-                    <>
-                        <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
-                        <button
-                            onClick={() => {
-                                setExpandedGroups(new Set());
-                                showToast('All groups collapsed', 'info');
-                            }}
-                            className="group flex items-center gap-3 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-500/30 transition-all shadow-2xl active:scale-95"
-                        >
-                            <Minimize size={16} className="group-hover:scale-110 transition-transform" />
-                            <span>Collapse All</span>
-                        </button>
-                    </>
-                )}
-
-                <div className="h-8 w-[1px] bg-white/5 mx-2"></div>
-
-                <button onClick={handleDownload} className="group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600/90 hover:text-white transition-all shadow-2xl active:scale-95 border border-white/10 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-                    <Download size={16} className="group-hover:-translate-y-0.5 transition-transform duration-300" />
-                    <span>Export Map</span>
+                <button onClick={handleDownload} className="p-3 text-slate-400 hover:text-white hover:bg-blue-600/20 rounded-xl transition-all" title="Export PNG">
+                    <Download size={16} />
                 </button>
-                <button onClick={handleAutoLayout} className="group flex items-center gap-3 px-6 py-3 bg-slate-900/60 backdrop-blur-xl text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600/90 hover:text-white transition-all shadow-2xl active:scale-95 border border-white/10 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                    <LayoutTemplate size={16} className="group-hover:rotate-90 transition-transform duration-500" />
-                    <span>Auto Layout</span>
+                <button onClick={handleAutoLayout} className="p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all" title="Auto Layout">
+                    <LayoutTemplate size={16} className="rotate-90" />
                 </button>
             </div>
 
             {selectedNode && (
-                <div className="absolute top-6 left-6 right-6 md:left-auto md:w-80 z-[100] bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl animate-in slide-in-from-right-8 duration-500 overflow-hidden">
+                <div className="absolute top-8 left-6 right-6 md:left-auto md:w-80 z-[100] bg-slate-950/40 backdrop-blur-3xl border border-white/[0.08] rounded-[32px] shadow-2xl animate-in slide-in-from-right-8 duration-500 overflow-hidden">
                     <div className="p-6 border-b border-white/5 bg-slate-950/40">
                         <div className="flex justify-between items-start">
                             <div>
@@ -1123,35 +1081,35 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 </div>
             )}
 
-            {/* Infrastructure Legend */}
-            <div className="absolute top-24 left-6 z-[90] bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-700 hidden lg:block w-56">
+            {/* Infrastructure Legend - Minimalist Floating */}
+            <div className="absolute top-8 right-6 z-[90] bg-slate-950/40 backdrop-blur-3xl border border-white/[0.08] rounded-[32px] p-6 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-700 hidden lg:block w-64 hover:bg-slate-950/60 transition-all">
                 <div className="flex flex-col gap-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-1.5 h-3 bg-blue-500 rounded-full" />
-                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Network Map Key</span>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-1 h-4 bg-blue-500 rounded-full" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Network Key</span>
                         </div>
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[9px] font-bold text-slate-300">ISP Uplink</span>
+                                    <span className="text-[8px] font-bold text-slate-300">ISP Uplink</span>
                                 </div>
-                                <span className="text-[8px] font-mono text-slate-500">1 Gbps+</span>
+                                <span className="text-[7px] font-mono text-slate-500 font-bold uppercase tracking-widest">1 Gbps+</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                                    <span className="text-[9px] font-bold text-slate-300">Distribution</span>
+                                    <span className="text-[8px] font-bold text-slate-300">Distribution</span>
                                 </div>
-                                <span className="text-[8px] font-mono text-slate-500">Trunk</span>
+                                <span className="text-[7px] font-mono text-slate-500 font-bold uppercase tracking-widest">Trunk</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                    <span className="text-[9px] font-bold text-rose-500">Overload</span>
+                                    <span className="text-[8px] font-bold text-rose-500">Overload</span>
                                 </div>
-                                <span className="text-[8px] font-mono text-rose-500">{'>'}85%</span>
+                                <span className="text-[7px] font-mono text-rose-500 font-bold uppercase tracking-widest">{'>'}85%</span>
                             </div>
                         </div>
                     </div>
@@ -1170,9 +1128,9 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                 <div key={v.id} className="flex items-center justify-between group cursor-pointer">
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full ${v.color} group-hover:scale-125 transition-transform`} />
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase group-hover:text-white transition-colors">{v.name}</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase group-hover:text-white transition-colors tracking-widest">{v.name}</span>
                                     </div>
-                                    <span className="text-[8px] font-mono text-slate-600 font-bold">{v.label}</span>
+                                    <span className="text-[7px] font-mono text-slate-600 font-bold uppercase">{v.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -1275,6 +1233,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                 tier={nodeTiers.get(sw.id)}
                                 isWiringMode={isWiringMode}
                                 onRelink={() => setRelinkingSwitch(sw)}
+                                onContextMenu={handleNodeContextMenu}
                             />
                         );
                     })}
@@ -1397,6 +1356,56 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     </div>
                 )
             }
+
+            {/* NetVision Modern Context Menu */}
+            <AnimatePresence>
+                {contextMenu && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        style={{ top: contextMenu.y, left: contextMenu.x }}
+                        className="fixed z-[9999] w-48 bg-slate-950/80 backdrop-blur-3xl border border-white/[0.08] rounded-2xl shadow-2xl p-1.5 overflow-hidden"
+                    >
+                        <div className="px-3 py-2 border-b border-white/5 mb-1">
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Node Authority</span>
+                        </div>
+                        <button 
+                            onClick={() => {
+                                const sw = switches.find(s => s.id === contextMenu.nodeId);
+                                if (sw) onViewProfile?.(sw);
+                                setContextMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 rounded-xl text-slate-300 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider"
+                        >
+                            <Info size={14} className="text-blue-400" />
+                            Device Profile
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const sw = switches.find(s => s.id === contextMenu.nodeId);
+                                if (sw) onEditNode?.(sw);
+                                setContextMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 rounded-xl text-slate-300 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider"
+                        >
+                            <Pencil size={14} className="text-amber-400" />
+                            Modify Node
+                        </button>
+                        <div className="h-px bg-white/5 my-1" />
+                        <button 
+                            onClick={() => {
+                                onDeleteNode?.(contextMenu.nodeId);
+                                setContextMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-rose-500/10 rounded-xl text-rose-500 hover:text-rose-400 transition-all text-[10px] font-bold uppercase tracking-wider"
+                        >
+                            <Trash2 size={14} />
+                            Purge System
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div >
     );
 };
