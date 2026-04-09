@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@/components/theme-provider';
 
 console.log("Gesit ERP: index.tsx loaded. Attempting to mount...");
 
@@ -19,9 +20,11 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <TooltipProvider>
-        <App />
-      </TooltipProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <TooltipProvider>
+          <App />
+        </TooltipProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

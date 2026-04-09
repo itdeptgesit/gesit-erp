@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import {
-  Bell, Menu, ChevronDown, LogOut, User, Settings, Sun, Moon, Check,
-  Info, AlertTriangle, AlertCircle, ExternalLink, LayoutGrid,
-  LifeBuoy, Activity, Calendar, ShoppingCart, Package, Network, Folder,
-  Shield, Users, Building2, Briefcase, Layers, Zap, Phone, Megaphone
+  Bell, LogOut, Sun, Moon, Mail,
+  Sparkles, BadgeCheck, CreditCard
 } from 'lucide-react';
 import { useLanguage } from '../translations';
 import { supabase } from '../lib/supabaseClient';
 import { cn } from "@/lib/utils";
 import { NotificationItem, UserGroup } from '../types';
+import { useTheme } from "next-themes";
 
 // SHADCN UI IMPORTS
 import { Button } from "@/components/ui/button";
@@ -18,38 +18,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard: LayoutGrid,
-  LifeBuoy: LifeBuoy,
-  Activity: Activity,
-  Calendar: Calendar,
-  ShoppingCart: ShoppingCart,
-  Cpu: Package,
-  Network: Network,
-  FolderOpen: Folder,
-  Shield: Shield,
-  Users: Users,
-  Building2: Building2,
-  Briefcase: Briefcase,
-  Layers: Layers,
-  Zap: Zap,
-  Phone: Phone,
-  Settings: Settings,
-  Megaphone: Megaphone
-};
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -74,35 +51,30 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onMenuClick, onLogout, onNavigate,
-  user, appName: propAppName, logoUrl, forceShowLogo
+  user,
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
+  const { setTheme, resolvedTheme } = useTheme();
 
   const userName = user?.name || 'User';
-  const appName = propAppName || 'GESIT PORTAL';
-  const LOGO_URL = "/image/logo.png";
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
+  const toggleTheme = (e: React.MouseEvent) => {
+    const isDarkCurrent = resolvedTheme === 'dark';
 
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    if (newTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+    if (!document.startViewTransition) {
+      setTheme(isDarkCurrent ? 'light' : 'dark');
+      return;
     }
+
+    document.documentElement.style.setProperty('--click-x', `${e.clientX}px`);
+    document.documentElement.style.setProperty('--click-y', `${e.clientY}px`);
+
+    document.startViewTransition(() => {
+      flushSync(() => {
+        setTheme(isDarkCurrent ? 'light' : 'dark');
+      });
+    });
   };
 
   useEffect(() => {
@@ -122,9 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
     });
 
     const fetchNotifications = async () => {
-      // Support both user_id and user_email for backwards compatibility
       let query = supabase.from('notifications').select('*');
-      
       if (user?.id && userEmail) {
         query = query.or(`user_id.eq.${user.id},user_email.ilike.${userEmail}`);
       } else if (user?.id) {
@@ -134,38 +104,25 @@ export const Header: React.FC<HeaderProps> = ({
       } else {
         return;
       }
-
-      const { data } = await query
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (data) {
-        setNotifications(data.map(mapNotification));
-      }
+      const { data } = await query.order('created_at', { ascending: false }).limit(20);
+      if (data) setNotifications(data.map(mapNotification));
     };
 
     fetchNotifications();
 
-    // Real-time updates
-    const channel = supabase
-      .channel(`notifications:${user?.id || userEmail}`)
-      .on('postgres_changes', {
+    const channel = supabase.channel(`notifications:${user?.id || userEmail}`).on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications'
       }, (payload) => {
-        // Only add if it belongs to this user
         const n = payload.new;
         if (n.user_id === user?.id || (userEmail && n.user_email?.toLowerCase() === userEmail)) {
-           const mapped = mapNotification(n);
-           setNotifications(prev => [mapped, ...prev].slice(0, 20));
+          const mapped = mapNotification(n);
+          setNotifications(prev => [mapped, ...prev].slice(0, 20));
         }
-      })
-      .subscribe();
+      }).subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user?.email]);
 
   const markAsRead = async (id: string) => {
@@ -175,202 +132,144 @@ export const Header: React.FC<HeaderProps> = ({
 
   const markAllAsRead = async () => {
     if (!user) return;
-    
     const email = user.email?.toLowerCase();
-    
     let query = supabase.from('notifications').update({ is_read: true });
-    if (user.id && email) {
-      query = query.or(`user_id.eq.${user.id},user_email.ilike.${email}`);
-    } else if (user.id) {
-      query = query.eq('user_id', user.id);
-    } else if (email) {
-      query = query.ilike('user_email', email);
-    } else {
-      return;
-    }
-
+    if (user.id && email) query = query.or(`user_id.eq.${user.id},user_email.ilike.${email}`);
+    else if (user.id) query = query.eq('user_id', user.id);
+    else if (email) query = query.ilike('user_email', email);
+    else return;
     const { error } = await query.eq('is_read', false);
     if (!error) setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'Success': return <Check className="text-emerald-500" size={14} />;
-      case 'Warning': return <AlertTriangle className="text-amber-500" size={14} />;
-      case 'Alert': return <AlertCircle className="text-destructive" size={14} />;
-      default: return <Info className="text-primary" size={14} />;
-    }
-  };
-
   return (
-    <header className="glass-header flex items-center justify-between px-3 md:px-8 h-16 sticky top-0 z-50 transition-all dark:bg-slate-950/90 dark:border-slate-800/50 backdrop-blur-xl border-b border-border shadow-sm">
-      {/* BRANDING */}
-      <div className="flex items-center gap-1 md:gap-4">
-        {onMenuClick && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMenuClick}
-            aria-label="Open menu"
-            className="md:hidden"
-          >
-            <Menu size={20} />
-          </Button>
-        )}
+    <div className="flex items-center gap-1">
+      {/* Mail Icon */}
+      <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent">
+        <Mail size={17} strokeWidth={1.5} />
+        <span className="absolute top-0.5 right-0.5 block h-[7px] w-[7px] rounded-full bg-rose-500" />
+      </Button>
 
-        <div
-          className={`flex items-center gap-2 sm:gap-3 cursor-pointer group ${!forceShowLogo ? 'md:hidden' : ''}`}
-          onClick={() => onNavigate?.('dashboard')}
-        >
-          <div className="relative">
-            <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center bg-white dark:bg-slate-800/80 rounded-lg shadow-sm border border-border/10 dark:border-slate-700/50 overflow-hidden">
-              <img src={logoUrl || LOGO_URL} alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-300 group-hover:scale-110 drop-shadow-sm object-contain" />
-            </div>
+      {/* Notifications Popover */}
+      <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent">
+            <Bell size={17} strokeWidth={1.5} />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 block h-[7px] w-[7px] rounded-full bg-rose-500" />
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[320px] p-0 rounded-lg overflow-hidden border border-border/40 shadow-xl bg-background/95 backdrop-blur-md">
+          <div className="px-4 py-3 flex justify-between items-center border-b border-border/10 bg-muted/20">
+            <h3 className="text-[13px] font-medium text-foreground">Notifications</h3>
+            {unreadCount > 0 && (
+              <button onClick={markAllAsRead} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                Mark all read
+              </button>
+            )}
           </div>
-
-          <div className="flex flex-col min-w-0">
-            <h1 className="text-xs sm:text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-none truncate">
-              {(appName || 'GESIT PORTAL').split(' ')[0]}<span className="text-primary dark:text-blue-400 font-black ml-0.5 hidden xs:inline sm:inline">{(appName || 'GESIT PORTAL').split(' ').slice(1).join(' ')}</span>
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* HEADER TOOLS */}
-      <div className="flex items-center gap-1 md:gap-4">
-        {/* Language Selection */}
-        <div className="flex items-center bg-muted/30 dark:bg-slate-800/60 p-0.5 rounded-full border border-border/10 dark:border-slate-700/50" role="group" aria-label="Language selection">
-          <Button
-            variant={language === 'en' ? "secondary" : "ghost"}
-            size="sm"
-            className={`h-5 sm:h-7 px-1.5 sm:px-2.5 text-[8px] sm:text-[10px] font-black rounded-full transition-all ${language === 'en' ? 'shadow-sm bg-white dark:bg-slate-600 text-primary dark:text-blue-400' : 'text-muted-foreground hover:text-foreground dark:hover:text-slate-200'}`}
-            onClick={() => setLanguage('en')}
-          >
-            EN
-          </Button>
-          <Button
-            variant={language === 'id' ? "secondary" : "ghost"}
-            size="sm"
-            className={`h-5 sm:h-7 px-1.5 sm:px-2.5 text-[8px] sm:text-[10px] font-black rounded-full transition-all ${language === 'id' ? 'shadow-sm bg-white dark:bg-slate-600 text-primary dark:text-blue-400' : 'text-muted-foreground hover:text-foreground dark:hover:text-slate-200'}`}
-            onClick={() => setLanguage('id')}
-          >
-            ID
-          </Button>
-        </div>
-
-        {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="text-muted-foreground dark:text-slate-400 dark:hover:text-slate-200 h-8 w-8 sm:h-10 sm:w-10"
-        >
-          {isDark ? <Sun size={16} /> : <Moon size={16} />}
-        </Button>
-
-        {/* Notifications Popover */}
-        <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground dark:text-slate-400 dark:hover:text-slate-200 h-8 w-8 sm:h-10 sm:w-10">
-              <Bell size={16} />
-              {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full border-2 border-background animate-pulse"></span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden dark:bg-slate-900 dark:border-slate-800">
-            <div className="px-4 py-3 flex justify-between items-center bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-slate-700/50">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-foreground dark:text-slate-200">Alerts</h3>
-              {unreadCount > 0 && (
-                <Button variant="link" size="sm" onClick={markAllAsRead} className="h-auto p-0 text-[10px] uppercase font-bold text-primary">
-                  Clear All
-                </Button>
-              )}
-            </div>
-            <ScrollArea className="max-h-[300px]">
-              {notifications.length === 0 ? (
-                <div className="py-8 text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest">No active alerts</div>
-              ) : (
-                <div className="flex flex-col">
-                  {notifications.map(n => (
-                    <div
-                      key={n.id}
-                      onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
-                      className={`p-3 flex gap-3 hover:bg-muted/50 cursor-pointer border-b border-border transition-colors ${!n.isRead ? 'bg-primary/5' : ''}`}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center shrink-0">
-                        {getIcon(n.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{n.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
-                      </div>
+          <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+            {notifications.length === 0 ? (
+              <div className="py-10 text-center text-xs text-muted-foreground">Everything caught up!</div>
+            ) : (
+              <div className="flex flex-col">
+                {notifications.map(n => (
+                  <div
+                    key={n.id}
+                    onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
+                    className="px-4 py-3 flex items-start gap-3 hover:bg-accent/30 cursor-pointer transition-colors border-b border-border/5 last:border-0"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5 border border-border/10">
+                      <span className="text-[10px] font-bold text-foreground">
+                        {n.title.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-normal text-foreground truncate">{n.title}</p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-normal">{n.message}</p>
+                    </div>
+                    {!n.isRead && <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5" />}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
 
-        {/* User Profile Dropdown */}
-        {user && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-1.5 sm:gap-2.5 px-1 sm:px-2 h-10 sm:h-12 hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-all group rounded-xl">
-                <div className="hidden md:flex flex-col items-end">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground tracking-tight leading-none">{userName}</span>
-                    <Badge
-                      variant={(user?.role || '').includes('Admin') ? 'destructive' : 'secondary'}
-                      className="h-4 px-1.5 py-0 text-[7px] font-black uppercase tracking-widest rounded-full"
-                    >
-                      {(user?.role || 'User').includes('Admin') ? 'Admin' : 'Personal'}
-                    </Badge>
-                  </div>
-                  {user?.jobTitle && <span className="text-[9px] font-medium text-muted-foreground mt-1 opacity-60 uppercase tracking-wider">{user.jobTitle}</span>}
-                </div>
-                <div className="relative">
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-primary dark:text-blue-400 overflow-hidden shadow-sm border border-border dark:border-slate-700 group-hover:border-primary/50 transition-all">
-                    {user?.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      userName.substring(0, 2).toUpperCase()
-                    )}
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-background shadow-sm"></div>
-                </div>
-                <ChevronDown size={12} className="text-muted-foreground/50 dark:text-slate-500 group-hover:text-foreground transition-colors" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl dark:bg-slate-900 dark:border-slate-800">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-xs tracking-widest text-muted-foreground uppercase font-black">{user?.role || 'Staff'}</p>
-                  <p className="text-sm font-bold leading-none">{userName}</p>
-                  {user?.email && <p className="text-xs leading-none text-muted-foreground mt-1">{user.email}</p>}
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onNavigate?.('profile')} className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>{t('profile')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onLogout?.()} className="text-destructive focus:bg-destructive/10 cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('logout')}</span>
+      {/* Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent"
+        onClick={toggleTheme}
+      >
+        {/* Crescent moon for light mode (click to go dark), Sun for dark mode */}
+        <Moon size={17} strokeWidth={1.5} className="block dark:hidden" />
+        <Sun size={17} strokeWidth={1.5} className="hidden dark:block" />
+      </Button>
+
+      {/* User Avatar */}
+      <div className="pl-1.5 ml-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 border border-border/20 shadow-sm cursor-pointer hover:ring-2 hover:ring-muted transition-all">
+                <AvatarImage src={user?.avatarUrl} alt={userName} />
+                <AvatarFallback className="text-[10px] font-bold bg-muted text-muted-foreground">
+                  {userName.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 rounded-xl shadow-xl border border-border/50" align="end" sideOffset={8}>
+            {/* User info */}
+            <div className="flex items-center gap-2.5 px-3 py-3 border-b border-border/30">
+              <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                <AvatarImage src={user?.avatarUrl} alt={userName} />
+                <AvatarFallback className="rounded-lg bg-muted text-muted-foreground text-[11px] font-semibold">
+                  {userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <span className="truncate text-[13px] font-medium text-foreground">{userName}</span>
+                <span className="truncate text-[11px] text-muted-foreground">{user?.email}</span>
+              </div>
+            </div>
+
+            {/* Menu items */}
+            <div className="py-1">
+              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
+                <Sparkles className="size-4 text-muted-foreground shrink-0" />
+                <span>Upgrade to Pro</span>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+            </div>
+            <DropdownMenuSeparator className="my-0" />
+            <div className="py-1">
+              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5" onClick={() => onNavigate?.('profile')}>
+                <BadgeCheck className="size-4 text-muted-foreground shrink-0" />
+                <span>Account</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
+                <CreditCard className="size-4 text-muted-foreground shrink-0" />
+                <span>Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
+                <Bell className="size-4 text-muted-foreground shrink-0" />
+                <span>Notifications</span>
+              </DropdownMenuItem>
+            </div>
+            <DropdownMenuSeparator className="my-0" />
+            <div className="py-1">
+              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5" onClick={onLogout}>
+                <LogOut className="size-4 text-muted-foreground shrink-0" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </header>
+    </div>
   );
 };

@@ -238,13 +238,18 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             <Menu size={20} />
                         </button>
 
-                        <div className="relative flex-1 max-w-md">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <div className="relative flex-1 max-w-md group">
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                                className="w-full pl-10 pr-12 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 transition-all"
                             />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md text-[10px] font-bold text-slate-400">
+                                <span>⌘</span>
+                                <span className="text-[11px]">+</span>
+                                <span>K</span>
+                            </div>
                         </div>
                     </div>
 

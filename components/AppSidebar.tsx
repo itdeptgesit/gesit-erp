@@ -1,12 +1,12 @@
 import * as React from "react"
 import {
     LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
-    Network, Folder, Shield, ChevronDown, X, Users, Building2,
-    Briefcase, Layers, Zap, PanelLeftClose, PanelLeft, Phone,
-    Settings, Megaphone, Search, ChevronRight, Plus, Key,
-    ChevronsUpDown, LogOut, User as UserIcon, Sparkles, BadgeCheck, Bell, CreditCard
+    Network, Folder, Shield, Users, Building2,
+    Briefcase, Layers, Zap, Phone,
+    Settings, Megaphone, ChevronRight, Key,
+    Star, Compass, UserCircle, Download
 } from 'lucide-react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import {
     Sidebar,
@@ -22,18 +22,8 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarGroupContent,
-    useSidebar,
+    useSidebar
 } from "@/components/ui/sidebar"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { APP_MENU_STRUCTURE } from '../constants';
 import { UserAccount, UserGroup } from '../types';
@@ -41,7 +31,7 @@ import { useLanguage } from '../translations';
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, React.ElementType> = {
-    LayoutDashboard: LayoutGrid,
+    LayoutDashboard: Compass,
     LifeBuoy: LifeBuoy,
     Activity: Activity,
     Calendar: Calendar,
@@ -58,10 +48,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Phone: Phone,
     Settings: Settings,
     Megaphone: Megaphone,
-    Key: Key
+    Key: Key,
+    User: UserCircle
 };
 
-interface AppSidebarProps {
+interface NavigationSidebarProps {
     currentUser: UserAccount | null;
     groupDefinitions: UserGroup[];
     onLogout: () => void;
@@ -69,17 +60,16 @@ interface AppSidebarProps {
     logoUrl?: string;
 }
 
-export function AppSidebar({
+export function NavigationSidebar({
     currentUser,
     groupDefinitions,
     onLogout,
-    appName = "GESIT PORTAL",
-    logoUrl = "/image/logo.png"
-}: AppSidebarProps) {
+}: NavigationSidebarProps) {
     const { t } = useLanguage();
-    const navigate = useNavigate();
     const location = useLocation();
-    const { state, isMobile } = useSidebar();
+    const navigate = useNavigate();
+    const { state } = useSidebar();
+    const isCollapsed = state === "collapsed";
 
     const allowedMenuIds = React.useMemo(() => {
         const allowed = new Set<string>();
@@ -110,326 +100,202 @@ export function AppSidebar({
         return allowed;
     }, [currentUser, groupDefinitions]);
 
-    const navMain = React.useMemo(() => {
+    const buildMenuItems = React.useCallback((parentId?: string) => {
         const allMenus = APP_MENU_STRUCTURE;
-        const parents = allMenus.filter(m => !m.parentId && m.id !== 'admin');
-        
-        return parents.map(parent => {
-            if (!allowedMenuIds.has(parent.id)) return null;
-            const children = allMenus.filter(m => m.parentId === parent.id);
-            const allowedChildren = children.filter(child => allowedMenuIds.has(child.id));
+        return allMenus
+            .filter(m => m.parentId === parentId && allowedMenuIds.has(m.id))
+            .map(m => ({
+                id: m.id,
+                title: t(m.id.replace(/-(.)/g, (_: string, c: string) => c.toUpperCase()) as any) || m.label,
+                url: m.id === 'dashboard' ? '/' : `/${m.id}`,
+                icon: ICON_MAP[m.iconName] || LayoutGrid,
+                children: allMenus
+                    .filter(c => c.parentId === m.id && allowedMenuIds.has(c.id))
+                    .map(c => ({
+                        id: c.id,
+                        title: t(c.id.replace(/-(.)/g, (_: string, c: string) => c.toUpperCase()) as any) || c.label,
+                        url: `/${c.id}`,
+                    }))
+            }));
+    }, [allowedMenuIds, t]);
 
-            return {
-                title: t(parent.id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any) || parent.label,
-                url: parent.id === 'dashboard' ? '/' : `/${parent.id}`,
-                icon: ICON_MAP[parent.iconName] || LayoutGrid,
-                isActive: location.pathname === (parent.id === 'dashboard' ? '/' : `/${parent.id}`) || allowedChildren.some(c => location.pathname === `/${c.id}`),
-                items: allowedChildren.length > 0 ? allowedChildren.map(c => ({
-                    title: t(c.id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any) || c.label,
-                    url: `/${c.id}`,
-                })) : undefined
-            };
-        }).filter(Boolean);
-    }, [allowedMenuIds, t, location.pathname]);
+    const mainItems = React.useMemo(() =>
+        buildMenuItems(undefined).filter(m => m.id !== 'admin'),
+        [buildMenuItems]
+    );
 
-    const navAdmin = React.useMemo(() => {
-        const allMenus = APP_MENU_STRUCTURE;
-        const adminMenu = allMenus.find(m => m.id === 'admin');
-        if (!adminMenu || !allowedMenuIds.has('admin')) return null;
-
-        const children = allMenus.filter(m => m.parentId === 'admin');
-        const allowedChildren = children.filter(child => allowedMenuIds.has(child.id));
-
+    const adminItem = React.useMemo(() => {
+        if (!allowedMenuIds.has('admin')) return null;
+        const adminMenu = APP_MENU_STRUCTURE.find(m => m.id === 'admin');
+        if (!adminMenu) return null;
         return {
+            id: 'admin',
             title: t('administration' as any) || "Administration",
             url: "/admin",
             icon: Shield,
-            isActive: location.pathname.startsWith('/admin') || allowedChildren.some(c => location.pathname === `/${c.id}`),
-            items: allowedChildren.map(c => ({
-                title: t(c.id.replace(/-(.)/g, (_, c) => c.toUpperCase()) as any) || c.label,
-                url: `/${c.id}`,
-            }))
+            children: APP_MENU_STRUCTURE
+                .filter(c => c.parentId === 'admin' && allowedMenuIds.has(c.id))
+                .map(c => ({
+                    id: c.id,
+                    title: t(c.id.replace(/-(.)/g, (_: string, c: string) => c.toUpperCase()) as any) || c.label,
+                    url: `/${c.id}`,
+                }))
         };
-    }, [allowedMenuIds, t, location.pathname]);
+    }, [allowedMenuIds, t]);
+
+    const isPathActive = (url: string) => {
+        if (url === '/') return location.pathname === '/';
+        return location.pathname === url || location.pathname.startsWith(url + '/');
+    };
+
+    const renderNavItem = (item: any) => {
+        const IconComp = item.icon;
+        const hasChildren = item.children && item.children.length > 0;
+        const isActive = isPathActive(item.url) ||
+            (hasChildren && item.children.some((c: any) => isPathActive(c.url)));
+
+        if (hasChildren) {
+            return (
+                <Collapsible
+                    key={item.id}
+                    defaultOpen={isActive}
+                    className="group/collapsible"
+                >
+                    <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                            {/* Use render prop for Base UI polymorphism */}
+                            <SidebarMenuButton
+                                tooltip={item.title}
+                                isActive={isActive}
+                                className={cn(
+                                    "text-[13px] font-normal",
+                                    isActive
+                                        ? "text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                {IconComp && <IconComp size={15} strokeWidth={1.3} />}
+                                <span>{item.title}</span>
+                                <ChevronRight
+                                    size={13}
+                                    strokeWidth={1.5}
+                                    className="ml-auto shrink-0 opacity-40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                                />
+                            </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                            <SidebarMenuSub>
+                                {item.children.map((child: any) => {
+                                    const isChildActive = isPathActive(child.url);
+                                    return (
+                                        <SidebarMenuSubItem key={child.id}>
+                                            <SidebarMenuSubButton
+                                                isActive={isChildActive}
+                                                render={<NavLink to={child.url} />}
+                                                className={cn(
+                                                    "text-[13px] font-normal",
+                                                    isChildActive
+                                                        ? "bg-white dark:bg-sidebar-accent text-foreground shadow-sm border border-border/10"
+                                                        : "text-muted-foreground hover:text-foreground hover:bg-transparent"
+                                                )}
+                                            >
+                                                {child.title}
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    );
+                                })}
+                            </SidebarMenuSub>
+                        </CollapsibleContent>
+                    </SidebarMenuItem>
+                </Collapsible>
+            );
+        }
+
+        // Leaf item — navigate programmatically to avoid asChild issues
+        return (
+            <SidebarMenuItem key={item.id}>
+                <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={isActive}
+                    onClick={() => navigate(item.url)}
+                    className={cn(
+                        "text-[13px] font-normal cursor-pointer",
+                        isActive
+                            ? "bg-white dark:bg-sidebar-accent text-foreground shadow-sm border border-border/10"
+                            : "text-muted-foreground hover:text-foreground"
+                    )}
+                >
+                    {IconComp && <IconComp size={15} strokeWidth={1.3} />}
+                    <span>{item.title}</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        );
+    };
 
     return (
-        <Sidebar collapsible="icon">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                            onClick={() => navigate('/')}
-                        >
-                            <div className="flex ml-1 items-center justify-center">
-                                <img src={logoUrl} alt="Logo" className="size-8 object-contain" />
-                            </div>
-                            <div className="grid flex-1 text-left text-sm leading-tight ml-3">
-                                <span className="truncate font-black tracking-tight text-lg">
-                                    Gesit Portal
-                                </span>
-                            </div>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-                
-                {/* QUICK SEARCH BAR */}
-                <div className="px-3 mt-4 mb-2">
-                    <div className="relative group/search">
-                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground/50 group-hover/search:text-primary transition-colors">
-                            <Search size={16} />
-                        </div>
-                        <input 
-                            type="text" 
-                            placeholder="Search for..." 
-                            className="w-full bg-muted/40 dark:bg-slate-900 border border-border/50 rounded-xl h-11 pl-10 pr-12 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all group-hover/search:bg-muted/60"
-                        />
-                        <div className="absolute right-3 inset-y-0 flex items-center pointer-events-none">
-                            <div className="flex items-center gap-1 bg-background dark:bg-slate-800 border border-border/50 rounded px-1.5 py-0.5 shadow-sm">
-                                <span className="text-[10px] font-black opacity-50">⌘</span>
-                                <span className="text-[10px] font-black opacity-50">K</span>
-                            </div>
-                        </div>
+        <Sidebar variant="inset" collapsible="icon" className="border-none">
+            {/* ── Header: Logo + Name ── */}
+            <SidebarHeader className="h-14 flex flex-row items-center px-4 border-none">
+                <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground">
+                        <Star size={14} strokeWidth={2.5} className="fill-background text-background" />
                     </div>
+                    {!isCollapsed && (
+                        <span className="truncate text-[14px] font-semibold tracking-tight text-foreground">
+                            Shadcn Dashboard
+                        </span>
+                    )}
                 </div>
             </SidebarHeader>
-            <SidebarContent className="px-3 pt-4 custom-scrollbar">
-                <SidebarGroup className="px-0">
-                    <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.25em] font-black text-muted-foreground/30 mb-3 px-2">Main Menu</SidebarGroupLabel>
-                    <SidebarMenu className="gap-1.5">
-                        {navMain.map((item: any) => (
-                            <Collapsible
-                                key={item.title}
-                                asChild
-                                defaultOpen={item.isActive}
-                                className="group/collapsible"
-                            >
-                                <SidebarMenuItem>
-                                    {item.items ? (
-                                        <>
-                                            <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton 
-                                                    tooltip={item.title} 
-                                                    isActive={item.isActive}
-                                                    size="lg"
-                                                    className={cn(
-                                                        "transition-all duration-300 rounded-xl h-11 px-4 border-transparent border",
-                                                        item.isActive 
-                                                            ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-lg shadow-primary/25 border-primary/20" 
-                                                            : "text-muted-foreground/60 hover:bg-muted/60 hover:text-foreground"
-                                                    )}
-                                                >
-                                                    {item.icon && <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 2} />}
-                                                    <span className={cn("font-bold text-sm tracking-tight", !item.isActive && "opacity-80")}>{item.title}</span>
-                                                    <ChevronRight className={cn(
-                                                        "ml-auto transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90",
-                                                        item.isActive ? "text-primary-foreground" : "text-muted-foreground/30"
-                                                    )} />
-                                                </SidebarMenuButton>
-                                            </CollapsibleTrigger>
-                                            <CollapsibleContent className="CollapsibleContent mt-1 ml-4 border-l border-border/50 pl-2">
-                                                <SidebarMenuSub className="gap-1 border-none ml-0 pl-0">
-                                                    {item.items.map((subItem: any) => {
-                                                        const isSubActive = location.pathname === subItem.url;
-                                                        return (
-                                                            <SidebarMenuSubItem key={subItem.title}>
-                                                                <SidebarMenuSubButton 
-                                                                    asChild 
-                                                                    isActive={isSubActive}
-                                                                    className={cn(
-                                                                        "transition-all duration-200 rounded-lg h-9 px-4",
-                                                                        isSubActive 
-                                                                            ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm font-extrabold" 
-                                                                            : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 font-bold"
-                                                                    )}
-                                                                >
-                                                                    <NavLink to={subItem.url}>
-                                                                        <span className="text-xs">{subItem.title}</span>
-                                                                    </NavLink>
-                                                                </SidebarMenuSubButton>
-                                                            </SidebarMenuSubItem>
-                                                        );
-                                                    })}
-                                                </SidebarMenuSub>
-                                            </CollapsibleContent>
-                                        </>
-                                    ) : (
-                                        <SidebarMenuButton 
-                                            asChild 
-                                            tooltip={item.title} 
-                                            isActive={item.isActive}
-                                            size="lg"
-                                            className={cn(
-                                                "transition-all duration-300 rounded-xl h-11 px-4 border-transparent border",
-                                                item.isActive 
-                                                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-lg shadow-primary/25 border-primary/20" 
-                                                    : "text-muted-foreground/60 hover:bg-muted/60 hover:text-foreground"
-                                            )}
-                                        >
-                                            <NavLink to={item.url}>
-                                                {item.icon && <item.icon size={18} strokeWidth={item.isActive ? 2.5 : 2} />}
-                                                <span className={cn("font-bold text-sm tracking-tight", !item.isActive && "opacity-80")}>{item.title}</span>
-                                            </NavLink>
-                                        </SidebarMenuButton>
-                                    )}
-                                </SidebarMenuItem>
-                            </Collapsible>
-                        ))}
-                    </SidebarMenu>
+
+            {/* ── Content ── */}
+            <SidebarContent className="px-2 py-3 gap-0 overflow-x-hidden">
+                <SidebarGroup className="p-0 mb-4">
+                    {!isCollapsed && (
+                        <SidebarGroupLabel className="px-2 mb-1 h-auto text-[11px] font-normal text-muted-foreground/40 tracking-wide">
+                            Main
+                        </SidebarGroupLabel>
+                    )}
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-0.5">
+                            {mainItems.map(renderNavItem)}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
                 </SidebarGroup>
 
-                {navAdmin && (
-                    <SidebarGroup className="group-data-[collapsible=icon]:hidden px-0">
-                        <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.25em] font-black text-muted-foreground/30 mt-8 mb-3 px-2">Administration</SidebarGroupLabel>
-                        <SidebarMenu className="gap-1.5">
-                            <Collapsible
-                                asChild
-                                defaultOpen={navAdmin.isActive}
-                                className="group/collapsible"
-                            >
-                                <SidebarMenuItem>
-                                    <CollapsibleTrigger asChild>
-                                        <SidebarMenuButton 
-                                            tooltip={navAdmin.title} 
-                                            isActive={navAdmin.isActive}
-                                            size="lg"
-                                            className={cn(
-                                                "transition-all duration-300 rounded-xl h-11 px-4 border-transparent border",
-                                                navAdmin.isActive 
-                                                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-lg shadow-primary/25 border-primary/20" 
-                                                    : "text-muted-foreground/60 hover:bg-muted/60 hover:text-foreground"
-                                            )}
-                                        >
-                                            <navAdmin.icon size={18} strokeWidth={navAdmin.isActive ? 2.5 : 2} />
-                                            <span className={cn("font-bold text-sm tracking-tight", !navAdmin.isActive && "opacity-80")}>{navAdmin.title}</span>
-                                            <ChevronRight className={cn(
-                                                "ml-auto transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90",
-                                                navAdmin.isActive ? "text-primary-foreground" : "text-muted-foreground/30"
-                                            )} />
-                                        </SidebarMenuButton>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent className="CollapsibleContent mt-1 ml-4 border-l border-border/50 pl-2">
-                                        <SidebarMenuSub className="gap-1 border-none ml-0 pl-0">
-                                            {navAdmin.items.map((subItem) => {
-                                                const isAdminSubActive = location.pathname === subItem.url;
-                                                return (
-                                                    <SidebarMenuSubItem key={subItem.title}>
-                                                        <SidebarMenuSubButton 
-                                                            asChild 
-                                                            isActive={isAdminSubActive}
-                                                            className={cn(
-                                                                "transition-all duration-200 rounded-lg h-9 px-4",
-                                                                isAdminSubActive 
-                                                                    ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-sm font-extrabold" 
-                                                                    : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 font-bold"
-                                                            )}
-                                                        >
-                                                            <NavLink to={subItem.url}>
-                                                                <span className="text-xs">{subItem.title}</span>
-                                                            </NavLink>
-                                                        </SidebarMenuSubButton>
-                                                    </SidebarMenuSubItem>
-                                                );
-                                            })}
-                                        </SidebarMenuSub>
-                                    </CollapsibleContent>
-                                </SidebarMenuItem>
-                            </Collapsible>
-                        </SidebarMenu>
+                {adminItem && (
+                    <SidebarGroup className="p-0">
+                        {!isCollapsed && (
+                            <SidebarGroupLabel className="px-2 mb-1 h-auto text-[11px] font-normal text-muted-foreground/40 tracking-wide">
+                                Components
+                            </SidebarGroupLabel>
+                        )}
+                        <SidebarGroupContent>
+                            <SidebarMenu className="gap-0.5">
+                                {renderNavItem(adminItem)}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
                     </SidebarGroup>
                 )}
             </SidebarContent>
-            <SidebarFooter className="p-4 pt-0 gap-4 mt-auto">
+
+            {/* ── Footer: Download button ── */}
+            <SidebarFooter className="p-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton
-                                    size="lg"
-                                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground rounded-xl border border-transparent hover:border-border/50 transition-all h-14"
-                                >
-                                    <Avatar className="h-10 w-10 rounded-lg overflow-hidden border border-white/10 dark:border-slate-800 shadow-sm">
-                                        <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.fullName || ""} className="aspect-square object-cover" />
-                                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
-                                            {(currentUser?.fullName || "U").substring(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                                        <span className="truncate font-black tracking-tight">{currentUser?.fullName}</span>
-                                        <span className="truncate text-[10px] font-black text-muted-foreground uppercase opacity-60">{currentUser?.email}</span>
-                                    </div>
-                                    <ChevronsUpDown className="ml-auto size-4 opacity-30" />
-                                </SidebarMenuButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl shadow-2xl"
-                                side={isMobile ? "bottom" : "right"}
-                                align="end"
-                                sideOffset={4}
-                            >
-                                <DropdownMenuLabel className="p-0 font-normal">
-                                    <div className="flex items-center gap-3 px-2 py-2 text-left text-sm">
-                                        <Avatar className="h-9 w-9 rounded-lg overflow-hidden shrink-0">
-                                            <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.fullName || ""} className="aspect-square object-cover" />
-                                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold">
-                                                {(currentUser?.fullName || "U").substring(0, 2).toUpperCase()}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-bold">{currentUser?.fullName}</span>
-                                            <span className="truncate text-xs text-muted-foreground">{currentUser?.email}</span>
-                                        </div>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                                        <BadgeCheck className="mr-2 size-4" />
-                                        Account
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/system-settings')}>
-                                        <Settings className="mr-2 size-4" />
-                                        Settings
-                                    </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={onLogout}>
-                                    <LogOut className="mr-2 size-4" />
-                                    Log out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <SidebarMenuButton
+                            tooltip="Download Dashboard"
+                            onClick={onLogout}
+                            className="h-10 w-full rounded-lg bg-foreground text-background text-[13px] font-medium hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2 px-3"
+                        >
+                            <Download size={14} strokeWidth={2} className="shrink-0" />
+                            {!isCollapsed && (
+                                <span className="truncate">Download Dashboard</span>
+                            )}
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-
-                {/* THEME SELECTOR - JEFF SU STYLE */}
-                <div className="flex bg-muted/40 dark:bg-slate-900 border border-border/50 rounded-xl p-1 gap-1">
-                    <button 
-                        onClick={() => { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }}
-                        className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all hover:bg-background/80 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
-                    >
-                        <span className="flex items-center justify-center gap-2">
-                             Light
-                        </span>
-                    </button>
-                    <button 
-                        onClick={() => { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }}
-                        className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all bg-background dark:bg-slate-800 shadow-sm text-foreground"
-                    >
-                        <span className="flex items-center justify-center gap-2">
-                             Dark
-                        </span>
-                    </button>
-                    <button 
-                        className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all hover:bg-background/80 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground"
-                    >
-                        <span className="flex items-center justify-center gap-2">
-                             Auto
-                        </span>
-                    </button>
-                </div>
             </SidebarFooter>
         </Sidebar>
-    )
+    );
 }

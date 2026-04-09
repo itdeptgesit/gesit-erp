@@ -164,8 +164,8 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                                         </TableCell>
                                         <TableCell className="text-center py-4">
                                             <div className="flex justify-center gap-2 opacity-40 group-hover:opacity-100 transition-all">
-                                                <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
-                                                    <a href={f.gdriveUrl} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a>
+                                                <Button variant="ghost" size="icon" render={<a href={f.gdriveUrl} target="_blank" rel="noreferrer" />} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
+                                                    <ExternalLink size={16} />
                                                 </Button>
                                                 {isAdmin && <Button variant="ghost" size="icon" onClick={() => { setEditingFile(f); setIsModalOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil size={16} /></Button>}
                                                 {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteFile(f)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 size={16} /></Button>}

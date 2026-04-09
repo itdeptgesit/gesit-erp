@@ -194,12 +194,11 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                             </div>
                                             {record.evidenceLink && (
                                                 <div className="pt-2">
-                                                    <Button variant="outline" size="sm" asChild className="rounded-xl font-bold text-[10px] uppercase tracking-widest border-primary/20 hover:bg-primary/5 h-10 px-5">
-                                                        <a href={record.evidenceLink} target="_blank" rel="noopener noreferrer">
+                                                    <Button variant="outline" size="sm" render={<a href={record.evidenceLink} target="_blank" rel="noopener noreferrer" />} className="rounded-xl font-bold text-[10px] uppercase tracking-widest border-primary/20 hover:bg-primary/5 h-10 px-5">
                                                             <ExternalLink size={14} className="mr-2" />
                                                             View Evidence
-                                                        </a>
                                                     </Button>
+
                                                 </div>
                                             )}
                                         </div>
