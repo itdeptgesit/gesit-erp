@@ -1,0 +1,862 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import {
+    Activity, ShoppingCart, RefreshCcw, Network, Box, Zap,
+    ListTodo, LifeBuoy, ChevronRight, Users, Wallet, ShieldCheck, AlertCircle, Database,
+    Sun, CloudSun, Moon, Megaphone, CheckCircle2, X, ArrowUpRight, ArrowDownRight,
+    TrendingUp, BarChart3, PieChart, Lock, Clock, Building2, Tag
+} from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+import { ActivityLog, PortStatus, Announcement } from '../types';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
+} from 'recharts';
+import { StatCard } from './StatCard';
+import { DashboardModeSwitcher, DashboardMode } from './DashboardModeSwitcher';
+import { TopVendorsWidget } from './TopVendorsWidget';
+import { IntelligenceLayer } from './IntelligenceLayer';
+import { RiskIndicator } from './RiskIndicator';
+import { generateInsights, calculateRiskScore, Insight, RiskScore } from '../utils/IntelligenceUtils';
+import { SystemHealthMonitor } from './SystemHealthMonitor';
+
+// --- Types ---
+
+interface VendorStat {
+    name: string;
+    total: number;
+    transactionCount: number;
+}
+
+interface DashboardStats {
+    totalAssets: number;
+    activeAssets: number;
+    openTickets: number;
+    resolvedTickets: number;
+    plannedTasks: number;
+    completedTasks: number;
+    inProgressTasks: number;
+    todoTasks: number;
+    pendingPurchases: number;
+    activePorts: number;
+    totalPorts: number;
+    errorPorts: number;
+    totalUsers: number;
+    totalDepts: number;
+    pendingBudget: number;
+    approvedBudget: number;
+    totalPaidSpend: number;
+    monthlyPaidSpend: number;
+    activeLoans: number;
+    overdueLoans: number;
+    ticketPriorities: {
+        critical: number;
+        high: number;
+        medium: number;
+        low: number;
+    };
+    recentActivities: ActivityLog[];
+    assetCategories: Record<string, number>;
+    deptSpending: Record<string, number>;
+    assetStatuses: {
+        operational: number;
+        maintenance: number;
+        retired: number;
+    };
+    personalTasks: any[];
+    upcomingLoans: any[];
+    activeAnnouncements: Announcement[];
+    vendors: VendorStat[];
+}
+
+interface MainDashboardProps {
+    onNavigate: (view: string) => void;
+    userName?: string;
+    userRole?: string;
+}
+
+// --- Helper Components ---
+
+const PriorityItem = ({ title, count, type, onClick }: any) => (
+    <div onClick={onClick} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors cursor-pointer group">
+        <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'critical' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' :
+                type === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
+                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                }`}>
+                {type === 'critical' ? <AlertCircle size={20} /> : type === 'warning' ? <Clock size={20} /> : <ListTodo size={20} />}
+            </div>
+            <div>
+                <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{title}</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Requires attention</p>
+            </div>
+        </div>
+        <div className="flex items-center gap-3">
+            <span className="text-xl font-bold text-slate-900 dark:text-white">{count}</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+        </div>
+    </div>
+);
+
+const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+};
+
+// --- Main Component ---
+
+export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userName, userRole = 'User' }) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [dashboardMode, setDashboardMode] = useState<DashboardMode>('overview');
+    const [insights, setInsights] = useState<Insight[]>([]);
+    const [riskScore, setRiskScore] = useState<RiskScore>({ score: 0, level: 'low', factors: [] });
+    const [stats, setStats] = useState<DashboardStats>({
+        totalAssets: 0, activeAssets: 0,
+        openTickets: 0, resolvedTickets: 0,
+        plannedTasks: 0, completedTasks: 0, inProgressTasks: 0, todoTasks: 0,
+        pendingPurchases: 0, activePorts: 0, totalPorts: 0, errorPorts: 0,
+        totalUsers: 0, totalDepts: 0,
+        pendingBudget: 0, approvedBudget: 0, totalPaidSpend: 0, monthlyPaidSpend: 0,
+        activeLoans: 0, overdueLoans: 0,
+        ticketPriorities: { critical: 0, high: 0, medium: 0, low: 0 },
+        recentActivities: [],
+        assetCategories: {},
+        deptSpending: {},
+        assetStatuses: { operational: 0, maintenance: 0, retired: 0 },
+        personalTasks: [], upcomingLoans: [], activeAnnouncements: [],
+        vendors: []
+    });
+
+    // Mock Data for Charts (Replace with real historical data if available)
+    const ticketTrendData = [
+        { name: 'Mon', tickets: 4 },
+        { name: 'Tue', tickets: 7 },
+        { name: 'Wed', tickets: 5 },
+        { name: 'Thu', tickets: 12 },
+        { name: 'Fri', tickets: 8 },
+        { name: 'Sat', tickets: 2 },
+        { name: 'Sun', tickets: 1 },
+    ];
+
+    const spendingData = [
+        { name: 'Hardware', value: 45000000 },
+        { name: 'Software', value: 25000000 },
+        { name: 'Services', value: 15000000 },
+        { name: 'Cloud', value: 10000000 },
+    ];
+
+    const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444'];
+
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [
+                { data: assets },
+                { count: openTickets },
+                { count: resolvedTickets },
+                { data: tasks },
+                { data: ports },
+                { data: purchases },
+                { data: purchaseRecords },
+                { data: allTickets },
+                { count: userCount },
+                { count: deptCount },
+                { count: activeLoans },
+                { data: activities },
+                { data: pTasks },
+                { data: loans },
+                { data: announcements }
+            ] = await Promise.all([
+                supabase.from('it_assets').select('status, category'),
+                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).eq('status', 'Open'),
+                supabase.from('helpdesk_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Closed']),
+                supabase.from('weekly_plans').select('status'),
+                supabase.from('switch_ports').select('status'),
+                supabase.from('purchase_plans').select('status, total_price'),
+                supabase.from('purchase_records').select('total_va, purchase_date, status, department'),
+                supabase.from('helpdesk_tickets').select('priority, status'),
+                supabase.from('user_accounts').select('*', { count: 'exact', head: true }),
+                supabase.from('departments').select('*', { count: 'exact', head: true }),
+                supabase.from('it_asset_loans').select('*', { count: 'exact', head: true }).eq('status', 'Active'),
+                supabase.from('activity_logs').select('*').order('id', { ascending: false }).limit(5),
+                supabase.from('weekly_plans').select('*').eq('assignee', userName || 'IT Support').neq('status', 'Done').order('due_date', { ascending: true }).limit(5),
+                supabase.from('it_asset_loans').select('*, it_assets(item_name)').eq('status', 'Active').order('expected_return_date', { ascending: true }).limit(5),
+                supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
+            ]);
+
+            // Process Data
+            const ticketPriorities = {
+                critical: allTickets?.filter((t: any) => t.priority === 'Critical' && t.status === 'Open').length || 0,
+                high: allTickets?.filter((t: any) => t.priority === 'High' && t.status === 'Open').length || 0,
+                medium: allTickets?.filter((t: any) => t.priority === 'Medium' && t.status === 'Open').length || 0,
+                low: allTickets?.filter((t: any) => t.priority === 'Low' && t.status === 'Open').length || 0,
+            };
+
+            const overdueLoans = (loans || []).filter((l: any) => new Date(l.expected_return_date) < new Date()).length;
+
+            const deptSpending = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
+                const dept = curr.department || 'General';
+                acc[dept] = (acc[dept] || 0) + (curr.total_va || 0);
+                return acc;
+            }, {} as Record<string, number>);
+
+            const activePortsCount = ports?.filter((p: any) => p.status === PortStatus.ACTIVE).length || 0;
+            const errorPortsCount = ports?.filter((p: any) => p.status === PortStatus.ERROR).length || 0;
+
+            const vendors = (purchaseRecords || []).filter((r: any) => r.status === 'Paid').reduce((acc: any, curr: any) => {
+                const vendorName = curr.vendor || 'Unknown';
+                if (!acc[vendorName]) {
+                    acc[vendorName] = { name: vendorName, total: 0, transactionCount: 0 };
+                }
+                acc[vendorName].total += (curr.total_va || 0);
+                acc[vendorName].transactionCount += 1;
+                return acc;
+            }, {} as Record<string, VendorStat>);
+
+            const vendorList = (Object.values(vendors) as VendorStat[]).sort((a, b) => b.total - a.total);
+
+            const pendingBudget = purchases?.filter(p => p.status.includes('Pending')).reduce((sum, p) => sum + (p.total_price || 0), 0) || 0;
+
+            const assetStatuses = {
+                operational: assets?.filter((a: any) => ['Active', 'Used', 'Deployed'].includes(a.status)).length || 0,
+                maintenance: assets?.filter((a: any) => ['Repair', 'Maintenance'].includes(a.status)).length || 0,
+                retired: assets?.filter((a: any) => ['Broken', 'Disposed', 'Sold', 'Lost'].includes(a.status)).length || 0,
+            };
+
+            setStats({
+                totalAssets: assets?.length || 0,
+                activeAssets: assetStatuses.operational,
+                openTickets: openTickets || 0,
+                resolvedTickets: resolvedTickets || 0,
+                plannedTasks: tasks?.length || 0,
+                completedTasks: tasks?.filter((t: any) => t.status === 'Done').length || 0,
+                inProgressTasks: tasks?.filter((t: any) => t.status === 'In Progress').length || 0,
+                todoTasks: tasks?.filter((t: any) => t.status === 'To Do' || t.status === 'Pending').length || 0,
+                pendingPurchases: purchases?.filter(p => p.status.includes('Pending')).length || 0,
+                activePorts: activePortsCount,
+                totalPorts: ports?.length || 0,
+                errorPorts: errorPortsCount,
+                totalUsers: userCount || 0,
+                totalDepts: deptCount || 0,
+                pendingBudget,
+                approvedBudget: purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0,
+                totalPaidSpend: purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0,
+                monthlyPaidSpend: 0, // Simplified for brevity
+                activeLoans: activeLoans || 0,
+                overdueLoans,
+                ticketPriorities,
+                recentActivities: (activities || []).map((a: any) => ({ ...a, activityName: a.activity_name, itPersonnel: a.it_personnel, createdAt: a.created_at })),
+                assetCategories: {},
+                deptSpending,
+                assetStatuses,
+                personalTasks: pTasks || [],
+                upcomingLoans: loans || [],
+                activeAnnouncements: announcements || [],
+                vendors: vendorList
+            });
+
+            // Generate Intelligence Insights
+            const generatedInsights = generateInsights({
+                totalPaidSpend: purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0,
+                pendingBudget,
+                approvedBudget: purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0,
+                ticketPriorities,
+                openTickets: openTickets || 0,
+                resolvedTickets: resolvedTickets || 0,
+                vendors: vendorList,
+                assetStatuses,
+                totalAssets: assets?.length || 0,
+                overdueLoans,
+                activeLoans: activeLoans || 0,
+                deptSpending
+            }, onNavigate);
+            setInsights(generatedInsights);
+
+            // Calculate Risk Score
+            const totalBudget = (purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0) + pendingBudget;
+            const budgetUtilization = totalBudget > 0 ? ((purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0) / totalBudget) * 100 : 0;
+            const maintenanceRate = assets?.length ? (assetStatuses.maintenance / assets.length) * 100 : 0;
+
+            const risk = calculateRiskScore({
+                budgetUtilization,
+                slaCompliance: 98.2,
+                criticalTickets: ticketPriorities.critical,
+                overdueItems: overdueLoans,
+                maintenanceRate
+            });
+            setRiskScore(risk);
+
+        } catch (error) {
+            console.error("Dashboard fetch error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchData(); }, []);
+
+    // --- Role Based View Logic ---
+
+    const isSuperAdmin = userRole === 'Super Admin';
+    const isAdmin = userRole === 'Admin' || isSuperAdmin;
+
+    return (
+        <div className="pb-12 space-y-8 animate-in fade-in duration-500">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        Dashboard
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full border ${isAdmin ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                            {userRole} View
+                        </span>
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                        Real-time system intelligence and performance monitoring.
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm active:scale-95">
+                        <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
+                    </button>
+                    <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold border border-emerald-100 dark:border-emerald-900/50 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        System Online
+                    </div>
+                </div>
+            </div>
+
+
+            {/* --- SYSTEM HEALTH MONITOR (Admin Only) --- */}
+            {isAdmin && <SystemHealthMonitor />}
+
+            {/* --- INTELLIGENCE LAYER (Admin Only) --- */}
+            {isAdmin && insights.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div className="lg:col-span-3">
+                        <IntelligenceLayer insights={insights} />
+                    </div>
+                    <div>
+                        <RiskIndicator riskScore={riskScore} />
+                    </div>
+                </div>
+            )}
+
+            {/* --- ADMIN VIEW --- */}
+            {isAdmin && (
+                <>
+                    {/* --- PRIORITY CENTER --- */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden h-full min-h-[220px]">
+                            <div className="absolute top-0 right-0 p-8 opacity-10">
+                                <Zap size={120} />
+                            </div>
+                            <div className="relative z-10">
+                                <h3 className="font-bold text-indigo-100 uppercase tracking-widest text-sm mb-1">Priority Center</h3>
+                                <h2 className="text-3xl font-bold mb-4">Action Required</h2>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('purchase')}>
+                                        <AlertCircle size={18} className="text-amber-300" />
+                                        <span className="font-medium">{stats.pendingPurchases} Pending Approvals</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('helpdesk')}>
+                                        <AlertCircle size={18} className="text-rose-300" />
+                                        <span className="font-medium">{stats.ticketPriorities.critical + stats.ticketPriorities.high} High Priority Tickets</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <PriorityItem title="Pending Approvals" count={stats.pendingPurchases} type="warning" onClick={() => onNavigate('purchase')} />
+                            <PriorityItem title="Critical Tickets" count={stats.ticketPriorities.critical} type="critical" onClick={() => onNavigate('helpdesk')} />
+                            <PriorityItem title="Overdue Loans" count={stats.overdueLoans} type="critical" onClick={() => onNavigate('asset-loan')} />
+                            <PriorityItem title="My Tasks" count={stats.todoTasks} type="normal" onClick={() => onNavigate('weekly')} />
+                        </div>
+                    </div>
+
+                    {/* --- KPI CARDS --- */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Operational Overview</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <StatCard
+                                label="Service Desk"
+                                value={stats.openTickets}
+                                subValue={`${stats.resolvedTickets} resolved`}
+                                icon={LifeBuoy}
+                                color="rose"
+                                onClick={() => onNavigate('helpdesk')}
+                                trendData={[12, 15, 8, 10, 7, 9, stats.openTickets]}
+                                percentageChange={-12.5}
+                                comparisonPeriod="vs Last Week"
+                            />
+                            <StatCard
+                                label="Assets"
+                                value={stats.totalAssets}
+                                subValue={`${stats.activeAssets} operational`}
+                                icon={Box}
+                                color="blue"
+                                onClick={() => onNavigate('assets')}
+                                trendData={[stats.totalAssets - 15, stats.totalAssets - 10, stats.totalAssets - 5, stats.totalAssets - 3, stats.totalAssets - 1, stats.totalAssets]}
+                                percentageChange={5.2}
+                                comparisonPeriod="MTD"
+                            />
+                            <StatCard
+                                label="Procurement"
+                                value={formatCurrency(stats.totalPaidSpend / 1000000) + 'M'}
+                                subValue="Total spending"
+                                icon={ShoppingCart}
+                                color="amber"
+                                onClick={() => onNavigate('purchase')}
+                                trendData={[35, 42, 38, 45, 41, 48, stats.totalPaidSpend / 1000000]}
+                                percentageChange={8.3}
+                                comparisonPeriod="vs Last Month"
+                                target={100000000}
+                            />
+                            <StatCard
+                                label="Infrastructure"
+                                value={stats.activePorts}
+                                subValue="Active Network Ports"
+                                icon={Network}
+                                color="emerald"
+                                onClick={() => onNavigate('network')}
+                                trendData={[stats.activePorts - 2, stats.activePorts - 1, stats.activePorts, stats.activePorts, stats.activePorts + 1, stats.activePorts]}
+                                percentageChange={0.5}
+                            />
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* --- USER VIEW (Always same) --- */}
+            {
+                !isAdmin && (
+                        <div className="relative z-10">
+                            <h3 className="font-bold text-indigo-100 uppercase tracking-widest text-sm mb-1">Priority Center</h3>
+                            <h2 className="text-3xl font-bold mb-4">Action Required</h2>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('purchase')}>
+                                    <AlertCircle size={18} className="text-amber-300" />
+                                    <span className="font-medium">{stats.pendingPurchases} Pending Approvals</span>
+                                </div>
+                                <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors" onClick={() => onNavigate('helpdesk')}>
+                                    <AlertCircle size={18} className="text-rose-300" />
+                                    <span className="font-medium">{stats.ticketPriorities.critical + stats.ticketPriorities.high} High Priority Tickets</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <PriorityItem title="Pending Approvals" count={stats.pendingPurchases} type="warning" onClick={() => onNavigate('purchase')} />
+                        <PriorityItem title="Critical Tickets" count={stats.ticketPriorities.critical} type="critical" onClick={() => onNavigate('helpdesk')} />
+                        <PriorityItem title="Overdue Loans" count={stats.overdueLoans} type="critical" onClick={() => onNavigate('asset-loan')} />
+                        <PriorityItem title="My Tasks" count={stats.todoTasks} type="normal" onClick={() => onNavigate('weekly')} />
+                    </div>
+                </div >
+
+    {/* --- LAYER 2: OPERATIONAL OVERVIEW --- */ }
+    < div >
+                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Operational Overview</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatCard
+                            label="Service Desk"
+                            value={stats.openTickets}
+                            subValue={`${stats.resolvedTickets} resolved`}
+                            icon={LifeBuoy}
+                            color="rose"
+                            onClick={() => onNavigate('helpdesk')}
+                            trendData={[12, 15, 8, 10, 7, 9, stats.openTickets]}
+                            percentageChange={-12.5}
+                            comparisonPeriod="vs Last Week"
+                        />
+                        <StatCard
+                            label="Assets"
+                            value={stats.totalAssets}
+                            subValue={`${stats.activeAssets} operational`}
+                            icon={Box}
+                            color="blue"
+                            onClick={() => onNavigate('assets')}
+                            trendData={[stats.totalAssets - 15, stats.totalAssets - 10, stats.totalAssets - 5, stats.totalAssets - 3, stats.totalAssets - 1, stats.totalAssets]}
+                            percentageChange={5.2}
+                            comparisonPeriod="MTD"
+                        />
+                        <StatCard
+                            label="Procurement"
+                            value={formatCurrency(stats.totalPaidSpend / 1000000) + 'M'}
+                            subValue="Total spending"
+                            icon={ShoppingCart}
+                            color="amber"
+                            onClick={() => onNavigate('purchase')}
+                            trendData={[35, 42, 38, 45, 41, 48, stats.totalPaidSpend / 1000000]}
+                            percentageChange={8.3}
+                            comparisonPeriod="vs Last Month"
+                            target={100000000}
+                        />
+                        <StatCard
+                            label="Infrastructure"
+                            value={stats.activePorts}
+                            subValue="Active Network Ports"
+                            icon={Network}
+                            color="emerald"
+                            onClick={() => onNavigate('network')}
+                            trendData={[stats.activePorts - 2, stats.activePorts - 1, stats.activePorts, stats.activePorts, stats.activePorts + 1, stats.activePorts]}
+                            percentageChange={0.5}
+                        />
+                    </div>
+                </div >
+
+    {/* --- LAYER 3: ANALYTICS --- */ }
+    < div className = "grid grid-cols-1 lg:grid-cols-3 gap-6" >
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
+                            <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">View All</button>
+                        </div>
+                        <div className="space-y-6">
+                            {stats.recentActivities.length === 0 ? <p className="text-sm text-slate-400 italic">No activity logs.</p> : stats.recentActivities.map((act) => (
+                                <div key={act.id} className="flex gap-4">
+                                    <div className="mt-1"><div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">{act.itPersonnel ? act.itPersonnel.substring(0, 2).toUpperCase() : 'IT'}</div></div>
+                                    <div>
+                                        <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-snug"><span className="font-bold text-slate-900 dark:text-white">{act.itPersonnel?.split(' ')[0]}</span> {act.activityName}</p>
+                                        <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
+                            <h3 className="font-bold text-slate-800 dark:text-white mb-2">Ticket Trend</h3>
+                            <div className="flex-1 min-h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={ticketTrendData}>
+                                        <defs><linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                                        <Tooltip />
+                                        <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTickets)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col">
+                            <h3 className="font-bold text-slate-800 dark:text-white mb-2">Budget Distribution</h3>
+                            <div className="flex-1 min-h-[200px] flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RePieChart>
+                                        <Pie data={spendingData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                            {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
+                                    </RePieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                </div >
+            </>
+                    )}
+
+{/* FINANCE MODE */ }
+{
+    dashboardMode === 'finance' && (
+        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+            {/* Row 1 – Financial KPI */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    label="Total Procurement"
+                    value={formatCurrency(stats.totalPaidSpend)}
+                    subtext="Settled Invoices"
+                    icon={Wallet}
+                    colorClass="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border-emerald-100 dark:border-emerald-500/20"
+                />
+                <StatCard
+                    label="Outstanding"
+                    value={formatCurrency(stats.pendingBudget)}
+                    subtext="Pending Commitments"
+                    icon={AlertCircle}
+                    colorClass="bg-rose-50 dark:bg-rose-500/10 text-rose-600 border-rose-100 dark:border-rose-500/20"
+                />
+                <StatCard
+                    label="Budget Absorption"
+                    value="84%"
+                    subtext="YTD Utilization"
+                    icon={TrendingUp}
+                    colorClass="bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20"
+                    trend={5}
+                />
+                <StatCard
+                    label="Gross Volume"
+                    value={formatCurrency(stats.totalPaidSpend + stats.pendingBudget)}
+                    subtext="Total Transaction Value"
+                    icon={BarChart3}
+                    colorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 border-indigo-100 dark:border-indigo-500/20"
+                />
+            </div>
+
+            {/* Row 2 – Trend (Full Width) */}
+            <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+                        <TrendingUp size={20} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Procurement Velocity</h3>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Monthly Disbursement Analysis</p>
+                    </div>
+                </div>
+                <div className="h-[350px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={[
+                            { name: 'Jan', amount: 45000000 }, { name: 'Feb', amount: 52000000 },
+                            { name: 'Mar', amount: 48000000 }, { name: 'Apr', amount: 61000000 },
+                            { name: 'May', amount: 55000000 }, { name: 'Jun', amount: 67000000 }
+                        ]}>
+                            <defs><linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val / 1000000}M`} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value: number) => [formatCurrency(value), 'Disbursed']}
+                                itemStyle={{ color: '#10b981', fontWeight: 700, fontSize: '12px' }}
+                                labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
+                            />
+                            <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorSpend)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Row 3 – Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-100 dark:border-blue-500/20 shadow-sm">
+                            <Building2 size={20} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Cost Center Distribution</h3>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Allocation by Department</p>
+                        </div>
+                    </div>
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart layout="vertical" data={Object.entries(stats.deptSpending).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5)} margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                                <XAxis type="number" hide />
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    width={140}
+                                    tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }}
+                                />
+                                <Tooltip
+                                    cursor={{ fill: 'transparent' }}
+                                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value: number) => [formatCurrency(value), 'Allocated']}
+                                    itemStyle={{ color: '#2563eb', fontWeight: 700, fontSize: '12px' }}
+                                    labelStyle={{ color: '#64748b', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}
+                                />
+                                <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={24}>
+                                    {Object.entries(stats.deptSpending).map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'][index % 5]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+                <div className="space-y-6">
+                    <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 p-8 shadow-sm">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
+                                <Tag size={20} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-none">Spend Categories</h3>
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Classification Breakdown</p>
+                            </div>
+                        </div>
+                        <div className="h-[220px] w-full relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RePieChart>
+                                    <Pie
+                                        data={spendingData}
+                                        innerRadius={65}
+                                        outerRadius={85}
+                                        paddingAngle={6}
+                                        dataKey="value"
+                                        stroke="none"
+                                        cornerRadius={4}
+                                    >
+                                        {spendingData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                        itemStyle={{ color: '#6366f1', fontWeight: 700, fontSize: '12px' }}
+                                    />
+                                </RePieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="text-center">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+                                    <p className="text-xl font-black text-slate-800 dark:text-white">100%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                            {spendingData.map((entry, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide truncate">{entry.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <TopVendorsWidget vendors={stats.vendors} />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+{/* TECHNICAL MODE */ }
+{
+    dashboardMode === 'technical' && (
+        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+            {/* Row 1 – Technical KPI */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <StatCard label="Open Tickets" value={stats.openTickets} icon={LifeBuoy} color="blue" />
+                <StatCard label="Critical Issues" value={stats.ticketPriorities.critical} icon={AlertCircle} color="rose" />
+                <StatCard label="SLA Status" value="98.2%" icon={ShieldCheck} color="emerald" subValue="Compliance rate" />
+                <StatCard label="Active Assets" value={stats.activeAssets} icon={Box} color="indigo" subValue={`${stats.totalAssets} total`} />
+                <StatCard label="Infrastructure" value={stats.activePorts} icon={Network} color="amber" subValue="Active ports" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Row 2 – Ticket Trend (2/3 width) */}
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-bold text-slate-800 dark:text-white">Ticket Volume Trend</h3>
+                        <div className="text-xs text-slate-500 font-medium">Last 30 Days</div>
+                    </div>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={ticketTrendData.concat([{ name: 'Sun', tickets: 2 }]) /* Mock for 30 days extension */}>
+                                <defs><linearGradient id="colorTicketsTech" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} /><stop offset="95%" stopColor="#2563eb" stopOpacity={0} /></linearGradient></defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                <YAxis axisLine={false} tickLine={false} />
+                                <Tooltip />
+                                <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorTicketsTech)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Row 3 – Asset Status (1/3 width) */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                    <h3 className="font-bold text-slate-800 dark:text-white mb-6">Asset Health</h3>
+                    <div className="space-y-6">
+                        {[
+                            { label: 'Operational', value: stats.assetStatuses.operational, color: 'bg-emerald-500' },
+                            { label: 'Maintenance', value: stats.assetStatuses.maintenance, color: 'bg-amber-500' },
+                            { label: 'Retired/Broken', value: stats.assetStatuses.retired, color: 'bg-rose-500' }
+                        ].map((item) => (
+                            <div key={item.label} className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500 font-medium">{item.label}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">{item.value}</span>
+                                </div>
+                                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className={`h-full ${item.color}`} style={{ width: `${(item.value / stats.totalAssets) * 100}%` }} />
+                                </div>
+                            </div>
+                        ))}
+                        <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => onNavigate('assets')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Asset List</button>
+                                <button onClick={() => onNavigate('network')} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 transition-colors">Infrastructure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Row 4 – Activity Feed */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold text-slate-800 dark:text-white">Recent Technical Updates</h3>
+                    <button onClick={() => onNavigate('activity')} className="text-blue-600 text-xs font-bold hover:underline">Full Audit Log</button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {stats.recentActivities.map((act) => (
+                        <div key={act.id} className="flex gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+                            <Activity size={20} className="text-blue-500 mt-1 shrink-0" />
+                            <div>
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{act.activityName}</p>
+                                <p className="text-xs text-slate-400 mt-1">{new Date(act.createdAt).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+        </>
+    )
+}
+
+{/* --- USER VIEW (Always same) --- */ }
+{
+    !isAdmin && (
+        <>
+            {/* User Specific Layer 2 */}
+            <div>
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">My Dashboard</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <StatCard label="My Tasks" value={stats.personalTasks.length} subValue="Active tasks" icon={ListTodo} color="blue" onClick={() => onNavigate('weekly')} />
+                    <StatCard label="My Loans" value={stats.activeLoans} subValue="Active items" icon={Zap} color="indigo" onClick={() => onNavigate('asset-loan')} />
+                    <StatCard label="Open Tickets" value={0} subValue="Reported issues" icon={LifeBuoy} color="rose" onClick={() => onNavigate('helpdesk')} />
+                </div>
+            </div>
+
+            {/* User Task List */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm">
+                <h3 className="font-bold text-slate-800 dark:text-white mb-6">My Upcoming Tasks</h3>
+                <div className="space-y-4">
+                    {stats.personalTasks.length === 0 ? (
+                        <div className="text-center py-10 text-slate-400">
+                            <ListTodo size={48} className="mx-auto mb-3 opacity-20" />
+                            <p>You have no pending tasks. Great job!</p>
+                        </div>
+                    ) : (
+                        stats.personalTasks.map((task: any) => (
+                            <div key={task.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-3 h-3 rounded-full ${task.priority === 'High' ? 'bg-rose-500' : 'bg-blue-500'}`}></div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-800 dark:text-white">{task.task}</h4>
+                                        <p className="text-xs text-slate-500">{new Date(task.due_date).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <span className="text-xs font-bold px-3 py-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">{task.status}</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </>
+    )
+}
+        </div >
+    );
+};

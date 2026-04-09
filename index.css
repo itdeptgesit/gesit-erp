@@ -1,0 +1,414 @@
+@import "tailwindcss";
+
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Lato:wght@300;400;700;900&family=Montserrat:wght@100..900&family=Poppins:wght@100;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Nunito:wght@200;300;400;500;600;700;800;900&family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&family=Outfit:wght@100;200;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@200;300;400;500;600;700;800&family=Ubuntu:wght@300;400;500;700&family=Urbanist:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&family=Lexend:wght@300;400;500;600;700&family=Figtree:wght@300;400;500;600;700;800;900&display=swap');
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/noto-sans";
+@import "@fontsource-variable/figtree";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-display: Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+
+    --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+    --color-brand-50: #f0f4ff;
+    --color-brand-100: #e0e9fe;
+    --color-brand-500: #1152d4;
+    --color-brand-600: #0f48bc;
+    --color-brand-700: #0d3ca1;
+    --color-brand-900: #0a2a75;
+
+    --breakpoint-xs: 480px;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+    --primary: oklch(0.488 0.243 264.376);
+    --background-light: #fcfcfd;
+    --background-dark: #020617;
+    --card-dark: #0f172a;
+    --radius: 0.45rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.147 0.004 49.25);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.147 0.004 49.25);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.147 0.004 49.25);
+    --primary-foreground: oklch(0.97 0.014 254.604);
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+    --muted: oklch(0.97 0.001 106.424);
+    --muted-foreground: oklch(0.553 0.013 58.071);
+    --accent: oklch(0.97 0.001 106.424);
+    --accent-foreground: oklch(0.216 0.006 56.043);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.923 0.003 48.717);
+    --input: oklch(0.923 0.003 48.717);
+    --ring: oklch(0.709 0.01 56.259);
+    --chart-1: oklch(0.869 0.005 56.366);
+    --chart-2: oklch(0.553 0.013 58.071);
+    --chart-3: oklch(0.444 0.011 73.639);
+    --chart-4: oklch(0.374 0.01 67.558);
+    --chart-5: oklch(0.268 0.007 34.298);
+    --sidebar: oklch(0.985 0.001 106.423);
+    --sidebar-foreground: oklch(0.147 0.004 49.25);
+    --sidebar-primary: oklch(0.546 0.245 262.881);
+    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+    --sidebar-accent: oklch(0.97 0.001 106.424);
+    --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
+    --sidebar-border: oklch(0.923 0.003 48.717);
+    --sidebar-ring: oklch(0.709 0.01 56.259);
+}
+
+/* Smooth Theme Transitions */
+*,
+*::before,
+*::after {
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--background-light);
+    color: #1a1c21;
+}
+
+html.dark body {
+    background-color: var(--background-dark);
+    color: #f1f5f9;
+}
+
+/* Improved Form Elements in Dark Mode */
+html.dark input:not([type="checkbox"]),
+html.dark select,
+html.dark textarea {
+    background-color: var(--card-dark) !important;
+    border-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+    border-color: #3b82f6 !important;
+    outline: none;
+}
+
+/* Glass Effects */
+.glass-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+html.dark .glass-header {
+    background: rgba(2, 6, 23, 0.88);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom-color: rgba(148, 163, 184, 0.08);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px) saturate(160%);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-glass);
+}
+
+html.dark .glass-card {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(148, 163, 184, 0.08);
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+}
+
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+.font-display {
+    font-family: Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+    letter-spacing: -0.015em;
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Dark Mode Table Fixes */
+html.dark table {
+    border-color: #1e293b;
+}
+
+html.dark tr {
+    border-color: #1e293b;
+}
+
+html.dark thead {
+    background-color: rgba(15, 23, 42, 0.5);
+}
+
+/* Dynamic Primary Color Utilities */
+.bg-primary {
+    background-color: var(--primary);
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.border-primary {
+    border-color: var(--primary);
+}
+
+.ring-primary {
+    --tw-ring-color: var(--primary);
+}
+
+.hover\:bg-primary:hover {
+    background-color: var(--primary);
+}
+
+.hover\:text-primary:hover {
+    color: var(--primary);
+}
+
+.hover\:border-primary:hover {
+    border-color: var(--primary);
+}
+
+/* Primary color with opacity variations */
+.bg-primary\/10 {
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.bg-primary\/20 {
+    background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.bg-primary\/5 {
+    background-color: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.text-primary\/50 {
+    color: color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+/* Focus states */
+.focus\:ring-primary:focus {
+    --tw-ring-color: var(--primary);
+}
+
+.focus\:border-primary:focus {
+    border-color: var(--primary);
+}
+
+/* Darker shade for hover (90% brightness) */
+.hover\:bg-primary-dark:hover {
+    background-color: color-mix(in srgb, var(--primary) 90%, black 10%);
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+.animate-dash {
+    animation: dash 1s linear infinite;
+}
+
+@theme inline {
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --radius-3xl: calc(var(--radius) + 12px);
+    --radius-4xl: calc(var(--radius) + 16px);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --font-sans: 'Noto Sans Variable', sans-serif;
+    --font-heading: 'Figtree Variable', sans-serif;
+}
+
+.dark {
+    --background: oklch(0.147 0.004 49.25);
+    --foreground: oklch(0.985 0.001 106.423);
+    --card: oklch(0.216 0.006 56.043);
+    --card-foreground: oklch(0.985 0.001 106.423);
+    --popover: oklch(0.216 0.006 56.043);
+    --popover-foreground: oklch(0.985 0.001 106.423);
+    --primary: oklch(0.424 0.199 265.638);
+    --primary-foreground: oklch(0.97 0.014 254.604);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.268 0.007 34.298);
+    --muted-foreground: oklch(0.709 0.01 56.259);
+    --accent: oklch(0.268 0.007 34.298);
+    --accent-foreground: oklch(0.985 0.001 106.423);
+    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: hsl(210 40% 98%);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.553 0.013 58.071);
+
+    --background-dark: hsl(222 47% 4%);
+    --card-dark: hsl(222 40% 7%);
+    --chart-1: oklch(0.869 0.005 56.366);
+    --chart-2: oklch(0.553 0.013 58.071);
+    --chart-3: oklch(0.444 0.011 73.639);
+    --chart-4: oklch(0.374 0.01 67.558);
+    --chart-5: oklch(0.268 0.007 34.298);
+    --sidebar: oklch(0.216 0.006 56.043);
+    --sidebar-foreground: oklch(0.985 0.001 106.423);
+    --sidebar-primary: oklch(0.623 0.214 259.815);
+    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+    --sidebar-accent: oklch(0.268 0.007 34.298);
+    --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.553 0.013 58.071);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+/* Print Styles */
+@media print {
+
+    /* Standard Hide utility */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Reset core containers to be transparent/white for printable area */
+    html,
+    body,
+    #root {
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    /* Force background visibility for PDF logic */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* The Print Container (Modal Overlay Replacement) */
+    .print-container {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        background: white !important;
+        z-index: 9999 !important;
+    }
+
+    /* The Document Sheet Appearance */
+    .receipt-sheet {
+        position: relative !important;
+        width: 100% !important;
+        max-width: none !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+
+    .receipt-sheet>div {
+        margin: 0 !important;
+        padding: 60px !important;
+        /* Professional A4 padding */
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Subtle text visibility on paper */
+    .text-slate-400,
+    .dark\:text-slate-500 {
+        color: #71717a !important;
+        /* slightly darker for print */
+    }
+}

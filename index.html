@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GESIT PORTAL - Enterprise Work Platform</title>
+  <meta name="description"
+    content="GESIT PORTAL Enterprise Work Platform - Integrated workspace for teams and operations." />
+
+  <!-- ✅ FAVICON & PRELOADS -->
+  <link rel="icon" type="image/png" href="/image/logo.png" />
+  <link rel="preload" as="image" href="/image/bg.jpeg" fetchpriority="high" />
+  <link rel="preload" as="image" href="/image/logo.png" fetchpriority="high" />
+
+  <!-- ✅ ENV CONFIG -->
+  <script>
+    window.process = {
+      env: {
+        NEXT_PUBLIC_SUPABASE_URL: 'https://yihjfrxdrhkqfnjofvua.supabase.co',
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
+      }
+    };
+  </script>
+
+  <!-- ✅ SYSTEM FONTS: WHATSAPP WEB STYLE -->
+  <style>
+    body {
+      font-family: Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
+    }
+  </style>
+
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
