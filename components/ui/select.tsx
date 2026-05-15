@@ -140,8 +140,9 @@ interface SelectValueProps {
 }
 
 function SelectValue({ placeholder, className, ...props }: SelectValueProps & Omit<React.ComponentProps<typeof RACSelectValue>, 'placeholder'>) {
+  const RACSelectValueAny = RACSelectValue as any;
   return (
-    <RACSelectValue
+    <RACSelectValueAny
       {...props}
       placeholder={placeholder || "Select an option"}
       className={cn("text-sm text-muted-foreground", className)}

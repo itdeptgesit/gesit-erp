@@ -296,7 +296,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
         <div className="mt-2 text-left">
           <Tabs value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }} className="w-full">
             <TabsList 
-                variant="ghost" 
+                variant="line" 
                 className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-none no-scrollbar justify-start px-0"
             >
               {categories.map(cat => (

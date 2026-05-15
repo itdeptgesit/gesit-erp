@@ -450,12 +450,12 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
                                                         {/* Secondary actions - dropdown */}
                                                         <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
+                                                            <DropdownMenuTrigger render={
                                                                 <Button variant="ghost" className="w-8">
                                                                     <span className="sr-only">Open menu</span>
                                                                     <MoreHorizontal className="h-4 w-4" />
                                                                 </Button>
-                                                            </DropdownMenuTrigger>
+                                                            } />
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                                 <DropdownMenuItem onClick={() => { setSelectedLoan(loan); }}><FileText className="mr-2 h-4 w-4" /><span>View Receipt</span></DropdownMenuItem>
