@@ -88,14 +88,14 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                     <Button
                         variant="outline"
                         onClick={handleExportExcel}
-                        className="h-9 px-4 text-xs font-bold"
+                        className="text-xs font-bold"
                     >
                         <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export Excel
                     </Button>
                     {canManage && (
                         <Button
                             onClick={() => { setEditingFile(null); setIsModalOpen(true); }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-blue-500/20"
+                            className="text-xs font-bold /20"
                         >
                             <Plus className="mr-2 h-3.5 w-3.5" /> Register Document
                         </Button>
@@ -107,14 +107,14 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 <StatCard label="DOCUMENTS" value={files.filter(f => f.type === 'pdf' || f.type === 'doc').length} subValue="Guides & Manuals" icon={FileType} color="rose" />
                 <StatCard label="RESOURCES" value={files.filter(f => f.type === 'sheet' || f.type === 'image').length} subValue="Sheets & Diagrams" icon={FileSpreadsheet} color="emerald" />
             </div>
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
+            <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
                 <div className="relative flex-1 w-full"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />
-                    <Input type="text" placeholder="Filter library items..." className="w-full pl-11 pr-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold dark:text-slate-200 focus-visible:ring-0 shadow-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+                    <Input type="text" placeholder="Filter library items..." className="w-full pl-11 pr-4 bg-slate-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold dark:text-slate-200 focus-visible:ring-0 shadow-none" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="flex gap-2 w-full md:w-auto">
 
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}><LayoutGrid size={16} /></button>
-                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}><List size={16} /></button>
+                    <div className="flex bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl border border-slate-200 dark:border-zinc-700">
+                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><LayoutGrid size={16} /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><List size={16} /></button>
                     </div>
                 </div>
             </div>
@@ -125,8 +125,8 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 <div className="py-20 text-center text-slate-400 dark:text-slate-600 text-[10px] font-bold uppercase tracking-widest italic">No files found in registry.</div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">{paginatedFiles.map(file => (
-                    <div key={file.id} className="bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group relative flex flex-col items-center text-center">
-                        <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{file.type === 'pdf' ? <FileType size={28} /> : file.type === 'sheet' ? <FileSpreadsheet size={28} /> : <FileText size={28} />}</div>
+                    <div key={file.id} className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-100 dark:border-zinc-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group relative flex flex-col items-center text-center">
+                        <div className="w-14 h-14 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{file.type === 'pdf' ? <FileType size={28} /> : file.type === 'sheet' ? <FileSpreadsheet size={28} /> : <FileText size={28} />}</div>
                         <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-200 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">{file.name}</h4><p className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-tighter">{file.category || 'Global'}</p>
                         <div className="mt-5 flex gap-2 w-full">
                             <a href={file.gdriveUrl} target="_blank" rel="noreferrer" className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5"><ExternalLink size={12} /> Open</a>
@@ -136,10 +136,10 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                     </div>
                 ))}</div>
             ) : (
-                <div className="bg-card dark:bg-slate-900/20 rounded-2xl border border-border/10 dark:border-white/[0.03] overflow-hidden shadow-sm flex flex-col">
+                <div className="bg-card dark:bg-zinc-900/20 rounded-xl border border-border/10 dark:border-white/[0.03] overflow-hidden shadow-sm flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar">
                         <Table>
-                            <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+                            <TableHeader className="bg-slate-50/50 dark:bg-zinc-800/50">
                                 <TableRow className="border-border/10">
                                     <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Document Title</TableHead>
                                     <TableHead className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Cluster</TableHead>
@@ -157,18 +157,18 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-4">
-                                            <span className="text-[10px] font-bold uppercase text-muted-foreground/80 bg-muted/50 dark:bg-slate-800/40 px-2 py-0.5 rounded border border-border/10">{f.category || 'Global'}</span>
+                                            <span className="text-[10px] font-bold uppercase text-muted-foreground/80 bg-muted/50 dark:bg-zinc-800/40 px-2 py-0.5 rounded border border-border/10">{f.category || 'Global'}</span>
                                         </TableCell>
                                         <TableCell className="py-4 font-mono text-[10px] font-bold text-muted-foreground">
                                             {f.updatedAt}
                                         </TableCell>
                                         <TableCell className="text-center py-4">
                                             <div className="flex justify-center gap-2 opacity-40 group-hover:opacity-100 transition-all">
-                                                <Button variant="ghost" size="icon" render={<a href={f.gdriveUrl} target="_blank" rel="noreferrer" />} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
+                                                <Button variant="ghost" size="icon" render={<a href={f.gdriveUrl} target="_blank" rel="noreferrer" />} className="w-8 text-muted-foreground hover:text-primary hover:bg-primary/10">
                                                     <ExternalLink size={16} />
                                                 </Button>
-                                                {isAdmin && <Button variant="ghost" size="icon" onClick={() => { setEditingFile(f); setIsModalOpen(true); }} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil size={16} /></Button>}
-                                                {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteFile(f)} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 size={16} /></Button>}
+                                                {isAdmin && <Button variant="ghost" size="icon" onClick={() => { setEditingFile(f); setIsModalOpen(true); }} className="w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"><Pencil size={16} /></Button>}
+                                                {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteFile(f)} className="w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"><Trash2 size={16} /></Button>}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -176,11 +176,11 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                             </TableBody>
                         </Table>
                     </div>
-                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
                         <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredFiles.length} documents)</p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
                         </div>
                     </div>
                 </div>
@@ -190,3 +190,4 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
         </div>
     );
 };
+

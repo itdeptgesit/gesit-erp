@@ -112,8 +112,8 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
     };
 
     return (
-        <Card className="rounded-[2rem] border-slate-100 dark:border-white/5 shadow-sm overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <CardHeader className="px-8 py-6 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-slate-800/20">
+        <Card className="rounded-xl border-slate-100 dark:border-white/5 shadow-sm overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CardHeader className="px-8 py-6 border-b border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-zinc-800/20">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-sm">
                         <Package size={22} />
@@ -151,7 +151,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                         id="search"
                                         placeholder={t('assetSearchPlaceholder')}
                                         className={cn(
-                                            "h-11 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/10 transition-all",
+                                            "h-11 rounded-xl bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-primary/10 transition-all",
                                             formData.assetId ? 'border-primary/50 bg-primary/5' : ''
                                         )}
                                         value={assetSearch}
@@ -163,7 +163,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                         autoComplete="off"
                                     />
                                     {isAssetListOpen && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[50] max-h-[300px] overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-300 border shadow-indigo-500/10">
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl z-[50] max-h-[300px] overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-300 border shadow-indigo-500/10">
                                             {filteredAssets.length === 0 ? (
                                                 <div className="p-10 text-center">
                                                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No assets available</p>
@@ -203,7 +203,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                     <Input
                                         type="date"
                                         required
-                                        className="h-11 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800"
+                                        className="h-11 rounded-xl bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800"
                                         value={formData.loanDate}
                                         onChange={e => setFormData({ ...formData, loanDate: e.target.value })}
                                     />
@@ -215,7 +215,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                     <Input
                                         type="date"
                                         required
-                                        className="h-11 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800"
+                                        className="h-11 rounded-xl bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800"
                                         value={formData.expectedReturnDate}
                                         onChange={e => setFormData({ ...formData, expectedReturnDate: e.target.value })}
                                     />
@@ -232,7 +232,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                 <Input
                                     type="text"
                                     placeholder={t('phonePlaceholder')}
-                                    className="h-11 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800"
+                                    className="h-11 rounded-xl bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800"
                                     value={formData.borrowerPhone}
                                     onChange={e => setFormData({ ...formData, borrowerPhone: e.target.value })}
                                 />
@@ -244,7 +244,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                                 </Label>
                                 <Textarea
                                     placeholder={t('purposePlaceholder')}
-                                    className="rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 h-[100px] py-4 resize-none leading-relaxed"
+                                    className="rounded-xl bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 h-[100px] py-4 resize-none leading-relaxed"
                                     value={formData.remarks}
                                     onChange={e => setFormData({ ...formData, remarks: e.target.value })}
                                 />
@@ -254,11 +254,11 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
 
                     <div className="pt-8 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400">
                                 <Package size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-0.5">{t('borrowerStatus')}</span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.15em] mb-0.5">{t('borrowerStatus')}</span>
                                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{formData.borrowerName} ({formData.borrowerDept})</span>
                             </div>
                         </div>
@@ -266,7 +266,7 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
                             type="submit"
                             disabled={isLoading}
                             size="lg"
-                            className="rounded-2xl px-10 h-13 font-black uppercase tracking-[0.1em] shadow-xl shadow-primary/20 flex items-center gap-3 transition-transform active:scale-95"
+                            className="font-black uppercase tracking-[0.1em] /20 flex items-center gap-3 transition-transform active:scale-95"
                         >
                             {isLoading ? (
                                 <RefreshCcw className="animate-spin text-white" size={18} />
@@ -283,3 +283,4 @@ export const LoanRequestFormInline: React.FC<LoanRequestFormInlineProps> = ({
         </Card>
     );
 };
+

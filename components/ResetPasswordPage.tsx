@@ -46,16 +46,16 @@ export const ResetPasswordPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
-            <main className="flex-1 flex items-center justify-center p-8 bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
+            <main className="flex-1 flex items-center justify-center p-8 bg-slate-50/50 dark:bg-zinc-900/50">
                 <div className="w-full max-w-[420px]">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-slate-800">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-zinc-800">
                         <div className="mb-10 text-center">
                             <img src={LOGO_URL} alt="Logo" className="h-12 w-auto mb-8 mx-auto" />
                             <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                                 {isSuccess ? 'Security Updated' : 'Reset Password'}
                             </h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
+                            <p className="text-slate-500 dark:text-zinc-400 text-sm mt-2 font-medium">
                                 {isSuccess
                                     ? 'Your new credentials have been established'
                                     : 'Please enter your new secure password'}
@@ -63,7 +63,7 @@ export const ResetPasswordPage: React.FC = () => {
                         </div>
 
                         {error && (
-                            <div className="mb-8 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 p-4 rounded-2xl text-sm font-medium flex items-start gap-3">
+                            <div className="mb-8 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 p-4 rounded-xl text-sm font-medium flex items-start gap-3">
                                 <span>{error}</span>
                             </div>
                         )}
@@ -73,7 +73,7 @@ export const ResetPasswordPage: React.FC = () => {
                                 <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 scale-in-center">
                                     <CheckCircle2 size={40} />
                                 </div>
-                                <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                <p className="text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                                     Redirecting to dashboard...
                                 </p>
                             </div>
@@ -86,7 +86,7 @@ export const ResetPasswordPage: React.FC = () => {
                                             <Lock size={20} />
                                         </div>
                                         <input
-                                            className="w-full h-14 pl-12 pr-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
+                                            className="w-full h-14 pl-12 pr-12 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
                                             placeholder="••••••••••••"
                                             type={showPassword ? "text" : "password"}
                                             value={password}
@@ -110,7 +110,7 @@ export const ResetPasswordPage: React.FC = () => {
                                             <Lock size={20} />
                                         </div>
                                         <input
-                                            className="w-full h-14 pl-12 pr-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
+                                            className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/50 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none text-slate-800 dark:text-slate-100 font-medium"
                                             placeholder="••••••••••••"
                                             type="password"
                                             value={confirmPassword}
@@ -123,7 +123,7 @@ export const ResetPasswordPage: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
+                                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50"
                                 >
                                     {isLoading ? <RefreshCcw className="animate-spin" size={20} /> : <>Update Security Key <ChevronRight size={18} /></>}
                                 </button>
@@ -135,3 +135,4 @@ export const ResetPasswordPage: React.FC = () => {
         </div>
     );
 };
+

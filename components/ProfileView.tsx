@@ -318,14 +318,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
     return (
         <div className="max-w-4xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
             {/* 1. Header Card - Direct from Image */}
-            <Card className="rounded-3xl border-slate-200 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 overflow-hidden mb-6">
+            <Card className="rounded-xl border-slate-200 dark:border-white/10 shadow-sm bg-white dark:bg-zinc-900 overflow-hidden mb-6">
                 <div className="p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
                     {/* Avatar with Camera Icon Overlay */}
                     <div className="relative group flex-shrink-0">
-                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-slate-800 shadow-lg relative bg-slate-100 dark:bg-slate-800">
+                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-zinc-800 shadow-lg relative bg-slate-100 dark:bg-zinc-800">
                             <Avatar className="w-full h-full rounded-none">
                                 <AvatarImage src={avatarUrl} className="object-cover" />
-                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 capitalize">
+                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 capitalize">
                                     {userInitial}
                                 </AvatarFallback>
                             </Avatar>
@@ -335,7 +335,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 </div>
                             )}
                         </div>
-                        <label className="absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center cursor-pointer shadow-md border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all z-10">
+                        <label className="absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center cursor-pointer shadow-md border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all z-10">
                             <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
                             <Camera size={16} className="text-slate-600 dark:text-white" />
                         </label>
@@ -354,11 +354,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             )}
                         </div>
 
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">
-                            {formData.jobTitle || 'N/A Level Personnel'} {formData.department && `• ${formData.department}`} {formData.company && `• ${formData.company}`}
+                        <p className="text-slate-500 dark:text-zinc-400 font-medium">
+                            {[formData.jobTitle, formData.department, formData.company].filter(Boolean).join(' • ')}
                         </p>
 
-                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-slate-500 dark:text-zinc-400 text-sm font-medium">
                             <div className="flex items-center gap-2">
                                 <Mail size={16} className="text-slate-400" />
                                 <span>{userEmail}</span>
@@ -374,7 +374,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                     <div className="flex-shrink-0">
                         <Button
                             onClick={() => setIsEditing(!isEditing)}
-                            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-6 rounded-xl font-bold transition-all shadow-sm"
+                            className="dark: dark: font-bold transition-all"
                         >
                             {isEditing ? 'Cancel Edit' : 'Edit Profile'}
                         </Button>
@@ -382,25 +382,25 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                 </div>
             </Card>
 
-            {/* 2. Custom Tabs - Direct from Image */}
+            {/* 2. Custom Standardized Tabs */}
             <Tabs defaultValue="account" className="w-full">
-                <div className="bg-slate-100/80 dark:bg-white/5 p-1.5 rounded-2xl mb-6 sm:mb-8 flex justify-start sm:justify-center overflow-x-auto no-scrollbar">
-                    <TabsList className="bg-transparent h-12 gap-1 sm:gap-2 w-full max-w-2xl px-1.5 min-w-max flex-nowrap inline-flex">
-                        <TabsTrigger value="personal" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Personal</TabsTrigger>
-                        <TabsTrigger value="account" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Account</TabsTrigger>
-                        <TabsTrigger value="security" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Security</TabsTrigger>
-                        <TabsTrigger value="notifications" className="rounded-xl font-bold text-slate-500 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-4 sm:px-8 text-[12px] sm:text-sm">Notifications</TabsTrigger>
+                <div className="flex justify-start sm:justify-center mb-6 sm:mb-8 overflow-x-auto no-scrollbar">
+                    <TabsList className="min-w-max shadow-sm">
+                        <TabsTrigger value="personal">Personal</TabsTrigger>
+                        <TabsTrigger value="account">Account</TabsTrigger>
+                        <TabsTrigger value="security">Security</TabsTrigger>
+                        <TabsTrigger value="notifications">Notifications</TabsTrigger>
                     </TabsList>
                 </div>
 
                 {/* Account Tab Content - Primary Focus from Image */}
                 <TabsContent value="account">
-                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                         <div className="p-6 sm:p-12 space-y-8 sm:space-y-12">
                             {/* Section: Header */}
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Account Settings</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your account preferences and security.</p>
+                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Manage your account preferences and security.</p>
                             </div>
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
@@ -409,7 +409,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="flex items-center justify-between group">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Status</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Your account is currently active</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Your account is currently active</p>
                                 </div>
                                 <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-none px-4 py-1.5 font-bold rounded-lg shadow-none">
                                     Active
@@ -422,7 +422,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Visibility</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Make your profile visible to other users</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Make your profile visible to other users</p>
                                 </div>
                                 <Switch defaultChecked className="data-[state=checked]:bg-slate-900 dark:data-[state=checked]:bg-blue-600" />
                             </div>
@@ -433,9 +433,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Data Export</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Download a copy of your data</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Download a copy of your data</p>
                                 </div>
-                                <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold h-12 px-8 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5">
+                                <Button variant="outline" className="w-full sm:w-auto font-bold border-slate-200 dark:border-white/10 dark:/5">
                                     Export Data
                                 </Button>
                             </div>
@@ -443,19 +443,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                     </Card>
 
                     {/* Danger Zone Card */}
-                    <Card className="mt-8 rounded-3xl border-rose-100 dark:border-rose-900/30 bg-white dark:bg-slate-900 overflow-hidden shadow-sm border">
+                    <Card className="mt-8 rounded-xl border-rose-100 dark:border-rose-900/30 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm border">
                         <div className="p-8 sm:p-12 space-y-8">
                             <div>
                                 <h3 className="text-xl font-bold text-rose-600 mb-1">Danger Zone</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Irreversible and destructive actions</p>
+                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Irreversible and destructive actions</p>
                             </div>
 
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
                                 <div className="space-y-1 text-left">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Delete Account</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Permanently delete your account and all data</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Permanently delete your account and all data</p>
                                 </div>
-                                <Button variant="destructive" className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-200 dark:shadow-rose-900/10 flex items-center justify-center gap-2">
+                                <Button variant="destructive" className="w-full sm:w-auto font-bold dark:/10 flex items-center justify-center gap-2">
                                     <Trash2 size={18} /> Delete Account
                                 </Button>
                             </div>
@@ -465,11 +465,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                 {/* Personal Tab - Adapting previous fields into new UI style */}
                 <TabsContent value="personal">
-                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                         <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Personal Details</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Update your identity and contact information.</p>
+                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Update your identity and contact information.</p>
                             </div>
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
@@ -481,7 +481,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.fullName}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
+                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -490,7 +490,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.jobTitle}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
+                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -499,13 +499,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.phone}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold"
+                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Department</Label>
                                     <Select disabled={!isEditing} value={formData.department} onValueChange={(val) => setFormData({ ...formData, department: val })}>
-                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold">
+                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
                                             <SelectValue placeholder="Select division" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -522,7 +522,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Company</Label>
                                     <Select disabled={!isEditing} value={formData.company} onValueChange={(val) => setFormData({ ...formData, company: val })}>
-                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 font-semibold">
+                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
                                             <SelectValue placeholder="Select company" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -536,7 +536,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                             {isEditing && (
                                 <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto bg-slate-900 dark:bg-blue-600 text-white px-10 h-14 rounded-xl font-bold flex justify-center items-center gap-2">
+                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto dark: font-bold flex justify-center items-center gap-2">
                                         {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
                                         Save Information
                                     </Button>
@@ -548,11 +548,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                 {/* Security Tab */}
                 <TabsContent value="security">
-                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                         <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Security Protocols</h3>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Manage your passcode and accessibility keys.</p>
+                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Manage your passcode and accessibility keys.</p>
                             </div>
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
@@ -560,12 +560,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Change Passcode</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Update your security key for system access</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Update your security key for system access</p>
                                 </div>
                                 <Button
                                     onClick={() => setIsPasswordModalOpen(true)}
                                     variant="outline"
-                                    className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 border-slate-200 dark:border-white/10 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto font-bold border-slate-200 dark:border-white/10 hover:border-amber-500 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Lock size={18} /> Update Key
                                 </Button>
@@ -576,12 +576,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Session Control</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs">Sign out from all active terminals</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Sign out from all active terminals</p>
                                 </div>
                                 <Button
                                     onClick={onLogout}
                                     variant="ghost"
-                                    className="w-full sm:w-auto rounded-xl font-bold h-14 px-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto font-bold transition-all flex items-center justify-center gap-2"
                                 >
                                     <LogOut size={18} /> Terminate All Sessions
                                 </Button>
@@ -593,10 +593,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             <div className="space-y-6">
                                 <div>
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">Active Sessions</h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs text-opacity-70 font-medium">Manage and secure your active login sessions across devices.</p>
+                                    <p className="text-slate-500 dark:text-zinc-400 text-xs text-opacity-70 font-medium">Manage and secure your active login sessions across devices.</p>
                                 </div>
 
-                                <div className="border border-slate-100 dark:border-white/5 rounded-2xl overflow-x-auto bg-white dark:bg-slate-900/50">
+                                <div className="border border-slate-100 dark:border-white/5 rounded-xl overflow-x-auto bg-white dark:bg-zinc-900/50">
                                     <Table className="min-w-[600px]">
                                         <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b-0">
                                             <TableRow className="hover:bg-transparent border-b">
@@ -621,8 +621,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                                             <span className="text-xs text-slate-400 font-medium">{session.browser}</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.ip}</TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-slate-400 text-sm">{session.lastUpdated}</TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-zinc-400 text-sm">{session.ip}</TableCell>
+                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-zinc-400 text-sm">{session.lastUpdated}</TableCell>
                                                     <TableCell className="py-6 px-6 font-medium text-slate-900 dark:text-slate-200 text-sm flex items-center gap-2">
                                                         {session.location === 'Identifying...' ? <Loader2 size={14} className="animate-spin text-slate-400" /> : <Globe size={14} className="text-slate-400" />}
                                                         {session.location}
@@ -636,7 +636,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 px-3 py-1.5 h-auto rounded-lg"
+                                                                className="text-xs font-bold dark: .5 h-auto"
                                                                 onClick={async () => {
                                                                     if (session.sessionToken) {
                                                                         await supabase.from('user_sessions').delete().eq('session_token', session.sessionToken);
@@ -659,13 +659,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                 </TabsContent>
 
                 <TabsContent value="notifications">
-                    <Card className="rounded-3xl border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
                         <div className="p-6 sm:p-12 space-y-10 text-center py-20">
                             <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Bell size={32} className="text-slate-300" />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">Notification Configurer</h3>
-                            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This module is currently initializing. Alert synchronization preferences will be available shortly.</p>
+                            <p className="text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">This module is currently initializing. Alert synchronization preferences will be available shortly.</p>
                         </div>
                     </Card>
                 </TabsContent>
@@ -675,3 +675,4 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         </div>
     );
 };
+

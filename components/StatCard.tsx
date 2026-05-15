@@ -73,34 +73,35 @@ export const StatCard: React.FC<StatCardProps> = ({
             onClick={onClick}
             className={`
                 relative flex flex-col justify-between p-6
-                bg-[#f5f5f5] text-[#111827] border-none shadow-none
-                rounded-[32px] min-h-[140px]
-                transition-all duration-300 cursor-pointer group
+                bg-card text-card-foreground border shadow-sm
+                rounded-xl min-h-[140px]
+                transition-all duration-200 cursor-pointer group hover:bg-muted/50
+                dark:border-white/10
             `}
         >
-            <div className="flex justify-between items-start">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${c.iconBg} ${c.text} shrink-0 shadow-lg shadow-black/5`}>
-                    <Icon size={18} strokeWidth={2.5} />
-                </div>
-                {calculatedChange !== undefined && (
-                    <div className={`flex items-center gap-0.5 font-bold text-[10px] ${trendDirection === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {trendDirection === 'up' ? <ArrowUpRight size={12} strokeWidth={3} /> : <ArrowDownRight size={12} strokeWidth={3} />}
-                        {Math.abs(calculatedChange).toFixed(0)}%
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-4">
-                <p className="text-[11px] font-black tracking-widest text-[#6B7280] uppercase opacity-70 mb-1">
+            <div className="flex justify-between items-center mb-4">
+                <p className="text-xs font-medium text-muted-foreground tracking-wide">
                     {label}
                 </p>
-                <div className="flex items-baseline gap-2">
-                    <h4 className="text-2xl font-black tracking-tighter text-[#111827]">
+                <div className="text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity">
+                    <Icon size={16} strokeWidth={2} />
+                </div>
+            </div>
+
+            <div className="mt-auto">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-3xl font-bold tracking-tight text-foreground">
                         {value}
                     </h4>
+                    {calculatedChange !== undefined && (
+                        <div className={`flex items-center gap-0.5 font-bold text-xs ${trendDirection === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {trendDirection === 'up' ? <ArrowUpRight size={14} strokeWidth={2.5} /> : <ArrowDownRight size={14} strokeWidth={2.5} />}
+                            {Math.abs(calculatedChange).toFixed(0)}%
+                        </div>
+                    )}
                 </div>
                 {finalSubText && (
-                    <p className="text-[10px] font-bold text-[#9CA3AF] mt-1 uppercase tracking-tight">
+                    <p className="text-xs text-muted-foreground mt-1.5 font-medium">
                         {finalSubText}
                     </p>
                 )}

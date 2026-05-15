@@ -175,7 +175,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             {/* HEADER */}
             {variant === 'public' ? (
                 // PUBLIC VARIANT
-                <header className="relative z-20 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 md:px-8 flex items-center justify-between transition-all">
+                <header className="relative z-20 h-16 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-6 md:px-8 flex items-center justify-between transition-all">
                     <NavLink to="/" className="flex items-center gap-3 group shrink-0">
                         <div className="w-9 h-9 flex items-center justify-center">
                             <img src="/image/logo.png" alt="Logo" className="h-8 w-8 object-contain" />
@@ -184,14 +184,14 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
                                 TASKPLUS <span className="text-blue-600">Directory</span>
                             </h1>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wider uppercase">Internal Registry</p>
+                            <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium tracking-wider uppercase">Internal Registry</p>
                         </div>
                     </NavLink>
 
                     <div className="flex items-center gap-4 ml-8">
                         <NavLink
                             to="/helpdesk"
-                            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all ${isActive ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                         >
                             <LifeBuoy size={14} />
                             Helpdesk
@@ -201,7 +201,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-2 shrink-0">
-                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="hidden md:flex items-center bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg border border-slate-200 dark:border-zinc-700">
                             <LayoutGroup id="floor-filter">
                                 {['All', 27, 26].map((f) => (
                                     <button
@@ -231,7 +231,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                     </div>
                 </header>
             ) : (
-                <header className="relative z-20 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between gap-6 transition-all">
+                <header className="relative z-20 h-14 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-6 flex items-center justify-between gap-6 transition-all">
                     {/* Left: Mobile menu + Search */}
                     <div className="flex items-center gap-4 flex-1">
                         <button onClick={onMenuClick} className="md:hidden p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
@@ -243,7 +243,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="w-full pl-10 pr-12 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 transition-all"
+                                className="w-full pl-10 pr-12 py-2 bg-white dark:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-700 text-[13px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 transition-all"
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md text-[10px] font-bold text-slate-400">
                                 <span>⌘</span>
@@ -273,8 +273,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             </button>
                             <AnimatePresence>
                                 {isNotificationOpen && (
-                                    <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }} className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden z-[100]">
-                                        <div className="px-4 py-3 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+                                    <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }} className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-800 overflow-hidden z-[100]">
+                                        <div className="px-4 py-3 flex justify-between items-center border-b border-slate-100 dark:border-zinc-800">
                                             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</h3>
                                             {unreadCount > 0 && <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[10px] font-semibold rounded-full">{unreadCount} New</span>}
                                         </div>
@@ -285,9 +285,9 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                                     <p className="text-xs text-slate-400">No notifications</p>
                                                 </div>
                                             ) : notifications.map(n => (
-                                                <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${!n.isRead ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}`}>
+                                                <div key={n.id} onClick={() => { markAsRead(n.id); if (n.link) navigate(n.link); setIsNotificationOpen(false); }} className={`px-4 py-3 border-b border-slate-50 dark:border-zinc-800/50 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${!n.isRead ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''}`}>
                                                     <p className="text-[13px] font-semibold text-slate-900 dark:text-white mb-0.5">{n.title}</p>
-                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">{n.message}</p>
+                                                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-2">{n.message}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -303,8 +303,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             <div className="relative" ref={dropdownRef}>
                                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
                                     <div className="relative">
-                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
-                                            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</div>}
+                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-zinc-700">
+                                            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-400 font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</div>}
                                         </div>
                                         <div className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border-[1.5px] border-white dark:border-slate-900"></div>
                                     </div>
@@ -320,9 +320,9 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                                             initial={{ opacity: 0, y: 8, scale: 0.96 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                                            className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden z-[100]"
+                                            className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-slate-200 dark:border-zinc-800 overflow-hidden z-[100]"
                                         >
-                                            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                                            <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
                                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{user?.role || 'Operator'}</p>
                                                 <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{userName}</p>
                                             </div>
@@ -355,3 +355,4 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
         </div>
     );
 };
+

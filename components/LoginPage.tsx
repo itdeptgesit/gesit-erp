@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, AlertCircle, Mail, Lock, ShieldCheck, CheckCircle2, Sun, Moon, ArrowRight, Loader2 } from 'lucide-react';
+import { 
+    AlertCircle, ShieldCheck, CheckCircle2, ArrowRight, Loader2,
+    Mail, Lock, Eye, EyeOff, Sun, Moon 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
@@ -87,6 +90,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onLogin(data.session.user.email);
             }
         } catch (err: any) {
+            console.error("LoginPage: Login failure detail:", err);
             setError(err.message || "Access denied.");
         } finally {
             setIsLoading(false);
@@ -135,7 +139,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300">
+        <div className="h-screen w-full bg-white dark:bg-zinc-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300 overflow-hidden">
             <style>{`
                 @keyframes pulse-slow {
                     0%, 100% { opacity: 0.35; transform: scale(1.05); }
@@ -205,7 +209,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 className="mb-16"
                             >
                                 <div className="w-28 h-28 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
-                                    <div className="absolute inset-0 bg-white/5 rounded-3xl blur-2xl group-hover:bg-white/10 transition-colors"></div>
+                                    <div className="absolute inset-0 bg-white/5 rounded-xl blur-2xl group-hover:bg-white/10 transition-colors"></div>
                                     <img src={logoUrl} alt="Logo" fetchPriority="high" loading="eager" className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:brightness-110 transition-all z-10" />
                                 </div>
                             </motion.div>
@@ -255,7 +259,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.6, delay: 0.8 + (i * 0.1) }}
-                                            className="bg-white/[0.03] backdrop-blur-3xl px-5 py-4 rounded-2xl border border-white/10 flex items-center gap-3 hover:bg-white/[0.08] transition-all group"
+                                            className="bg-white/[0.03] backdrop-blur-3xl px-5 py-4 rounded-xl border border-white/10 flex items-center gap-3 hover:bg-white/[0.08] transition-all group"
                                         >
                                             <span className="text-2xl group-hover:scale-110 transition-transform">{badge.emoji}</span>
                                             <div>
@@ -293,7 +297,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
 
                 {/* Right Login Side */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-slate-50 dark:bg-slate-950/50 relative overflow-hidden transition-all duration-500">
+                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-slate-50 dark:bg-zinc-950/50 relative overflow-hidden transition-all duration-500">
                     {/* Animated Background Orbs */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
                         <motion.div
@@ -319,9 +323,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={toggleTheme}
-                        className="absolute top-8 right-8 h-12 w-12 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 shadow-xl z-50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300"
+                        className="absolute top-8 right-8 w-12 /80 dark: backdrop-blur-xl border border-slate-200/50 dark:border-white/10 z-50 dark: transition-all duration-300"
                     >
-                        {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                        {isDark ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
                     </Button>
 
                     <div className="w-full max-w-[460px] relative z-10 mx-auto">
@@ -333,20 +337,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                 >
-                                    <Card className="border-none bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden">
+                                    <Card className="border-none bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
                                         <CardContent className="pt-12 pb-12 px-10 text-center space-y-8">
                                             <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner ring-8 ring-emerald-500/5">
                                                 <CheckCircle2 size={48} className="animate-in zoom-in duration-500" />
                                             </div>
                                             <div className="space-y-4">
                                                 <h4 className="text-3xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">Email Sent</h4>
-                                                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                                <p className="text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
                                                     A recovery link has been sent to your inbox. Please check your email and follow the instructions.
                                                 </p>
                                             </div>
                                             <Button
                                                 onClick={() => { setResetSent(false); setIsResetMode(false); }}
-                                                className="w-full h-14 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all"
+                                                className="w-full dark: font-black text-[11px] uppercase tracking-[0.2em] transition-all"
                                             >
                                                 Return to Login Page
                                             </Button>
@@ -361,16 +365,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.4, ease: "easeOut" }}
                                 >
-                                    <Card className="border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2rem] overflow-hidden">
+                                    <Card className="border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
                                         <CardHeader className="pt-8 px-10 pb-6">
                                             {/* Mobile/Tablet Logo */}
                                             <div className="lg:hidden mb-8 flex flex-col items-center text-center gap-4">
-                                                <div className="w-20 h-20 p-2 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center">
+                                                <div className="w-20 h-20 p-2 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center">
                                                     <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                                                 </div>
                                                 <div>
                                                     <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{appName}</h2>
-                                                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mt-1">Infrastructure Access</p>
+                                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em] mt-1">Infrastructure Access</p>
                                                 </div>
                                             </div>
                                             
@@ -379,7 +383,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                     {isResetMode ? 'Recovery' : 'Sign In'}
                                                 </span>
                                             </CardTitle>
-                                            <CardDescription className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">
+                                            <CardDescription className="text-slate-500 dark:text-zinc-400 text-xs font-medium leading-relaxed">
                                                 {isResetMode 
                                                     ? 'Identity verification required for restoration.' 
                                                     : 'Welcome back! Enter credentials to access ecosystem.'}
@@ -388,7 +392,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                         
                                         <CardContent className="px-10 pb-6">
                                             {error && (
-                                                <Alert variant="destructive" className="mb-6 bg-rose-500/10 border-rose-500/20 rounded-[1rem] p-3">
+                                                <Alert variant="destructive" className="mb-6 bg-rose-500/10 border-rose-500/20 rounded-xl p-3">
                                                     <AlertCircle className="h-4 w-4" />
                                                     <AlertDescription className="text-[10px] font-bold leading-relaxed ml-1">{error}</AlertDescription>
                                                 </Alert>
@@ -396,9 +400,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                                             <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-5">
                                                 <div className="space-y-2">
-                                                    <Label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 ml-1">Identity identifier</Label>
+                                                    <Label className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 ml-1">Identity identifier</Label>
                                                     <div className="relative group">
-                                                        <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
+                                                        <Mail size={18} strokeWidth={1.5} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
                                                         <Input
                                                             className="h-12 pl-12 pr-4 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] focus:ring-2 focus:ring-primary/5 font-bold text-xs"
                                                             placeholder="Email or username"
@@ -412,9 +416,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                                                 {!isResetMode && (
                                                     <div className="space-y-2">
-                                                        <Label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 ml-1">Key authority</Label>
+                                                        <Label className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 ml-1">Key authority</Label>
                                                         <div className="relative group">
-                                                            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
+                                                            <Lock size={18} strokeWidth={1.5} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
                                                             <Input
                                                                 className="h-12 pl-12 pr-12 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] focus:ring-2 focus:ring-primary/5 font-bold text-xs"
                                                                 placeholder="Password"
@@ -427,18 +431,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 type="button"
-                                                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg"
+                                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 dark:hover:"
                                                                 onClick={() => setShowPassword(!showPassword)}
                                                             >
-                                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                                {showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
                                                             </Button>
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 <Button
+                                                    type="submit"
                                                     disabled={isLoading}
-                                                    className="w-full h-12 text-white rounded-xl font-bold text-[13px] tracking-tight transition-all shadow-xl hover:translate-y-[-1px]"
+                                                    className="w-full font-bold text-[13px] tracking-tight transition-all hover:translate-y-[-1px]"
                                                     style={{ backgroundColor: primaryColor }}
                                                 >
                                                     {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Sign in now'}
@@ -449,7 +454,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 <Button
                                                     variant="link"
                                                     onClick={() => setIsResetMode(!isResetMode)}
-                                                    className="h-auto p-0 text-[10px] font-bold tracking-tight"
+                                                    className="h-auto text-[10px] font-bold tracking-tight"
                                                     style={{ color: primaryColor }}
                                                 >
                                                     {isResetMode ? 'Return to login' : 'Forgot your password?'}
@@ -465,7 +470,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                     variant="outline"
                                                     onClick={handleGoogleLogin}
                                                     disabled={isLoading}
-                                                    className="w-full h-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 rounded-xl gap-2 text-[10px] font-bold uppercase tracking-widest shadow-sm"
+                                                    className="w-full dark: border-slate-200 dark:border-white/10 gap-2 text-[10px] font-bold uppercase tracking-widest"
                                                 >
                                                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -490,7 +495,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 </button>
                                                 <div className="flex items-center gap-4 text-slate-400/50">
                                                     <a href="/privacy" className="text-[8px] font-bold hover:text-primary transition-all uppercase tracking-widest">Privacy</a>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-800" />
+                                                    <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-zinc-800" />
                                                     <a href="/terms" className="text-[8px] font-bold hover:text-primary transition-all uppercase tracking-widest">Terms</a>
                                                 </div>
                                             </div>

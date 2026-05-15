@@ -106,7 +106,17 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
     useEffect(() => {
         document.documentElement.style.setProperty('--primary', settings.primaryColor);
         document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
-        document.documentElement.style.setProperty('--font-sans', settings.fontFamily);
+        document.documentElement.style.setProperty('--font-sans', `"${settings.fontFamily}", sans-serif`);
+
+        const fontUrl = `https://fonts.googleapis.com/css2?family=${settings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+        let link = document.getElementById('google-fonts') as HTMLLinkElement;
+        if (!link) {
+            link = document.createElement('link');
+            link.id = 'google-fonts';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+        link.href = fontUrl;
     }, [settings.primaryColor, settings.fontFamily]);
 
     const handleSave = async () => {
@@ -274,7 +284,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="p-6 bg-slate-50 dark:bg-slate-900 border rounded-lg" style={{ fontFamily: settings.fontFamily }}>
+                                        <div className="p-6 bg-slate-50 dark:bg-zinc-900 border rounded-lg" style={{ fontFamily: settings.fontFamily }}>
                                             <p className="text-xs font-semibold text-muted-foreground uppercase mb-4 tracking-wider">Preview</p>
                                             <h1 className="text-2xl font-bold mb-2">Modern Interface System</h1>
                                             <p className="text-sm text-muted-foreground leading-relaxed">This is a live preview of how the chosen typography will render across the ecosystem.</p>
@@ -299,7 +309,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                                 <Label className="text-sm font-semibold">Max Login Attempts</Label>
                                                 <div className="flex items-center gap-3">
                                                     {[3, 5, 10].map(i => (
-                                                        <Button key={i} variant={settings.maxLoginAttempts === i ? "default" : "outline"} size="sm" className="w-12 h-9" onClick={() => setSettings({...settings, maxLoginAttempts: i})}>{i}</Button>
+                                                        <Button key={i} variant={settings.maxLoginAttempts === i ? "default" : "outline"} size="sm" className="w-12" onClick={() => setSettings({...settings, maxLoginAttempts: i})}>{i}</Button>
                                                     ))}
                                                 </div>
                                                 <p className="text-[11px] text-muted-foreground italic">Brute-force protection threshold.</p>
@@ -341,7 +351,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
                                                 <CardHeader className="p-4"><CardTitle className="text-sm font-semibold">Cleanup</CardTitle></CardHeader>
                                                 <CardContent className="px-4 pb-4">
                                                     <p className="text-xs text-muted-foreground mb-4">Wipe local session and browser cache.</p>
-                                                    <Button variant="outline" size="sm" className="w-full gap-2 hover:bg-rose-50 hover:text-rose-600" onClick={handleClearCache}>
+                                                    <Button variant="outline" size="sm" className="w-full gap-2" onClick={handleClearCache}>
                                                         <Trash2 size={14} /> Clear Cache
                                                     </Button>
                                                 </CardContent>
@@ -380,3 +390,4 @@ const SettingField = ({ label, value, onChange, textarea, type = "text" }: { lab
         )}
     </div>
 );
+

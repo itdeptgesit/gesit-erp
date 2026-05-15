@@ -1,204 +1,169 @@
 "use client"
 
 import * as React from "react"
-import { Select as SelectPrimitive } from "@base-ui/react/select"
-
+import {
+  Select as RACSelect,
+  SelectValue as RACSelectValue,
+  SelectProps as RACSelectProps,
+  Button as RACButton,
+  ListBox as RACListBox,
+  ListBoxItem as RACListBoxItem,
+  ListBoxItemProps as RACListBoxItemProps,
+  composeRenderProps,
+} from "react-aria-components"
+import { Key } from "@react-types/shared"
 import { cn } from "@/lib/utils"
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon, CheckIcon } from "lucide-react"
+import { Popover } from "./popover"
 
-const Select = SelectPrimitive.Root
-
-function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
-  return (
-    <SelectPrimitive.Group
-      data-slot="select-group"
-      className={cn("scroll-my-1 p-1", className)}
-      {...props}
-    />
-  )
+export interface SelectProps<T extends object, V = any> extends Omit<RACSelectProps<T>, 'children'> {
+  label?: string
+  description?: string
+  errorMessage?: string
+  children: React.ReactNode | ((item: T) => React.ReactNode)
+  placeholder?: string
+  className?: string
+  disabled?: boolean
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
-  return (
-    <SelectPrimitive.Value
-      data-slot="select-value"
-      className={cn("flex flex-1 text-left", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectTrigger({
-  className,
-  size = "default",
+function Select<T extends object, V = any>({
   children,
+  defaultValue,
+  value,
+  onValueChange,
+  disabled,
+  defaultSelectedKey,
+  selectedKey,
+  onSelectionChange,
+  isDisabled,
+  className,
   ...props
-}: SelectPrimitive.Trigger.Props & {
-  size?: "sm" | "default"
+}: SelectProps<T, V> & {
+  defaultValue?: V
+  value?: V
+  onValueChange?: (value: V) => void
+  disabled?: boolean
 }) {
+  // Map traditional props to RAC props
+  const finalDefaultKey = (defaultSelectedKey ?? defaultValue) as Key | undefined;
+  const finalKey = (selectedKey ?? value) as Key | undefined;
+  const finalIsDisabled = isDisabled ?? disabled;
+  
+  const handleSelectionChange = (key: Key) => {
+    onSelectionChange?.(key);
+    onValueChange?.(key as V);
+  };
+
   return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
-      className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-4xl border border-input bg-input/30 px-3 py-2 text-sm whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
+    <RACSelect
       {...props}
+      defaultSelectedKey={finalDefaultKey}
+      selectedKey={finalKey}
+      onSelectionChange={handleSelectionChange}
+      isDisabled={finalIsDisabled}
+      className={cn("group flex flex-col gap-2", className)}
+    >
+      {children as React.ReactNode}
+    </RACSelect>
+  )
+}
+
+function SelectItem<T extends Key>({ className, value, children, ...props }: { value: T } & Omit<RACListBoxItemProps<any>, 'value'>) {
+  // Wrap the key in an object for RAC ListBoxItem
+  const itemValue = React.useMemo(() => ({ key: value }), [value]);
+  return (
+    <RACListBoxItem
+      {...props}
+      id={value}
+      value={itemValue}
+      textValue={String(children)}
+      className={composeRenderProps(className, (className, renderProps) => cn(
+        "relative flex w-full cursor-default items-center gap-2.5 rounded-xl py-2 pr-8 pl-3 text-sm outline-none select-none transition-colors",
+        "focus:bg-accent focus:text-accent-foreground",
+        "disabled:opacity-50 disabled:pointer-events-none",
+        "group-selected:font-bold",
+        className
+      ))}
+    >
+      {composeRenderProps(children, (children, renderProps) => (
+        <>
+          <span className="flex-1 truncate">
+            {children}
+          </span>
+          {renderProps.isSelected && (
+            <span className="absolute right-2 flex size-4 items-center justify-center">
+              <CheckIcon size={14} className="text-primary" />
+            </span>
+          )}
+        </>
+      ))}
+    </RACListBoxItem>
+  )
+}
+
+// --- Modular Components for Backward Compatibility ---
+
+function SelectTrigger({ className, children, ...props }: any) {
+  return (
+    <RACButton 
+      {...props}
+      className={composeRenderProps(className, (className, renderProps) => cn(
+        "flex h-9 items-center justify-between gap-2.5 rounded-xl border border-input bg-input/30 px-3 py-2 text-sm transition-all outline-none",
+        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "dark:hover:bg-input/50",
+        renderProps.isPressed && "scale-[0.98]",
+        className
+      ))}
     >
       {children}
-      <SelectPrimitive.Icon
-        render={
-          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
-        }
-      />
-    </SelectPrimitive.Trigger>
+      <ChevronDownIcon className="size-4 text-muted-foreground shrink-0" />
+    </RACButton>
   )
 }
 
-function SelectContent({
-  className,
-  children,
-  side = "bottom",
-  sideOffset = 4,
-  align = "center",
-  alignOffset = 0,
-  alignItemWithTrigger = true,
-  ...props
-}: SelectPrimitive.Popup.Props &
-  Pick<
-    SelectPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+function SelectContent({ className, children, ...props }: any) {
   return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner
-        side={side}
-        sideOffset={sideOffset}
-        align={align}
-        alignOffset={alignOffset}
-        alignItemWithTrigger={alignItemWithTrigger}
-        className="isolate z-50"
-      >
-        <SelectPrimitive.Popup
-          data-slot="select-content"
-          data-align-trigger={alignItemWithTrigger}
-          className={cn("relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-2xl bg-popover text-popover-foreground shadow-2xl ring-1 ring-foreground/5 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
-          {...props}
-        >
-          <SelectScrollUpButton />
-          <SelectPrimitive.List>{children}</SelectPrimitive.List>
-          <SelectScrollDownButton />
-        </SelectPrimitive.Popup>
-      </SelectPrimitive.Positioner>
-    </SelectPrimitive.Portal>
+    <Popover {...props} className={cn("min-w-[--trigger-width]", className)}>
+        <RACListBox className="outline-none p-1">
+          {children}
+        </RACListBox>
+    </Popover>
   )
 }
 
-function SelectLabel({
-  className,
-  ...props
-}: SelectPrimitive.GroupLabel.Props) {
+const SelectValueInternal = RACSelectValue;
+
+interface SelectValueProps {
+  placeholder?: string
+  className?: string
+}
+
+function SelectValue({ placeholder, className, ...props }: SelectValueProps & Omit<React.ComponentProps<typeof RACSelectValue>, 'placeholder'>) {
   return (
-    <SelectPrimitive.GroupLabel
-      data-slot="select-label"
-      className={cn("px-3 py-2.5 text-xs text-muted-foreground", className)}
+    <RACSelectValue
       {...props}
+      placeholder={placeholder || "Select an option"}
+      className={cn("text-sm text-muted-foreground", className)}
     />
   )
 }
 
-function SelectItem({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.Item.Props) {
-  return (
-    <SelectPrimitive.Item
-      data-slot="select-item"
-      className={cn(
-        "relative flex w-full cursor-default items-center gap-2.5 rounded-xl py-2 pr-8 pl-3 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
-        className
-      )}
-      {...props}
-    >
-      <SelectPrimitive.ItemText className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">
-        {children}
-      </SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator
-        render={
-          <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center" />
-        }
-      >
-        <CheckIcon className="pointer-events-none" />
-      </SelectPrimitive.ItemIndicator>
-    </SelectPrimitive.Item>
-  )
-}
+const SelectRoot = RACSelect;
+const SelectGroup = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const SelectLabel = ({ children, className }: any) => (
+  <header className={cn("px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest", className)}>
+    {children}
+  </header>
+);
 
-function SelectSeparator({
-  className,
-  ...props
-}: SelectPrimitive.Separator.Props) {
-  return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn(
-        "pointer-events-none -mx-1 my-1 h-px bg-border/50",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function SelectScrollUpButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpArrow>) {
-  return (
-    <SelectPrimitive.ScrollUpArrow
-      data-slot="select-scroll-up-button"
-      className={cn(
-        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <ChevronUpIcon
-      />
-    </SelectPrimitive.ScrollUpArrow>
-  )
-}
-
-function SelectScrollDownButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownArrow>) {
-  return (
-    <SelectPrimitive.ScrollDownArrow
-      data-slot="select-scroll-down-button"
-      className={cn(
-        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <ChevronDownIcon
-      />
-    </SelectPrimitive.ScrollDownArrow>
-  )
-}
-
-export {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
+export { 
+    Select, 
+    SelectItem,
+    SelectTrigger,
+    SelectContent,
+    SelectValue,
+    SelectRoot,
+    SelectGroup,
+    SelectLabel
 }

@@ -17,6 +17,14 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoanRequestFormInline } from './LoanRequestFormInline';
@@ -38,7 +46,6 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
     const [editingLoan, setEditingLoan] = useState<ITAssetLoan | null>(null);
     const [deleteLoan, setDeleteLoan] = useState<ITAssetLoan | null>(null);
     const [selectedLoan, setSelectedLoan] = useState<ITAssetLoan | null>(null);
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ loan: ITAssetLoan; type: 'approve' | 'reject' } | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
     const [historyTab, setHistoryTab] = useState<string>('All');
@@ -174,7 +181,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                 );
             case 'Rejected':
                 return (
-                    <div className={cn(baseClass, "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400")}>
+                    <div className={cn(baseClass, "bg-slate-100 text-slate-500 border-slate-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400")}>
                         <XCircle size={compact ? 10 : 12} /> {compact ? t('statusRejected') : (canManage ? 'Rejected' : 'Request Rejected')}
                     </div>
                 );
@@ -295,7 +302,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                             <Button
                                 variant="outline"
                                 onClick={handleExportExcel}
-                                className="h-9 px-4 text-xs font-bold"
+                                className="text-xs font-bold"
                             >
                                 <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export Excel
                             </Button>
@@ -331,7 +338,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                             <Input
                                 type="text"
                                 placeholder={t('searchAssetsPlaceholder')}
-                                className="h-10 pl-10 pr-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl"
+                                className="h-10 pl-10 pr-4 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
@@ -339,27 +346,27 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                     </div>
 
                     <div className="flex gap-2 w-full md:w-auto">
-                        <select className="h-9 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                        <select className="h-9 px-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 focus:outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                             <option value="All">{t('allStatus')}</option>
                             <option value="Pending">{t('statusPending')}</option>
                             <option value="Active">{t('statusActive')}</option>
                             <option value="Returned">{t('statusReturned')}</option>
                             <option value="Overdue">{t('statusOverdue')}</option>
                         </select>
-                        <button onClick={fetchLoans} className="h-9 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-500 transition-colors">
+                        <button onClick={fetchLoans} className="h-9 px-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-500 transition-colors">
                             <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
                         </button>
                     </div>
                 </div>
 
-                <div className={`${canManage ? 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col' : ''}`} style={canManage ? { maxHeight: 'calc(100vh - 340px)', minHeight: '400px' } : undefined}>
+                <div className={`${canManage ? 'bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col' : ''}`} style={canManage ? { maxHeight: 'calc(100vh - 340px)', minHeight: '400px' } : undefined}>
                     {canManage ? (
                         <>
                             {/* Desktop Table View */}
                             <div className="hidden md:block overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.15em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                                        <tr className="bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-[0.15em] text-[10px] border-b border-slate-100 dark:border-zinc-800">
                                             <th className="px-6 py-4">{t('itemDetails')}</th>
                                             <th className="px-6 py-4">{t('borrower')}</th>
                                             <th className="px-6 py-4 text-center">{t('dates')}</th>
@@ -404,76 +411,63 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                     {getStatusDisplay(loan.status)}
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="flex items-center justify-center gap-1">
+                                                    <div className="flex items-center justify-center gap-0">
                                                         {/* Primary action buttons - compact icon-only */}
                                                         {loan.status === 'Pending' && (
                                                             <>
-                                                                <button
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
                                                                     onClick={() => setConfirmAction({ loan, type: 'approve' })}
                                                                     title="Approve"
-                                                                    className="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-sm shadow-emerald-500/20"
+                                                                    className="w-8 dark: dark:"
                                                                 >
-                                                                    <CheckCircle2 size={13} />
-                                                                </button>
-                                                                <button
+                                                                    <CheckCircle2 size={16} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
                                                                     onClick={() => setConfirmAction({ loan, type: 'reject' })}
                                                                     title="Reject"
-                                                                    className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-500 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 transition-all"
+                                                                    className="w-8 dark: dark:"
                                                                 >
-                                                                    <XCircle size={13} />
-                                                                </button>
+                                                                    <XCircle size={16} />
+                                                                </Button>
                                                             </>
                                                         )}
 
                                                         {loan.status === 'Active' && (
-                                                            <button
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
                                                                 onClick={() => handleReturnAsset(loan)}
                                                                 title="Mark Returned"
-                                                                className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 transition-all"
+                                                                className="w-8 dark: dark:"
                                                             >
-                                                                <RotateCcw size={13} />
-                                                            </button>
+                                                                <RotateCcw size={16} />
+                                                            </Button>
                                                         )}
 
                                                         {/* Secondary actions - dropdown */}
-                                                        <div className="relative">
-                                                            <button
-                                                                onClick={() => setOpenMenuId(openMenuId === loan.id ? null : loan.id)}
-                                                                className="p-2 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-all"
-                                                            >
-                                                                <MoreHorizontal size={14} />
-                                                            </button>
-                                                            {openMenuId === loan.id && (
-                                                                <>
-                                                                    <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                                                                    <div className="absolute right-0 top-full mt-1 z-20 w-40 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-black/30 py-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                                                        <button
-                                                                            onClick={() => { setSelectedLoan(loan); setOpenMenuId(null); }}
-                                                                            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                                                        >
-                                                                            <FileText size={12} className="text-indigo-400" /> View Receipt
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => { setEditingLoan(loan); setIsModalOpen(true); setOpenMenuId(null); }}
-                                                                            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                                                        >
-                                                                            <Pencil size={12} className="text-blue-400" /> Edit Record
-                                                                        </button>
-                                                                        {isAdmin && (
-                                                                            <>
-                                                                                <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
-                                                                                <button
-                                                                                    onClick={() => { setDeleteLoan(loan); setOpenMenuId(null); }}
-                                                                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
-                                                                                >
-                                                                                    <Trash2 size={12} /> Delete
-                                                                                </button>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </div>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="w-8">
+                                                                    <span className="sr-only">Open menu</span>
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem onClick={() => { setSelectedLoan(loan); }}><FileText className="mr-2 h-4 w-4" /><span>View Receipt</span></DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => { setEditingLoan(loan); setIsModalOpen(true); }}><Pencil className="mr-2 h-4 w-4" /><span>Edit Record</span></DropdownMenuItem>
+                                                                {isAdmin && (
+                                                                    <>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem onClick={() => { setDeleteLoan(loan); }} className="text-rose-500 focus:text-rose-500 focus:bg-rose-50 dark:focus:bg-rose-950/20"><Trash2 className="mr-2 h-4 w-4" /><span>Delete</span></DropdownMenuItem>
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -498,7 +492,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             {getStatusDisplay(loan.status)}
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('borrower')}</span>
                                                 <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300 text-[11px]">
@@ -507,7 +501,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             </div>
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('department')}</span>
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-zinc-400">
                                                     <Building2 size={10} /> {loan.borrowerDept}
                                                 </div>
                                             </div>
@@ -522,7 +516,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-50 dark:border-slate-800">
+                                        <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-50 dark:border-zinc-800">
                                             {loan.status === 'Pending' && (
                                                 <>
                                                     <button onClick={() => handleApproveRequest(loan)} className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl transition-all">
@@ -570,44 +564,36 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                             </div>
 
                             {/* RIGHT COLUMN: COMPACT HISTORY */}
-                            <div className="lg:col-span-4 flex flex-col overflow-hidden border-l border-slate-100 dark:border-slate-800 pl-5">
+                            <div className="lg:col-span-4 flex flex-col overflow-hidden border-l border-slate-100 dark:border-zinc-800 pl-5">
                                 {/* Header */}
                                 <div className="flex items-center justify-between mb-3 shrink-0">
-                                    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
+                                    <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-zinc-500">
                                         {t('myRequestsHistory')}
                                     </h3>
                                     <span className="text-[10px] font-semibold text-slate-400">{filteredLoans.length} records</span>
                                 </div>
 
-                                {/* Status Filter Tabs — simple underline style */}
-                                <div className="shrink-0 mb-3 flex gap-0 border-b border-slate-100 dark:border-slate-800">
-                                    {(['All', 'Pending', 'Active', 'Returned'] as const).map((tab) => {
-                                        const count = tab === 'All'
-                                            ? filteredLoans.length
-                                            : filteredLoans.filter(l => l.status === tab).length;
-                                        const isActive = historyTab === tab;
-                                        return (
-                                            <button
-                                                key={tab}
-                                                onClick={() => { setHistoryTab(tab); setHistoryPage(1); }}
-                                                className={cn(
-                                                    "flex-1 pb-2 text-[10px] font-semibold transition-colors border-b-2 -mb-px",
-                                                    isActive
-                                                        ? "border-slate-800 dark:border-white text-slate-800 dark:text-white"
-                                                        : "border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"
-                                                )}
-                                            >
-                                                {tab}
-                                                {count > 0 && (
-                                                    <span className={cn(
-                                                        "ml-1 text-[9px]",
-                                                        isActive ? "text-slate-500 dark:text-slate-400" : "text-slate-300 dark:text-slate-600"
-                                                    )}>{count}</span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                {/* Status Filter Tabs — Standardized underlined style */}
+                                <Tabs value={historyTab} onValueChange={(val) => { setHistoryTab(val); setHistoryPage(1); }} className="shrink-0 mb-3">
+                                    <TabsList>
+                                        {(['All', 'Pending', 'Active', 'Returned'] as const).map((tab) => {
+                                            const count = tab === 'All'
+                                                ? filteredLoans.length
+                                                : filteredLoans.filter(l => l.status === tab).length;
+                                            return (
+                                                <TabsTrigger
+                                                    key={tab}
+                                                    value={tab}
+                                                >
+                                                    {tab}
+                                                    {count > 0 && (
+                                                        <span className="ml-1 opacity-50">{count}</span>
+                                                    )}
+                                                </TabsTrigger>
+                                            );
+                                        })}
+                                    </TabsList>
+                                </Tabs>
 
                                 {/* Scrollable filtered list */}
                                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1">
@@ -650,7 +636,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                             onClick={() => setSelectedLoan(loan)}
                                                             className={cn(
                                                                 "w-full text-left group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors",
-                                                                selectedLoan?.id === loan.id && "bg-slate-50 dark:bg-slate-800/60"
+                                                                selectedLoan?.id === loan.id && "bg-slate-50 dark:bg-zinc-800/60"
                                                             )}
                                                         >
                                                             <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", statusDot)} />
@@ -679,7 +665,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
                                                 {/* Pagination */}
                                                 {totalHistoryPages > 1 && (
-                                                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-100 dark:border-slate-800">
+                                                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-100 dark:border-zinc-800">
                                                         <span className="text-[10px] text-slate-400">
                                                             {safePage} / {totalHistoryPages}
                                                         </span>
@@ -687,14 +673,14 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                             <button
                                                                 onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
                                                                 disabled={safePage === 1}
-                                                                className="w-7 h-7 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 transition-all"
+                                                                className="w-7 h-7 flex items-center justify-center rounded-md border border-slate-200 dark:border-zinc-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 transition-all"
                                                             >
                                                                 <ChevronLeft size={12} />
                                                             </button>
                                                             <button
                                                                 onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
                                                                 disabled={safePage === totalHistoryPages}
-                                                                className="w-7 h-7 flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 transition-all"
+                                                                className="w-7 h-7 flex items-center justify-center rounded-md border border-slate-200 dark:border-zinc-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 transition-all"
                                                             >
                                                                 <ChevronRight size={12} />
                                                             </button>
@@ -709,11 +695,11 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                         </div>
                     )}
 
-                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
                         <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1}</p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
                         </div>
                     </div>
                 </div>
@@ -799,7 +785,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                 {
                     confirmAction && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-150">
+                            <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 animate-in zoom-in-95 duration-150">
                                 <div className="p-6">
                                     {/* Title row */}
                                     <div className="flex items-center gap-3 mb-1">
@@ -810,14 +796,14 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             {confirmAction.type === 'approve' ? 'Approve this request?' : 'Reject this request?'}
                                         </h3>
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 ml-9 mb-5">
+                                    <p className="text-xs text-slate-500 dark:text-zinc-400 ml-9 mb-5">
                                         {confirmAction.type === 'approve'
                                             ? 'Status will change to Active and the asset will be marked as in use.'
                                             : 'This request will be permanently rejected.'}
                                     </p>
 
                                     {/* Info rows */}
-                                    <div className="border border-slate-100 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 mb-5 text-xs">
+                                    <div className="border border-slate-100 dark:border-zinc-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 mb-5 text-xs">
                                         <div className="flex justify-between items-center px-3 py-2">
                                             <span className="text-slate-400 font-medium">Asset</span>
                                             <span className="font-medium text-slate-800 dark:text-slate-200 text-right ml-4 truncate max-w-[180px]">{confirmAction.loan.assetName}</span>
@@ -828,7 +814,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                         </div>
                                         <div className="flex justify-between items-center px-3 py-2">
                                             <span className="text-slate-400 font-medium">Department</span>
-                                            <span className="font-medium text-slate-600 dark:text-slate-400">{confirmAction.loan.borrowerDept}</span>
+                                            <span className="font-medium text-slate-600 dark:text-zinc-400">{confirmAction.loan.borrowerDept}</span>
                                         </div>
                                     </div>
 
@@ -837,7 +823,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                         <button
                                             onClick={() => setConfirmAction(null)}
                                             disabled={isConfirming}
-                                            className="flex-1 h-9 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                                            className="flex-1 h-9 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                                         >
                                             Cancel
                                         </button>
@@ -879,9 +865,9 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
             {
                 selectedLoan && (
                     <div id="loan-print-area" className="fixed inset-0 z-[1000] flex items-start sm:items-center justify-center bg-slate-900/60 backdrop-blur-md p-2 sm:p-4 overflow-y-auto print-container custom-scrollbar" onClick={() => setSelectedLoan(null)}>
-                        <div className="bg-slate-100 dark:bg-slate-950 w-full max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border border-white/20 relative animate-in zoom-in-95 duration-300 receipt-sheet my-auto" onClick={e => e.stopPropagation()}>
-                            <div className="mx-2 sm:mx-6 my-4 sm:my-10 bg-white dark:bg-slate-900 rounded-[1.25rem] sm:rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden">
-                                <div className="px-6 sm:px-10 py-6 sm:py-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
+                        <div className="bg-slate-100 dark:bg-zinc-950 w-full max-w-2xl rounded-xl sm:rounded-xl shadow-2xl border border-white/20 relative animate-in zoom-in-95 duration-300 receipt-sheet my-auto" onClick={e => e.stopPropagation()}>
+                            <div className="mx-2 sm:mx-6 my-4 sm:my-10 bg-white dark:bg-zinc-900 rounded-xl sm:rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 relative overflow-hidden">
+                                <div className="px-6 sm:px-10 py-6 sm:py-8 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-2 bg-blue-600 rounded-lg"><Package size={20} className="text-white" /></div>
@@ -898,16 +884,16 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             <section>
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 border-l-2 border-blue-600 pl-3">{t('itemDetails')}</h4>
                                                 <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight break-words">{selectedLoan.assetName}</p>
-                                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase">{selectedLoan.assetTag || 'NO-TAG'}</span>
+                                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase">{selectedLoan.assetTag || 'NO-TAG'}</span>
                                             </section>
                                             <section>
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 border-l-2 border-blue-600 pl-3">{t('dates')}</h4>
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                    <div className="p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800">
                                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('loanDate')}</p>
                                                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{format(new Date(selectedLoan.loanDate), 'MMM dd, yyyy')}</p>
                                                     </div>
-                                                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                    <div className="p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800">
                                                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('expectedReturn')}</p>
                                                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{format(new Date(selectedLoan.expectedReturnDate), 'MMM dd, yyyy')}</p>
                                                     </div>
@@ -917,7 +903,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                         <div className="space-y-8">
                                             <section>
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 border-l-2 border-blue-600 pl-3">{t('borrower')}</h4>
-                                                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800">
                                                     <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600"><User size={20} /></div>
                                                     <div>
                                                         <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">{selectedLoan.borrowerName}</p>
@@ -927,7 +913,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             </section>
                                             <section>
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 border-l-2 border-blue-600 pl-3">{t('status')}</h4>
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm gap-3">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800 rounded-xl shadow-sm gap-3">
                                                     {getStatusDisplay(selectedLoan.status)}
                                                     <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-100 dark:border-emerald-900/40 animate-pulse w-fit">
                                                         <ShieldCheck size={12} />
@@ -937,18 +923,18 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                             </section>
                                         </div>
                                     </div>
-                                    <div className="pt-8 border-t border-slate-50 dark:border-slate-800">
+                                    <div className="pt-8 border-t border-slate-50 dark:border-zinc-800">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-20">
                                             <div className="text-center">
                                                 <div className="px-5">
-                                                    <div className="h-[1px] bg-slate-200 dark:bg-slate-800 w-full mb-3"></div>
+                                                    <div className="h-[1px] bg-slate-200 dark:bg-zinc-800 w-full mb-3"></div>
                                                     <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase leading-tight tracking-tighter">{selectedLoan.borrowerName}</p>
                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t('borrower')}</p>
                                                 </div>
                                             </div>
                                             <div className="text-center relative">
                                                 <div className="px-5">
-                                                    <div className="h-[1px] bg-slate-200 dark:bg-slate-800 w-full mb-3"></div>
+                                                    <div className="h-[1px] bg-slate-200 dark:bg-zinc-800 w-full mb-3"></div>
                                                     <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase leading-tight tracking-tighter">{(selectedLoan.itPersonnel || 'ADMIN SYSTEM').toUpperCase()}</p>
                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t('authorizedBy')}</p>
                                                 </div>
@@ -961,11 +947,11 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                 </div>
                             </div>
                             <div className="px-10 pb-10 flex items-center justify-center gap-4 no-print">
-                                <button onClick={() => window.print()} className="flex-1 max-w-[200px] h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center gap-3 group hover:border-blue-500 transition-all font-bold text-slate-600 dark:text-slate-300 text-[11px] uppercase tracking-widest">
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-colors"><Download size={14} /></div>
+                                <button onClick={() => window.print()} className="flex-1 max-w-[200px] h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center gap-3 group hover:border-blue-500 transition-all font-bold text-slate-600 dark:text-slate-300 text-[11px] uppercase tracking-widest">
+                                    <div className="p-2 bg-slate-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-colors"><Download size={14} /></div>
                                     {t('printReceipt')}
                                 </button>
-                                <button onClick={() => setSelectedLoan(null)} className="flex-1 max-w-[200px] h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-950/20">
+                                <button onClick={() => setSelectedLoan(null)} className="flex-1 max-w-[200px] h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-950/20">
                                     {t('closeReceipt')}
                                 </button>
                             </div>

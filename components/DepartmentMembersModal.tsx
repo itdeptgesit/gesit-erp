@@ -233,14 +233,14 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
 
     return (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-hidden">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[85vh] border border-white/20 dark:border-slate-800">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[85vh] border border-white/20 dark:border-zinc-800">
 
-                <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 rounded-t-[2rem]">
+                <div className="px-8 py-6 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/50 rounded-t-xl">
                     <div>
                         <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">
                             {department.name} <span className="text-blue-600 dark:text-blue-400">Personnel</span>
                         </h2>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.3em] mt-1">Management Engine</p>
+                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.3em] mt-1">Management Engine</p>
                     </div>
                     <button onClick={onClose} className="p-2.5 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
                         <X size={20} />
@@ -249,14 +249,14 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
                     {error && (
-                        <div className="m-6 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl flex items-start gap-3 text-rose-600 dark:text-rose-400 animate-in slide-in-from-top-2">
+                        <div className="m-6 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 rounded-xl flex items-start gap-3 text-rose-600 dark:text-rose-400 animate-in slide-in-from-top-2">
                             <AlertCircle size={18} className="mt-0.5 shrink-0" />
                             <p className="text-xs font-bold leading-relaxed">{error}</p>
                         </div>
                     )}
 
                     {showAddMode ? (
-                        <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 m-6 rounded-[1.5rem] border border-blue-100 dark:border-blue-900/30 animate-in slide-in-from-right-4 duration-300 shadow-inner">
+                        <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 m-6 rounded-xl border border-blue-100 dark:border-blue-900/30 animate-in slide-in-from-right-4 duration-300 shadow-inner">
                             <div className="flex items-center gap-2 mb-4">
                                 <UserPlus size={18} className="text-blue-600 dark:text-blue-400" />
                                 <h4 className="font-black text-slate-800 dark:text-slate-200 text-xs uppercase tracking-widest">Assign Personnel</h4>
@@ -265,7 +265,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                             <div className="space-y-4">
                                 <div className="relative">
                                     <select
-                                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 appearance-none font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50 shadow-sm"
+                                        className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 appearance-none font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50 shadow-sm"
                                         value={selectedUserId}
                                         onChange={(e) => setSelectedUserId(e.target.value)}
                                         disabled={isActionLoading}
@@ -286,7 +286,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                                     <button
                                         onClick={() => setShowAddMode(false)}
                                         disabled={isActionLoading}
-                                        className="px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+                                        className="px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
                                     >
                                         Cancel
                                     </button>
@@ -302,8 +302,8 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                             </div>
                         </div>
                     ) : (
-                        <div className="px-8 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Personnel List : {members.length}</span>
+                        <div className="px-8 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Personnel List : {members.length}</span>
                             <button
                                 onClick={handleOpenAdd}
                                 disabled={isLoading || isActionLoading}
@@ -318,11 +318,11 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                         {isLoading && members.length === 0 ? (
                             <li className="p-12 text-center flex flex-col items-center gap-4">
                                 <Loader2 size={32} className="animate-spin text-blue-500" />
-                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Syncing Personnel Data...</p>
+                                <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Syncing Personnel Data...</p>
                             </li>
                         ) : (members.length === 0 && !showAddMode) ? (
                             <li className="p-20 text-center flex flex-col items-center gap-4 text-slate-300 dark:text-slate-700">
-                                <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center shadow-inner border border-white dark:border-slate-700">
+                                <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center shadow-inner border border-white dark:border-zinc-700">
                                     <UserPlus size={32} className="opacity-20" />
                                 </div>
                                 <p className="text-xs font-bold italic">No department members registered.</p>
@@ -331,7 +331,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                             members.map(member => (
                                 <li key={member.id} className="px-8 py-5 flex justify-between items-center hover:bg-slate-50/80 dark:hover:bg-slate-800/50 group transition-all animate-in slide-in-from-bottom-2">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-sm font-black text-slate-500 dark:text-slate-400 shadow-sm border border-white dark:border-slate-600">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-sm font-black text-slate-500 dark:text-zinc-400 shadow-sm border border-white dark:border-slate-600">
                                             {member.fullName ? member.fullName.charAt(0) : '?'}
                                         </div>
                                         <div>
@@ -342,7 +342,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                                                     if (!cleanDept) return null;
                                                     const isCurrent = cleanDept.toLowerCase() === department.name.trim().toLowerCase();
                                                     return (
-                                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border ${isCurrent ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>
+                                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border ${isCurrent ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/50' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'}`}>
                                                             {cleanDept}
                                                         </span>
                                                     );
@@ -368,8 +368,8 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                     </ul>
                 </div>
 
-                <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 text-center">
-                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest italic">
+                <div className="px-8 py-4 bg-slate-50 dark:bg-zinc-800/50 border-t border-slate-100 dark:border-zinc-800 text-center">
+                    <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest italic">
                         Personnel changes are automatically synced to global directory
                     </p>
                 </div>
@@ -392,4 +392,5 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
         </div>
     );
 };
+
 

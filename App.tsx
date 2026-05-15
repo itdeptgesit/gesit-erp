@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { defaultTheme, Provider } from '@adobe/react-spectrum';
+import { Routes, Route, Navigate, useNavigate, useLocation, NavLink, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { NavigationSidebar } from './components/AppSidebar';
+import { AppSidebarModern as NavigationSidebar } from './components/AppSidebarModern';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import {
   Breadcrumb,
@@ -26,6 +27,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastProvider } from './components/ToastProvider';
 import { LogoPreloader } from './components/LogoPreloader';
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { supabase } from './lib/supabaseClient';
 import { UserAccount, UserGroup } from './types';
@@ -35,10 +37,12 @@ import {
   LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
   Network, Folder, Shield, ChevronDown, ChevronRight, X, Users, Building2,
   Briefcase, Layers, Zap, ChevronLeft, PanelLeftClose, PanelLeft, Phone,
-  Settings, Megaphone, Loader2, CheckCircle2, Circle
+  Settings, Megaphone, Loader2, CheckCircle2, Circle, LayoutDashboard, Kanban
 } from 'lucide-react';
 
 import { checkAssetLoanOverdue } from './utils/LoanNotificationUtils';
+import { ProfileView } from './components/ProfileView';
+
 
 // Lazy Load Managers
 const MainDashboard = React.lazy(() => import('./components/MainDashboard').then(m => ({ default: m.MainDashboard })));
@@ -50,7 +54,7 @@ const WeeklyPlanManager = React.lazy(() => import('./components/WeeklyPlanManage
 const PurchasePlanManager = React.lazy(() => import('./components/PurchasePlanManager').then(m => ({ default: m.PurchasePlanManager })));
 const PurchaseRecordManager = React.lazy(() => import('./components/PurchaseRecordManager').then(m => ({ default: m.PurchaseRecordManager })));
 const UserManagement = React.lazy(() => import('./components/UserManagement').then(m => ({ default: m.UserManagement })));
-const ProfileView = React.lazy(() => import('./components/ProfileView').then(m => ({ default: m.ProfileView })));
+// ProfileView is now a direct import
 const MasterCompany = React.lazy(() => import('./components/MasterCompany').then(m => ({ default: m.MasterCompany })));
 const MasterDepartment = React.lazy(() => import('./components/MasterDepartment').then(m => ({ default: m.MasterDepartment })));
 const MasterCategory = React.lazy(() => import('./components/MasterCategory').then(m => ({ default: m.MasterCategory })));
@@ -69,8 +73,32 @@ const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetai
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 const TaskplusDashboard = React.lazy(() => import('./components/TaskplusDashboard').then(m => ({ default: m.TaskplusDashboard })));
 const WorknestDashboard = React.lazy(() => import('./components/WorknestDashboard').then(m => ({ default: m.default })));
+const EcommerceDashboard = React.lazy(() => import('./components/AnalyticsDashboard').then(m => ({ default: m.default })));
 const PrivacyPolicy = React.lazy(() => import('./components/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService = React.lazy(() => import('./components/TermsOfService').then(m => ({ default: m.TermsOfService })));
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  LayoutDashboard: LayoutDashboard,
+  LifeBuoy: LifeBuoy,
+  Activity: Activity,
+  Kanban: Kanban,
+  Calendar: Calendar,
+  ShoppingCart: ShoppingCart,
+  Cpu: Package,
+  Network: Network,
+  FolderOpen: Folder,
+  Shield: Shield,
+  Users: Users,
+  Building2: Building2,
+  Briefcase: Briefcase,
+  Layers: Layers,
+  Zap: Zap,
+  Phone: Phone,
+  Settings: Settings,
+  Megaphone: Megaphone,
+  Key: CheckCircle2,
+  User: Circle,
+}
 
 const PublicLayout: React.FC<{
   children: React.ReactNode;
@@ -79,13 +107,15 @@ const PublicLayout: React.FC<{
   currentUser: UserAccount | null;
   groupDefinitions: UserGroup[];
   variant?: 'admin' | 'public';
+  hideHeader?: boolean;
+  hideFooter?: boolean;
   searchProps?: {
     value: string;
     onChange: (val: string) => void;
   };
-}> = ({ children, appSettings, onLogout, currentUser, groupDefinitions, variant = 'admin', searchProps }) => {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+}> = ({ children, appSettings, onLogout, currentUser, groupDefinitions, variant = 'admin', hideHeader = false, hideFooter = false, searchProps }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-sidebar text-foreground transition-colors duration-300 overflow-hidden relative font-sans">
@@ -100,26 +130,28 @@ const PublicLayout: React.FC<{
         />
       )}
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header
-          onLogout={onLogout}
-          onNavigate={(v) => { /* public layout navigate */ }}
-          userGroups={currentUser?.groups || []}
-          userRole={currentUser?.role}
-          groupDefinitions={groupDefinitions}
-          currentView={location.pathname.substring(1)}
-          user={currentUser ? {
-            id: currentUser.id,
-            name: currentUser.fullName,
-            role: currentUser.role,
-            email: currentUser.email,
-            jobTitle: currentUser.jobTitle,
-            avatarUrl: currentUser.avatarUrl
-          } : undefined}
-          appName={appSettings.name}
-          logoUrl={appSettings.logo}
-          forceShowLogo={variant === 'public'}
-        />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+        {!hideHeader && (
+          <Header
+            onLogout={onLogout}
+            onNavigate={(v) => navigate(`/${v}`)}
+            userGroups={currentUser?.groups || []}
+            userRole={currentUser?.role}
+            groupDefinitions={groupDefinitions}
+            currentView={location.pathname.substring(1)}
+            user={currentUser ? {
+              id: currentUser.id,
+              name: currentUser.fullName,
+              role: currentUser.role,
+              email: currentUser.email,
+              jobTitle: currentUser.jobTitle,
+              avatarUrl: currentUser.avatarUrl
+            } : undefined}
+            appName={appSettings.name}
+            logoUrl={appSettings.logo}
+            forceShowLogo={variant === 'public'}
+          />
+        )}
 
         <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
           <div className="flex-1 p-4 md:p-8">
@@ -127,7 +159,7 @@ const PublicLayout: React.FC<{
               {children}
             </div>
           </div>
-          <Footer />
+          {!hideFooter && <Footer />}
         </main>
       </div>
     </div>
@@ -199,8 +231,8 @@ const InternalApp: React.FC = () => {
         if (session?.user?.email) {
           await handleLogin(session.user.email);
         }
-      } catch (err) {
-        console.error("App.tsx: Session check failed", err);
+      } catch (err: any) {
+        console.error("LoginPage: Login error:", err);
       } finally {
         console.log("App.tsx: Session check complete, setting loading to false.");
         setIsCheckingSession(false);
@@ -259,8 +291,19 @@ const InternalApp: React.FC = () => {
           document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
           document.documentElement.style.setProperty('--color-primary', newSettings.primaryColor);
 
-          // Apply font family
-          document.documentElement.style.setProperty('--font-sans', newSettings.fontFamily);
+          // Apply font family safely with quotes and fallback
+          document.documentElement.style.setProperty('--font-sans', `"${newSettings.fontFamily}", sans-serif`);
+
+          // Dynamically load font from Google Fonts
+          const fontUrl = `https://fonts.googleapis.com/css2?family=${newSettings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+          let link = document.getElementById('google-fonts') as HTMLLinkElement;
+          if (!link) {
+            link = document.createElement('link');
+            link.id = 'google-fonts';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+          }
+          link.href = fontUrl;
         }
       } catch (err) { /* ignore */ }
     };
@@ -445,15 +488,33 @@ const InternalApp: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col min-h-screen"
           >
-            <SidebarProvider>
-            <React.Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617]"><Loader2 className="animate-spin text-blue-600" size={32} /></div>}>
-              <Routes location={location} key={location.pathname}>
+            <React.Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 size={40} className="animate-spin text-primary opacity-50" /></div>}>
+              <Routes>
+                {/* Public Routes - No Sidebar */}
+                <Route path="/login" element={
+                  <div className="h-screen w-full">
+                    {!isAuthenticated ? (
+                      <LoginPage
+                        onLogin={handleLogin}
+                        appName={appSettings.name}
+                        logoUrl={appSettings.logo}
+                        primaryColor={appSettings.primaryColor}
+                      />
+                    ) : <Navigate to="/" replace />}
+                  </div>
+                } />
+                
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                
                 <Route path="/directory" element={
                   <PublicLayout
                     onLogout={() => setIsLogoutModalOpen(true)}
                     currentUser={currentUser}
                     groupDefinitions={groupDefinitions}
                     variant="public"
+                    hideHeader={true}
+                    hideFooter={true}
                     searchProps={{ value: globalSearchTerm, onChange: setGlobalSearchTerm }}
                     appSettings={{
                       ...appSettings,
@@ -470,49 +531,56 @@ const InternalApp: React.FC = () => {
                     />
                   </PublicLayout>
                 } />
+                
                 <Route path="/asset/:id?" element={<AssetRouteWrapper />} />
-                <Route path="/login" element={
-                  <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                    {!isAuthenticated ? (
-                      <LoginPage
-                        onLogin={handleLogin}
-                        appName={appSettings.name}
-                        logoUrl={appSettings.logo}
-                        primaryColor={appSettings.primaryColor}
-                      />
-                    ) : <Navigate to="/" />}
-                  </motion.div>
-                } />
-                <Route path="/privacy" element={
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                    <PrivacyPolicy />
-                  </motion.div>
-                } />
-                <Route path="/terms" element={
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                    <TermsOfService />
-                  </motion.div>
-                } />
-
-                <Route path="/helpdesk" element={<ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<HelpdeskManager currentUser={currentUser} />} /></ProtectedRoute>} />
-                <Route path="/asset-loan" element={<ProtectedRoute isAuthenticated={isAuthenticated}><DashboardLayout isCheckingSession={isCheckingSession} appSettings={appSettings} currentUser={currentUser} groupDefinitions={groupDefinitions} isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen} isSidebarCollapsed={isSidebarCollapsed} setIsSidebarCollapsed={setIsSidebarCollapsed} setIsLogoutModalOpen={setIsLogoutModalOpen} floorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} onShare={handleGlobalShare} children={<AssetLoanManager currentUser={currentUser} />} /></ProtectedRoute>} />
-
+                
+                {/* Consolidated Protected Routes - Single stable layout instance */}
                 <Route path="/*" element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
-                    <DashboardLayout
-                      appSettings={appSettings}
-                      currentUser={currentUser}
-                      groupDefinitions={groupDefinitions}
-                      isMobileSidebarOpen={isMobileSidebarOpen}
-                      setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-                      isSidebarCollapsed={isSidebarCollapsed}
-                      setIsSidebarCollapsed={setIsSidebarCollapsed}
-                      setIsLogoutModalOpen={setIsLogoutModalOpen}
-                      refreshUserProfile={refreshUserProfile}
-                      floorFilter={globalFloorFilter}
-                      onFloorFilterChange={setGlobalFloorFilter}
-                      onShare={handleGlobalShare}
-                    />
+                    <TooltipProvider>
+                      <SidebarProvider>
+                        <DashboardLayout
+                          appSettings={appSettings}
+                          currentUser={currentUser}
+                          groupDefinitions={groupDefinitions}
+                          isMobileSidebarOpen={isMobileSidebarOpen}
+                          setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                          isSidebarCollapsed={isSidebarCollapsed}
+                          setIsSidebarCollapsed={setIsSidebarCollapsed}
+                          setIsLogoutModalOpen={setIsLogoutModalOpen}
+                          refreshUserProfile={refreshUserProfile}
+                          floorFilter={globalFloorFilter}
+                          onFloorFilterChange={setGlobalFloorFilter}
+                          onShare={handleGlobalShare}
+                        >
+                          <Routes>
+                            <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
+                            <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
+                            <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
+                            <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
+                            <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
+                            <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
+                            <Route path="purchase-record" element={<PurchaseRecordManager currentUser={currentUser} />} />
+                            <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
+                            <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
+                            <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
+                            <Route path="files" element={<FileManager currentUser={currentUser} />} />
+                            <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} />} />
+                            <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
+                            <Route path="credential" element={<CredentialManager currentUser={currentUser} />} />
+                            <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
+                            <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
+                            <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />
+                            <Route path="master-group" element={<MasterGroup currentUser={currentUser} />} />
+                            <Route path="system-settings" element={<SystemSettings currentUser={currentUser} />} />
+                            <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
+                            <Route path="announcements" element={<AnnouncementManager />} />
+                            <Route path="maintenance" element={<SystemMaintenance />} />
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                          </Routes>
+                        </DashboardLayout>
+                      </SidebarProvider>
+                    </TooltipProvider>
                   </ProtectedRoute>
                 } />
               </Routes>
@@ -533,7 +601,7 @@ const InternalApp: React.FC = () => {
                     exit={{ opacity: 0, y: 20, scale: 0.9 }}
                     className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none"
                   >
-                    <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/10 dark:border-slate-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-w-[320px]">
+                    <div className="flex items-center gap-3 px-6 py-4 bg-slate-900/90 dark:bg-zinc-800/90 backdrop-blur-xl border border-white/10 dark:border-zinc-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-w-[320px]">
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                         {toast.type === 'success' ? <CheckCircle2 size={18} /> : <X size={18} />}
                       </div>
@@ -545,8 +613,8 @@ const InternalApp: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+
             </React.Suspense>
-            </SidebarProvider>
           </motion.div>
         )}
       </AnimatePresence>
@@ -557,9 +625,11 @@ const InternalApp: React.FC = () => {
 // Wrapper Component to provide Router Context
 const App: React.FC = () => {
   return (
-    <ToastProvider>
-      <InternalApp />
-    </ToastProvider>
+    <Provider theme={defaultTheme} colorScheme="light">
+      <ToastProvider>
+        <InternalApp />
+      </ToastProvider>
+    </Provider>
   );
 };
 
@@ -593,19 +663,6 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   const groups = currentUser?.groups || [];
   const currentView = location.pathname.substring(1) || 'dashboard';
   const isITStaff = role.includes('admin') || groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support')) || currentUser?.isHelpdeskSupport === true;
-
-  const [searchOpen, setSearchOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setSearchOpen((open) => !open);
-      }
-    }
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
 
   // Strict Access Control Logic
   const allowedMenuIds = React.useMemo(() => {
@@ -663,18 +720,20 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   }, [allowedMenuIds, currentView, navigate, isITStaff]);
 
   return (
-    <>
+    <SidebarProvider>
       <NavigationSidebar
         currentUser={currentUser}
         groupDefinitions={groupDefinitions}
         onLogout={() => setIsLogoutModalOpen(true)}
+        onNavigate={(v) => navigate(`/${v}`)}
         appName={appSettings.name}
         logoUrl={appSettings.logo}
       />
-      <SidebarInset className="bg-white dark:bg-background rounded-l-2xl sidebar-inset-shadow overflow-hidden">
-        <header className="flex h-[52px] shrink-0 items-center justify-between gap-4 px-4 bg-white/50 dark:bg-background/50 backdrop-blur-sm border-none">
+      <SidebarInset>
+        {/* Rest of the content */}
+        <header className="bg-background sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="h-8 w-8 rounded-md hover:bg-muted text-muted-foreground/80 transition-all flex items-center justify-center">
+            <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground/80 transition-all flex items-center justify-center border border-border/10">
               <PanelLeft size={16} strokeWidth={1.5} />
             </SidebarTrigger>
             <div className="h-4 w-[1px] bg-border/40 mx-1.5 hidden md:block" />
@@ -691,34 +750,6 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-
-          <div className="flex-1 max-w-xl hidden md:block px-8">
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="group flex items-center gap-2.5 w-full h-8 px-4 rounded-full border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all text-muted-foreground"
-            >
-              <Search size={14} strokeWidth={2} className="opacity-50" />
-              <span className="text-[13px] font-medium opacity-60">Search...</span>
-              <div className="ml-auto flex items-center gap-1 rounded bg-white dark:bg-muted border border-border/40 px-1.5 py-0.5 text-[10px] font-medium shadow-sm">
-                <span className="opacity-40 font-sans">⌘</span>
-                <span className="opacity-60">K</span>
-              </div>
-            </button>
-
-            <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-              <CommandInput placeholder="Search everything..." />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup heading="Suggestions">
-                  {APP_MENU_STRUCTURE.filter(m => !m.parentId && m.id !== 'admin').map((menu) => (
-                    <CommandItem key={menu.id} value={menu.label} onSelect={() => { navigate(`/${menu.id}`); setSearchOpen(false); }} className="cursor-pointer">
-                       {menu.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </CommandDialog>
           </div>
 
           <div className="flex items-center gap-1">
@@ -743,42 +774,17 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
+          <main className="flex-1 flex flex-col">
             <div className="flex-1 py-4 md:py-6 lg:py-8">
               <div className="w-full min-h-full">
-                {children ? children : (
-                  <Routes>
-                    <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
-                    <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
-                    <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
-                    <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
-                    <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />
-                    <Route path="purchase-record" element={<PurchaseRecordManager currentUser={currentUser} />} />
-                    <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
-                    <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
-                    <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
-                    <Route path="files" element={<FileManager currentUser={currentUser} />} />
-                    <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={floorFilter} onFloorFilterChange={onFloorFilterChange} />} />
-                    <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
-                    <Route path="credential" element={<CredentialManager currentUser={currentUser} />} />
-                    <Route path="master-company" element={<MasterCompany currentUser={currentUser} />} />
-                    <Route path="master-department" element={<MasterDepartment currentUser={currentUser} />} />
-                    <Route path="master-category" element={<MasterCategory currentUser={currentUser} />} />
-                    <Route path="master-group" element={<MasterGroup currentUser={currentUser} />} />
-                    <Route path="system-settings" element={<SystemSettings currentUser={currentUser} />} />
-                    <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
-                    <Route path="announcements" element={<AnnouncementManager />} />
-                    <Route path="maintenance" element={<SystemMaintenance />} />
-                    <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                )}
+                {children ? children : <Outlet />}
               </div>
             </div>
             <Footer />
           </main>
         </div>
       </SidebarInset>
-    </>
+    </SidebarProvider>
   );
 };
+

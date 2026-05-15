@@ -66,7 +66,7 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md font-sans">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex justify-between items-center">
           <div>
             <h3 className="text-lg font-bold text-slate-900 tracking-tight">
@@ -79,7 +79,7 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
 
         <div className="p-8 space-y-6">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-inner">
+            <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shadow-inner">
               {getDeviceIcon(editData.deviceType as DeviceType || port.deviceType)}
             </div>
             <div className="flex-1">
@@ -100,7 +100,7 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
 
           <div className="space-y-6 pt-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <label className={labelClass}>IP Address</label>
                 {isEditing ? (
                   <input type="text" className={inputClass} value={editData.ipAddress || ''} onChange={e => setEditData({ ...editData, ipAddress: e.target.value })} placeholder="e.g. 192.168.1.50" />
@@ -108,7 +108,7 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
                   <p className="font-mono font-bold text-blue-600 text-sm">{port.ipAddress || '-'}</p>
                 )}
               </div>
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <label className={labelClass}>MAC Address</label>
                 {isEditing ? (
                   <input type="text" className={inputClass} value={editData.macAddress || ''} onChange={e => setEditData({ ...editData, macAddress: e.target.value })} placeholder="e.g. 00:0A:95:9D:68:16" />
@@ -119,8 +119,8 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100"><label className={labelClass}>VLAN / Logic ID</label>{isEditing ? (<input type="number" className={inputClass} value={editData.vlan || ''} onChange={e => setEditData({ ...editData, vlan: Number(e.target.value) })} />) : (<p className="font-bold text-slate-800 text-lg">{port.vlan || '-'}</p>)}</div>
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100"><label className={labelClass}>VLAN / Logic ID</label>{isEditing ? (<input type="number" className={inputClass} value={editData.vlan || ''} onChange={e => setEditData({ ...editData, vlan: Number(e.target.value) })} />) : (<p className="font-bold text-slate-800 text-lg">{port.vlan || '-'}</p>)}</div>
+              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <label className={labelClass}>Link Speed</label>
                 {isEditing ? (
                   <select className={inputClass} value={editData.linkSpeed || '1 Gbps'} onChange={e => setEditData({ ...editData, linkSpeed: e.target.value as any })}>
@@ -136,20 +136,20 @@ export const PortDetailModal: React.FC<PortDetailModalProps> = ({ port, onClose,
               </div>
             </div>
 
-            <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100"><label className={labelClass}>Media Infrastructure</label>{isEditing ? (<select className={inputClass} value={editData.cableType || 'Cat6'} onChange={e => setEditData({ ...editData, cableType: e.target.value as any })}><option value="Cat6">Cat6 (UTP)</option><option value="Cat5e">Cat5e (UTP)</option><option value="Coaxial">Coaxial (Analog)</option><option value="Fiber">Fiber Optic</option></select>) : (<div className="flex flex-col"><span className="font-bold text-slate-800 flex items-center gap-2"><Cable size={14} className="text-blue-500" />{port.cableType || 'UTP/Cat6'}</span><span className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{port.cableLength || 'Std Length'}</span></div>)}</div>
+            <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100"><label className={labelClass}>Media Infrastructure</label>{isEditing ? (<select className={inputClass} value={editData.cableType || 'Cat6'} onChange={e => setEditData({ ...editData, cableType: e.target.value as any })}><option value="Cat6">Cat6 (UTP)</option><option value="Cat5e">Cat5e (UTP)</option><option value="Coaxial">Coaxial (Analog)</option><option value="Fiber">Fiber Optic</option></select>) : (<div className="flex flex-col"><span className="font-bold text-slate-800 flex items-center gap-2"><Cable size={14} className="text-blue-500" />{port.cableType || 'UTP/Cat6'}</span><span className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{port.cableLength || 'Std Length'}</span></div>)}</div>
 
-            <div className="bg-blue-50/30 p-5 rounded-3xl border border-blue-100/50"><label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Link2 size={12} /> Switch Interconnection</label>{isEditing ? (<select className={inputClass} value={editData.uplinkDeviceId || ''} onChange={e => setEditData({ ...editData, uplinkDeviceId: e.target.value })}><option value="">No Uplink (End Device)</option>{availableSwitches.filter(s => s.name !== switchName).map(sw => (<option key={sw.id} value={sw.id}>Link to: {sw.name}</option>))}</select>) : (<div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${port.uplinkDeviceId ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}><Server size={18} /></div><div><p className="text-[13px] font-bold text-slate-800">{port.uplinkDeviceId ? availableSwitches.find(s => s.id === port.uplinkDeviceId)?.name : 'Standalone Port'}</p><p className="text-[10px] text-slate-400 font-medium">{port.uplinkDeviceId ? 'Fiber/Copper Trunking' : 'Connected to standard end-device'}</p></div></div>)}</div>
+            <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100/50"><label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Link2 size={12} /> Switch Interconnection</label>{isEditing ? (<select className={inputClass} value={editData.uplinkDeviceId || ''} onChange={e => setEditData({ ...editData, uplinkDeviceId: e.target.value })}><option value="">No Uplink (End Device)</option>{availableSwitches.filter(s => s.name !== switchName).map(sw => (<option key={sw.id} value={sw.id}>Link to: {sw.name}</option>))}</select>) : (<div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${port.uplinkDeviceId ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}><Server size={18} /></div><div><p className="text-[13px] font-bold text-slate-800">{port.uplinkDeviceId ? availableSwitches.find(s => s.id === port.uplinkDeviceId)?.name : 'Standalone Port'}</p><p className="text-[10px] text-slate-400 font-medium">{port.uplinkDeviceId ? 'Fiber/Copper Trunking' : 'Connected to standard end-device'}</p></div></div>)}</div>
             <div className="pt-4 border-t border-slate-50"><label className={labelClass}>Physical Documentation</label><div className="flex justify-between items-center text-xs"><span className="text-slate-400 font-medium">Patch Panel Port</span><span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">{port.patchPanelPort}</span></div></div>
           </div>
         </div>
 
         <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Close</button>
+          <button onClick={onClose} className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Close</button>
           {canManage && (
             isEditing ? (
-              <button onClick={handleSave} className="flex items-center gap-2 px-8 py-2.5 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all"><Save size={16} /> Save Circuit</button>
+              <button onClick={handleSave} className="flex items-center gap-2 px-8 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all"><Save size={16} /> Save Circuit</button>
             ) : (
-              <button onClick={() => setIsEditing(true)} className="px-8 py-2.5 bg-slate-900 text-white rounded-2xl text-xs font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all">Edit Wiring Config</button>
+              <button onClick={() => setIsEditing(true)} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black shadow-lg shadow-slate-200 transition-all">Edit Wiring Config</button>
             )
           )}
         </div>

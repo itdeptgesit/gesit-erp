@@ -5,7 +5,8 @@ import {
     Database, Activity, Megaphone,
     ShoppingCart, Box, Shield,
     MessageSquare, RefreshCcw, ChevronRight, Info, Phone, Search, ArrowUpRight, Target,
-    Wallet, CheckCircle2 as CheckCircle2Icon, Clock, Briefcase, Tag, Star
+    Wallet, CheckCircle2 as CheckCircle2Icon, Clock, Briefcase, Tag, Star,
+    Sun, Moon, Sunrise, User, Building2, Sparkles, LifeBuoy, Plus
 } from 'lucide-react';
 import {
     XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -25,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { AIAssistant } from './AIAssistant';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,9 +74,9 @@ const StatusBadge = ({ status }: { status: string }) => {
         'Completed': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
         'In Progress': { variant: 'outline', bg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50', dot: 'bg-blue-500' },
         'On Hold': { variant: 'outline', bg: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/50', dot: 'bg-amber-500' },
-        'Pending': { variant: 'outline', bg: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/50', dot: 'bg-slate-400' },
+        'Pending': { variant: 'outline', bg: 'bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700/50', dot: 'bg-slate-400' },
         'Done': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
-        'To Do': { variant: 'outline', bg: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/50', dot: 'bg-slate-400' },
+        'To Do': { variant: 'outline', bg: 'bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700/50', dot: 'bg-slate-400' },
     };
     const c = config[status] || config['Pending'];
     return (
@@ -214,7 +216,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
             const personalAlerts: string[] = [];
             if (myOverdueTotal > 0) personalAlerts.push(`${myOverdueTotal} planner overdue`);
-            const oldProcurement = myProcurements.find(p => (p.status === 'In Review' || p.status === 'Draft') && p.request_date && new Date(p.request_date) < fiveDaysAgo);
+            const oldProcurement = myProcurements.find(p => p.status?.includes('Pending') && p.request_date && new Date(p.request_date) < fiveDaysAgo);
             if (oldProcurement) personalAlerts.push(`1 procurement pending > 5 hari`);
             const nearDueLoan = myLoans.find(a => a.due_date && (new Date(a.due_date).getTime() - new Date().getTime()) < 3 * 24 * 3600 * 1000);
             if (nearDueLoan) personalAlerts.push(`1 loan hampir jatuh tempo`);
@@ -226,14 +228,14 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             // --- ORGANIZATION CALCULATIONS ---
             const totalTickets = (helpTickets || []).filter(t => t.status !== 'Closed' && t.status !== 'Resolved');
             const activeActivities = (activities || []).filter(a => a.status !== 'Completed');
-            const pendingProc = (purchasePlans || []).filter(p => p.status === 'In Review' || p.status === 'Draft');
+            const pendingProc = (purchasePlans || []).filter(p => p.status?.includes('Pending'));
             const thisMonthPurchases = (purchasePlans || []).filter(p => {
                 if (!p.request_date) return false;
                 const d = new Date(p.request_date);
                 const now = new Date();
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             });
-            const totalPurchaseVal = thisMonthPurchases.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+            const totalPurchaseVal = thisMonthPurchases.reduce((acc, curr) => acc + (curr.total_price || 0), 0);
             const totalAssets = (itAssets || []).length;
             const activeLoans = (itAssets || []).filter(a => a.status === 'Used').length;
             const completionRate = weeklyPlans && weeklyPlans.length > 0 ?
@@ -387,10 +389,10 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 topHandlers: topHandlersList,
 
                 procurementStats: {
-                    pending: myProcurements.filter(p => p.status === 'In Review').length,
+                    pending: myProcurements.filter(p => p.status?.includes('Pending')).length,
                     approved: myProcurements.filter(p => p.status === 'Approved').length,
                     rejected: myProcurements.filter(p => p.status === 'Rejected').length,
-                    totalBudget: myProcurements.reduce((acc, curr) => acc + (curr.amount || 0), 0)
+                    totalBudget: myProcurements.reduce((acc, curr) => acc + (curr.total_price || 0), 0)
                 },
                 personalAlerts,
                 orgCritical: orgAlerts,
@@ -522,59 +524,120 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
     if (isLoading) {
         return (
-            <div className="space-y-5 animate-pulse min-h-screen">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                        <div className="h-10 bg-muted rounded-2xl w-64" />
-                        <div className="h-5 bg-muted rounded-xl w-80" />
-                    </div>
-                </div>
+            <div className="space-y-8 animate-pulse">
+                {/* Hero skeleton */}
+                <div className="h-44 bg-gradient-to-br from-muted via-muted/60 to-muted rounded-xl" />
+                {/* Stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-32 bg-muted rounded-3xl" />)}
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-36 bg-muted rounded-xl" />)}
+                </div>
+                {/* Content */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="lg:col-span-4 h-80 bg-muted rounded-xl" />
+                    <div className="lg:col-span-8 h-80 bg-muted rounded-xl" />
                 </div>
             </div>
         );
     }
 
+    // Dynamic greeting based on time of day
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return { text: 'Good morning', icon: Sunrise };
+        if (hour < 18) return { text: 'Good afternoon', icon: Sun };
+        return { text: 'Good evening', icon: Moon };
+    };
+    const greeting = getGreeting();
+    const GreetingIcon = greeting.icon;
+    const firstName = (userName || currentUser?.fullName || 'there').split(' ')[0];
+    const todayFormatted = new Date().toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+    });
+
     return (
         <div className="w-full space-y-8 animate-in fade-in duration-700 pb-16">
 
-            {/* --- CORE HEADER --- */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between items-start gap-6 pt-2">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
-                            <Target size={16} className="animate-pulse" />
+            {/* --- HERO HEADER --- */}
+            <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8">
+                {/* Decorative orbs */}
+                <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-indigo-500/5 blur-3xl" />
+
+                <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                        {/* Avatar / Icon */}
+                        <div className="hidden sm:flex w-14 h-14 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center shrink-0">
+                            <GreetingIcon size={24} className="text-primary" strokeWidth={2} />
                         </div>
-                        <Badge variant="outline" className="text-[10px] font-semibold tracking-wider uppercase border-primary/20 text-primary bg-primary/5 px-2.5 py-0.5 rounded-full">
-                            {activeMode === 'PERSONAL' ? 'Operation Hub' : 'System Gesit'}
-                        </Badge>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                <span>{todayFormatted}</span>
+                                <span className="w-1 h-1 rounded-full bg-border" />
+                                <span className="text-primary">{greeting.text}</span>
+                            </div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                                {greeting.text}, {firstName}
+                                <span className="text-primary">.</span>
+                            </h1>
+                            <p className="text-sm text-muted-foreground font-medium max-w-xl">
+                                {activeMode === 'PERSONAL'
+                                    ? "Here's your daily workspace — tasks, tickets, and equipment at a glance."
+                                    : 'Real-time organizational health, infrastructure status, and team performance.'}
+                            </p>
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        {activeMode === 'PERSONAL' ? 'My Workspace' : 'Control Tower'}
-                    </h1>
-                    <p className="text-sm text-muted-foreground font-medium max-w-lg">
-                        {activeMode === 'PERSONAL'
-                            ? 'Manage your daily technical roadmap and equipment efficiency.'
-                            : 'Real-time synchronization of organizational health and infrastructure status.'}
-                    </p>
+
+                    {/* Mode Toggle with Icons */}
+                    <div className="flex p-1 bg-muted/60 backdrop-blur-sm rounded-xl border border-border/60 self-start lg:self-auto">
+                        {([
+                            { id: 'PERSONAL', label: 'Personal', icon: User },
+                            { id: 'ORGANIZATION', label: 'Organization', icon: Building2 }
+                        ] as const).map(mode => {
+                            const ModeIcon = mode.icon;
+                            const isActive = activeMode === mode.id;
+                            return (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => setActiveMode(mode.id)}
+                                    className={`relative flex items-center gap-2 px-4 md:px-5 py-2 rounded-lg text-[12px] font-semibold transition-all
+                                        ${isActive
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }
+                                    `}
+                                >
+                                    <ModeIcon size={14} strokeWidth={2.2} className={isActive ? 'text-primary' : ''} />
+                                    <span>{mode.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="flex p-1 bg-muted/50 rounded-lg border border-border">
-                    {(['PERSONAL', 'ORGANIZATION'] as const).map(mode => (
-                        <button
-                            key={mode}
-                            onClick={() => setActiveMode(mode)}
-                            className={`px-6 py-2 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-all
-                                ${activeMode === mode
-                                    ? 'bg-background text-primary shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100'
-                                }
-                            `}
-                        >
-                            {mode === 'PERSONAL' ? 'Personal' : 'Organization'}
-                        </button>
-                    ))}
+                {/* Quick Actions Bar */}
+                <div className="relative mt-6 pt-5 border-t border-border/40 flex flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mr-2 self-center">
+                        <Sparkles size={11} className="text-primary" /> Quick Actions
+                    </span>
+                    {[
+                        { label: 'New Ticket', icon: LifeBuoy, view: 'helpdesk' },
+                        { label: 'Activity Log', icon: Activity, view: 'activity' },
+                        { label: 'Weekly Plan', icon: Calendar, view: 'weekly' },
+                        { label: 'Procurement', icon: ShoppingCart, view: 'purchase' },
+                        { label: 'Assets', icon: Database, view: 'assets' },
+                    ].map(action => {
+                        const ActionIcon = action.icon;
+                        return (
+                            <button
+                                key={action.view}
+                                onClick={() => onNavigate(action.view)}
+                                className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card hover:bg-primary hover:text-primary-foreground border border-border/60 hover:border-primary text-[11px] font-semibold text-foreground/80 transition-all"
+                            >
+                                <ActionIcon size={12} strokeWidth={2.2} className="opacity-70 group-hover:opacity-100" />
+                                {action.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -623,11 +686,23 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                         );
                                     })
                                 ) : (
-                                    <div className="py-12 flex flex-col items-center text-center">
-                                        <div className="w-16 h-16 bg-muted/40 rounded-full flex items-center justify-center mb-4">
-                                            <Calendar className="text-muted-foreground/30" size={32} />
+                                    <div className="py-10 flex flex-col items-center text-center">
+                                        <div className="relative w-20 h-20 mb-4">
+                                            <div className="absolute inset-0 bg-primary/5 rounded-full animate-ping opacity-75" />
+                                            <div className="relative w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+                                                <CheckCircle2 className="text-primary" size={32} strokeWidth={1.8} />
+                                            </div>
                                         </div>
-                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest leading-loose">No task scheduled today.</p>
+                                        <p className="text-sm font-semibold text-foreground mb-1">All caught up!</p>
+                                        <p className="text-xs text-muted-foreground mb-4">You have no tasks scheduled for today.</p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-[11px] font-semibold"
+                                            onClick={() => onNavigate('weekly')}
+                                        >
+                                            <Plus size={12} className="mr-1" /> Plan a task
+                                        </Button>
                                     </div>
                                 )}
                             </CardContent>
@@ -664,7 +739,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <CardHeader className="p-6 pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-base font-semibold">Assigned to Me</CardTitle>
-                                            <Button variant="link" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-wider text-primary px-0" onClick={() => onNavigate('weekly')}>View All</Button>
+                                            <Button variant="link" size="sm" className="text-[10px] font-bold uppercase tracking-wider text-primary" onClick={() => onNavigate('weekly')}>View All</Button>
                                         </div>
                                     </CardHeader>
                                     <div className="px-0">
@@ -675,15 +750,25 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                         <TableCell className="pl-6 py-3">
                                                             <p className="text-sm font-semibold">{act.activity_name || act.category}</p>
                                                             <div className="flex items-center gap-2 mt-0.5">
-                                                                <Badge variant="outline" className={`text-[7px] h-3.5 px-1 ${act.priority === 'High' ? 'text-destructive border-destructive/30' : ''}`}>{act.priority || 'Medium'}</Badge>
-                                                                <span className="text-[9px] font-medium text-muted-foreground uppercase">Due: {act.due_date || '-'}</span>
+                                                                <Badge variant="outline" className={`text-xs px-1.5 rounded-sm h-5 font-medium ${act.priority === 'High' ? 'text-destructive border-destructive/30 bg-destructive/5' : 'text-muted-foreground bg-muted/20'}`}>{act.priority || 'Medium'}</Badge>
+                                                                <span className="text-xs text-muted-foreground font-medium">Due: {act.due_date || '-'}</span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="pr-6 text-right"><StatusBadge status={act.status} /></TableCell>
                                                     </TableRow>
                                                 ))}
                                                 {listData.myActivities.length === 0 && (
-                                                    <TableRow><TableCell colSpan={2} className="h-40 text-center text-muted-foreground uppercase text-[10px] tracking-widest">No activities</TableCell></TableRow>
+                                                    <TableRow>
+                                                        <TableCell colSpan={2} className="h-40 text-center">
+                                                            <div className="flex flex-col items-center gap-2">
+                                                                <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center">
+                                                                    <Activity size={20} className="text-muted-foreground/50" />
+                                                                </div>
+                                                                <p className="text-sm font-medium text-muted-foreground">No activities assigned</p>
+                                                                <p className="text-[11px] text-muted-foreground/70">You're free for now.</p>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
                                                 )}
                                             </TableBody>
                                         </Table>
@@ -729,12 +814,12 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             </CardHeader>
                             <div className="overflow-x-auto">
                                 <Table>
-                                    <TableHeader className="bg-muted/30">
-                                        <TableRow className="border-border/50">
-                                            <TableHead className="pl-6 h-10 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Asset Name</TableHead>
-                                            <TableHead className="h-10 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Serial / ID</TableHead>
-                                            <TableHead className="h-10 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Due Date</TableHead>
-                                            <TableHead className="text-right pr-6 h-10 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                                    <TableHeader>
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableHead className="pl-6 h-10 font-medium text-xs text-muted-foreground">Asset Name</TableHead>
+                                            <TableHead className="h-10 font-medium text-xs text-muted-foreground">Serial / ID</TableHead>
+                                            <TableHead className="h-10 font-medium text-xs text-muted-foreground">Due Date</TableHead>
+                                            <TableHead className="text-right pr-6 h-10 font-medium text-xs text-muted-foreground">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -745,23 +830,33 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                 <TableRow key={asset.id} className={`border-border/20 hover:bg-muted/30 transition-colors group ${isNearDue ? 'bg-destructive/5' : ''}`}>
                                                     <TableCell className="pl-6 py-4">
                                                         <div className="flex items-center gap-2.5">
-                                                            <div className="w-7 h-7 rounded bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
+                                                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
                                                                 <Database size={14} />
                                                             </div>
                                                             <span className="text-sm font-semibold">{asset.item_name}</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="font-medium text-xs text-muted-foreground">{asset.serial_number || '-'}</TableCell>
-                                                    <TableCell className={`text-xs font-bold ${isNearDue ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                                    <TableCell className="font-medium text-sm text-muted-foreground">{asset.serial_number || '-'}</TableCell>
+                                                    <TableCell className={`text-sm font-medium ${isNearDue ? 'text-destructive' : 'text-muted-foreground'}`}>
                                                         {asset.due_date ? new Date(asset.due_date).toLocaleDateString() : '-'}
-                                                        {isNearDue && <span className="ml-2 inline-block px-1.5 py-0.5 bg-destructive text-white rounded text-[7px] font-bold uppercase tracking-tight">Express</span>}
+                                                        {isNearDue && <span className="ml-2 inline-block px-1.5 py-0.5 bg-destructive text-white rounded-md text-[10px] font-semibold">Express</span>}
                                                     </TableCell>
                                                     <TableCell className="text-right pr-6"><StatusBadge status={asset.status} /></TableCell>
                                                 </TableRow>
                                             );
                                         })}
                                         {listData.myBorrowedAssets.length === 0 && (
-                                            <TableRow><TableCell colSpan={4} className="h-40 text-center text-muted-foreground font-bold uppercase text-[10px] tracking-widest">You have no active asset loans</TableCell></TableRow>
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="h-44 text-center">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-14 h-14 rounded-xl bg-muted/60 flex items-center justify-center">
+                                                            <Box size={24} className="text-muted-foreground/50" strokeWidth={1.8} />
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-foreground">No borrowed assets</p>
+                                                        <p className="text-[11px] text-muted-foreground">Equipment you borrow will appear here.</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
                                         )}
                                     </TableBody>
                                 </Table>
@@ -779,43 +874,43 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             {stats.totalOverdueOrg > 0 && (
                                 <div 
                                     onClick={() => onNavigate('asset-loan')}
-                                    className="flex-1 bg-rose-500/10 border border-rose-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-rose-500/20 transition-all shadow-sm"
+                                    className="w-full md:w-auto pr-6 bg-destructive/10 border border-destructive/20 p-3 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-destructive/15 transition-all"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
-                                            <Shield size={20} className="animate-pulse" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center text-destructive-foreground">
+                                            <Shield size={16} className="animate-pulse" />
                                         </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Aset Terlambat!</h4>
-                                            <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{stats.totalOverdueOrg} barang belum dikembalikan tepat waktu.</p>
+                                        <div className="mr-8">
+                                            <h4 className="text-xs font-bold text-destructive leading-none mb-1">Aset Terlambat!</h4>
+                                            <p className="text-[11px] font-medium text-destructive/80">{stats.totalOverdueOrg} barang belum dikembalikan.</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={18} className="text-rose-500 group-hover:translate-x-1 transition-transform" />
+                                    <ChevronRight size={16} className="text-destructive opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                 </div>
                             )}
 
                             {stats.totalOpenTickets > 0 && (
                                 <div 
                                     onClick={() => onNavigate('helpdesk')}
-                                    className="flex-1 bg-blue-500/10 border border-blue-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/20 transition-all shadow-sm"
+                                    className="w-full md:w-auto pr-6 bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/15 transition-all"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                                            <MessageSquare size={20} />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                                            <MessageSquare size={16} />
                                         </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Tiket Masuk!</h4>
-                                            <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-1.5">{stats.totalOpenTickets} tiket baru butuh balasan kamu.</p>
+                                        <div className="mr-8">
+                                            <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 leading-none mb-1">Tiket Masuk!</h4>
+                                            <p className="text-[11px] font-medium text-blue-600/80 dark:text-blue-400/80">{stats.totalOpenTickets} tiket baru butuh balasan.</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={18} className="text-blue-500 group-hover:translate-x-1 transition-transform" />
+                                    <ChevronRight size={16} className="text-blue-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                 </div>
                             )}
                         </div>
                     )}
 
                     {/* 1. Summary Cards (Global KPI) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         <StatCard label="Activities" value={stats.totalActiveActivities} icon={Activity} color="indigo" subValue="In progress" />
                         <StatCard label="Procurement" value={stats.pendingProcurement} icon={ShoppingCart} color="amber" subValue="To review" />
                         <StatCard label="Spending" value={formatCurrency(stats.totalPurchaseThisMonth)} icon={TrendingUp} color="emerald" subValue="This Month" />
@@ -836,7 +931,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Financial Summary</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-[9px] font-bold uppercase tracking-wider text-primary px-3 h-7" onClick={() => onNavigate('procurement')}>
+                            <Button variant="ghost" size="sm" className="text-[9px] font-bold uppercase tracking-wider text-primary" onClick={() => onNavigate('procurement')}>
                                 View All <ChevronRight size={10} className="ml-1" />
                             </Button>
                         </CardHeader>
@@ -937,7 +1032,6 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
                         <Card className="lg:col-span-4 rounded-xl border-border shadow-sm overflow-hidden bg-primary/5 flex flex-col items-center justify-between p-7 relative isolate h-full">
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/10 pointer-events-none" />
-                            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-300 via-primary to-blue-300 pointer-events-none" />
 
                             <div className="flex-none mb-6 text-center">
                                 <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-foreground mb-1">{t('ticketingAnalytics')}</h4>
@@ -1106,7 +1200,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                                 <div key={wIdx} className="flex flex-col gap-[4px]">
                                                                     {week.map((day: any, dIdx: number) => {
                                                                         const val = day.count;
-                                                                        const colorClass = val === 0 ? 'bg-slate-200/70 dark:bg-slate-800'
+                                                                        const colorClass = val === 0 ? 'bg-slate-200/70 dark:bg-zinc-800'
                                                                             : val < 3 ? 'bg-[#9be9a8] dark:bg-emerald-900/60'
                                                                                 : val < 6 ? 'bg-[#40c463] dark:bg-emerald-600'
                                                                                     : val < 10 ? 'bg-[#30a14e] dark:bg-emerald-500'
@@ -1131,7 +1225,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                         </span>
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="text-[10px] text-muted-foreground/50">Less</span>
-                                                            <div className="w-[11px] h-[11px] rounded-[2px] bg-slate-200/70 dark:bg-slate-800" />
+                                                            <div className="w-[11px] h-[11px] rounded-[2px] bg-slate-200/70 dark:bg-zinc-800" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#9be9a8] dark:bg-emerald-900/60" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#40c463] dark:bg-emerald-600" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#30a14e] dark:bg-emerald-500" />
@@ -1221,20 +1315,20 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                         onChange={(e) => setProjectSearch(e.target.value)}
                                     />
                                 </div>
-                                <Button variant="outline" size="sm" className="h-8 px-2.5 rounded-lg border-border/50 text-muted-foreground">
+                                <Button variant="outline" size="sm" className=".5 border-border/50 text-muted-foreground">
                                     <RefreshCcw size={12} />
                                 </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
-                                <TableHeader className="bg-muted/30">
-                                    <TableRow className="hover:bg-transparent border-border/50">
-                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Project Name</TableHead>
-                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Department</TableHead>
-                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Status</TableHead>
-                                        <TableHead className="text-[9px] font-bold uppercase tracking-widest h-10">Timeline</TableHead>
-                                        <TableHead className="text-right text-[9px] font-bold uppercase tracking-widest h-10">Priority</TableHead>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="text-xs font-medium text-muted-foreground h-10 w-[250px]">Project Name</TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground h-10">Department</TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground h-10">Status</TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground h-10">Timeline</TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground h-10 text-right">Priority</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1242,32 +1336,32 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                         <TableRow key={item.id} className="hover:bg-muted/20 border-border/50 transition-colors">
                                             <TableCell className="py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] ${idx % 2 === 0 ? 'bg-indigo-500/10 text-indigo-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${idx % 2 === 0 ? 'bg-indigo-500/10 text-indigo-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                                                         {item.name?.charAt(0) || 'P'}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-[10px] font-bold truncate uppercase">{item.name}</p>
-                                                        <p className="text-[8px] text-muted-foreground uppercase font-medium">Ref: PJ-{2000 + item.id}</p>
+                                                        <p className="text-sm font-semibold truncate text-foreground">{item.name}</p>
+                                                        <p className="text-xs text-muted-foreground">Ref: PJ-{2000 + item.id}</p>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-[10px] font-bold text-muted-foreground uppercase">{item.department || 'GENERAL'}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{item.department || 'General'}</TableCell>
                                             <TableCell>
                                                 <StatusBadge status={item.status} />
                                             </TableCell>
                                             <TableCell>
                                                 <div className="space-y-1.5 w-24">
-                                                    <div className="flex justify-between text-[8px] font-bold text-muted-foreground uppercase">
+                                                    <div className="flex justify-between text-xs text-muted-foreground">
                                                         <span>Progress</span>
                                                         <span>{item.progress}%</span>
                                                     </div>
-                                                    <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                                                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                                         <motion.div initial={{ width: 0 }} animate={{ width: `${item.progress}%` }} transition={{ duration: 1 }} className={`h-full rounded-full ${item.progress === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${item.priority === 'High' ? 'bg-red-500/10 text-red-500' : 'bg-slate-500/10 text-slate-500'}`}>
+                                                <span className={`text-xs font-semibold px-2 py-1 rounded-md ${item.priority === 'High' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'}`}>
                                                     {item.priority || 'Normal'}
                                                 </span>
                                             </TableCell>
@@ -1284,15 +1378,17 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             <div className="p-4 border-t border-border/50 flex items-center justify-between">
                                 <p className="text-[9px] font-bold text-muted-foreground uppercase">Showing {paginatedProjects.length} of {filteredProjects.length} initiatives</p>
                                 <div className="flex gap-1">
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}><ChevronRight size={12} className="rotate-180" /></Button>
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md bg-primary/10 border-primary/20 text-primary font-bold text-[10px]">{currentPage}</Button>
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}><ChevronRight size={12} /></Button>
+                                    <Button variant="outline" size="sm" className="w-7 border-border/50" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}><ChevronRight size={12} className="rotate-180" /></Button>
+                                    <Button variant="outline" size="sm" className="w-7 bg-primary/10 border-primary/20 text-primary font-bold text-[10px]">{currentPage}</Button>
+                                    <Button variant="outline" size="sm" className="w-7 border-border/50" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}><ChevronRight size={12} /></Button>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
             )}
+            
         </div>
     );
 };
+

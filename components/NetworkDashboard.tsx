@@ -545,12 +545,12 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 description="Sentralisasi manajemen infrastruktur IT & monitoring jaringan real-time"
             >
                 <div className="flex items-center gap-2">
-                    <div className="flex bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 mr-2">
+                    <div className="flex bg-slate-50 dark:bg-zinc-900 p-1 rounded-lg border border-slate-200 dark:border-zinc-800 mr-2">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleExportSwitches}
-                            className="h-8 w-8 text-slate-500 hover:text-emerald-600 hover:bg-white dark:hover:bg-slate-800"
+                            className="w-8 dark:"
                             title="Export Nodes"
                         >
                             <FileSpreadsheet size={16} />
@@ -559,7 +559,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             variant="ghost"
                             size="icon"
                             onClick={handleExportWiring}
-                            className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800"
+                            className="w-8 dark:"
                             title="Export Wiring"
                         >
                             <Server size={16} />
@@ -568,7 +568,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     {canManage && (
                         <Button
                             onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }}
-                            className="h-10 px-5 bg-slate-900 dark:bg-slate-100 text-white dark:text-black font-semibold text-xs rounded-xl"
+                            className="dark: font-semibold text-xs"
                         >
                             <Plus size={14} className="mr-2" /> Provision Node
                         </Button>
@@ -577,7 +577,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         <Button
                             onClick={handleSaveLayout}
                             disabled={isSaving}
-                            className="h-10 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-500/20"
+                            className="font-semibold text-xs /20"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin mr-2" /> : <Save size={14} className="mr-2" />}
                             Sync Geometry
@@ -588,16 +588,16 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
 
 
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 shadow-sm">
-                    <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-800 shadow-sm">
+                    <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
                         {[{ id: 'topology', label: 'Topology', icon: GitBranch }, { id: 'status', label: 'Nodes', icon: Layout }, { id: 'wiring', label: 'Wiring', icon: Cable }, { id: 'devices', label: 'Hardware', icon: Server }].map(tab => (
                             <button 
                                 key={tab.id} 
                                 onClick={() => startTransition(() => setActiveTab(tab.id as any))} 
                                 className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap 
                                     ${activeTab === tab.id 
-                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' 
+                                        ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' 
                                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
                                     } ${isPending ? 'opacity-50 grayscale' : ''}`}
                             >
@@ -609,7 +609,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     <div className="relative flex-1 md:max-w-xs">
                         <Input 
                             placeholder="Filter registry..." 
-                            className="w-full pl-9 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300" 
+                            className="w-full pl-9 h-11 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300" 
                             value={searchTerm} 
                             onChange={e => setSearchTerm(e.target.value)} 
                         />
@@ -669,18 +669,18 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                     <div className="p-6 md:p-8">
                                         {activeTab === 'status' ? (
                                             <div className="space-y-8">{filteredSwitches.map(sw => (
-                                                <div key={sw.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                                                    <div className="flex justify-between items-end mb-6"><div><div className="flex items-center gap-3"><h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{sw.name}</h3><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-bold border border-slate-200 dark:border-slate-700 uppercase">{sw.model}</span></div><p className="text-slate-400 text-[10px] mt-1 font-bold uppercase tracking-widest">{sw.location} • {sw.rack} • <span className="text-blue-500">{sw.ip}</span></p></div></div>
+                                                <div key={sw.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+                                                    <div className="flex justify-between items-end mb-6"><div><div className="flex items-center gap-3"><h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{sw.name}</h3><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 text-[9px] font-bold border border-slate-200 dark:border-zinc-700 uppercase">{sw.model}</span></div><p className="text-slate-400 text-[10px] mt-1 font-bold uppercase tracking-widest">{sw.location} • {sw.rack} • <span className="text-blue-500">{sw.ip}</span></p></div></div>
                                                     <SwitchVisualizer switchDetails={sw} onPortClick={(port) => { setSelectedPort(port); setSelectedSwitch(sw); }} />
                                                 </div>
                                             ))}</div>
                                         ) : activeTab === 'wiring' ? (
-                                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
+                                            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
                                         ) : (
-                                            <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shadow-sm">
+                                            <div className="bg-white dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-x-auto shadow-sm">
                                                 <Table className="w-full">
                                                     <TableHeader>
-                                                        <TableRow className="bg-white dark:bg-slate-950 hover:bg-transparent">
+                                                        <TableRow className="bg-white dark:bg-zinc-950 hover:bg-transparent">
                                                             <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Device Identity</TableHead>
                                                             <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Networking</TableHead>
                                                             <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Infrastructure Detail</TableHead>
@@ -699,7 +699,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                                                     <p className="font-mono text-blue-600 dark:text-blue-400 text-[11px] font-black">{sw.ip}</p>
                                                                     <p className="text-[9px] text-slate-400 font-bold uppercase mt-1 tracking-wider">Static Access</p>
                                                                 </TableCell>
-                                                                <TableCell className="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-tight">
+                                                                <TableCell className="px-6 py-4 text-slate-500 dark:text-zinc-400 text-[11px] font-bold uppercase tracking-tight">
                                                                     <p className="text-slate-700 dark:text-slate-300">{sw.location}</p>
                                                                     <p className="text-[9px] text-slate-400 font-bold mt-1 tracking-widest">SN: {sw.serialNumber || 'N/A'}</p>
                                                                 </TableCell>
@@ -710,8 +710,8 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                                                 </TableCell>
                                                                 <TableCell className="px-6 py-4">
                                                                     <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="h-8 w-8 text-slate-400 hover:text-slate-900 dark:hover:text-white"><Pencil size={14} /></Button>}
-                                                                        {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="h-8 w-8 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></Button>}
+                                                                        {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 dark:hover:"><Pencil size={14} /></Button>}
+                                                                        {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="w-8"><Trash2 size={14} /></Button>}
                                                                     </div>
                                                                 </TableCell>
                                                             </TableRow>
@@ -765,3 +765,4 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
         </div>
     );
 };
+

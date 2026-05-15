@@ -60,12 +60,12 @@ export const IntelligenceInsight: React.FC<IntelligenceInsightProps> = ({ insigh
     const priorityBadge = {
         high: { bg: 'bg-rose-100 dark:bg-rose-900/40', text: 'text-rose-700 dark:text-rose-300', label: 'High' },
         medium: { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300', label: 'Medium' },
-        low: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', label: 'Low' }
+        low: { bg: 'bg-slate-100 dark:bg-zinc-800', text: 'text-slate-600 dark:text-zinc-400', label: 'Low' }
     }[insight.priority];
 
     return (
         <div
-            className={`${style.bg} ${style.border} border rounded-2xl p-5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${insight.action ? 'cursor-pointer' : ''} group animate-in fade-in slide-in-from-bottom-2`}
+            className={`${style.bg} ${style.border} border rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${insight.action ? 'cursor-pointer' : ''} group animate-in fade-in slide-in-from-bottom-2`}
             onClick={insight.action?.onClick}
         >
             <div className="flex items-start gap-4">
@@ -85,14 +85,14 @@ export const IntelligenceInsight: React.FC<IntelligenceInsightProps> = ({ insigh
                         </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed mb-3">
                         {insight.description}
                     </p>
 
                     {/* Metric Display */}
                     {insight.metric && insight.value !== undefined && (
                         <div className="flex items-center gap-2 mb-3">
-                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest">
                                 {insight.metric}:
                             </span>
                             <span className={`text-sm font-black ${style.text}`}>
@@ -118,3 +118,4 @@ export const IntelligenceInsight: React.FC<IntelligenceInsightProps> = ({ insigh
         </div>
     );
 };
+

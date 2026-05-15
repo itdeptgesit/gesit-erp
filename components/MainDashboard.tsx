@@ -1,12 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-    ShoppingCart, RefreshCcw, Network, Box, Zap,
-    ListTodo, LifeBuoy, ChevronRight, AlertCircle, Clock,
-    TrendingUp, TrendingDown, Activity, ShieldAlert, PieChart,
-    BarChart, LayoutGrid, Target, ArrowUpRight, CheckCircle2
-} from 'lucide-react';
+import ShoppingCart from '@spectrum-icons/workflow/ShoppingCart';
+import Refresh from '@spectrum-icons/workflow/Refresh';
+import Box from '@spectrum-icons/workflow/Box';
+import Flashlight from '@spectrum-icons/workflow/Flashlight';
+import Checklist from '@spectrum-icons/workflow/TaskList';
+import Help from '@spectrum-icons/workflow/Help';
+import ChevronRight from '@spectrum-icons/workflow/ChevronRight';
+import AlertCircle from '@spectrum-icons/workflow/AlertCircle';
+import Clock from '@spectrum-icons/workflow/Clock';
+import GraphTrend from '@spectrum-icons/workflow/GraphTrend';
+import Activity from '@spectrum-icons/workflow/History';
+import Shield from '@spectrum-icons/workflow/Shield';
+import GraphPie from '@spectrum-icons/workflow/GraphPie';
+import GraphBarVertical from '@spectrum-icons/workflow/GraphBarVertical';
+import ViewGrid from '@spectrum-icons/workflow/ViewGrid';
+import Target from '@spectrum-icons/workflow/Target';
+import ArrowUpRight from '@spectrum-icons/workflow/ArrowUpRight';
+import CheckmarkCircle from '@spectrum-icons/workflow/CheckmarkCircle';
 import {
     BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
     ResponsiveContainer, LineChart, Line, AreaChart, Area, Cell, PieChart as RePieChart, Pie
@@ -17,6 +29,8 @@ import { StatCard } from './StatCard';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { twMerge } from "tailwind-merge";
 
 // --- Types ---
 
@@ -83,7 +97,7 @@ const PriorityItem = ({ title, count, type, onClick }: any) => (
                 type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
                     'bg-muted text-muted-foreground'
                 }`}>
-                {type === 'critical' ? <AlertCircle size={16} /> : type === 'warning' ? <Clock size={16} /> : <ListTodo size={16} />}
+                {type === 'critical' ? <AlertCircle size="S" /> : type === 'warning' ? <Clock size="S" /> : <Checklist size="S" />}
             </div>
             <div>
                 <h4 className="font-semibold text-foreground text-sm">{title}</h4>
@@ -92,7 +106,9 @@ const PriorityItem = ({ title, count, type, onClick }: any) => (
         </div>
         <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-foreground">{count}</span>
-            <ChevronRight size={12} className="text-muted-foreground group-hover:text-primary transition-all" />
+            <span className="text-muted-foreground group-hover:text-primary transition-all">
+                <ChevronRight size="XS" />
+            </span>
         </div>
     </div>
 );
@@ -260,68 +276,57 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
     return (
         <div className="pb-12 space-y-8 animate-in fade-in duration-500">
-            {/* Header */}
-            <PageHeader
-                title="Control Center"
-                description={`Systems operational. Welcome back, ${userName?.split(' ')[0] || 'User'}.`}
-            >
-                <div className="flex items-center gap-4">
-                    {/* Tab Switcher - Match Screenshot */}
-                    <div className="flex items-center border-b border-border mb-[-1.5rem] pt-1">
-                        {(['personal', 'organization'] as DashboardMode[]).map((mode) => (
-                            <button
-                                key={mode}
-                                onClick={() => setActiveMode(mode)}
-                                className={`
-                                    px-6 py-3 text-[11px] font-bold uppercase tracking-wider transition-all relative
-                                    ${activeMode === mode
-                                        ? 'text-primary'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                    }
-                                `}
-                            >
-                                {mode}
-                                {activeMode === mode && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                                )}
-                            </button>
-                        ))}
-                    </div>
+            <Tabs value={activeMode} onValueChange={(value) => setActiveMode(value as DashboardMode)} className="w-full">
+                {/* Header */}
+                <PageHeader
+                    title="Control Center"
+                    description={`Systems operational. Welcome back, ${userName?.split(' ')[0] || 'User'}.`}
+                >
+                    <div className="flex items-center gap-4">
+                        {/* Tab Switcher - Now using Standardized Tabs Component */}
+                        <TabsList>
+                            <TabsTrigger value="personal">
+                                Personal
+                            </TabsTrigger>
+                            <TabsTrigger value="organization">
+                                Organization
+                            </TabsTrigger>
+                        </TabsList>
 
-                    <div className="flex-1" />
+                        <div className="flex-1" />
 
-                    <div className="hidden md:flex items-center gap-2">
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
-                                <LayoutGrid size={14} />
+                        <div className="hidden md:flex items-center gap-2">
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                                    <ViewGrid size="S" />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="h-9 w-40 bg-muted/50 border border-border rounded-lg pl-9 pr-4 text-xs focus:ring-1 focus:ring-primary/20 transition-all outline-none"
+                                />
                             </div>
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="h-9 w-40 bg-muted/50 border border-border rounded-lg pl-9 pr-4 text-xs focus:ring-1 focus:ring-primary/20 transition-all outline-none"
-                            />
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={fetchData}
+                                className="w-9 border-border bg-background"
+                            >
+                                <span className={isLoading ? 'animate-spin' : ''}><Refresh size="S" /></span>
+                            </Button>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={fetchData}
-                            className="h-9 w-9 rounded-lg border-border bg-background"
-                        >
-                            <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
-                        </Button>
                     </div>
-                </div>
-            </PageHeader>
+                </PageHeader>
 
-            {/* --- DASHBOARD CONTENT SWITCHER --- */}
-            {activeMode === 'personal' ? (
-                /* PERSONAL VIEW (Referencing Screenshot 1) */
-                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                {/* --- DASHBOARD CONTENT SWITCHER --- */}
+                <TabsContent value="personal" className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                    {/* PERSONAL VIEW (Referencing Screenshot 1) */}
+                    {/* Stat Cards - Row 1 */}
                     {/* Stat Cards - Row 1 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
                             label="My Open Tickets" value={stats.openTickets} subValue="+2 Today"
-                            icon={LifeBuoy} color="blue" onClick={() => onNavigate('helpdesk')}
+                            icon={Help} color="blue" onClick={() => onNavigate('helpdesk')}
                         />
                         <StatCard
                             label="My Asset Loans" value={stats.activeLoans} subtext="On Loan"
@@ -333,7 +338,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         />
                         <StatCard
                             label="My Tasks Today" value={stats.personalTasks.length} subtext="1 Overdue"
-                            icon={ListTodo} color="indigo" onClick={() => onNavigate('weekly')}
+                            icon={Checklist} color="indigo" onClick={() => onNavigate('weekly')}
                         />
                     </div>
 
@@ -347,7 +352,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             <div className="space-y-4">
                                 {stats.personalTasks.slice(0, 3).map((task) => (
                                     <div key={task.id} className="flex items-center gap-3 group">
-                                        <div className="w-5 h-5 rounded border border-slate-300 dark:border-slate-700 flex items-center justify-center group-hover:border-primary transition-colors cursor-pointer">
+                                        <div className="w-5 h-5 rounded border border-slate-300 dark:border-zinc-700 flex items-center justify-center group-hover:border-primary transition-colors cursor-pointer">
                                             <div className="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100" />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -357,7 +362,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         {task.status === 'Overdue' && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 font-bold">OVERDUE</Badge>}
                                     </div>
                                 ))}
-                                <Button variant="link" className="px-0 h-auto text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary mt-2" onClick={() => onNavigate('weekly')}>
+                                <Button variant="link" className="h-auto text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary mt-2" onClick={() => onNavigate('weekly')}>
                                     View All Tasks
                                 </Button>
                             </div>
@@ -367,7 +372,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-semibold text-foreground">My Tickets</h3>
-                                <Activity size={14} className="text-muted-foreground" />
+                                <span className="text-muted-foreground"><Activity size="S" /></span>
                             </div>
                             <div className="h-48 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -383,7 +388,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                             <div className="mt-4 text-center">
                                 <Button variant="link" size="sm" onClick={() => onNavigate('helpdesk')} className="text-xs font-semibold text-primary">
-                                    View My Tickets <ChevronRight size={12} className="ml-1" />
+                                    View My Tickets <span className="ml-1"><ChevronRight size="XS" /></span>
                                 </Button>
                             </div>
                         </div>
@@ -392,7 +397,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-semibold text-foreground">My Assets</h3>
-                                <Box size={14} className="text-muted-foreground" />
+                                <span className="text-muted-foreground"><Box size="S" /></span>
                             </div>
                             <div className="space-y-4">
                                 {stats.upcomingLoans.slice(0, 2).map((loan: any, i) => (
@@ -407,8 +412,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         <div className="text-[10px] font-bold text-muted-foreground">APR 25</div>
                                     </div>
                                 ))}
-                                <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-bold uppercase tracking-wider h-8" onClick={() => onNavigate('asset-loan')}>
-                                    View All <ChevronRight size={14} />
+                                <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-bold uppercase tracking-wider" onClick={() => onNavigate('asset-loan')}>
+                                    View All <span className="ml-1"><ChevronRight size="S" /></span>
                                 </Button>
                             </div>
                         </div>
@@ -419,13 +424,13 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-semibold text-foreground">Recent Activity</h3>
-                                <Activity size={14} className="text-muted-foreground" />
+                                <span className="text-muted-foreground"><Activity size="S" /></span>
                             </div>
                             <div className="space-y-6">
                                 {stats.recentActivities.length > 0 ? stats.recentActivities.slice(0, 3).map((act, i) => (
                                     <div key={i} className="flex gap-4">
                                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 transition-colors">
-                                            <Activity size={18} />
+                                            <Activity size="S" />
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-foreground">{act.activityName}</p>
@@ -440,10 +445,10 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                /* ORGANIZATION VIEW (Referencing Screenshot 2) */
-                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                </TabsContent>
+
+                <TabsContent value="organization" className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                    {/* ORGANIZATION VIEW (Referencing Screenshot 2) */}
                     {/* Header Controls for Organization */}
                     <div className="flex justify-end pr-4">
                         <div className="flex items-center gap-2 group cursor-pointer">
@@ -458,36 +463,40 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             {stats.overdueLoans > 0 && (
                                 <div 
                                     onClick={() => onNavigate('asset-loan')}
-                                    className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-[2rem] flex items-center justify-between group cursor-pointer hover:bg-rose-500/15 transition-all"
+                                    className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-rose-500/15 transition-all"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
-                                            <ShieldAlert size={20} />
+                                        <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                                            <Shield size="S" />
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-white">Overdue Assets Detected</h4>
                                             <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{stats.overdueLoans} asset loans are past their return date.</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={18} className="text-rose-500 group-hover:translate-x-1 transition-transform" />
+                                    <span className={twMerge("group-hover:translate-x-1 transition-transform", "text-rose-500")}>
+                                        <ChevronRight size="S" />
+                                    </span>
                                 </div>
                             )}
 
                             {stats.openTickets > 0 && (
                                 <div 
                                     onClick={() => onNavigate('helpdesk')}
-                                    className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-[2rem] flex items-center justify-between group cursor-pointer hover:bg-blue-500/15 transition-all"
+                                    className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/15 transition-all"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                                            <LifeBuoy size={20} />
+                                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                            <Help size="S" />
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-white">Active Support Tickets</h4>
                                             <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{stats.openTickets} tickets are currently waiting for response.</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={18} className="text-blue-500 group-hover:translate-x-1 transition-transform" />
+                                    <span className={twMerge("group-hover:translate-x-1 transition-transform", "text-blue-500")}>
+                                        <ChevronRight size="S" />
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -497,7 +506,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
                             label="Open Tickets" value={stats.openTickets}
-                            icon={LifeBuoy} color="blue" onClick={() => onNavigate('helpdesk')}
+                            icon={Help} color="blue" onClick={() => onNavigate('helpdesk')}
                             percentageChange={3.2} status="on-track"
                         />
                         <StatCard
@@ -512,7 +521,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         />
                         <StatCard
                             label="Task Health" value="100%"
-                            icon={Zap} color="emerald" onClick={() => onNavigate('weekly')}
+                            icon={Flashlight} color="emerald" onClick={() => onNavigate('weekly')}
                             percentageChange={2.0} status="on-track" subValue="Overall Rate"
                         />
                     </div>
@@ -523,7 +532,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-base font-semibold text-foreground">Budget Utilization</h3>
-                                <PieChart size={14} className="text-muted-foreground" />
+                                <span className="text-muted-foreground"><GraphPie size="S" /></span>
                             </div>
                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-4 opacity-70">Paid vs Total Commitment</p>
                             
@@ -575,7 +584,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         onClick={() => onNavigate('asset-loan')}
                                         className="p-3 bg-rose-50 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/30 flex items-center gap-3 cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all"
                                     >
-                                        <ShieldAlert size={14} className="text-rose-500" />
+                                        <span className="text-rose-500"><Shield size="S" /></span>
                                         <span className="text-xs font-bold text-rose-700 dark:text-rose-400">
                                             {stats.overdueLoans} asset loans are currently overdue
                                         </span>
@@ -583,27 +592,27 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 )}
                                 
                                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/30 flex items-center gap-3">
-                                    <AlertCircle size={14} className="text-amber-500" />
+                                    <span className="text-amber-500"><AlertCircle size="XS" /></span>
                                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{stats.openTickets} tickets are currently open</span>
                                 </div>
                                 
                                 {stats.overdueLoans === 0 && stats.openTickets === 0 && (
                                     <div className="py-8 text-center">
-                                        <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-2 opacity-20" />
+                                        <span className="text-emerald-500 mx-auto mb-2 opacity-20"><CheckmarkCircle size="XXL" /></span>
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase">No critical alerts</p>
                                     </div>
                                 )}
                             </div>
                             <div className="mt-8 text-center border-t pt-4">
-                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground h-8" onClick={() => onNavigate('asset-loan')}>View All Asset Loans</Button>
+                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" onClick={() => onNavigate('asset-loan')}>View All Asset Loans</Button>
                             </div>
                         </div>
 
                         {/* Purchase by Category Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Top Spend by Category</h3>
-                                <TrendingUp size={14} className="text-muted-foreground" />
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-base font-semibold text-foreground">Project Revenue Trend</h3>
+                                <span className="text-muted-foreground"><GraphTrend size="XS" /></span>
                             </div>
                             <div className="h-56 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -678,15 +687,15 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
                         {/* Recent Purchase Activities */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-2">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-sm font-semibold text-foreground">Recent Activities</h3>
-                                <Activity size={14} className="text-muted-foreground" />
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base font-semibold text-foreground">Asset Activity Log</h3>
+                                <span className="text-muted-foreground"><Activity size="XS" /></span>
                             </div>
                             <div className="space-y-4">
                                 {stats.recentActivities.length > 0 ? stats.recentActivities.map((act, i) => (
                                     <div key={i} className="flex gap-4 p-3 bg-muted/20 rounded-xl hover:bg-muted/40 transition-all border border-transparent hover:border-border">
                                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                            <Activity size={18} />
+                                            <Activity size="S" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-0.5">
@@ -721,8 +730,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };

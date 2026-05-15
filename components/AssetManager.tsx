@@ -327,7 +327,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               variant="outline"
               size="sm"
               onClick={handleDownloadTemplate}
-              className="text-[10px] font-bold uppercase tracking-widest h-9"
+              className="text-[10px] font-bold uppercase tracking-widest"
               title="Download Blank Template"
             >
               <Download className="mr-2 h-3.5 w-3.5" /> Template
@@ -337,7 +337,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
-              className="border-dashed h-9 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="border-dashed dark: text-[10px] font-bold uppercase tracking-widest dark:"
             >
               <FileSpreadsheet className={`mr-2 h-3.5 w-3.5 ${isImporting ? 'animate-bounce' : ''}`} /> {isImporting ? 'Processing...' : 'Bulk Import'}
             </Button>
@@ -346,14 +346,14 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         <Button 
           size="sm"
           onClick={handleExportExcel} 
-          className="bg-emerald-600 h-9 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest shadow-sm"
+          className="text-[10px] font-bold uppercase tracking-widest"
         >
           <Download className="mr-2 h-3.5 w-3.5" /> Export Excel
         </Button>
       </PageHeader>
 
       {notification && (
-        <div className={`p-4 rounded-2xl border flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${notification.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400'}`}>
+        <div className={`p-4 rounded-xl border flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${notification.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400'}`}>
           {notification.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
           <span className="text-sm font-semibold">{notification.text}</span>
         </div>
@@ -395,7 +395,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             variant="outline"
             size="icon"
             onClick={resetFilters}
-            className="h-11 w-11 text-muted-foreground hover:text-destructive border-muted-foreground/10"
+            className="w-11 text-muted-foreground hover:text-destructive border-muted-foreground/10"
             title="Reset Filters"
           >
             <RotateCcw size={16} />
@@ -404,7 +404,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           {canManage && (
             <Button 
               onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} 
-              className="h-11 px-6 font-bold uppercase text-[10px] tracking-widest shadow-sm gap-2"
+              className="font-bold uppercase text-[10px] tracking-widest gap-2"
             >
               <Plus size={14} /> Add Asset
             </Button>
@@ -412,16 +412,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <Table className="w-full">
             <TableHeader>
-              <TableRow className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900">
-                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Node Profile</TableHead>
-                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Cluster</TableHead>
-                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Assignment / Site</TableHead>
-                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px]">Status</TableHead>
-                <TableHead className="px-6 py-5 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] text-center">Protocol</TableHead>
+              <TableRow className="bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800 hover:bg-white dark:hover:bg-slate-900">
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Node Profile</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Cluster</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Assignment / Site</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Status</TableHead>
+                <TableHead className="px-6 py-5 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px] text-center">Protocol</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -472,11 +472,11 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4"><span className="text-slate-600 dark:text-slate-400 text-[10px] font-semibold">{asset.category}</span></TableCell>
+                  <TableCell className="px-6 py-4"><span className="text-slate-600 dark:text-zinc-400 text-[10px] font-semibold">{asset.category}</span></TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">{asset.user || 'Unassigned'}</span>
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{asset.location}</span>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mt-0.5">{asset.location}</span>
                     </div>
                   </TableCell>
                   <TableCell className="px-6 py-4">
@@ -484,16 +484,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
-                      <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400" title="Label"><QrCode size={14} /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="w-8 dark: dark:" title="Label"><QrCode size={14} /></Button>
 
                       {canManage && (
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400" title="Edit">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="w-8 dark: dark:" title="Edit">
                           <Pencil size={14} />
                         </Button>
                       )}
 
                       {canDelete && (
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteAsset(asset)} className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400" title="Delete">
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteAsset(asset)} className="w-8 dark: dark:" title="Delete">
                           <Trash2 size={14} />
                         </Button>
                       )}
@@ -505,7 +505,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           </Table>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
           <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredAssets.length} assets)</p>
           <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
@@ -514,7 +514,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               size="icon" 
               disabled={currentPage === 1} 
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+              className="w-8 text-muted-foreground hover:text-primary transition-all"
             >
               <ChevronLeft size={16} />
             </Button>
@@ -523,7 +523,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               size="icon" 
               disabled={currentPage === totalPages || totalPages === 0} 
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+              className="w-8 text-muted-foreground hover:text-primary transition-all"
             >
               <ChevronRight size={16} />
             </Button>
@@ -614,3 +614,4 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
     </div>
   );
 };
+

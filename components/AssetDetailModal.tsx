@@ -57,7 +57,7 @@ export const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ isOpen, onCl
                                 variant="ghost"
                                 size="icon"
                                 onClick={onClose}
-                                className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                                className="w-8 text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 <X size={16} />
                             </Button>

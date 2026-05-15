@@ -32,13 +32,13 @@ const DataCard = ({ label, value, icon: Icon, mono = false, copyable = false }: 
     return (
         <motion.li
             whileHover={{ y: -1 }}
-            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group list-none"
+            className="flex items-center gap-3 p-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md hover:border-blue-500/20 transition-all group list-none"
         >
             <div className="p-2 bg-slate-50 dark:bg-blue-500/10 rounded-lg text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 transition-all">
                 <Icon size={16} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-0.5">{label}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 mb-0.5">{label}</p>
                 <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs md:text-sm ${mono ? 'font-mono' : 'font-bold'} text-slate-900 dark:text-slate-100 truncate`}>
                         {(!value || value.toString().toLowerCase() === 'nan' || value === '-') ? '-' : value}
@@ -150,12 +150,12 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                 <div className="w-full max-w-4xl grid lg:grid-cols-2 gap-12 items-center">
                     <div className="aspect-square bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl"></div>
                     <div className="space-y-6">
-                        <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full"></div>
-                        <div className="h-12 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-2xl"></div>
-                        <div className="h-6 w-1/2 bg-slate-50 dark:bg-slate-900 animate-pulse rounded-lg"></div>
+                        <div className="h-4 w-24 bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-full"></div>
+                        <div className="h-12 w-full bg-slate-100 dark:bg-zinc-800 animate-pulse rounded-xl"></div>
+                        <div className="h-6 w-1/2 bg-slate-50 dark:bg-zinc-900 animate-pulse rounded-lg"></div>
                         <div className="pt-8 space-y-4">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="h-20 bg-slate-50 dark:bg-white/[0.02] animate-pulse rounded-2xl"></div>
+                                <div key={i} className="h-20 bg-slate-50 dark:bg-white/[0.02] animate-pulse rounded-xl"></div>
                             ))}
                         </div>
                     </div>
@@ -206,7 +206,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-900 dark:text-slate-200">Gesit Digital Registry</span>
                     </div>
                     <div className="flex items-center gap-6">
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
                             Registry Version: v4.1.2
                         </div>
                         <button onClick={toggleTheme} aria-label="Toggle theme" className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-blue-500 transition-colors">
@@ -225,7 +225,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[60px] opacity-40 group-hover:opacity-60 transition-opacity"></div>
 
                                 {hasImage ? (
-                                    <div className="relative z-10 w-full aspect-square p-2 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden group/img flex items-center justify-center">
+                                    <div className="relative z-10 w-full aspect-square p-2 bg-white rounded-xl border border-slate-200 dark:border-zinc-800 shadow-md overflow-hidden group/img flex items-center justify-center">
                                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-700"></div>
                                         <img
                                             src={asset.image_url}
@@ -248,7 +248,7 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/[0.05]">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-2">Tracking Asset ID</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-400 mb-2">Tracking Asset ID</p>
                             <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">{asset.assetId}</h2>
                         </div>
                     </div>
@@ -287,20 +287,20 @@ export const AssetPublicDetail: React.FC<AssetPublicDetailProps> = ({ assetId })
                                 </ul>
                             </section>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center">
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-8 text-center">
                                 <AlertTriangle size={32} className="text-slate-200 dark:text-slate-800 mb-4" />
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Non-Technical Asset Class</p>
                             </div>
                         )}
 
                         <div className="mt-auto pt-12">
-                            <div className="p-6 rounded-xl bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-100 border border-transparent dark:border-slate-700 shadow-sm">
+                            <div className="p-6 rounded-xl bg-slate-900 dark:bg-zinc-800 text-white dark:text-slate-100 border border-transparent dark:border-zinc-700 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-60 dark:text-slate-400">IT Support Hotline</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-60 dark:text-zinc-400">IT Support Hotline</span>
                                     <ShieldCheck size={16} className="dark:text-blue-400" />
                                 </div>
                                 <h4 className="text-lg font-bold mb-2 tracking-tight">Need assistance?</h4>
-                                <p className="text-xs opacity-70 mb-6 leading-relaxed dark:text-slate-400">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
+                                <p className="text-xs opacity-70 mb-6 leading-relaxed dark:text-zinc-400">Our infrastructure team is ready to help with technical validated data or maintenance requests.</p>
                                 <a href={`mailto:it@gesit.co.id?subject=Support: ${asset.assetId}`} aria-label="Contact Support" className="block text-center py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors active:scale-95">
                                     Initialize Support Chat
                                 </a>

@@ -194,7 +194,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                             </div>
                                             {record.evidenceLink && (
                                                 <div className="pt-2">
-                                                    <Button variant="outline" size="sm" render={<a href={record.evidenceLink} target="_blank" rel="noopener noreferrer" />} className="rounded-xl font-bold text-[10px] uppercase tracking-widest border-primary/20 hover:bg-primary/5 h-10 px-5">
+                                                    <Button variant="outline" size="sm" render={<a href={record.evidenceLink} target="_blank" rel="noopener noreferrer" />} className="font-bold text-[10px] uppercase tracking-widest border-primary/20 hover:bg-primary/5">
                                                             <ExternalLink size={14} className="mr-2" />
                                                             View Evidence
                                                     </Button>
@@ -359,7 +359,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                 </div>
 
                 <DialogFooter className="px-8 py-4 border-t shrink-0 flex flex-row justify-end items-center gap-3 no-print">
-                    <Button variant="outline" onClick={onClose} className="rounded-xl h-10 px-6 text-[10px] font-bold uppercase tracking-wider border hover:bg-muted/50 transition-all">
+                    <Button variant="outline" onClick={onClose} className="text-[10px] font-bold uppercase tracking-wider border hover:bg-muted/50 transition-all">
                         Close
                     </Button>
                     <Button
@@ -371,14 +371,14 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                             showToast('Synced to digital cloud repository!');
                         }}
                         disabled={isSyncing}
-                        className="rounded-xl h-10 px-6 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-all"
+                        className="text-[10px] font-bold uppercase tracking-wider border border-emerald-200 transition-all"
                     >
                         {isSyncing ? <RefreshCcw className="animate-spin mr-2" size={14} /> : <FileSpreadsheet className="mr-2" size={14} />}
                         {isSyncing ? 'Syncing...' : 'Sync to Cloud'}
                     </Button>
                     <Button
                         onClick={handlePrint}
-                        className="rounded-xl h-10 px-6 text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-95"
+                        className="text-[10px] font-bold uppercase tracking-wider /20 transition-all active:scale-95"
                     >
                         <Printer className="mr-2" size={14} /> Print Record
                     </Button>

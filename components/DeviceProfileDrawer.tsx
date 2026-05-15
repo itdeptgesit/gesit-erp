@@ -107,23 +107,23 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
             {/* Backdrop for mobile */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm -z-10 md:hidden"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10 md:hidden"
                     onClick={onClose}
                 />
             )}
 
-            <div className="h-full bg-white dark:bg-[#0b1120] shadow-[-20px_0_50px_rgba(0,0,0,0.2)] border-l border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+            <div className="h-full bg-white dark:bg-[#0b1120] shadow-[-20px_0_50px_rgba(0,0,0,0.2)] border-l border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden">
                 {/* Header Section */}
-                <div className="relative p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="relative p-8 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
                     <button
                         onClick={onClose}
-                        className="absolute top-6 right-6 p-2.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-2xl text-slate-400 transition-all active:scale-95"
+                        className="absolute top-6 right-6 p-2.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl text-slate-400 transition-all active:scale-95"
                     >
                         <X size={20} />
                     </button>
 
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                        <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
                             <Server size={28} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -137,14 +137,14 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                             <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
                             {device.status || assetData?.status || 'Operational'}
                         </div>
-                        <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        <div className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400">
                             ID: {assetData?.assetId || 'Virtual'}
                         </div>
                     </div>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex p-2 gap-1 bg-slate-100 dark:bg-slate-900/80 mx-8 mt-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="flex p-2 gap-1 bg-slate-100 dark:bg-zinc-900/80 mx-8 mt-6 rounded-xl border border-slate-200 dark:border-zinc-800">
                     {[
                         { id: 'overview', icon: Info, label: 'Overview' },
                         { id: 'technical', icon: Settings, label: 'Specs' },
@@ -153,7 +153,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-blue-600 shadow-sm border border-slate-200 dark:border-zinc-700' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                         >
                             <tab.icon size={14} />
                             {tab.label}
@@ -174,7 +174,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     {/* Asset Image */}
                                     <div className="relative group">
-                                        <div className="w-full h-48 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center">
+                                        <div className="w-full h-48 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 overflow-hidden flex items-center justify-center">
                                             {assetData?.image_url ? (
                                                 <img src={assetData.image_url} alt="" className="w-full h-full object-cover" />
                                             ) : (
@@ -184,18 +184,18 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                                 </div>
                                             )}
                                         </div>
-                                        <button className="absolute bottom-4 right-4 p-3 bg-slate-900/80 backdrop-blur-md text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-all border border-white/10">
+                                        <button className="absolute bottom-4 right-4 p-3 bg-slate-900/80 backdrop-blur-md text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all border border-white/10">
                                             <Camera size={16} />
                                         </button>
                                     </div>
 
                                     {/* Core Stats */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/20">
+                                        <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/20">
                                             <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-1">Logic IP</span>
                                             <span className="text-sm font-mono font-bold text-slate-900 dark:text-blue-400 tracking-tight">{device.ip || 'DHCP'}</span>
                                         </div>
-                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Uptime</span>
                                             <span className="text-sm font-bold text-slate-900 dark:text-white">{device.uptime || 'Stable'}</span>
                                         </div>
@@ -203,8 +203,8 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
 
                                     {/* Location & Ownership */}
                                     <div className="space-y-4">
-                                        <div className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                                        <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500">
                                                 <MapPin size={18} />
                                             </div>
                                             <div className="flex-1">
@@ -212,8 +212,8 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                                 <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{device.location} • {device.rack}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                                        <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500">
                                                 <Shield size={18} />
                                             </div>
                                             <div className="flex-1">
@@ -225,14 +225,14 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
 
                                     {/* Documentation Notes */}
                                     {device.notes && (
-                                        <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                        <div className="p-6 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800">
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">Documentation Notes</span>
-                                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">"{device.notes}"</p>
+                                            <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed italic">"{device.notes}"</p>
                                         </div>
                                     )}
 
                                     {/* Audit Trail Section */}
-                                    <div className="p-6 rounded-3xl bg-slate-900 border border-white/5 space-y-4">
+                                    <div className="p-6 rounded-xl bg-slate-900 border border-white/5 space-y-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <History size={14} className="text-blue-500" />
                                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Digital Audit Trail</span>
@@ -253,14 +253,14 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
 
                                     {/* Quick Actions */}
                                     <div className="grid grid-cols-2 gap-3">
-                                        <button className="flex items-center justify-between p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 group hover:bg-emerald-500 hover:text-white transition-all">
+                                        <button className="flex items-center justify-between p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 group hover:bg-emerald-500 hover:text-white transition-all">
                                             <div className="text-left">
                                                 <span className="text-[8px] font-black uppercase text-emerald-500 group-hover:text-white/80 block">Config</span>
                                                 <span className="text-[10px] font-black uppercase tracking-widest">Backup</span>
                                             </div>
                                             <Cloud size={18} className="text-emerald-500 group-hover:text-white" />
                                         </button>
-                                        <button className="flex items-center justify-between p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 group hover:bg-blue-500 hover:text-white transition-all">
+                                        <button className="flex items-center justify-between p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 group hover:bg-blue-500 hover:text-white transition-all">
                                             <div className="text-left">
                                                 <span className="text-[8px] font-black uppercase text-blue-500 group-hover:text-white/80 block">Specs</span>
                                                 <span className="text-[10px] font-black uppercase tracking-widest">Datasheet</span>
@@ -283,7 +283,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                             { label: 'Serial Identity', value: device.serialNumber || 'N/A' },
                                             { label: 'Current Load', value: `${device.ports.filter(p => p.status === PortStatus.ACTIVE).length} / ${device.totalPorts} Active` }
                                         ].map((spec, i) => (
-                                            <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                                            <div key={i} className="flex justify-between items-center p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-100 dark:border-zinc-800">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{spec.label}</span>
                                                 <span className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase">{spec.value}</span>
                                             </div>
@@ -291,7 +291,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                     </div>
 
                                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8 mb-4">Lifecycle & Warranty</h3>
-                                    <div className="bg-slate-900 rounded-3xl p-6 border border-white/5 relative overflow-hidden">
+                                    <div className="bg-slate-900 rounded-xl p-6 border border-white/5 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-8 opacity-10">
                                             <Shield size={64} className="text-blue-500" />
                                         </div>
@@ -323,21 +323,21 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                     </div>
 
                                     {maintenanceLogs.length === 0 ? (
-                                        <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[3rem]">
+                                        <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-xl">
                                             <AlertCircle size={32} className="text-slate-300 mx-auto mb-4" />
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Zero maintenance records found for this frequency.</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {maintenanceLogs.map((log, i) => (
-                                                <div key={i} className="relative pl-6 pb-6 border-l border-slate-100 dark:border-slate-800 last:pb-0">
+                                                <div key={i} className="relative pl-6 pb-6 border-l border-slate-100 dark:border-zinc-800 last:pb-0">
                                                     <div className="absolute top-0 -left-1.5 w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] border-2 border-white dark:border-[#0b1120]" />
-                                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                                                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-100 dark:border-zinc-800">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <h4 className="text-[11px] font-black text-slate-900 dark:text-white uppercase leading-none">{log.activityName}</h4>
                                                             <span className="text-[8px] font-mono font-bold text-slate-400">{new Date(log.createdAt).toLocaleDateString()}</span>
                                                         </div>
-                                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 italic mb-3">"{log.remarks || 'No technical notes recorded.'}"</p>
+                                                        <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed line-clamp-2 italic mb-3">"{log.remarks || 'No technical notes recorded.'}"</p>
                                                         <div className="flex items-center gap-2">
                                                             <UserAvatar name={log.itPersonnel} size="xs" />
                                                             <span className="text-[10px] font-black uppercase text-blue-500">{log.itPersonnel}</span>
@@ -354,8 +354,8 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                 </div>
 
                 {/* Footer / External Search */}
-                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                    <button className="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/30">
+                <div className="p-8 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
+                    <button className="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/30">
                         <Activity size={16} />
                         Live Network Probe
                     </button>
@@ -364,3 +364,4 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
         </div>
     );
 };
+

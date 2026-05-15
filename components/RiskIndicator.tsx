@@ -50,7 +50,7 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
     const rotation = (score / 100) * 180;
 
     return (
-        <div className={`${style.bg} ${style.border} border rounded-2xl p-6 animate-in fade-in slide-in-from-bottom-3`}>
+        <div className={`${style.bg} ${style.border} border rounded-xl p-6 animate-in fade-in slide-in-from-bottom-3`}>
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <div className={`p-2.5 rounded-xl bg-gradient-to-br ${style.gradient} text-white shadow-lg`}>
@@ -60,7 +60,7 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
                     <h3 className="font-black text-slate-900 dark:text-white text-base leading-none">
                         Risk Assessment
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-1">
                         System Health Score
                     </p>
                 </div>
@@ -140,7 +140,7 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
             {/* Risk Factors */}
             {factors.length > 0 && (
                 <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
                         Contributing Factors
                     </h4>
                     {factors.map((factor, index) => (
@@ -153,13 +153,13 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
                                     +{factor.impact}
                                 </span>
                             </div>
-                            <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full bg-gradient-to-r ${style.gradient} rounded-full transition-all duration-500`}
                                     style={{ width: `${factor.impact}%` }}
                                 />
                             </div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-500">
+                            <p className="text-[10px] text-slate-500 dark:text-zinc-500">
                                 {factor.description}
                             </p>
                         </div>
@@ -171,7 +171,7 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
             {factors.length === 0 && (
                 <div className="text-center py-4">
                     <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500 opacity-50" />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-zinc-400">
                         All systems operating within normal parameters
                     </p>
                 </div>
@@ -179,3 +179,4 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ riskScore }) => {
         </div>
     );
 };
+

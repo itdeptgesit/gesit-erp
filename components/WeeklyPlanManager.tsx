@@ -90,14 +90,14 @@ const CATEGORY_COLORS: { [key: string]: { bg: string; text: string; dot: string 
 const PRIORITY_STYLE: { [key: string]: string } = {
     'High': 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
     'Medium': 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-    'Low': 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    'Low': 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400',
 };
 
 // Status badge
 const STATUS_STYLE: { [key: string]: string } = {
     'Done': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     'In Progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    'To Do': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    'To Do': 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400',
     'Pending': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
@@ -284,9 +284,9 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
             >
                 <div className="flex items-center gap-3">
                     {/* Event count badge */}
-                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
                         <CalendarRange size={14} className="text-slate-400" />
-                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{totalEventsThisMonth} events</span>
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">{totalEventsThisMonth} events</span>
                     </div>
 
                     {/* Date range display */}
@@ -297,7 +297,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                     </div>
 
                     {/* View toggle */}
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg border border-slate-200 dark:border-zinc-700">
                         {[
                             { id: 'Month', icon: CalendarRange, label: 'Grid' },
                             { id: 'List', icon: LayoutList, label: 'List' },
@@ -319,14 +319,14 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                     </div>
 
                     {/* Navigation */}
-                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-r border-slate-200 dark:border-slate-700 transition-colors">
+                    <div className="flex items-center bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg overflow-hidden shadow-sm">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-r border-slate-200 dark:border-zinc-700 transition-colors">
                             <ChevronLeft size={16} />
                         </button>
                         <button onClick={() => setViewDate(new Date())} className="px-3 text-[11px] font-bold uppercase hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors h-full">
                             Today
                         </button>
-                        <button onClick={() => navigate(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-l border-slate-200 dark:border-slate-700 transition-colors">
+                        <button onClick={() => navigate(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 border-l border-slate-200 dark:border-zinc-700 transition-colors">
                             <ChevronRight size={16} />
                         </button>
                     </div>
@@ -334,7 +334,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                     {canManage && (
                         <Button
                             onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-                            className="bg-slate-900 dark:bg-blue-600 text-white h-9 px-4 text-xs font-bold rounded-lg hover:bg-black dark:hover:bg-blue-700 shadow-sm flex items-center gap-1.5"
+                            className="dark: text-xs font-bold dark: flex items-center gap-1.5"
                         >
                             <Plus size={14} />
                             Add Event
@@ -344,7 +344,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
             </PageHeader>
 
             {/* ── MAIN CALENDAR CONTAINER ── */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex-1 overflow-hidden flex flex-col relative">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm flex-1 overflow-hidden flex flex-col relative">
                 {loading ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4">
                         <RefreshCcw className="animate-spin text-blue-500" size={28} />
@@ -353,11 +353,11 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                 ) : viewMode === 'Month' ? (
                     <>
                         {/* Day headers */}
-                        <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
+                        <div className="grid grid-cols-7 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 shrink-0">
                             {DAY_HEADERS.map(day => (
                                 <div key={day} className={cn(
                                     "py-3 text-center text-[11px] font-bold uppercase tracking-widest",
-                                    (day === 'Sat' || day === 'Sun') ? 'text-rose-400 dark:text-rose-500' : 'text-slate-400 dark:text-slate-500'
+                                    (day === 'Sat' || day === 'Sun') ? 'text-rose-400 dark:text-rose-500' : 'text-slate-400 dark:text-zinc-500'
                                 )}>
                                     {day}
                                 </div>
@@ -382,8 +382,8 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                         <div
                                             key={idx}
                                             className={cn(
-                                                "border-r border-b border-slate-100 dark:border-slate-800 p-2 flex flex-col gap-1 min-h-[120px] relative group",
-                                                !cell.currentMonth && "bg-slate-50/40 dark:bg-slate-800/10",
+                                                "border-r border-b border-slate-100 dark:border-zinc-800 p-2 flex flex-col gap-1 min-h-[120px] relative group",
+                                                !cell.currentMonth && "bg-slate-50/40 dark:bg-zinc-800/10",
                                                 // Cuti bersama → amber tint
                                                 cell.currentMonth && isCutiBersama && "bg-amber-50/40 dark:bg-amber-900/10",
                                                 // National holiday or weekend → rose tint
@@ -401,7 +401,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                                             ? 'text-amber-600 dark:text-amber-400'
                                                             : (isNationalHoliday || isWeekend)
                                                                 ? 'text-rose-500 dark:text-rose-400'
-                                                                : 'text-slate-500 dark:text-slate-400',
+                                                                : 'text-slate-500 dark:text-zinc-400',
                                                     !cell.currentMonth && "opacity-30"
                                                 )}>
                                                     {cell.date.getDate()}
@@ -514,7 +514,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                         const style = getCategoryStyle(task.category);
                                         const multi = isMultiDay(task);
                                         return (
-                                            <div key={task.id} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
+                                            <div key={task.id} className="flex items-center gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
                                                 <div className={cn("w-1 self-stretch rounded-full shrink-0", style.bg)} />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
@@ -524,11 +524,11 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                                     </div>
                                                     <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{task.task}</h4>
                                                     {task.description && (
-                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{task.description}</p>
+                                                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-1 mt-0.5">{task.description}</p>
                                                     )}
                                                 </div>
                                                 <div className="shrink-0 text-right space-y-1">
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 justify-end">
+                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 justify-end">
                                                         <Calendar size={11} />
                                                         {multi
                                                             ? `${task.startDate} → ${task.dueDate}`
@@ -536,7 +536,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                                         }
                                                     </div>
                                                     {task.assignee && (
-                                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 justify-end">
+                                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 justify-end">
                                                             <User size={11} />
                                                             {task.assignee}
                                                         </div>
@@ -568,7 +568,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                         <div
                             ref={popoverRef}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+                            className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
                         >
                             {/* Color header bar */}
                             <div className={cn("h-1.5 w-full", getCategoryStyle(selectedTask.category).bg)} />
@@ -593,10 +593,10 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2 leading-snug">{selectedTask.task}</h3>
 
                                 {selectedTask.description && (
-                                    <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3 border-t border-slate-100 dark:border-slate-800 pt-3">{selectedTask.description}</p>
+                                    <p className="text-[12px] text-slate-500 dark:text-zinc-400 leading-relaxed mb-3 border-t border-slate-100 dark:border-zinc-800 pt-3">{selectedTask.description}</p>
                                 )}
 
-                                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                <div className="space-y-2 border-t border-slate-100 dark:border-zinc-800 pt-3">
                                     <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
                                         <CalendarRange size={13} className="text-slate-400 shrink-0" />
                                         {isMultiDay(selectedTask)
@@ -619,7 +619,7 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
                                 </div>
 
                                 {(canManage || canDelete) && (
-                                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800">
                                         {canManage && (
                                             <button
                                                 onClick={() => handleEdit(selectedTask)}
@@ -691,3 +691,4 @@ export const WeeklyPlanManager: React.FC<WeeklyPlanManagerProps> = ({ currentUse
         </div>
     );
 };
+

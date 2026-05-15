@@ -200,7 +200,7 @@ export const ApprovalManager: React.FC<ApprovalManagerProps> = ({ currentUser })
                         variant="ghost"
                         size="icon"
                         onClick={fetchPendingRequests}
-                        className="h-9 w-9 rounded-xl hover:bg-muted"
+                        className="w-9 hover:bg-muted"
                     >
                         <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
                     </Button>

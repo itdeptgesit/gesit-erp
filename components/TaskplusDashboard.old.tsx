@@ -72,9 +72,9 @@ const StatusBadge = ({ status }: { status: string }) => {
         'Completed': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
         'In Progress': { variant: 'outline', bg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50', dot: 'bg-blue-500' },
         'On Hold': { variant: 'outline', bg: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/50', dot: 'bg-amber-500' },
-        'Pending': { variant: 'outline', bg: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/50', dot: 'bg-slate-400' },
+        'Pending': { variant: 'outline', bg: 'bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700/50', dot: 'bg-slate-400' },
         'Done': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
-        'To Do': { variant: 'outline', bg: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/50', dot: 'bg-slate-400' },
+        'To Do': { variant: 'outline', bg: 'bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700/50', dot: 'bg-slate-400' },
     };
     const c = config[status] || config['Pending'];
     return (
@@ -525,12 +525,12 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             <div className="space-y-5 animate-pulse min-h-screen">
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
-                        <div className="h-10 bg-muted rounded-2xl w-64" />
+                        <div className="h-10 bg-muted rounded-xl w-64" />
                         <div className="h-5 bg-muted rounded-xl w-80" />
                     </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-32 bg-muted rounded-3xl" />)}
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-32 bg-muted rounded-xl" />)}
                 </div>
             </div>
         );
@@ -664,7 +664,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <CardHeader className="p-6 pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-base font-semibold">Assigned to Me</CardTitle>
-                                            <Button variant="link" size="sm" className="h-8 text-[10px] font-bold uppercase tracking-wider text-primary px-0" onClick={() => onNavigate('weekly')}>View All</Button>
+                                            <Button variant="link" size="sm" className="text-[10px] font-bold uppercase tracking-wider text-primary" onClick={() => onNavigate('weekly')}>View All</Button>
                                         </div>
                                     </CardHeader>
                                     <div className="px-0">
@@ -779,10 +779,10 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             {stats.totalOverdueOrg > 0 && (
                                 <div 
                                     onClick={() => onNavigate('asset-loan')}
-                                    className="flex-1 bg-rose-500/10 border border-rose-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-rose-500/20 transition-all shadow-sm"
+                                    className="flex-1 bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-rose-500/20 transition-all shadow-sm"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+                                        <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
                                             <Shield size={20} className="animate-pulse" />
                                         </div>
                                         <div>
@@ -797,10 +797,10 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             {stats.totalOpenTickets > 0 && (
                                 <div 
                                     onClick={() => onNavigate('helpdesk')}
-                                    className="flex-1 bg-blue-500/10 border border-blue-500/20 p-4 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/20 transition-all shadow-sm"
+                                    className="flex-1 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/20 transition-all shadow-sm"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                                             <MessageSquare size={20} />
                                         </div>
                                         <div>
@@ -836,7 +836,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Financial Summary</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-[9px] font-bold uppercase tracking-wider text-primary px-3 h-7" onClick={() => onNavigate('procurement')}>
+                            <Button variant="ghost" size="sm" className="text-[9px] font-bold uppercase tracking-wider text-primary" onClick={() => onNavigate('procurement')}>
                                 View All <ChevronRight size={10} className="ml-1" />
                             </Button>
                         </CardHeader>
@@ -1106,7 +1106,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                                 <div key={wIdx} className="flex flex-col gap-[4px]">
                                                                     {week.map((day: any, dIdx: number) => {
                                                                         const val = day.count;
-                                                                        const colorClass = val === 0 ? 'bg-slate-200/70 dark:bg-slate-800'
+                                                                        const colorClass = val === 0 ? 'bg-slate-200/70 dark:bg-zinc-800'
                                                                             : val < 3 ? 'bg-[#9be9a8] dark:bg-emerald-900/60'
                                                                                 : val < 6 ? 'bg-[#40c463] dark:bg-emerald-600'
                                                                                     : val < 10 ? 'bg-[#30a14e] dark:bg-emerald-500'
@@ -1131,7 +1131,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                                         </span>
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="text-[10px] text-muted-foreground/50">Less</span>
-                                                            <div className="w-[11px] h-[11px] rounded-[2px] bg-slate-200/70 dark:bg-slate-800" />
+                                                            <div className="w-[11px] h-[11px] rounded-[2px] bg-slate-200/70 dark:bg-zinc-800" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#9be9a8] dark:bg-emerald-900/60" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#40c463] dark:bg-emerald-600" />
                                                             <div className="w-[11px] h-[11px] rounded-[2px] bg-[#30a14e] dark:bg-emerald-500" />
@@ -1221,7 +1221,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                         onChange={(e) => setProjectSearch(e.target.value)}
                                     />
                                 </div>
-                                <Button variant="outline" size="sm" className="h-8 px-2.5 rounded-lg border-border/50 text-muted-foreground">
+                                <Button variant="outline" size="sm" className=".5 border-border/50 text-muted-foreground">
                                     <RefreshCcw size={12} />
                                 </Button>
                             </div>
@@ -1284,9 +1284,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             <div className="p-4 border-t border-border/50 flex items-center justify-between">
                                 <p className="text-[9px] font-bold text-muted-foreground uppercase">Showing {paginatedProjects.length} of {filteredProjects.length} initiatives</p>
                                 <div className="flex gap-1">
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}><ChevronRight size={12} className="rotate-180" /></Button>
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md bg-primary/10 border-primary/20 text-primary font-bold text-[10px]">{currentPage}</Button>
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md border-border/50" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}><ChevronRight size={12} /></Button>
+                                    <Button variant="outline" size="sm" className="w-7 border-border/50" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}><ChevronRight size={12} className="rotate-180" /></Button>
+                                    <Button variant="outline" size="sm" className="w-7 bg-primary/10 border-primary/20 text-primary font-bold text-[10px]">{currentPage}</Button>
+                                    <Button variant="outline" size="sm" className="w-7 border-border/50" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}><ChevronRight size={12} /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -1296,3 +1296,4 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
         </div>
     );
 };
+

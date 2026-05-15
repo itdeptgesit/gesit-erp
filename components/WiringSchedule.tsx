@@ -51,23 +51,23 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-950 rounded-b-2xl overflow-hidden flex flex-col min-h-[400px]">
+        <div className="bg-white dark:bg-zinc-950 rounded-b-xl overflow-hidden flex flex-col min-h-[400px]">
             {/* Table Toolbar */}
-            <div className="px-6 py-5 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
+            <div className="px-6 py-5 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-800 flex flex-wrap gap-4 items-center justify-between">
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-600" size={14} />
                     <Input
                         placeholder="Search by target, IP, or patch port..."
-                        className="w-full pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300 transition-all font-medium"
+                        className="w-full pl-10 h-11 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300 transition-all font-medium"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl">
                         <Filter size={14} className="text-slate-400" />
                         <select
-                            className="bg-transparent text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer"
+                            className="bg-transparent text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 focus:outline-none cursor-pointer"
                             value={deviceFilter}
                             onChange={e => setDeviceFilter(e.target.value)}
                         >
@@ -82,8 +82,8 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
 
             <div className="flex-1 overflow-auto custom-scrollbar max-h-[500px]">
                 <Table className="w-full">
-                    <TableHeader className="bg-white dark:bg-slate-950 sticky top-0 z-10">
-                        <TableRow className="border-b border-slate-100 dark:border-slate-800 hover:bg-transparent">
+                    <TableHeader className="bg-white dark:bg-zinc-950 sticky top-0 z-10">
+                        <TableRow className="border-b border-slate-100 dark:border-zinc-800 hover:bg-transparent">
                             <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Source Device</TableHead>
                             <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Circuit ID</TableHead>
                             <TableHead className="px-6 h-12 text-[9px] font-bold uppercase tracking-widest text-slate-400">Patch Location</TableHead>
@@ -99,7 +99,7 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
                             <TableRow key={`${conn.switchId}-${conn.port.id}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors group">
                                 <TableCell className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                             {getSourceIcon(conn.switchName, conn.switchModel)}
                                         </div>
                                         <div>
@@ -108,14 +108,14 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="px-6 py-4 font-mono text-slate-500 dark:text-slate-400 text-[11px] font-bold">P-{conn.port.portNumber.toString().padStart(2, '0')}</TableCell>
+                                <TableCell className="px-6 py-4 font-mono text-slate-500 dark:text-zinc-400 text-[11px] font-bold">P-{conn.port.portNumber.toString().padStart(2, '0')}</TableCell>
                                 <TableCell className="px-6 py-4">
-                                    <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md font-mono text-[10px] font-bold border border-slate-200 dark:border-slate-700">
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 rounded-md font-mono text-[10px] font-bold border border-slate-200 dark:border-zinc-700">
                                         {conn.port.patchPanelPort || 'N/A'}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-6 py-4 text-center">
-                                    <div className={`w-2 h-2 mx-auto rounded-full ${conn.port.status === PortStatus.ACTIVE ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
+                                    <div className={`w-2 h-2 mx-auto rounded-full ${conn.port.status === PortStatus.ACTIVE ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-zinc-800'}`}></div>
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
                                     {conn.uplink ? (
@@ -140,10 +140,11 @@ export const WiringSchedule: React.FC<WiringScheduleProps> = ({ switches }) => {
                     </TableBody>
                 </Table>
             </div>
-            <div className="px-6 py-4 bg-white dark:bg-slate-950 text-[9px] text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center border-t border-slate-100 dark:border-slate-800">
+            <div className="px-6 py-4 bg-white dark:bg-zinc-950 text-[9px] text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center border-t border-slate-100 dark:border-zinc-800">
                 <span className="flex items-center gap-2"><Network size={12} /> Segments Found: {filteredConnections.length}</span>
                 <span className="opacity-50">Authorized Infrastructure Report</span>
             </div>
         </div>
     );
 };
+

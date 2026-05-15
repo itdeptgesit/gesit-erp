@@ -92,7 +92,7 @@ export const SystemMaintenance: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 p-6 rounded-2xl flex items-start gap-4 transition-colors">
+            <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 p-6 rounded-xl flex items-start gap-4 transition-colors">
                 <div className="p-3 bg-rose-600 text-white rounded-xl shadow-md shrink-0">
                     <ShieldAlert size={24} />
                 </div>
@@ -114,18 +114,18 @@ export const SystemMaintenance: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {modules.map((m, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+                    <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start mb-4">
-                            <div className={`p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-slate-900 dark:group-hover:bg-blue-600 group-hover:text-white transition-all`}>
+                            <div className={`p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 group-hover:bg-slate-900 dark:group-hover:bg-blue-600 group-hover:text-white transition-all`}>
                                 <m.icon size={20} />
                             </div>
                         </div>
                         <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight mb-2">{m.title}</h4>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-6 uppercase tracking-widest leading-relaxed">Wipe all records in this module.</p>
+                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mb-6 uppercase tracking-widest leading-relaxed">Wipe all records in this module.</p>
 
                         <button
                             onClick={() => setConfirmModal({ open: true, type: m.title, title: `Wipe ${m.title}`, table: m.table })}
-                            className="w-full py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-100 dark:hover:border-rose-900/50 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-100 dark:hover:border-rose-900/50 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             <Trash2 size={14} /> Clear Module
                         </button>
@@ -133,11 +133,11 @@ export const SystemMaintenance: React.FC = () => {
                 ))}
             </div>
 
-            <div className="bg-slate-900 dark:bg-[#020617] p-8 rounded-2xl shadow-xl relative overflow-hidden group border border-transparent dark:border-slate-800">
+            <div className="bg-slate-900 dark:bg-[#020617] p-8 rounded-xl shadow-xl relative overflow-hidden group border border-transparent dark:border-zinc-800">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
                 <div className="relative z-10 max-w-lg">
                     <h3 className="text-white font-bold text-xl uppercase tracking-tighter mb-3">{t('totalReset')}</h3>
-                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium leading-relaxed mb-8 uppercase tracking-widest opacity-80">
+                    <p className="text-slate-400 dark:text-zinc-500 text-xs font-medium leading-relaxed mb-8 uppercase tracking-widest opacity-80">
                         {t('totalResetDesc')}
                     </p>
                     <button
@@ -160,3 +160,4 @@ export const SystemMaintenance: React.FC = () => {
         </div>
     );
 };
+

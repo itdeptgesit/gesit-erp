@@ -12,6 +12,9 @@ interface CategoryFormModalProps {
   initialData?: AssetCategory | null;
 }
 
+const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
+const labelClass = "block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3 ml-1";
+
 export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<AssetCategory>>({});
 
@@ -31,69 +34,67 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, on
     onClose();
   };
 
-  const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
-  const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1";
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto font-sans" onClick={onClose}>
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
+                            {initialData ? 'Update Category' : 'New Category'}
+                        </h2>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Asset Classification Meta</p>
+                    </div>
+                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all"><X size={20} /></button>
+                </div>
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto font-sans">
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-lg animate-in fade-in zoom-in duration-300 flex flex-col border border-white/20 dark:border-slate-800">
-        <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                {initialData ? 'Update Category' : 'New Category'}
-            </h2>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Classification Meta</p>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-400"><X size={20} /></button>
+                <form id="categoryForm" onSubmit={handleSubmit} className="p-9 space-y-8">
+                    <div>
+                        <label className={labelClass}>Category Name <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <input
+                                type="text" required className={`${inputClass} pl-11 !text-base !font-black focus:ring-blue-500/10`}
+                                value={formData.name || ''}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g. Workstation PC"
+                                autoFocus
+                            />
+                            <Layers size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Cluster Code (Short)</label>
+                        <div className="relative">
+                            <input
+                                type="text" className={`${inputClass} pl-11 !font-black !tracking-widest`}
+                                value={formData.code || ''}
+                                onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                placeholder="e.g. WPC"
+                                maxLength={5}
+                            />
+                            <Tag size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Brief Definition</label>
+                        <div className="relative">
+                            <textarea
+                                rows={3} className={`${inputClass} pl-11 resize-none min-h-[100px]`}
+                                value={formData.description || ''}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Purpose of this category..."
+                            />
+                            <Type size={18} className="absolute left-4 top-5 text-slate-400" />
+                        </div>
+                    </div>
+                </form>
+
+                <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
+                    <button type="button" onClick={onClose} className="px-6 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
+                    <button type="submit" form="categoryForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Commit Meta</button>
+                </div>
+            </div>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-            <div>
-                <label className={labelClass}>Category Name <span className="text-red-500">*</span></label>
-                <div className="relative">
-                    <input 
-                        type="text" required className={`${inputClass} pl-10`} 
-                        value={formData.name || ''} 
-                        onChange={e => setFormData({...formData, name: e.target.value})}
-                        placeholder="e.g. Workstation PC"
-                    />
-                    <Layers size={14} className="absolute left-3.5 top-4 text-slate-400" />
-                </div>
-            </div>
-            
-            <div>
-                <label className={labelClass}>Cluster Code (Short)</label>
-                <div className="relative">
-                    <input 
-                        type="text" className={`${inputClass} pl-10`} 
-                        value={formData.code || ''} 
-                        onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                        placeholder="e.g. WPC"
-                        maxLength={5}
-                    />
-                    <Tag size={14} className="absolute left-3.5 top-4 text-slate-400" />
-                </div>
-            </div>
-
-            <div>
-                <label className={labelClass}>Brief Definition</label>
-                <div className="relative">
-                    <textarea 
-                        rows={3} className={`${inputClass} pl-10 resize-none`} 
-                        value={formData.description || ''} 
-                        onChange={e => setFormData({...formData, description: e.target.value})}
-                        placeholder="Purpose of this category..."
-                    />
-                    <Type size={14} className="absolute left-3.5 top-4 text-slate-400" />
-                </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
-                <button type="button" onClick={onClose} className="px-6 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">Cancel</button>
-                <button type="submit" className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg active:scale-95">Save Registry</button>
-            </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 };

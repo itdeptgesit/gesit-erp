@@ -82,14 +82,14 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
         return (
             <div className={`space-y-4 animate-in fade-in duration-500 ${className}`}>
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-lg animate-pulse">
+                    <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg animate-pulse">
                         <Zap size={24} strokeWidth={2.5} />
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                             System Health
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                             Checking system status...
                         </p>
                     </div>
@@ -103,14 +103,14 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-lg">
+                    <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg">
                         <Zap size={24} strokeWidth={2.5} />
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                             System Health
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                             Real-time infrastructure monitoring
                         </p>
                     </div>
@@ -135,11 +135,11 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
                     return (
                         <div
                             key={service.name}
-                            className={`${colors.bg} ${colors.border} border rounded-2xl p-5 transition-all duration-300 hover:shadow-lg`}
+                            className={`${colors.bg} ${colors.border} border rounded-xl p-5 transition-all duration-300 hover:shadow-lg`}
                         >
                             {/* Service Header */}
                             <div className="flex items-center justify-between mb-4">
-                                <div className={`p-2.5 rounded-xl bg-white dark:bg-slate-800 ${colors.text} shadow-sm`}>
+                                <div className={`p-2.5 rounded-xl bg-white dark:bg-zinc-800 ${colors.text} shadow-sm`}>
                                     <ServiceIcon size={20} strokeWidth={2.5} />
                                 </div>
                                 <StatusIcon size={18} className={colors.icon} />
@@ -162,7 +162,7 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
 
                             {/* Response Time */}
                             <div className="flex items-center justify-between text-xs mb-2">
-                                <span className="text-slate-500 dark:text-slate-400 font-medium">
+                                <span className="text-slate-500 dark:text-zinc-400 font-medium">
                                     Response Time
                                 </span>
                                 <span className={`font-bold ${colors.text}`}>
@@ -171,7 +171,7 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
                             </div>
 
                             {/* Uptime Bar */}
-                            <div className="h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full ${colors.pulse} transition-all duration-500`}
                                     style={{ width: `${service.uptime}%` }}
@@ -179,7 +179,7 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
                             </div>
 
                             {/* Last Checked */}
-                            <div className="mt-2 text-[9px] text-slate-400 dark:text-slate-500">
+                            <div className="mt-2 text-[9px] text-slate-400 dark:text-zinc-500">
                                 Updated {service.lastChecked.toLocaleTimeString()}
                             </div>
 
@@ -195,10 +195,10 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
             </div>
 
             {/* Summary Stats */}
-            <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-6">
+            <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-zinc-800/50 rounded-xl p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
                             Average Uptime
                         </div>
                         <div className="text-3xl font-black text-slate-900 dark:text-white">
@@ -206,7 +206,7 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
                         </div>
                     </div>
                     <div>
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
                             Services Online
                         </div>
                         <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
@@ -214,7 +214,7 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
                         </div>
                     </div>
                     <div>
-                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
                             Status
                         </div>
                         <div className={`text-xl font-black ${getStatusColor(overallStatus).text}`}>
@@ -226,3 +226,4 @@ export const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({ classN
         </div>
     );
 };
+

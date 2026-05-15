@@ -162,26 +162,27 @@ export function NavigationSidebar({
                     className="group/collapsible"
                 >
                     <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                            {/* Use render prop for Base UI polymorphism */}
-                            <SidebarMenuButton
-                                tooltip={item.title}
-                                isActive={isActive}
-                                className={cn(
-                                    "text-[13px] font-normal",
-                                    isActive
-                                        ? "text-foreground"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                {IconComp && <IconComp size={15} strokeWidth={1.3} />}
-                                <span>{item.title}</span>
-                                <ChevronRight
-                                    size={13}
-                                    strokeWidth={1.5}
-                                    className="ml-auto shrink-0 opacity-40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                        <CollapsibleTrigger
+                            render={
+                                <SidebarMenuButton
+                                    tooltip={item.title}
+                                    isActive={isActive}
+                                    className={cn(
+                                        "text-[13px] font-normal",
+                                        isActive
+                                            ? "text-foreground"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
                                 />
-                            </SidebarMenuButton>
+                            }
+                        >
+                            {IconComp && <IconComp size={15} strokeWidth={1.3} />}
+                            <span>{item.title}</span>
+                            <ChevronRight
+                                size={13}
+                                strokeWidth={1.5}
+                                className="ml-auto shrink-0 opacity-40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                            />
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <SidebarMenuSub>
@@ -195,7 +196,7 @@ export function NavigationSidebar({
                                                 className={cn(
                                                     "text-[13px] font-normal",
                                                     isChildActive
-                                                        ? "bg-white dark:bg-sidebar-accent text-foreground shadow-sm border border-border/10"
+                                                        ? "bg-white dark:bg-sidebar-accent text-foreground border border-border/10"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                                                 )}
                                             >
@@ -221,7 +222,7 @@ export function NavigationSidebar({
                     className={cn(
                         "text-[13px] font-normal cursor-pointer",
                         isActive
-                            ? "bg-white dark:bg-sidebar-accent text-foreground shadow-sm border border-border/10"
+                            ? "bg-white dark:bg-sidebar-accent text-foreground border border-border/10"
                             : "text-muted-foreground hover:text-foreground"
                     )}
                 >
@@ -237,12 +238,12 @@ export function NavigationSidebar({
             {/* ── Header: Logo + Name ── */}
             <SidebarHeader className="h-14 flex flex-row items-center px-4 border-none">
                 <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground">
-                        <Star size={14} strokeWidth={2.5} className="fill-background text-background" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md overflow-hidden">
+                        <img src="/image/logo.png" alt="Gesit Logo" className="h-full w-full object-contain" />
                     </div>
                     {!isCollapsed && (
                         <span className="truncate text-[14px] font-semibold tracking-tight text-foreground">
-                            Shadcn Dashboard
+                            Gesit Portal
                         </span>
                     )}
                 </div>
@@ -280,22 +281,7 @@ export function NavigationSidebar({
             </SidebarContent>
 
             {/* ── Footer: Download button ── */}
-            <SidebarFooter className="p-3">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            tooltip="Download Dashboard"
-                            onClick={onLogout}
-                            className="h-10 w-full rounded-lg bg-foreground text-background text-[13px] font-medium hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2 px-3"
-                        >
-                            <Download size={14} strokeWidth={2} className="shrink-0" />
-                            {!isCollapsed && (
-                                <span className="truncate">Download Dashboard</span>
-                            )}
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
+            <SidebarFooter className="p-0" />
         </Sidebar>
     );
 }

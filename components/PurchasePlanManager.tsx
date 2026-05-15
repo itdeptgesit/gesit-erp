@@ -229,19 +229,21 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 title="Procurement Center"
                 description="Managed investment & equipment audit log"
             >
+            <div className="flex justify-center mb-2">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
-                    <TabsList className="grid grid-cols-3 w-[400px] h-10 p-1 bg-muted/50 rounded-lg">
-                        <TabsTrigger value="registry" className="text-[10px] font-bold uppercase tracking-widest gap-2">
-                            <ListFilter size={14} /> REGISTRY
+                    <TabsList>
+                        <TabsTrigger value="registry">
+                            <ListFilter size={14} className="mr-2" /> REGISTRY
                         </TabsTrigger>
-                        <TabsTrigger value="approvals" className="text-[10px] font-bold uppercase tracking-widest gap-2">
-                            <UserCheck size={14} /> TASKS ({stats.actionsCount})
+                        <TabsTrigger value="approvals">
+                            <UserCheck size={14} className="mr-2" /> TASKS ({stats.actionsCount})
                         </TabsTrigger>
-                        <TabsTrigger value="analytics" className="text-[10px] font-bold uppercase tracking-widest gap-2">
-                            <BarChart3 size={14} /> REPORTS
+                        <TabsTrigger value="analytics">
+                            <BarChart3 size={14} className="mr-2" /> REPORTS
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
+            </div>
             </PageHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -268,7 +270,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 variant="outline"
                                 size="icon"
                                 onClick={handleExportExcel}
-                                className="h-11 w-11 text-emerald-600 hover:text-emerald-700 border-muted-foreground/10"
+                                className="w-11 border-muted-foreground/10"
                                 title="Export Excel"
                             >
                                 <FileSpreadsheet size={18} />
@@ -277,7 +279,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 variant="outline"
                                 size="icon"
                                 onClick={fetchData} 
-                                className="h-11 w-11 text-muted-foreground hover:text-primary border-muted-foreground/10"
+                                className="w-11 text-muted-foreground hover:text-primary border-muted-foreground/10"
                             >
                                 <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
                             </Button>
@@ -285,7 +287,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         {canManage && (
                             <Button 
                                 onClick={() => setIsModalOpen(true)} 
-                                className="h-11 px-6 font-bold uppercase text-[10px] tracking-widest shadow-sm gap-2"
+                                className="font-bold uppercase text-[10px] tracking-widest gap-2"
                             >
                                 New request
                             </Button>
@@ -299,7 +301,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 {/* Status Distribution */}
                                 <div className="bg-muted/20 p-6 rounded-lg border">
 
-                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <Clock size={14} /> Workflow Distribution
                                     </h3>
                                     <div className="h-64 w-full relative">
@@ -331,7 +333,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                             <div key={idx} className="flex items-center gap-2 p-2 bg-background rounded-md border text-foreground">
 
                                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][idx % 5] }} />
-                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase truncate">{s.name}</span>
+                                                <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase truncate">{s.name}</span>
                                                 <span className="ml-auto text-xs font-bold">{s.value}</span>
                                             </div>
                                         ))}
@@ -341,7 +343,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 {/* Top Vendors Spending */}
                                 <div className="bg-muted/20 p-6 rounded-lg border">
 
-                                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <ShoppingCart size={14} /> Top Projected Spend by Vendor
                                     </h3>
                                     <div className="h-64 w-full">
@@ -367,14 +369,14 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             </div>
 
                             {/* Recent Activity Mini Feed Placeholder or High Level Trend */}
-                            <div className="p-12 text-center border-t border-slate-100 dark:border-slate-800 border-dashed">
+                            <div className="p-12 text-center border-t border-slate-100 dark:border-zinc-800 border-dashed">
                                 <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">Full Audit Trail Synced with Corporate Ledger</p>
                             </div>
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-slate-800">
+                                <tr className="bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-zinc-800">
                                     <th className="px-6 py-5">Item Identity</th>
                                     <th className="px-6 py-5 text-center">Qty</th>
                                     <th className="px-6 py-5 text-right">Commitment</th>
@@ -418,7 +420,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 ) : paginatedPlans.map(plan => {
                                     const isMyTurn = isMyTurnToApprove(plan);
                                     const requesterProfile = getRequesterProfile(plan.requester);
-                                    return (<tr key={plan.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-top ${isMyTurn ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}><td className="px-6 py-5"><div className="flex flex-col max-w-xs"><span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight mb-1 leading-tight">{plan.item}</span><span className="text-[10px] text-slate-400 dark:text-slate-600 line-clamp-1 italic">{plan.specs}</span></div></td><td className="px-6 py-5 text-center font-mono text-[11px] text-slate-500 dark:text-slate-400 font-bold">{plan.quantity}x</td><td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatIDR(plan.totalPrice)}</td><td className="px-6 py-5">{getStatusDisplay(plan)}</td><td className="px-6 py-5"><div className="flex flex-col"><div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{requesterProfile?.fullName || plan.requester}</p><Fingerprint size={10} className="text-blue-500 opacity-20" /></div><p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 font-mono">{plan.requestDate}</p></div></td><td className="px-6 py-5 text-center"><div className="flex items-center justify-center gap-1.5"><button onClick={() => { const profile = getRequesterProfile(plan.requester); setApproverNames({ spv: allUsers.find(u => u.id.toString() === profile?.supervisorId)?.fullName || '', manager: allUsers.find(u => u.id.toString() === profile?.managerId)?.fullName || '' }); setSelectedRequesterProfile(profile); setSelectedPlan(plan); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg" title="View Registry Entry"><Eye size={16} /></button>
+                                    return (<tr key={plan.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-top ${isMyTurn ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}><td className="px-6 py-5"><div className="flex flex-col max-w-xs"><span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight mb-1 leading-tight">{plan.item}</span><span className="text-[10px] text-slate-400 dark:text-slate-600 line-clamp-1 italic">{plan.specs}</span></div></td><td className="px-6 py-5 text-center font-mono text-[11px] text-slate-500 dark:text-zinc-400 font-bold">{plan.quantity}x</td><td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatIDR(plan.totalPrice)}</td><td className="px-6 py-5">{getStatusDisplay(plan)}</td><td className="px-6 py-5"><div className="flex flex-col"><div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{requesterProfile?.fullName || plan.requester}</p><Fingerprint size={10} className="text-blue-500 opacity-20" /></div><p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 font-mono">{plan.requestDate}</p></div></td><td className="px-6 py-5 text-center"><div className="flex items-center justify-center gap-1.5"><button onClick={() => { const profile = getRequesterProfile(plan.requester); setApproverNames({ spv: allUsers.find(u => u.id.toString() === profile?.supervisorId)?.fullName || '', manager: allUsers.find(u => u.id.toString() === profile?.managerId)?.fullName || '' }); setSelectedRequesterProfile(profile); setSelectedPlan(plan); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg" title="View Registry Entry"><Eye size={16} /></button>
                                         {isMyTurn ? (<><button onClick={() => handleApprove(plan)} disabled={isActionLoading} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90" title="Authorize"><Check size={16} strokeWidth={3} /></button><button onClick={() => setRejectTarget(plan)} disabled={isActionLoading} className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90" title="Deny"><X size={16} strokeWidth={3} /></button></>) : (canDelete && <button onClick={() => setDeletePlan(plan)} className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100" title="Purge Node"><Trash2 size={16} /></button>)}</div></td></tr>);
                                 })}</tbody>
                         </table>
@@ -432,7 +434,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             size="icon" 
                             disabled={currentPage === 1} 
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                            className="w-8 text-muted-foreground hover:text-primary transition-all"
                         >
                             <ChevronLeft size={16} />
                         </Button>
@@ -441,7 +443,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             size="icon" 
                             disabled={currentPage === totalPages || totalPages === 0} 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                            className="w-8 text-muted-foreground hover:text-primary transition-all"
                         >
                             <ChevronRight size={16} />
                         </Button>
@@ -457,3 +459,4 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         </div>
     );
 };
+

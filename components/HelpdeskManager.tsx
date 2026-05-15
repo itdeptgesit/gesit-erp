@@ -11,7 +11,7 @@ import {
     User, Building2, PauseCircle, Lock, Unlock, MessageCircle, ChevronLeft, ChevronRight, ChevronDown, CircleDot, RotateCcw,
     Image as ImageIcon, Smile, Paperclip, Globe, Zap, Hash, PlusCircle, LifeBuoy, Check, CheckCheck,
     ArrowLeft, ArrowRight, ShieldCheck, CloudUpload, Phone, Info, FileText, File, ExternalLink, Star, Download, Inbox, Shield,
-    Share2, MoreHorizontal, Link, Archive, Plus, Bell, Moon, Sun, LogOut, Settings, Trash2,
+    Share2, MoreHorizontal, Link, Archive, Plus, Bell, Moon, Sun, LogOut, Settings, Trash2, Folder, FolderOpen,
     Bold, Italic, List, Code, Quote, Megaphone, Radio, BarChart2
 } from 'lucide-react';
 import {
@@ -32,6 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -40,10 +41,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface HelpdeskManagerProps {
     currentUser: UserAccount | null;
@@ -382,7 +384,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         const imageUrl = imageMatch[1];
                         return (
                             <div key={idx} onClick={() => setPreviewImage(imageUrl)} className="block cursor-zoom-in group/img relative overflow-hidden rounded-xl border border-black/5 dark:border-white/5 mt-2 transition-transform active:scale-[0.98] w-full max-w-lg">
-                                <img src={imageUrl} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-slate-800 rounded-lg shadow-sm" loading="lazy" />
+                                <img src={imageUrl} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-zinc-800 rounded-lg shadow-sm" loading="lazy" />
                             </div>
                         );
                     }
@@ -390,7 +392,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         const fileUrl = fileMatch ? fileMatch[2] : imageMatch![1];
                         const isPdf = (fileMatch && fileMatch[1] === 'PDF') || isUrlPdf(fileUrl);
                         return (
-                            <div key={idx} onClick={() => isPdf ? setPreviewImage(fileUrl) : window.open(fileUrl, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                            <div key={idx} onClick={() => isPdf ? setPreviewImage(fileUrl) : window.open(fileUrl, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-zinc-800 border-slate-200/50 dark:border-zinc-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
                                 <div className={`p-2 rounded-lg ${isSelf ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'}`}>
                                     <FileText size={18} />
                                 </div>
@@ -414,13 +416,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                     if (isImage && !isPdf) {
                         return (
                             <div key={`attr-${i}`} onClick={() => setPreviewImage(url)} className="block cursor-zoom-in group/img relative overflow-hidden rounded-xl border border-black/5 dark:border-white/5 mt-2 transition-transform active:scale-[0.98] w-full max-w-lg">
-                                <img src={url} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-slate-800 rounded-lg shadow-sm" loading="lazy" />
+                                <img src={url} alt="Attachment" className="max-w-full max-h-[300px] object-contain bg-slate-100 dark:bg-zinc-800 rounded-lg shadow-sm" loading="lazy" />
                             </div>
                         );
                     }
 
                     return (
-                        <div key={`attr-${i}`} onClick={() => isPdf ? setPreviewImage(url) : window.open(url, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                        <div key={`attr-${i}`} onClick={() => isPdf ? setPreviewImage(url) : window.open(url, '_blank')} className={`flex items-center gap-3 p-3 rounded-xl mt-2 border transition-all cursor-pointer ${isSelf ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-slate-100 dark:bg-zinc-800 border-slate-200/50 dark:border-zinc-700/50 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
                             <div className={`p-2 rounded-lg ${isSelf ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'}`}>
                                 <FileText size={18} />
                             </div>
@@ -485,8 +487,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         respondedAt: t.responded_at
     });
 
-    const fetchTickets = async () => {
-        setIsLoading(true);
+    const fetchTickets = async (silent = false) => {
+        if (!silent) setIsLoading(true);
         try {
             let query = supabase.from('helpdesk_tickets').select('*');
 
@@ -497,7 +499,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 } else {
                     // If profile not yet loaded and not IT staff, return empty to prevent leak
                     setTickets([]);
-                    setIsLoading(false);
+                    if (!silent) setIsLoading(false);
                     return;
                 }
             }
@@ -509,9 +511,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             }
         } catch (err: any) {
             console.error("Fetch Tickets Error:", err);
-            showToast(err.message, 'error');
+            if (!silent) showToast(err.message, 'error');
         } finally {
-            setIsLoading(false);
+            if (!silent) setIsLoading(false);
         }
     };
 
@@ -534,6 +536,25 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             console.error('Error fetching messages:', err);
         }
     };
+
+    // Auto-refresh mechanism (Polling Fallback)
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchTickets(true);
+        }, 5000); // 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, [currentUser?.email, isSupport]);
+
+    // Independent Auto-refresh for selected ticket messages
+    useEffect(() => {
+        if (!selectedTicket?.id) return;
+        const intervalId = setInterval(() => {
+            fetchMessages(selectedTicket.id);
+        }, 5000); // 5 seconds
+
+        return () => clearInterval(intervalId);
+    }, [selectedTicket?.id, isSupport]);
 
     useEffect(() => {
         fetchTickets();
@@ -687,7 +708,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
     useEffect(() => {
         if (selectedTicket) {
-            setResolutionNote(selectedTicket.resolution || '');
+            // Always start with a clean input area for new messages
+            setResolutionNote('');
+            
             setFeedbackRating(selectedTicket.rating || 0);
             setFeedbackComment(selectedTicket.feedback || '');
             fetchMessages(selectedTicket.id);
@@ -954,7 +977,6 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             const senderRole = isSupport ? 'IT' : 'User';
             const updatePayload: any = {};
             if (isSupport && !isInternal) {
-                updatePayload.resolution = resolutionNote;
                 if (!selectedTicket.assignedTo) {
                     updatePayload.assigned_to = currentUser?.fullName || 'IT Support';
                     updatePayload.assigned_to_email = currentUser?.email;
@@ -1541,7 +1563,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 pt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20 rounded-b-xl border-x border-b border-border/30">
+                            <div className="p-4 pt-1 text-[11px] leading-relaxed text-slate-600 dark:text-zinc-400 bg-slate-50/50 dark:bg-zinc-800/20 rounded-b-xl border-x border-b border-border/30">
                                 {item.detail}
                             </div>
                         </motion.div>
@@ -1563,7 +1585,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                     <Button
                         variant={isManagementMode ? "outline" : "default"}
                         size="sm"
-                        className="h-8 rounded-full text-xs font-bold shadow-sm"
+                        className="text-xs font-bold"
                         onClick={() => setIsManagementMode(!isManagementMode)}
                     >
                         {isManagementMode ? (
@@ -1576,33 +1598,28 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             </PageHeader>
 
 
-            {/* Client View Selection (Premium Pill Tabs) */}
-            {!isManagementMode && (
-                <div className="flex p-1.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-border shadow-sm w-fit mb-4">
-                    {[
-                        { id: 'archive', label: t('myTickets'), icon: Inbox },
-                        { id: 'form', label: t('submitTicket'), icon: LifeBuoy }
-                    ].map((tab) => {
-                        const isActive = viewMode === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => {
-                                    setSelectedTicket(null);
-                                    setViewMode(tab.id as any);
-                                }}
-                                className={cn(
-                                    "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
-                                    isActive
-                                        ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700"
-                                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                                )}
-                            >
-                                <tab.icon size={14} className={isActive ? "text-indigo-500" : "text-slate-400"} />
-                                <span>{tab.label}</span>
-                            </button>
-                        );
-                    })}
+            {/* Action Bar */}
+            {!isManagementMode && viewMode === 'archive' && (
+                <div className="w-full flex justify-end mb-6">
+                    <Button 
+                        onClick={() => setViewMode('form')}
+                        className="/20 group"
+                    >
+                        <LifeBuoy size={16} className="mr-2 group-hover:scale-110 transition-transform" />
+                        <span className="text-[11px] font-black uppercase tracking-widest">{t('submitTicket')}</span>
+                    </Button>
+                </div>
+            )}
+            {!isManagementMode && viewMode === 'form' && (
+                <div className="w-full mb-6 flex items-center gap-4">
+                    <Button 
+                        variant="ghost"
+                        onClick={() => setViewMode('archive')}
+                        className="dark: group"
+                    >
+                        <Inbox size={16} className="mr-2 text-slate-400 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{t('myTickets')}</span>
+                    </Button>
                 </div>
             )}
 
@@ -1619,21 +1636,17 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             {
                 isManagementMode && (
                     <>
-                        {/* Tab Toggles for Management Mode */}
-                        <div className="flex bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl w-fit mb-6 shadow-sm ring-1 ring-inset ring-slate-200/50 dark:ring-slate-800/50">
-                            <button
-                                onClick={() => setManagementTab('queue')}
-                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all", managementTab === 'queue' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
-                            >
-                                <List size={14} /> Queue
-                            </button>
-                            <button
-                                onClick={() => setManagementTab('analytics')}
-                                className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all", managementTab === 'analytics' ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/30 dark:hover:bg-slate-800/50")}
-                            >
-                                <BarChart2 size={14} /> Analytics
-                            </button>
-                        </div>
+                        {/* Tab Toggles for Management Mode - Standardized */}
+                        <Tabs value={managementTab} onValueChange={(val) => setManagementTab(val as any)} className="w-fit mb-6">
+                            <TabsList>
+                                <TabsTrigger value="queue">
+                                    <List size={14} className="mr-2" /> Queue
+                                </TabsTrigger>
+                                <TabsTrigger value="analytics">
+                                    <BarChart2 size={14} className="mr-2" /> Analytics
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
 
                         {managementTab === 'queue' && (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
@@ -1650,12 +1663,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             {/* AREA UTAMA */}
             {
                 viewMode === 'success' ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-border shadow-sm max-w-lg mx-auto mt-12 animate-in zoom-in duration-500">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl p-12 text-center border border-border shadow-sm max-w-lg mx-auto mt-12 animate-in zoom-in duration-500">
                         <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">{t('reportSent')}</h2>
                         <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">{t('reportSuccessDesc')}</p>
 
-                        <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 rounded-xl border border-border inline-block mb-8">
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 px-8 py-4 rounded-xl border border-border inline-block mb-8">
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('reportId')}</div>
                             <span className="text-xl font-bold text-primary font-mono tracking-tight">#{lastCreatedTicketId}</span>
                         </div>
@@ -1664,7 +1677,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                             <Button
                                 size="lg"
                                 onClick={() => setViewMode('archive')}
-                                className="w-full rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
+                                className="w-full font-bold"
                             >
                                 {t('returnToTicketing')}
                             </Button>
@@ -1679,19 +1692,19 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2">
                                 <Card className="border-border/60 shadow-sm overflow-hidden">
-                                    <CardHeader className="flex flex-row items-center justify-between pb-4">
+                                    <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-slate-100 dark:border-zinc-800/50 bg-slate-50/30 dark:bg-zinc-800/20">
                                         <div className="space-y-1">
-                                            <CardTitle className="text-xl font-bold tracking-tight">{t('submitSupportTicket')}</CardTitle>
-                                            <p className="text-xs text-muted-foreground">{t('supportTeamBackSoon')}</p>
+                                            <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{t('submitSupportTicket')}</CardTitle>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('supportTeamBackSoon')}</p>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
                                         {/* Subject Field */}
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">{t('subject')}</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">{t('subject')}</label>
                                             <input
                                                 type="text"
-                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                                                className="flex h-12 w-full rounded-xl border border-border bg-slate-50/50 dark:bg-zinc-800/50 px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/5 focus-visible:border-indigo-500/50 transition-all"
                                                 placeholder={t('subjectPlaceholder')}
                                                 value={newTicketData.subject}
                                                 onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
@@ -1700,10 +1713,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
                                         {/* Deskripsi Field */}
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">{t('description')}</label>
-                                            <div className="border border-input rounded-md overflow-hidden bg-background focus-within:ring-1 focus-within:ring-ring transition-all">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">{t('description')}</label>
+                                            <div className="border border-border rounded-xl overflow-hidden bg-slate-50/50 dark:bg-zinc-800/50 focus-within:ring-4 focus-within:ring-indigo-500/5 focus-within:border-indigo-500/50 transition-all">
                                                 {/* Rich Text Toolbar */}
-                                                <div className="px-2 py-1 bg-muted/20 border-b border-input flex flex-wrap gap-1 items-center">
+                                                <div className="px-3 py-2 bg-white/50 dark:bg-zinc-900/50 border-b border-border flex flex-wrap gap-1.5 items-center">
                                                     {[
                                                         { icon: Bold, type: 'bold' },
                                                         { icon: Italic, type: 'italic' },
@@ -1719,16 +1732,16 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                             size="icon"
                                                             type="button"
                                                             onClick={() => applyNewTicketFormatting(item.type)}
-                                                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                            className="w-8 dark: transition-all"
                                                         >
-                                                            <item.icon size={12} />
+                                                            <item.icon size={13} />
                                                         </Button>
                                                     ))}
-                                                    {isUploading && <Loader2 size={12} className="animate-spin text-primary ml-2" />}
+                                                    {isUploading && <Loader2 size={13} className="animate-spin text-indigo-500 ml-2" />}
                                                 </div>
                                                 <textarea
                                                     ref={newTicketDescriptionRef}
-                                                    className="w-full h-[220px] p-4 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground resize-none leading-relaxed"
+                                                    className="w-full h-[220px] p-5 bg-transparent border-none outline-none text-[14px] font-medium placeholder:text-slate-400 resize-none leading-relaxed"
                                                     placeholder={t('descPlaceholder')}
                                                     value={newTicketData.description}
                                                     onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
@@ -1774,11 +1787,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             </div>
                                         </div>
                                     </CardContent>
-                                    <div className="p-4 border-t bg-muted/10 flex items-center justify-end gap-2">
+                                    <div className="p-6 border-t bg-slate-50/50 dark:bg-zinc-800/30 flex items-center justify-end gap-3">
                                         <Button
                                             variant="ghost"
                                             onClick={() => setViewMode('archive')}
-                                            className="h-9 px-4 text-xs font-semibold"
+                                            className="text-[11px] font-black uppercase tracking-widest transition-all"
                                         >
                                             {t('cancel')}
                                         </Button>
@@ -1786,9 +1799,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             size="sm"
                                             onClick={handleCreateTicket}
                                             disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
-                                            className="h-9 px-4 text-xs font-semibold"
+                                            className="text-[11px] font-black uppercase tracking-widest dark: /20 dark:/10"
                                         >
-                                            {isActionLoading ? <Loader2 size={14} className="animate-spin mr-2" /> : <Send size={13} className="mr-2" />}
+                                            {isActionLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={14} className="mr-2" />}
                                             {t('submitReport')}
                                         </Button>
                                     </div>
@@ -1863,7 +1876,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         {b.title && <h5 className="text-[10px] font-black uppercase tracking-tight text-slate-800 dark:text-slate-200 mb-0.5">{b.title}</h5>}
-                                                        <p className="text-xs font-medium text-slate-700 dark:text-slate-400 leading-relaxed mb-1.5 line-clamp-2">
+                                                        <p className="text-xs font-medium text-slate-700 dark:text-zinc-400 leading-relaxed mb-1.5 line-clamp-2">
                                                             {b.content || b.message}
                                                         </p>
                                                         <div className="flex items-center gap-2">
@@ -1875,7 +1888,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 </div>
                                             </div>
                                         )) : (
-                                            <div className="p-8 text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                                            <div className="p-8 text-center bg-slate-50/50 dark:bg-zinc-800/20 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
                                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No active system alerts</p>
                                             </div>
                                         )}
@@ -2047,65 +2060,58 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 ) : (isManagementMode && managementTab === 'queue') ? (
                     <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-280px)] min-h-[600px] lg:min-h-[650px]">
                         {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
-                        <div className={`w-full lg:w-96 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 h-[600px] lg:h-full ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                            <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-col gap-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                        <div className={`w-full lg:w-96 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 h-[600px] lg:h-full ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                            <div className="p-5 border-b border-slate-100 dark:border-zinc-800/60 flex flex-col gap-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                                {/* Header Title & Meta actions */}
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Messages</h2>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => fetchTickets()} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" title="Refresh">
+                                            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+                                        </button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger render={
+                                                <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" title="Filters & Options" />
+                                            }>
+                                                <MoreHorizontal size={16} />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-56 font-medium z-[200]">
+                                                <DropdownMenuGroup>
+                                                    <DropdownMenuLabel className="text-xs">Filter Status</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    {['All', 'Open', 'In Progress', 'Resolved'].map(st => (
+                                                        <DropdownMenuItem key={st} onClick={() => setStatusFilter(st)} className="text-xs flex justify-between">
+                                                            <span>{st === 'In Progress' ? 'Active' : st}</span>
+                                                            {statusFilter === st && <Check size={14} className="text-indigo-500" />}
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuGroup>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuGroup>
+                                                    <DropdownMenuLabel className="text-xs">Ticket View</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => setSupportFilter('all')} className="text-xs flex justify-between">All Tickets {supportFilter === 'all' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setSupportFilter('assigned')} className="text-xs flex justify-between">My Tasks {supportFilter === 'assigned' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setSupportFilter('mine')} className="text-xs flex justify-between">My Reports {supportFilter === 'mine' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
+                                                </DropdownMenuGroup>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={handleExportExcel} className="text-xs text-emerald-600"><FileSpreadsheet size={14} className="mr-2" /> Export to Excel</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={resetFilters} className="text-xs text-rose-600"><RotateCcw size={14} className="mr-2" /> Reset Filters</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+
                                 {/* Search Bar */}
                                 <div className="relative group">
                                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                                     <input
                                         type="text"
-                                        placeholder={t('searchTickets')}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
+                                        placeholder="Search messages..."
+                                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 rounded-lg text-sm font-medium outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all dark:text-white placeholder:text-slate-400"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
-                                </div>
-
-                                {/* Status Filters */}
-                                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
-                                    {['All', 'Open', 'Active', 'Done'].map(st => {
-                                        const isActive = statusFilter === (st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st));
-                                        const actualStatus = st === 'Active' ? 'In Progress' : (st === 'Done' ? 'Resolved' : st);
-
-                                        return (
-                                            <button
-                                                key={st}
-                                                onClick={() => setStatusFilter(actualStatus)}
-                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
-                                            >
-                                                {st === 'All' ? t('statusAll') : (st === 'Open' ? t('statusOpen') : (st === 'Active' ? t('statusActive') : t('statusDone')))}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Role/Assignment Filters */}
-                                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
-                                    <button
-                                        onClick={() => setSupportFilter('all')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'all' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
-                                    >
-                                        All
-                                    </button>
-                                    <button
-                                        onClick={() => setSupportFilter('assigned')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'assigned' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
-                                    >
-                                        My Tasks
-                                    </button>
-                                    <button
-                                        onClick={() => setSupportFilter('mine')}
-                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold tracking-wide transition-all ${supportFilter === 'mine' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
-                                    >
-                                        My Reports
-                                    </button>
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex items-center justify-end gap-1.5 pt-1">
-                                    <button onClick={handleExportExcel} className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all" title="Export Excel"><FileSpreadsheet size={16} strokeWidth={2} /></button>
-                                    <button onClick={resetFilters} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 rounded-lg transition-all" title="Reset"><RotateCcw size={16} strokeWidth={2} /></button>
-                                    <button onClick={fetchTickets} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 rounded-lg transition-all" title="Refresh"><RefreshCcw size={16} strokeWidth={2} className={isLoading ? 'animate-spin' : ''} /></button>
                                 </div>
                             </div>
 
@@ -2169,44 +2175,35 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 <div
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
-                                                    className={`flex items-center gap-3 px-3 py-3 cursor-pointer transition-all duration-150 relative
+                                                    className={`group flex items-start gap-4 px-5 py-4 cursor-pointer transition-all duration-200 relative
                                                         ${isSelected
-                                                            ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                            ? 'bg-slate-50 dark:bg-zinc-800'
+                                                            : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/50'
                                                         }
                                                     `}
                                                 >
                                                     {/* Avatar */}
-                                                    <div className="relative shrink-0">
-                                                        <UserAvatar name={ticket.requesterName} url={userAvatars[ticket.requesterName]} size="lg" className={`border-2 ${ticket.status === 'Resolved' ? 'border-emerald-200 dark:border-emerald-900/50' : ''}`} />
-                                                        {/* Status dot */}
-                                                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${statusDot[ticket.status] || 'bg-slate-400'}`} />
+                                                    <div className="relative shrink-0 pt-0.5">
+                                                        <UserAvatar name={ticket.requesterName} url={userAvatars[ticket.requesterName]} size="md" />
+                                                        {/* Status dot - Green if active/open, else muted */}
+                                                        <span className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 ${ticket.status === 'Open' || ticket.status === 'In Progress' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'}`} />
                                                     </div>
 
-                                                    {/* Deskripsi */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-0.5">
-                                                            <span className={`text-sm font-bold truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`text-[14px] font-bold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>
                                                                 {ticket.requesterName}
                                                             </span>
-                                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 ml-2">{timeAgo}</span>
+                                                            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 shrink-0 ml-2">{timeAgo}</span>
                                                         </div>
-                                                        <div className="flex items-center justify-between gap-1">
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
-                                                                <span className="font-bold text-slate-600 dark:text-slate-300">{ticket.subject}</span>
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className={`text-[13px] truncate ${isSelected ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-slate-500 dark:text-zinc-500 font-normal'} flex-1`}>
+                                                                {ticket.subject}
                                                             </p>
-                                                            {ticket.priority && ticket.priority !== 'Medium' && (
-                                                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wide ${priorityBadge[ticket.priority] || ''}`}>
-                                                                    {ticket.priority}
-                                                                </span>
+                                                            {ticket.status === 'Open' && (
+                                                                <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
                                                             )}
-                                                        </div>
-                                                        <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                                            {ticket.status === 'In Progress' ? <Loader2 size={10} className="text-blue-500 animate-spin mr-1 shrink-0" /> :
-                                                                ticket.status === 'Resolved' ? <CheckCircle2 size={10} className="text-emerald-500 mr-1 shrink-0" /> :
-                                                                    <CircleDot size={10} className={`mr-1 shrink-0 ${ticket.status === 'Open' ? 'text-rose-500' : 'text-amber-500'}`} />}
-                                                            <span className="font-medium text-slate-600 dark:text-slate-300">{statusLabel[ticket.status] || ticket.status}</span>
-                                                            {ticket.assignedTo && <span className="ml-1.5 border-l border-slate-200 dark:border-slate-700 pl-1.5 opacity-80">Assigned: {ticket.assignedTo.split(' ')[0]}</span>}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2216,7 +2213,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 )}
                             </div>
 
-                            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900 z-10">
+                            <div className="px-5 py-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-900 z-10">
                                 <span className="text-[10px] font-bold text-slate-400 tracking-wide leading-none pt-0.5">{filteredTickets.length} Total Tickets</span>
                                 <div className="flex items-center gap-1">
                                     <button
@@ -2239,102 +2236,64 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         </div>
 
                         {/* CENTER COLUMN */}
-                        <div className={`flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden h-[600px] lg:h-full ${!selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className={`flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden h-[600px] lg:h-full ${!selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
                             {selectedTicket ? (
                                 <>
                                     {/* Chat Header */}
-                                    {/* Elevated Chat Header */}
-                                    <div className="px-5 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 z-20 sticky top-0">
+                                    <div className="px-6 py-4 bg-white/95 dark:bg-zinc-900/95 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between shrink-0 z-20 sticky top-0">
                                         <div className="flex items-center gap-4 min-w-0">
                                             <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors shrink-0">
                                                 <ChevronLeft size={18} />
                                             </button>
 
-                                            {/* Avatar with Status Ring */}
                                             <div className="relative shrink-0">
-                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="md" className="ring-2 ring-slate-50 dark:ring-slate-800 shadow-sm" />
-                                                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-sm" />
+                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="md" />
+                                                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
                                             </div>
 
                                             <div className="min-w-0 flex flex-col justify-center">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate tracking-tight">{selectedTicket.requesterName}</h3>
-                                                    {selectedTicket.priority === 'Critical' && (
-                                                        <span className="hidden sm:flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded-md shadow-sm">
-                                                            <AlertCircle size={10} /> Urgent
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">{selectedTicket.ticketId}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 opacity-60"></span>
-                                                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate tracking-wide">{selectedTicket.department}</span>
-                                                </div>
+                                                <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate tracking-tight">{selectedTicket.requesterName}</h3>
+                                                <span className="text-[11px] font-medium text-emerald-500 tracking-wide">Active now</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-                                            {/* Info/Details Toggle on Mobile */}
+                                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                            <button className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+                                                <MoreHorizontal size={18} />
+                                            </button>
                                             <button
                                                 onClick={() => setShowMobileDetails(!showMobileDetails)}
-                                                className={`lg:hidden p-2 rounded-xl transition-all ${showMobileDetails ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'bg-slate-50 text-slate-400 dark:bg-slate-800'}`}
+                                                className={`lg:hidden p-2 rounded-full transition-all ${showMobileDetails ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'}`}
                                             >
                                                 <Info size={18} />
                                             </button>
-
-                                            {/* Status Badge */}
-                                            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all
-                                                ${selectedTicket.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' :
-                                                    selectedTicket.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400' :
-                                                        selectedTicket.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400' :
-                                                            'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400'}`}>
-                                                {selectedTicket.status === 'In Progress' ? <Loader2 size={12} className="animate-spin" /> :
-                                                    selectedTicket.status === 'Resolved' ? <CheckCircle2 size={12} /> :
-                                                        <CircleDot size={12} />}
-                                                <span>{selectedTicket.status === 'In Progress' ? 'Processing' : selectedTicket.status}</span>
-                                            </div>
-
-
                                         </div>
                                     </div>
 
                                     {/* WA-style Chat Messages */}
-                                    <div
-                                        className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-1"
-                                        style={{ background: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23e2e8f0\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M0 0h40v40H0V0zm20 2l3 6h6l-5 4 2 6-6-4-6 4 2-6-5-4h6z\'/%3E%3C/g%3E%3C/svg%3E")' }}
-                                    >
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6 space-y-4 bg-slate-50/50 dark:bg-zinc-900/50 relative">
                                         {/* Date separator */}
-                                        <div className="flex justify-center mb-3">
-                                            <span className="bg-white/80 dark:bg-slate-800/80 backdrop-blur text-[10px] font-semibold text-slate-500 px-3 py-1 rounded-full shadow-sm">
-                                                {new Date(selectedTicket.createdAt).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                                        <div className="flex justify-center mb-6">
+                                            <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-400 px-3 py-1 bg-white/60 dark:bg-zinc-800/60 rounded-full">
+                                                {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </span>
                                         </div>
 
-                                        {/* Contact Info (WhatsApp Style) */}
-                                        <div className="flex flex-col items-center justify-center p-6 mx-auto mb-6 mt-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm max-w-sm">
-                                            <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="xl" className="w-20 h-20 text-3xl mb-3 shadow-md" />
-                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{selectedTicket.requesterPhone || selectedTicket.requesterName}</h2>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">~{selectedTicket.requesterName}</p>
-                                            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4 text-center">{selectedTicket.department} • {selectedTicket.requesterEmail}</p>
-                                            <div className="flex flex-col items-center gap-3 mt-1 w-full">
-                                                <div className="w-full flex items-center justify-center gap-2 text-xs font-black text-indigo-700 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-900/40 px-4 py-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center shadow-sm">
-                                                    <Hash size={14} className="shrink-0" />
-                                                    <span className="truncate">{selectedTicket.subject}</span>
-                                                </div>
-                                            </div>
+                                        {/* First message: ticket description (from requester) */}
+                                        <div className="flex flex-col w-full text-center items-center justify-center gap-2 mb-8 mt-2 opacity-50">
+                                             <div className="px-4 py-2 bg-slate-200 dark:bg-zinc-800 rounded-lg max-w-sm text-xs font-medium text-slate-600 dark:text-slate-300 text-left">
+                                                <strong>Subject:</strong> {selectedTicket.subject}
+                                             </div>
                                         </div>
 
-                                        {/* First message: ticket description (from requester) */}
-                                        <div className="flex items-end gap-2 mb-1">
-                                            <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="sm" />
-                                            <div className="max-w-[78%]">
-                                                <div className="bg-white dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm border border-slate-100 dark:border-slate-700">
-                                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-1">{selectedTicket.requesterName}</p>
-                                                    <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                        <div className="flex items-end gap-3 mb-2 flex-row">
+                                            <div className="max-w-[80%] flex flex-col items-start">
+                                                <div className="bg-zinc-800 dark:bg-zinc-800 rounded-lg rounded-bl-sm px-4 py-3 shadow-sm border border-zinc-700">
+                                                    <div className="text-sm font-medium text-white leading-relaxed">
                                                         <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} />
                                                     </div>
-                                                    <p className="text-[10px] text-slate-400 mt-1 text-right">{new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                 </div>
+                                                <span className="text-[10px] text-slate-400 mt-1.5">{new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
                                         </div>
 
@@ -2357,60 +2316,52 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         {/* Avatar — only for other side */}
                                                         <UserAvatar name={msg.sender_name || 'S'} url={userAvatars[msg.sender_name]} size="sm" className={isSelf ? 'ring-indigo-100 dark:ring-indigo-900/50' : ''} />
 
-                                                        <div className={`max-w-[78%] ${isSelf ? 'items-end' : 'items-start'} flex flex-col`}>
-                                                            {/* Sender name for non-self */}
-                                                            {!isSelf && (
-                                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5 px-1">{msg.sender_name}</span>
-                                                            )}
-                                                            <div className={`px-4 py-2.5 shadow-sm relative ${isInternalMsg
-                                                                ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 rounded-2xl'
+                                                        <div className={`max-w-[80%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}>
+                                                            <div className={`px-4 py-3 shadow-sm relative ${isInternalMsg
+                                                                ? 'bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/40 rounded-lg'
                                                                 : isSelf
-                                                                    ? 'bg-indigo-600 dark:bg-indigo-700 text-white rounded-2xl rounded-br-sm'
-                                                                    : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-bl-sm'
+                                                                    ? 'bg-zinc-950 dark:bg-black text-white rounded-lg rounded-br-sm border border-black dark:border-zinc-800'
+                                                                    : 'bg-zinc-800 dark:bg-zinc-800 text-white border border-zinc-700 rounded-lg rounded-bl-sm'
                                                                 }`}>
                                                                 {isInternalMsg && (
-                                                                    <div className="flex items-center gap-1 mb-1.5">
-                                                                        <Shield size={9} className="text-amber-500" />
-                                                                        <span className="text-[8px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Internal Note</span>
+                                                                    <div className="flex items-center gap-1 mb-1.5 opacity-80">
+                                                                        <Shield size={10} className="text-amber-600" />
+                                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Internal Note</span>
                                                                     </div>
                                                                 )}
-                                                                <div className={`text-sm leading-relaxed ${isSelf ? 'text-white' : isInternalMsg ? 'text-amber-900 dark:text-amber-200' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                                <div className={`text-sm leading-relaxed ${isSelf ? 'text-white' : isInternalMsg ? 'text-amber-900 dark:text-amber-200' : 'text-white font-medium'}`}>
                                                                     {(() => {
                                                                         const imageMatch = msg.message.match(/!\[image\]\((.*?)\)/);
                                                                         const fileMatch = msg.message.match(/\[Attached (File|PDF)\]\((.*?)\)/);
                                                                         if (imageMatch) return (
-                                                                            <div onClick={() => setPreviewImage(imageMatch[1])} className="block cursor-zoom-in overflow-hidden rounded-xl mt-1">
-                                                                                <img src={imageMatch[1]} alt="Attachment" className="max-w-full max-h-[260px] object-contain rounded-xl hover:opacity-90 transition-opacity" loading="lazy" />
+                                                                            <div onClick={() => setPreviewImage(imageMatch[1])} className="block cursor-zoom-in overflow-hidden rounded-lg mt-1">
+                                                                                <img src={imageMatch[1]} alt="Attachment" className="max-w-full max-h-[260px] object-contain rounded-lg hover:opacity-90 transition-opacity" loading="lazy" />
                                                                             </div>
                                                                         );
                                                                         if (fileMatch) {
                                                                             const fileUrl = fileMatch[2];
                                                                             const isPdf = fileMatch[1] === 'PDF';
                                                                             if (isPdf) return (
-                                                                                <div onClick={() => setPreviewImage(fileUrl)} className={`flex items-center gap-3 p-2.5 rounded-xl mt-1 cursor-pointer ${isSelf ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
-                                                                                    <div className="p-2 rounded-lg bg-rose-100 text-rose-600 shrink-0"><FileText size={16} /></div>
-                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">Attached PDF</p><p className="text-[10px] opacity-70">Tap to preview</p></div>
-                                                                                    <ExternalLink size={12} className="opacity-60 shrink-0" />
+                                                                                <div onClick={() => setPreviewImage(fileUrl)} className={`flex items-center gap-3 p-2.5 rounded-lg mt-1 cursor-pointer bg-white/10 hover:bg-white/20 transition-all`}>
+                                                                                    <div className="p-2 rounded bg-white/10 text-white shrink-0"><FileText size={16} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-semibold truncate text-white">Attached PDF</p><p className="text-[10px] text-white/50">Tap to preview</p></div>
                                                                                 </div>
                                                                             );
                                                                             return (
-                                                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-2.5 rounded-xl mt-1 ${isSelf ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-100 dark:bg-slate-700'}`}>
-                                                                                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600 shrink-0"><FileText size={16} /></div>
-                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">Attached Document</p><p className="text-[10px] opacity-70">Click to view</p></div>
-                                                                                    <ExternalLink size={12} className="opacity-60 shrink-0" />
+                                                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-2.5 rounded-lg mt-1 bg-white/10 hover:bg-white/20 transition-all`}>
+                                                                                    <div className="p-2 rounded bg-white/10 text-white shrink-0"><FileText size={16} /></div>
+                                                                                    <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-white truncate">Document</p><p className="text-[10px] text-white/50">Click to view</p></div>
                                                                                 </a>
                                                                             );
                                                                         }
                                                                         return <EmojiRenderer text={msg.message} />;
                                                                     })()}
                                                                 </div>
-                                                                {/* Timestamp + ticks */}
-                                                                <div className={`flex items-center gap-1 mt-1 justify-end`}>
-                                                                    <span className={`text-[9px] ${isSelf ? 'text-white/70' : 'text-slate-400'}`}>
-                                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                    {isSelf && <span className="text-[11px] text-blue-300">??</span>}
-                                                                </div>
+                                                            </div>
+                                                            <div className={`flex items-center gap-1 mt-1.5 justify-end`}>
+                                                                <span className="text-[10px] font-medium text-slate-400">
+                                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </motion.div>
@@ -2420,48 +2371,15 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                         <div ref={messagesEndRef} />
                                     </div>
 
-                                    {/* WA-style Input Bar */}
-                                    <div className="px-3 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                                    {/* Simplified Input Bar */}
+                                    <div className="px-6 py-4 bg-white dark:bg-zinc-900 shrink-0">
                                         {!isSolved ? (
-                                            <div className="flex items-end gap-2">
-                                                {/* Left icon buttons */}
-                                                <div className="flex items-center gap-1 pb-1.5">
-                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
-                                                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="w-9 h-9 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-blue-500" /> : <Paperclip size={18} />}
-                                                    </button>
-                                                    <div className="relative">
-                                                        <button ref={emojiTriggerRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${showEmojiPicker ? 'text-blue-500 bg-blue-50' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                                                            <Smile size={18} />
-                                                        </button>
-                                                        <AnimatePresence>
-                                                            {showEmojiPicker && (
-                                                                <motion.div initial={{ opacity: 0, scale: 0.9, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 10 }} className="absolute bottom-full left-0 mb-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl z-[100] w-[280px] overflow-hidden">
-                                                                    <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                                                                        <div className="flex gap-1 overflow-x-auto no-scrollbar">{EMOJI_CATEGORIES.map((cat, catIdx) => (<button key={cat.name} onClick={() => setActiveEmojiCategory(catIdx)} className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === catIdx ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>{cat.icon}</button>))}</div>
-                                                                    </div>
-                                                                    <div className="p-2 grid grid-cols-7 gap-1 h-[180px] overflow-y-auto custom-scrollbar">{EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (<button key={emoji} onClick={() => addEmoji(emoji)} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"><FluentEmoji emoji={emoji} size={18} /></button>))}</div>
-                                                                </motion.div>
-                                                            )}
-                                                        </AnimatePresence>
-                                                    </div>
-                                                    {isSupport && (
-                                                        <button
-                                                            onClick={() => setIsInternal(!isInternal)}
-                                                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all ${isInternal ? 'bg-amber-100 text-amber-600' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                                            title={isInternal ? 'Internal Note' : 'Toggle Internal Note'}
-                                                        >
-                                                            <Shield size={16} />
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {/* Input box */}
-                                                <div className={`flex-1 min-h-[44px] max-h-36 bg-white dark:bg-slate-800 border rounded-3xl px-4 py-2.5 flex items-end shadow-sm transition-colors ${isInternal ? 'border-amber-300 dark:border-amber-600' : 'border-slate-200 dark:border-slate-700'}`}>
+                                            <div className="flex items-end gap-3 p-1.5 pl-4 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800">
+                                                <div className="flex-1 min-h-[44px] flex items-center">
                                                     <textarea
                                                         rows={1}
-                                                        className="w-full bg-transparent border-none text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 outline-none resize-none leading-relaxed"
-                                                        placeholder={isInternal ? '?? Private internal note...' : 'Type a message...'}
+                                                        className="w-full bg-transparent border-none text-[14px] text-slate-700 dark:text-slate-200 placeholder:text-slate-400/80 outline-none resize-none leading-relaxed py-2.5"
+                                                        placeholder={isInternal ? 'Type a private note...' : 'Type your message...'}
                                                         value={resolutionNote}
                                                         onChange={e => {
                                                             setResolutionNote(e.target.value);
@@ -2473,18 +2391,49 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     />
                                                 </div>
 
-                                                {/* Send button */}
-                                                <button
-                                                    onClick={handleSendReply}
-                                                    disabled={isActionLoading || !resolutionNote.trim()}
-                                                    className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-all active:scale-95 disabled:opacity-40 ${isInternal ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                                                >
-                                                    {isActionLoading ? <Loader2 size={16} className="animate-spin text-white" /> : <Send size={16} className="text-white ml-0.5" />}
-                                                </button>
+                                                <div className="flex items-center gap-1.5 pb-1">
+                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" onChange={handleFileUpload} />
+                                                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 dark:hover:bg-zinc-700/50 transition-all">
+                                                        {isUploading ? <Loader2 size={18} className="animate-spin text-blue-500" /> : <Paperclip size={18} />}
+                                                    </button>
+                                                    <div className="relative">
+                                                        <button ref={emojiTriggerRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${showEmojiPicker ? 'text-indigo-500 bg-indigo-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 dark:hover:bg-zinc-700/50'}`}>
+                                                            <Smile size={18} />
+                                                        </button>
+                                                        <AnimatePresence>
+                                                            {showEmojiPicker && (
+                                                                <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="absolute bottom-full right-0 mb-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-xl z-[100] w-[280px] overflow-hidden">
+                                                                    <div className="p-2 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50">
+                                                                        <div className="flex gap-1 overflow-x-auto no-scrollbar">{EMOJI_CATEGORIES.map((cat, catIdx) => (<button key={cat.name} onClick={() => setActiveEmojiCategory(catIdx)} className={`p-1.5 rounded-lg transition-all shrink-0 ${activeEmojiCategory === catIdx ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>{cat.icon}</button>))}</div>
+                                                                    </div>
+                                                                    <div className="p-2 grid grid-cols-7 gap-1 h-[180px] overflow-y-auto custom-scrollbar">{EMOJI_CATEGORIES[activeEmojiCategory].emojis.map(emoji => (<button key={emoji} onClick={() => addEmoji(emoji)} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-lg"><FluentEmoji emoji={emoji} size={18} /></button>))}</div>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    </div>
+
+                                                    {isSupport && (
+                                                        <button
+                                                            onClick={() => setIsInternal(!isInternal)}
+                                                            className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${isInternal ? 'bg-amber-100 text-amber-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 dark:hover:bg-zinc-700/50'}`}
+                                                            title={isInternal ? 'Internal Mode On' : 'Internal Mode Off'}
+                                                        >
+                                                            <Shield size={16} />
+                                                        </button>
+                                                    )}
+
+                                                    <button
+                                                        onClick={handleSendReply}
+                                                        disabled={isActionLoading || !resolutionNote.trim()}
+                                                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${isInternal ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'bg-slate-900 hover:bg-black dark:bg-zinc-100 dark:hover:bg-white shadow-lg shadow-black/10'} disabled:opacity-30 disabled:shadow-none`}
+                                                    >
+                                                        {isActionLoading ? <Loader2 size={16} className="animate-spin text-white" /> : <Send size={16} className={isInternal ? 'text-white' : 'text-white dark:text-black'} />}
+                                                    </button>
+                                                </div>
                                             </div>
                                         ) : (
-                                            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0">
-                                                <div className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+                                            <div className="px-4 py-3 bg-slate-50 dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-center shrink-0">
+                                                <div className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-zinc-800 px-4 py-2 rounded-full flex items-center gap-2 border border-slate-200 dark:border-zinc-700">
                                                     <Lock size={14} className="opacity-70" />
                                                     {t('ticketResolvedMsg')}
                                                 </div>
@@ -2495,7 +2444,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 </>
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">
-                                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4"><MessageSquare size={24} className="text-slate-300 dark:text-slate-600" /></div>
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-4"><MessageSquare size={24} className="text-slate-300 dark:text-slate-600" /></div>
                                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{t('selectTicketTip')}</p>
                                 </div>
                             )}
@@ -2503,136 +2452,159 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
 
                         {/* RIGHT COLUMN: Ticket Details */}
-                        <div className={`fixed inset-0 z-[100] bg-white dark:bg-slate-900 lg:static lg:z-0 lg:w-80 lg:bg-white lg:dark:bg-slate-900 lg:rounded-xl lg:border lg:border-slate-200 lg:dark:border-slate-800 lg:shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${(!selectedTicket || !showMobileDetails) ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className={`fixed inset-0 z-[100] bg-white dark:bg-zinc-900 lg:static lg:z-0 lg:w-80 lg:bg-white lg:dark:bg-zinc-900 lg:rounded-xl lg:border lg:border-slate-200 lg:dark:border-zinc-800 lg:shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${(!selectedTicket || !showMobileDetails) ? 'hidden lg:flex' : 'flex'}`}>
                             {selectedTicket ? (
                                 <>
-                                    {/* Details Header */}
-                                    <div className="p-3 border-b border-slate-50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-between shrink-0 z-10 sticky top-0">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 flex items-center justify-center shadow-sm">
-                                                <Info size={18} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Ticket Details</h3>
-                                                <p className="text-[10px] font-medium text-slate-500">#{selectedTicket.ticketId}</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => setShowMobileDetails(false)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-rose-500">
-                                            <X size={18} />
+                                    {/* Action Header */}
+                                    <div className="p-4 flex items-center justify-between shrink-0 z-10 sticky top-0 bg-white dark:bg-zinc-900 border-b lg:border-none border-slate-100 dark:border-zinc-800">
+                                        <button onClick={() => setShowMobileDetails(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors">
+                                           <X size={16} />
                                         </button>
+                                        <div className="ml-auto flex gap-2">
+                                            <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 transition-colors">
+                                                <Bell size={14} />
+                                            </button>
+                                            <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 transition-colors">
+                                                <X size={14} className="hidden lg:block" onClick={() => setSelectedTicket(null)} />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {/* Details Content */}
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
-                                        {/* Status & Priority */}
-                                        <div className="space-y-3">
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-6">
+                                        {/* Profile Card Center */}
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="relative mb-3">
+                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="xl" className="w-24 h-24 text-4xl shadow-sm" />
+                                                <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white dark:border-zinc-900" />
+                                            </div>
+                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{selectedTicket.requesterName}</h2>
+                                            <p className="text-xs font-semibold text-emerald-500 tracking-wide mt-1">Active now</p>
+                                        </div>
+
+                                        <div className="space-y-4">
                                             <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</label>
-                                                <select
-                                                    value={selectedTicket.status}
-                                                    onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value)}
-                                                    disabled={isActionLoading || !isOwner}
-                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    <option value="Open">Open</option>
-                                                    <option value="In Progress">In Progress</option>
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="Resolved">Resolved</option>
-                                                </select>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Subject</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedTicket.subject}</p>
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
-                                                <select
-                                                    value={selectedTicket.priority}
-                                                    onChange={(e) => handleUpdatePriority(selectedTicket.id, e.target.value)}
-                                                    disabled={isActionLoading || !isOwner}
-                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    <option value="Low">Low</option>
-                                                    <option value="Medium">Medium</option>
-                                                    <option value="High">High</option>
-                                                    <option value="Critical">Critical</option>
-                                                </select>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedTicket.requesterEmail}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedTicket.requesterPhone || '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{selectedTicket.department}</p>
                                             </div>
                                         </div>
 
-                                        {/* Category — Filled by support */}
-                                        {isSupport && (
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Category</label>
-                                                <select
-                                                    value={selectedTicket.department || 'General'}
-                                                    onChange={async (e) => {
-                                                        const newDept = e.target.value;
-                                                        try {
-                                                            await supabase.from('helpdesk_tickets').update({ department: newDept, updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
-                                                            setSelectedTicket((prev: any) => prev ? { ...prev, department: newDept } : null);
-                                                            setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, department: newDept } : t));
-                                                            showToast('Category updated');
-                                                        } catch (err: any) {
-                                                            showToast(err.message, 'error');
-                                                        }
-                                                    }}
-                                                    disabled={isActionLoading || !isOwner}
-                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    <option value="General">General</option>
-                                                    <option value="General Inquiry">General Inquiry</option>
-                                                    <option value="Technical Support">Technical Support</option>
-                                                    <option value="Hardware Issue">Hardware Issue</option>
-                                                    <option value="Network Access">Network Access</option>
-                                                    <option value="Software License">Software License</option>
-                                                    <option value="Account & Access">Account & Access</option>
-                                                    <option value="Infrastructure">Infrastructure</option>
-                                                </select>
-                                            </div>
-                                        )}
+                                        <div className="pt-4 border-t border-slate-100 dark:border-zinc-800">
+                                             <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors text-left group">
+                                                 <div className="flex items-center gap-3">
+                                                     <div className="p-2 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 group-hover:bg-blue-100 transition-colors">
+                                                         <FolderOpen size={16} />
+                                                     </div>
+                                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Shared Files</p>
+                                                 </div>
+                                                 <ChevronRight size={16} className="text-slate-400" />
+                                             </button>
+                                        </div>
 
-                                        {/* Assignment */}
-                                        {isSupport && (
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assign To</label>
-                                                <select
-                                                    value={selectedTicket.assignedTo || ''}
-                                                    onChange={(e) => handleAssignTicket(selectedTicket.id, e.target.value)}
-                                                    disabled={isActionLoading || !isOwner}
-                                                    className="w-full p-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    <option value="">Unassigned</option>
-                                                    {itStaff.map(staff => (
-                                                        <option key={staff.email} value={staff.name}>{staff.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
-
-                                        {/* Requester Info */}
-                                        <div className="space-y-2">
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Requester</label>
-                                            <div className="flex items-center gap-3">
-                                                <UserAvatar name={selectedTicket.requesterName} url={userAvatars[selectedTicket.requesterName]} size="sm" />
+                                        {/* Functional Statuses Collapse Block */}
+                                        <div className="pt-6 border-t border-slate-100 dark:border-zinc-800 space-y-4">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{selectedTicket.requesterName}</p>
-                                                    <p className="text-xs text-slate-500">{selectedTicket.requesterEmail}</p>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Status</label>
+                                                    <select
+                                                        value={selectedTicket.status}
+                                                        onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value)}
+                                                        disabled={isActionLoading || !isOwner}
+                                                        className="w-full p-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                    >
+                                                        <option value="Open">Open</option>
+                                                        <option value="In Progress">In Progress</option>
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Resolved">Resolved</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Priority</label>
+                                                    <select
+                                                        value={selectedTicket.priority}
+                                                        onChange={(e) => handleUpdatePriority(selectedTicket.id, e.target.value)}
+                                                        disabled={isActionLoading || !isOwner}
+                                                        className="w-full p-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                    >
+                                                        <option value="Low">Low</option>
+                                                        <option value="Medium">Medium</option>
+                                                        <option value="High">High</option>
+                                                        <option value="Critical">Critical</option>
+                                                    </select>
                                                 </div>
                                             </div>
+
+                                            {isSupport && (
+                                                <>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Category</label>
+                                                        <select
+                                                            value={selectedTicket.department || 'General'}
+                                                            onChange={async (e) => {
+                                                                const newDept = e.target.value;
+                                                                try {
+                                                                    await supabase.from('helpdesk_tickets').update({ department: newDept, updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
+                                                                    setSelectedTicket((prev: any) => prev ? { ...prev, department: newDept } : null);
+                                                                    setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, department: newDept } : t));
+                                                                    showToast('Category updated');
+                                                                } catch (err: any) {
+                                                                    showToast(err.message, 'error');
+                                                                }
+                                                            }}
+                                                            disabled={isActionLoading || !isOwner}
+                                                            className="w-full p-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                        >
+                                                            <option value="General">General</option>
+                                                            <option value="General Inquiry">General Inquiry</option>
+                                                            <option value="Technical Support">Technical Support</option>
+                                                            <option value="Hardware Issue">Hardware Issue</option>
+                                                            <option value="Account & Access">Account & Access</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Assign To</label>
+                                                        <select
+                                                            value={selectedTicket.assignedTo || ''}
+                                                            onChange={(e) => handleAssignTicket(selectedTicket.id, e.target.value)}
+                                                            disabled={isActionLoading || !isOwner}
+                                                            className="w-full p-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500"
+                                                        >
+                                                            <option value="">Unassigned</option>
+                                                            {itStaff.map(staff => (
+                                                                <option key={staff.email} value={staff.name}>{staff.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {/* Dates */}
                                         <div className="space-y-3">
                                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Timestamps</label>
 
-                                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 space-y-2.5 border border-slate-100 dark:border-slate-800">
+                                            <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-3 space-y-2.5 border border-slate-100 dark:border-zinc-800">
                                                 <div className="flex items-center justify-between text-xs">
-                                                    <span className="text-slate-500 dark:text-slate-400">Created</span>
+                                                    <span className="text-slate-500 dark:text-zinc-400">Created</span>
                                                     <span className="font-medium text-slate-700 dark:text-slate-300">
                                                         {new Date(selectedTicket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} <span className="text-slate-400 font-normal ml-0.5">{new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </span>
                                                 </div>
 
                                                 {selectedTicket.updatedAt && (
-                                                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-200 dark:border-slate-700/50">
-                                                        <span className="text-slate-500 dark:text-slate-400">Activity</span>
+                                                    <div className="flex items-center justify-between text-xs pt-2.5 border-t border-slate-200 dark:border-zinc-700/50">
+                                                        <span className="text-slate-500 dark:text-zinc-400">Activity</span>
                                                         <span className="font-medium text-slate-700 dark:text-slate-300">
                                                             {new Date(selectedTicket.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} <span className="text-slate-400 font-normal ml-0.5">{new Date(selectedTicket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         </span>
@@ -2658,7 +2630,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             <div className="space-y-2">
                                                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('clientFeedback')}</label>
                                                 {selectedTicket.rating ? (
-                                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-100 dark:border-slate-700">
+                                                    <div className="bg-slate-50 dark:bg-zinc-800 rounded-lg p-3 border border-slate-100 dark:border-zinc-700">
                                                         <div className="flex gap-1 mb-2">
                                                             {[1, 2, 3, 4, 5].map(star => (
                                                                 <Star key={star} size={14} className={selectedTicket.rating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'} />
@@ -2679,7 +2651,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                         )}
 
                                         {/* Actions */}
-                                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                        <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 space-y-3">
                                             {isSolveConfirmOpen ? (
                                                 <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800 rounded-xl p-4 space-y-3 animate-in fade-in zoom-in-95 duration-200">
                                                     <div className="flex items-start gap-3">
@@ -2694,7 +2666,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setIsSolveConfirmOpen(false); }}
-                                                            className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all"
+                                                            className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-zinc-800 text-slate-500 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 transition-all"
                                                         >
                                                             Cancel
                                                         </button>
@@ -2715,12 +2687,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                             <button
                                                                 disabled={isActionLoading || !isOwner}
                                                                 onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress')}
-                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-500 hover:text-indigo-600'}`}
+                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'In Progress' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-zinc-700 hover:border-indigo-500 hover:text-indigo-600'}`}
                                                             >Process</button>
                                                             <button
                                                                 disabled={isActionLoading || !isOwner}
                                                                 onClick={() => handleUpdateStatus(selectedTicket.id, 'Pending')}
-                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600'}`}
+                                                                className={`flex-1 h-9 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border ${selectedTicket.status === 'Pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-zinc-800 text-slate-500 border-slate-200 dark:border-zinc-700 hover:border-amber-500 hover:text-amber-600'}`}
                                                             >Hold</button>
                                                         </div>
                                                     )}
@@ -2728,7 +2700,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         <button
                                                             disabled={isActionLoading || !isOwner}
                                                             onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress', 'Ticket reopened for further investigation.')}
-                                                            className="w-full h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
+                                                            className="w-full h-10 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-zinc-700"
                                                         >
                                                             <RefreshCcw size={16} /> Reopen Ticket
                                                         </button>
@@ -2747,7 +2719,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 <button
                                                     onClick={handleConvertToActivity}
                                                     disabled={isActionLoading}
-                                                    className="w-full h-10 bg-white dark:bg-slate-800 hover:bg-indigo-50 border border-slate-200 dark:border-slate-700 text-indigo-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                                                    className="w-full h-10 bg-white dark:bg-zinc-800 hover:bg-indigo-50 border border-slate-200 dark:border-zinc-700 text-indigo-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2"
                                                 >
                                                     {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
                                                     Log to Assets
@@ -2768,7 +2740,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setIsDeleteConfirmOpen(false); }}
-                                                                className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all"
+                                                                className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-zinc-800 text-slate-500 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 transition-all"
                                                             >
                                                                 Cancel
                                                             </button>
@@ -2786,7 +2758,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     <button
                                                         onClick={() => setIsDeleteConfirmOpen(true)}
                                                         disabled={isActionLoading}
-                                                        className="w-full h-10 bg-white dark:bg-slate-800 hover:bg-rose-50 border border-rose-200 dark:border-rose-900/50 text-rose-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-sm"
+                                                        className="w-full h-10 bg-white dark:bg-zinc-800 hover:bg-rose-50 border border-rose-200 dark:border-rose-900/50 text-rose-600 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-sm"
                                                     >
                                                         <Trash2 size={16} /> Delete Ticket
                                                     </button>
@@ -2797,7 +2769,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 </>
                             ) : (
                                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-center opacity-40">
-                                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center mb-3"><Info size={20} className="text-slate-300 dark:text-slate-600" /></div>
+                                    <div className="w-12 h-12 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-3"><Info size={20} className="text-slate-300 dark:text-slate-600" /></div>
                                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">No ticket selected</p>
                                 </div>
                             )}
@@ -2806,22 +2778,22 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
                         {/* LEFT COLUMN: User's Ticket List */}
-                        <div className={`w-full lg:w-96 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                            <div className="p-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-col gap-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                        <div className={`w-full lg:w-96 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                            <div className="p-4 border-b border-slate-100 dark:border-zinc-800/60 flex flex-col gap-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
                                 {/* Search Bar */}
                                 <div className="relative group">
                                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                                     <input
                                         type="text"
                                         placeholder={t('searchTickets')}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-zinc-800/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
                                 </div>
 
                                 {/* Status Filters */}
-                                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
+                                <div className="flex bg-slate-50 dark:bg-zinc-800/50 p-1 rounded-xl">
                                     {['All', 'Progress', 'Resolved'].map(st => {
                                         const isActive = (st === 'All' && statusFilter === 'All') ||
                                             (st === 'Progress' && statusFilter !== 'All' && statusFilter !== 'Resolved') ||
@@ -2835,7 +2807,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     else if (st === 'Progress') setStatusFilter('Open'); // Simplified fallback
                                                     else setStatusFilter('Resolved');
                                                 }}
-                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
+                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
                                             >
                                                 {st === 'All' ? t('statusAll') : st === 'Progress' ? t('statusProgress') : t('statusResolved')}
                                             </button>
@@ -2864,39 +2836,44 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 <div
                                                     key={ticket.id}
                                                     onClick={() => setSelectedTicket(ticket)}
-                                                    className={`flex items-center gap-3 px-3 py-4 cursor-pointer transition-all duration-150 relative
+                                                    className={`group flex items-start gap-4 px-5 py-4 cursor-pointer transition-all duration-200 relative
                                                         ${isSelected
-                                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 shadow-[inset_3px_0_0_0_#4f46e5]'
-                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                            ? 'bg-slate-50 dark:bg-zinc-800'
+                                                            : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/50'
                                                         }
                                                     `}
                                                 >
-                                                    <div className="relative shrink-0">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-200 dark:border-slate-700">
+                                                    {/* Ticket Icon / Avatar */}
+                                                    <div className="relative shrink-0 pt-0.5">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isSelected ? 'bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 border-slate-200 dark:border-zinc-700'}`}>
                                                             <LifeBuoy size={18} />
                                                         </div>
-                                                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${statusDot[ticket.status] || 'bg-slate-400'}`} />
+                                                        {/* Status dot */}
+                                                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900 ${statusDot[ticket.status] || 'bg-slate-400'}`} />
                                                     </div>
 
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-0.5">
-                                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">{ticket.ticketId}</span>
-                                                            <span className="text-[9px] text-slate-400">{new Date(ticket.updatedAt || ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`text-[12px] font-black uppercase tracking-tight ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
+                                                                #{ticket.ticketId}
+                                                            </span>
+                                                            <span className="text-[10px] font-medium text-slate-400 shrink-0 ml-2">{(() => {
+                                                                const d = new Date(ticket.updatedAt || ticket.createdAt);
+                                                                const now = new Date();
+                                                                const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
+                                                                if (diff < 60) return 'Just now';
+                                                                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                                                                if (diff < 86400) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                                return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                                                            })()}</span>
                                                         </div>
-                                                        <h4 className={`text-sm font-bold truncate mb-0.5 ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-900 dark:text-white'}`}>
+                                                        <h4 className={`text-[14px] font-bold truncate leading-snug ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>
                                                             {ticket.subject}
                                                         </h4>
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <p className="text-[11px] text-slate-500 line-clamp-1 italic flex-1">{ticket.description.replace(/[#*`]/g, '')}</p>
-                                                            {ticket.rating && (
-                                                                <div className="flex shrink-0">
-                                                                    {[1, 2, 3, 4, 5].map(s => (
-                                                                        <Star key={s} size={8} className={ticket.rating >= s ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-800"} />
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
+                                                        <p className="text-[12px] text-slate-500 dark:text-zinc-500 line-clamp-1 italic font-medium mt-0.5">
+                                                            {ticket.description.replace(/[#*`]/g, '')}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             );
@@ -2907,31 +2884,31 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         </div>
 
                         {/* RIGHT COLUMN: Chat Area */}
-                        <div className={`flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col rounded-xl overflow-hidden shadow-sm ${!selectedTicket ? 'hidden lg:flex items-center justify-center' : 'flex'}`}>
+                        <div className={`flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex flex-col rounded-xl overflow-hidden shadow-sm ${!selectedTicket ? 'hidden lg:flex items-center justify-center' : 'flex'}`}>
                             {selectedTicket ? (
                                 <>
-                                    <div className="px-6 py-4 bg-white dark:bg-slate-900 border-b border-border flex items-center justify-between shrink-0 z-20 sticky top-0">
+                                    <div className="px-5 py-4 bg-white dark:bg-zinc-900 border-b border-border/60 flex items-center justify-between shrink-0 z-20 sticky top-0">
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-2 text-muted-foreground hover:bg-muted rounded-md transition-colors shrink-0">
+                                            <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-all shrink-0">
                                                 <ChevronLeft size={20} />
                                             </button>
 
-                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm shrink-0">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-slate-400 border border-border shrink-0">
                                                 <LifeBuoy size={20} />
                                             </div>
 
                                             <div className="min-w-0 flex flex-col">
-                                                <h3 className="text-sm font-bold text-foreground truncate tracking-tight">{selectedTicket.subject}</h3>
+                                                <h3 className="text-[14px] font-black text-slate-800 dark:text-white truncate tracking-tight">{selectedTicket.subject}</h3>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">#{selectedTicket.ticketId}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-                                                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{selectedTicket.department}</span>
+                                                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">#{selectedTicket.ticketId}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-zinc-700"></span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedTicket.department}</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className={cn(
-                                            "flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest",
+                                            "flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-[0.15em]",
                                             selectedTicket.status === 'Resolved'
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-400'
                                                 : 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900/50 dark:text-indigo-400'
@@ -2943,58 +2920,63 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                     </div>
 
                                     {/* Clean Messages Area */}
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8 space-y-6 bg-slate-50/50 dark:bg-slate-900/50">
-                                        {/* Original Ticket Description */}
-                                        <div className="flex flex-col items-center">
-                                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">
-                                                {t('reportCreated')} • {new Date(selectedTicket.createdAt).toLocaleDateString()}
-                                            </div>
-
-                                            <Card className="max-w-[85%] border-border/50 shadow-sm overflow-hidden">
-                                                <div className="px-5 py-4 bg-muted/30 border-b border-border/50 flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <User size={14} className="text-indigo-500" />
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('complaintDetail')}</span>
-                                                    </div>
-                                                    <span className="text-[9px] font-medium text-muted-foreground">
-                                                        {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                                <CardContent className="p-5">
-                                                    <div className="text-sm text-foreground leading-relaxed">
-                                                        <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} />
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8 space-y-6 bg-slate-50/30 dark:bg-zinc-950/50">
+                                         {/* Original Ticket Description */}
+                                         <div className="flex flex-col items-center mb-8">
+                                             <div className="px-4 py-1.5 bg-slate-200/50 dark:bg-zinc-800/50 rounded-full text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-8 border border-border/40 shadow-sm">
+                                                 {t('reportCreated')} • {new Date(selectedTicket.createdAt).toLocaleDateString()}
+                                             </div>
+ 
+                                             <div className="w-full max-w-2xl mx-auto mt-2">
+                                                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col gap-4">
+                                                     <div className="flex items-start justify-between gap-4">
+                                                         <div className="flex items-center gap-3">
+                                                             <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                                 <Info size={20} />
+                                                             </div>
+                                                             <div>
+                                                                 <h3 className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">{t('complaintDetail')}</h3>
+                                                                 <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">#{selectedTicket.ticketId} • {selectedTicket.category}</p>
+                                                             </div>
+                                                         </div>
+                                                         <div className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-zinc-800 text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
+                                                             {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                         </div>
+                                                     </div>
+                                                     <div className="w-full h-px bg-slate-100 dark:bg-zinc-800/80"></div>
+                                                     <div className="text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                                                         <RichContentRenderer text={selectedTicket.description} attachments={selectedTicket.attachments} isSelf={false} />
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
 
                                         {/* Message History */}
                                         {messages.map((msg, i) => {
                                             const isFromSupport = msg.sender_role === 'IT';
                                             return (
-                                                <div key={i} className={`flex ${!isFromSupport ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={cn(
-                                                        "max-w-[80%] px-4 py-3 shadow-sm rounded-xl border overflow-hidden",
-                                                        !isFromSupport
-                                                            ? 'bg-primary text-primary-foreground border-transparent rounded-tr-none'
-                                                            : 'bg-card text-card-foreground border-border rounded-tl-none'
-                                                    )}>
+                                                <div key={i} className={`flex ${!isFromSupport ? 'justify-end' : 'justify-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                                                    <div className="max-w-[85%] space-y-1.5">
                                                         {isFromSupport && (
-                                                            <div className="text-[9px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 mb-1.5 flex items-center gap-1.5">
+                                                            <div className="text-[9px] font-black uppercase tracking-[0.15em] text-indigo-600 dark:text-indigo-400 ml-1 flex items-center gap-1.5">
                                                                 <Shield size={10} /> {t('itTeam')}
                                                             </div>
                                                         )}
-                                                        <div className="text-sm leading-relaxed">
-                                                            <RichContentRenderer text={msg.message} isSelf={!isFromSupport} />
+                                                        <div className={cn(
+                                                            "px-5 py-4 shadow-xl border transition-all relative",
+                                                            !isFromSupport
+                                                                ? 'bg-zinc-950 dark:bg-indigo-600 text-white border-transparent rounded-[20px] rounded-tr-none shadow-zinc-950/10'
+                                                                : 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 border-slate-200 dark:border-zinc-700/80 rounded-[20px] rounded-tl-none shadow-slate-200/50 dark:shadow-none'
+                                                        )}>
+                                                            <div className="text-[14px] leading-relaxed font-medium">
+                                                                <RichContentRenderer text={msg.message} isSelf={!isFromSupport} />
+                                                            </div>
                                                         </div>
-                                                        <div className="flex justify-end mt-2 items-center gap-1.5">
-                                                            <span className={cn(
-                                                                "text-[9px] font-medium opacity-60",
-                                                                !isFromSupport ? 'text-primary-foreground' : 'text-muted-foreground'
-                                                            )}>
+                                                        <div className={cn("flex mt-1.5 items-center gap-1.5", !isFromSupport ? 'justify-end' : 'justify-start ml-2')}>
+                                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                                                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
-                                                            {!isFromSupport && <CheckCheck size={12} className="text-primary-foreground/70" />}
+                                                            {!isFromSupport && <div className="flex -space-x-1"><Check size={12} className="text-indigo-400/50" /><Check size={12} className="text-indigo-500" /></div>}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -3003,48 +2985,54 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                         <div ref={messagesEndRef} />
                                     </div>
 
-                                    {/* WA-style Input Bar */}
-                                    <div className="p-4 bg-white dark:bg-slate-900 border-t border-border bg-card">
+                                    {/* Integrated Input Bar */}
+                                    <div className="p-4 bg-white dark:bg-zinc-950 border-t border-slate-100 dark:border-zinc-800/60 z-10 sticky bottom-0">
                                         {!isSolved ? (
-                                            <div className="flex items-end gap-3 max-w-4xl mx-auto">
-                                                <button onClick={() => fileInputRef.current?.click()} className="h-10 w-10 shrink-0 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
-                                                    <Paperclip size={20} />
-                                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} />
-                                                </button>
-
-                                                <div className="flex-1 border border-input rounded-md bg-background focus-within:ring-1 focus-within:ring-ring transition-all">
+                                            <div className="max-w-4xl mx-auto">
+                                                <div className="relative group flex items-end bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all shadow-sm pl-2 pr-2 py-2">
+                                                    <button 
+                                                        onClick={() => fileInputRef.current?.click()} 
+                                                        className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-all"
+                                                    >
+                                                        <Paperclip size={20} />
+                                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} />
+                                                    </button>
                                                     <textarea
                                                         rows={1}
-                                                        className="w-full bg-transparent border-none text-sm p-3 placeholder:text-muted-foreground outline-none resize-none min-h-[40px] max-h-[120px]"
+                                                        className="flex-1 bg-transparent border-none text-slate-900 dark:text-slate-100 text-[14px] font-medium p-3 placeholder:text-slate-400 outline-none resize-none max-h-[150px] custom-scrollbar"
                                                         placeholder={t('writeMessage')}
                                                         value={resolutionNote}
                                                         onChange={e => {
                                                             setResolutionNote(e.target.value);
                                                             e.target.style.height = 'auto';
-                                                            e.target.style.height = `${e.target.scrollHeight}px`;
+                                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
                                                         }}
                                                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                                                     />
+                                                    <Button
+                                                        onClick={handleSendReply}
+                                                        disabled={isActionLoading || !resolutionNote.trim()}
+                                                        size="icon"
+                                                        className="w-10 shrink-0 transition-all /20 ml-2"
+                                                    >
+                                                        {isActionLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={18} className="translate-x-[1px]" />}
+                                                    </Button>
                                                 </div>
-
-                                                <Button
-                                                    onClick={handleSendReply}
-                                                    disabled={isActionLoading || !resolutionNote.trim()}
-                                                    size="icon"
-                                                    className="h-10 w-10 shrink-0"
-                                                >
-                                                    {isActionLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                                                </Button>
                                             </div>
                                         ) : (
                                             <div className="max-w-4xl mx-auto py-2">
                                                 {selectedTicket.rating ? (
-                                                    <div className="py-4 px-6 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl border border-dashed border-border flex flex-col items-center gap-3">
-                                                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
-                                                            <CheckCircle2 size={14} />
-                                                            {t('ticketRated')}
+                                                    <div className="py-4 px-6 bg-slate-50/50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-border flex flex-col items-center gap-2.5">
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                                                                <CheckCircle2 size={14} />
+                                                                {t('ticketRated')}
+                                                            </div>
+                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                                                                SOLVED: {new Date(selectedTicket.updatedAt || selectedTicket.createdAt).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
                                                         </div>
-                                                        <div className="flex gap-1.5">
+                                                        <div className="flex gap-1.5 mt-1">
                                                             {[1, 2, 3, 4, 5].map((star) => (
                                                                 <Star
                                                                     key={star}
@@ -3063,11 +3051,11 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     <motion.div
                                                         initial={{ opacity: 0, y: 10 }}
                                                         animate={{ opacity: 1, y: 0 }}
-                                                        className="bg-accent/30 dark:bg-accent/10 rounded-xl p-4 border border-border space-y-4"
+                                                        className="bg-slate-50 dark:bg-zinc-900/80 rounded-xl p-6 border border-slate-200 dark:border-zinc-800 space-y-5"
                                                     >
-                                                        <div className="text-center space-y-1">
-                                                            <h4 className="text-sm font-bold">{t('howWasService')}</h4>
-                                                            <p className="text-[11px] text-muted-foreground">{t('giveRatingDesc')}</p>
+                                                        <div className="text-center space-y-1.5 mb-2">
+                                                            <h4 className="text-[15px] font-black tracking-tight text-slate-900 dark:text-white">{t('howWasService')}</h4>
+                                                            <p className="text-[12px] font-medium text-slate-500 dark:text-zinc-400 leading-relaxed whitespace-pre-line">{t('giveRatingDesc')}</p>
                                                         </div>
 
                                                         <div className="flex justify-center gap-3">
@@ -3097,7 +3085,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                 className="space-y-3 pt-2"
                                                             >
                                                                 <textarea
-                                                                    className="w-full text-xs p-3 rounded-md border border-input bg-background outline-none focus:ring-1 focus:ring-ring min-h-[80px] resize-none"
+                                                                    className="w-full text-[13px] p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/50 text-slate-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all min-h-[100px] resize-none placeholder:text-slate-400 dark:placeholder:text-zinc-600"
                                                                     placeholder={t('feedbackPlaceholder')}
                                                                     value={feedbackComment}
                                                                     onChange={(e) => setFeedbackComment(e.target.value)}
@@ -3105,7 +3093,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                                 <Button
                                                                     onClick={handleSubmitFeedback}
                                                                     disabled={isActionLoading}
-                                                                    className="w-full h-9 text-xs font-bold uppercase tracking-wider"
+                                                                    className="w-full text-xs font-bold uppercase tracking-wider"
                                                                 >
                                                                     {isActionLoading ? <Loader2 size={14} className="animate-spin mr-2" /> : <Check size={14} className="mr-2" />}
                                                                     {t('submitRating')}
@@ -3126,7 +3114,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 </>
                             ) : (
                                 <div className="p-12 text-center max-w-sm">
-                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 dark:border-slate-700">
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 dark:border-zinc-700">
                                         <MessageSquare size={32} className="text-indigo-200 dark:text-indigo-900" />
                                     </div>
                                     <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2 tracking-tight">{t('selectConv')}</h3>
@@ -3143,18 +3131,18 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             {
                 previewImage && (
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl" onClick={() => setPreviewImage(null)}>
-                        <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
-                        <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
+                        <button className="absolute top-8 right-24 p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); if (previewImage) handleDownloadImage(previewImage); }} title="Download"><Download size={24} /></button>
+                        <button className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all" onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}><X size={24} /></button>
                         <div className="relative max-w-[90vw] max-h-[90vh] w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                             {previewImage.toLowerCase().includes('.pdf') ? (
                                 <div className="w-full h-full max-w-5xl relative flex flex-col items-center justify-center">
-                                    <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`} className="w-full h-full bg-white rounded-2xl shadow-2xl" title="PDF Preview" />
+                                    <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewImage)}&embedded=true`} className="w-full h-full bg-white rounded-xl shadow-2xl" title="PDF Preview" />
                                     <div className="absolute bottom-4 right-4">
                                         <a href={previewImage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 text-white text-[10px] font-bold uppercase rounded-lg border border-white/10 hover:bg-slate-800 transition-all"><ExternalLink size={12} /> Open Original PDF</a>
                                     </div>
                                 </div>
                             ) : (
-                                <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+                                <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" />
                             )}
                         </div>
                     </div>
@@ -3163,6 +3151,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         </div>
     );
 };
+
 
 
 

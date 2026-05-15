@@ -47,7 +47,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20, x: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-            className={`pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl shadow-black/10 border ${config.bg} ${config.border} ${config.text} min-w-[320px] max-w-md`}
+            className={`pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl shadow-black/10 border ${config.bg} ${config.border} ${config.text} min-w-[320px] max-w-md`}
         >
             <div className="shrink-0 p-1.5 bg-white/20 rounded-lg">
                 {config.icon}

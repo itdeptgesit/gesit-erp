@@ -108,22 +108,22 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
         }
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all";
-    const labelClass = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all";
+    const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
     const dynamicFields = getDynamicFields(formData.category || '');
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[95vh] border border-slate-100 dark:border-slate-800">
-                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[95vh] border border-slate-100 dark:border-zinc-800">
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 rounded-t-xl">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none">
                             {initialData ? 'Edit Protocol' : 'Register Secret'}
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase font-bold tracking-widest">GESIT Vault Registry</p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 uppercase font-bold tracking-widest">GESIT Vault Registry</p>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm transition-all"><X size={20} /></button>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-sm transition-all"><X size={20} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
@@ -161,7 +161,7 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
 
                         {/* DYNAMIC METADATA FIELDS SECTION */}
                         {dynamicFields.length > 0 && (
-                            <div className="p-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
+                            <div className="p-4 bg-slate-50/50 dark:bg-zinc-800/30 rounded-xl border border-slate-100 dark:border-zinc-800/50 space-y-4">
                                 <p className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mb-2 px-1">Specific Metadata Specifications</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {dynamicFields.map(field => (
@@ -232,11 +232,11 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-zinc-800">
                         <button 
                             type="button" 
                             onClick={onClose} 
-                            className="px-6 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold uppercase tracking-widest transition-all"
+                            className="px-6 py-2.5 bg-slate-50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold uppercase tracking-widest transition-all"
                         >
                             Cancel
                         </button>
@@ -254,3 +254,4 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
         </div>
     );
 };
+

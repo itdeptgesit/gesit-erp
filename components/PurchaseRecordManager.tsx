@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
     const { t } = useLanguage();
@@ -470,28 +471,20 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 </PageHeader>
 
                 {/* Second Row: Actions & FY Filters */}
-                <div className="flex flex-wrap items-center justify-between gap-4 px-2 pt-2 border-t border-slate-100 dark:border-slate-800/50 mt-2">
-                    <div className="hidden lg:flex items-center bg-muted/50 p-1 rounded-xl border border-border backdrop-blur-sm">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setYearFilter('2026')}
-                            className={cn("h-8 px-4 text-[10px] font-black tracking-[0.1em] uppercase rounded-lg transition-all", yearFilter === '2026' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                        >
-                            FY 2026
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setYearFilter('2025')}
-                            className={cn("h-8 px-4 text-[10px] font-black tracking-[0.1em] uppercase rounded-lg transition-all", yearFilter === '2025' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                        >
-                            FY 2025
-                        </Button>
-                    </div>
+                <div className="flex flex-wrap items-center justify-between gap-4 px-2 pt-2 border-t border-slate-100 dark:border-zinc-800/50 mt-2">
+                    <Tabs value={yearFilter} onValueChange={setYearFilter} className="hidden lg:block">
+                        <TabsList>
+                            <TabsTrigger value="2026">
+                                FY 2026
+                            </TabsTrigger>
+                            <TabsTrigger value="2025">
+                                FY 2025
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
 
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 text-xs font-bold">
+                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="text-xs font-bold">
                             <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export
                         </Button>
                         <Button
@@ -499,7 +492,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             size="sm"
                             onClick={handleSyncAllToSheet}
                             disabled={isSyncingAll || filteredRecords.length === 0}
-                            className="h-9 px-4 text-xs font-bold"
+                            className="text-xs font-bold"
                         >
                             {isSyncingAll ? <RefreshCcw className="mr-2 h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="mr-2 h-3.5 w-3.5" />}
                             Sync
@@ -507,7 +500,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         <Button
                             size="sm"
                             onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
-                            className="h-9 px-4 text-xs font-bold shadow-md transition-all active:scale-95"
+                            className="text-xs font-bold transition-all active:scale-95"
                         >
                             <Plus className="mr-2 h-3.5 w-3.5" /> New Entry
                         </Button>
@@ -516,20 +509,20 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* Advanced Filters Bar */}
-            <Card className="rounded-xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
+            <Card className="rounded-xl border-none shadow-sm bg-white dark:bg-zinc-900 overflow-hidden">
                 <CardContent className="p-2.5 flex flex-col md:flex-row items-center gap-3">
                     <div className="relative flex-1 w-full">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Search descriptions, vendors, or IDs..."
-                            className="pl-9 h-9 bg-slate-50 border-none dark:bg-slate-800 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs"
+                            className="pl-9 h-9 bg-slate-50 border-none dark:bg-zinc-800 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 shrink-0">
                         <Select value={yearFilter} onValueChange={setYearFilter}>
-                            <SelectTrigger className="w-[110px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                            <SelectTrigger className="w-[110px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -539,7 +532,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         </Select>
 
                         <Select value={quarterFilter} onValueChange={setQuarterFilter}>
-                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
                                 <SelectValue placeholder="Quarter" />
                             </SelectTrigger>
                             <SelectContent>
@@ -552,7 +545,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         </Select>
 
                         <Select value={monthFilter} onValueChange={setMonthFilter}>
-                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider">
+                            <SelectTrigger className="w-[125px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
                                 <SelectValue placeholder="Month" />
                             </SelectTrigger>
                             <SelectContent>
@@ -566,7 +559,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         <Button
                             variant={showDatePicker ? "default" : "secondary"}
                             onClick={() => setShowDatePicker(!showDatePicker)}
-                            className={cn("h-9 px-4 text-[10px] font-bold uppercase tracking-wider gap-2", !showDatePicker && "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border-none")}
+                            className={cn("h-9 px-4 text-[10px] font-bold uppercase tracking-wider gap-2", !showDatePicker && "bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 border-none")}
                         >
                             <Calendar size={13} />
                             {showDatePicker ? 'Hide Date' : 'Date Range'}
@@ -576,13 +569,13 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </Card>
 
             {showDatePicker && (
-                <Card className="rounded-xl border-dashed border-2 bg-slate-50/50 dark:bg-slate-900/50 animate-in slide-in-from-top-2 duration-300">
+                <Card className="border-dashed border-2 dark: animate-in slide-in-from-top-2 duration-300">
                     <CardContent className="p-4 flex flex-wrap gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period Start</label>
                             <Input
                                 type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-slate-950 font-bold border-muted-foreground/20"
+                                className="w-[180px] h-9 bg-white dark:bg-zinc-950 font-bold border-muted-foreground/20"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                             />
@@ -591,13 +584,13 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period End</label>
                             <Input
                                 type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-slate-950 font-bold border-muted-foreground/20"
+                                className="w-[180px] h-9 bg-white dark:bg-zinc-950 font-bold border-muted-foreground/20"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
                             />
                         </div>
                         <div className="flex items-end pb-0.5">
-                            <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950">
+                            <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-[10px] font-black uppercase tracking-widest dark:">
                                 Reset Range
                             </Button>
                         </div>
@@ -627,7 +620,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}
             <div className="grid grid-cols-1 gap-6">
                 {/* Main Chart Card */}
-                <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+                <Card className="rounded-xl border-none shadow-sm overflow-hidden bg-white dark:bg-zinc-900">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
@@ -672,7 +665,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     <TopVendorsWidget vendors={vendorData} />
 
                     {/* Department Allocation */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
                                 <Briefcase size={16} />
@@ -697,7 +690,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                             <span className="text-emerald-500 text-[9px] w-6">{dept.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800/50 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-zinc-800/50 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${dept.percentage}%` }}
@@ -709,7 +702,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     </div>
 
                     {/* Category Distribution */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
                                 <Tag size={16} />
@@ -734,7 +727,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                             <span className="text-indigo-500 text-[9px] w-6">{cat.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-slate-50 dark:bg-slate-800/50 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-slate-50 dark:bg-zinc-800/50 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${cat.percentage}%` }}
@@ -883,9 +876,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     </TableCell>
                                     <TableCell className="py-7 text-right pr-10 px-6">
                                         <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-xl"><Eye size={15} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="h-9 w-9 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/5 rounded-xl"><Pencil size={15} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-xl"><Trash2 size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"><Eye size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-9 text-muted-foreground"><Pencil size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5"><Trash2 size={15} /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -909,7 +902,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 size="sm"
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-background"
+                                className="text-[10px] font-black uppercase tracking-widest bg-background"
                             >
                                 <ChevronLeft size={14} className="mr-1" /> Prev
                             </Button>
@@ -941,7 +934,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 size="sm"
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-background"
+                                className="text-[10px] font-black uppercase tracking-widest bg-background"
                             >
                                 Next <ChevronRight size={14} className="ml-1" />
                             </Button>
@@ -965,3 +958,4 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         </div>
     );
 };
+

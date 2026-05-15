@@ -56,7 +56,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-100 dark:border-white/5 rounded-xl p-0 overflow-hidden shadow-2xl">
+            <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900 border-slate-100 dark:border-white/5 rounded-xl p-0 overflow-hidden shadow-2xl">
                 <DialogHeader className="p-8 pb-4 relative overflow-hidden bg-slate-50/50 dark:bg-white/[0.02]">
                     <div className="absolute top-0 right-0 p-8 opacity-5">
                         <KeyRound size={80} />
@@ -109,7 +109,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                             required
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
-                                            className="h-14 rounded-xl bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 px-5 text-sm font-bold focus:ring-2 focus:ring-blue-500/10"
+                                            className="h-14 rounded-xl bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 px-5 text-sm font-bold focus:ring-2 focus:ring-blue-500/10"
                                             placeholder="••••••••"
                                         />
                                     </div>
@@ -121,7 +121,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                             required
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="h-14 rounded-xl bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 px-5 text-sm font-bold focus:ring-2 focus:ring-blue-500/10"
+                                            className="h-14 rounded-xl bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 px-5 text-sm font-bold focus:ring-2 focus:ring-blue-500/10"
                                             placeholder="••••••••"
                                         />
                                     </div>
@@ -131,7 +131,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                     <Button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]"
+                                        className="font-black text-[10px] uppercase tracking-[0.2em] /20 transition-all active:scale-[0.98]"
                                     >
                                         {isLoading ? (
                                             <>
@@ -146,7 +146,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                                         type="button"
                                         variant="ghost"
                                         onClick={onClose}
-                                        className="h-12 rounded-xl text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                                        className="text-[10px] font-black dark: uppercase tracking-widest dark:/5 transition-all"
                                     >
                                         Dismiss
                                     </Button>
@@ -159,3 +159,4 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         </Dialog>
     );
 };
+

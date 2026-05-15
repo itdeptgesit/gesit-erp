@@ -126,25 +126,25 @@ export const AnnouncementManager: React.FC = () => {
             )}
 
             {isFormOpen && (
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md animate-in zoom-in-95 duration-200">
+                <div className="bg-white dark:bg-zinc-900 p-8 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-md animate-in zoom-in-95 duration-200">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Broadcast Title</label>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest block mb-2">Broadcast Title</label>
                                     <Input
                                         required
                                         type="text"
                                         placeholder="Identification of the message..."
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50"
+                                        className="w-full bg-slate-50 dark:bg-zinc-800/50"
                                         value={formData.title}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Signal Type</label>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest block mb-2">Signal Type</label>
                                     <select
-                                        className="w-full h-10 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-md text-sm outline-none focus:ring-1 focus:ring-slate-950 dark:focus:ring-slate-300"
+                                        className="w-full h-10 px-3 py-2 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-md text-sm outline-none focus:ring-1 focus:ring-slate-950 dark:focus:ring-slate-300"
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                                     >
@@ -156,18 +156,18 @@ export const AnnouncementManager: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Message Content</label>
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest block mb-2">Message Content</label>
                                 <Textarea
                                     required
                                     rows={5}
                                     placeholder="Enter full protocol details..."
-                                    className="w-full bg-slate-50 dark:bg-slate-800/50 resize-none min-h-[8rem]"
+                                    className="w-full bg-slate-50 dark:bg-zinc-800/50 resize-none min-h-[8rem]"
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                 />
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
                             <Button
                                 type="submit"
                                 disabled={isSaving}
@@ -185,12 +185,12 @@ export const AnnouncementManager: React.FC = () => {
                 {isLoading ? (
                     <div className="col-span-full py-10 text-center"><Clock className="animate-spin text-slate-300 mx-auto" size={24} /></div>
                 ) : announcements.length === 0 ? (
-                    <div className="col-span-full py-20 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400">
+                    <div className="col-span-full py-20 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 flex flex-col items-center justify-center text-slate-400">
                         <Megaphone size={32} className="opacity-20 mb-4" />
                         <p className="text-[10px] font-bold uppercase tracking-widest">No active communications</p>
                     </div>
                 ) : announcements.map((ann) => (
-                    <div key={ann.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between group">
+                    <div key={ann.id} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col justify-between group">
                         <div>
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${ann.type === 'info' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
@@ -205,17 +205,17 @@ export const AnnouncementManager: React.FC = () => {
                                 </div>
                             </div>
                             <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm tracking-tight mb-2 uppercase">{ann.title}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6 line-clamp-3 font-medium">{ann.content}</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mb-6 line-clamp-3 font-medium">{ann.content}</p>
                         </div>
 
-                        <div className="pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                        <div className="pt-4 border-t border-slate-50 dark:border-zinc-800 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-slate-400">
                                 <Calendar size={12} />
                                 <span className="text-[9px] font-bold uppercase tracking-tighter">{ann.created_at ? new Date(ann.created_at).toLocaleDateString() : 'New'}</span>
                             </div>
                             <button
                                 onClick={() => toggleStatus(ann.id!, ann.is_active)}
-                                className={`px-4 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${ann.is_active ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                                className={`px-4 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${ann.is_active ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400'
                                     }`}
                             >
                                 {ann.is_active ? 'Online' : 'Dark'}
@@ -242,3 +242,4 @@ export const AnnouncementManager: React.FC = () => {
         </div>
     );
 };
+

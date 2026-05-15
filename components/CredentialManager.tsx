@@ -223,7 +223,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
               
               <Button 
                 type="submit"
-                className="w-full h-11 bg-slate-900 dark:bg-slate-100 text-white dark:text-black font-semibold"
+                className="w-full dark: font-semibold"
               >
                 Unlock Vault
               </Button>
@@ -260,7 +260,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
           <Button 
             size="lg"
             onClick={handleAdd}
-            className="col-span-2 md:h-[52px] font-bold uppercase tracking-widest text-[11px] gap-2 shadow-lg shadow-primary/20"
+            className="col-span-2 md:h-[52px] font-bold uppercase tracking-widest text-[11px] gap-2 /20"
           >
             <Plus size={18} /> Add New Secret
           </Button>
@@ -280,49 +280,42 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
             />
           </div>
           
-          <div className="flex items-center gap-2 p-1 bg-muted rounded-md">
-            <Button 
-                variant={viewLayout === 'grid' ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={() => setViewLayout('grid')}
-                className="h-10 w-10"
-            >
-              <LayoutGrid size={18} className={viewLayout === 'grid' ? 'text-primary' : 'text-muted-foreground'} />
-            </Button>
-            <Button 
-                variant={viewLayout === 'table' ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={() => setViewLayout('table')}
-                className="h-10 w-10"
-            >
-              <List size={18} className={viewLayout === 'table' ? 'text-primary' : 'text-muted-foreground'} />
-            </Button>
-          </div>
+          <Tabs value={viewLayout} onValueChange={(val) => setViewLayout(val as 'grid' | 'table')} className="w-auto">
+            <TabsList>
+              <TabsTrigger value="grid">
+                <LayoutGrid size={14} className="mr-2" /> GRID
+              </TabsTrigger>
+              <TabsTrigger value="table">
+                <List size={14} className="mr-2" /> TABLE
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* MODERN TABS SCROLLABLE */}
-        <div className="mt-2 flex items-center gap-1 overflow-x-auto pb-2 scrollbar-none no-scrollbar">
-          {categories.map(cat => (
-            <Button
-              key={cat}
-              variant={categoryFilter === cat ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => { setCategoryFilter(cat); setCurrentPage(1); }}
-              className={cn(
-                  "h-8 px-4 text-[10px] font-bold uppercase tracking-widest",
-                  categoryFilter === cat ? "" : "text-muted-foreground"
-              )}
+        {/* MODERN STANDARDIZED TABS */}
+        <div className="mt-2 text-left">
+          <Tabs value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setCurrentPage(1); }} className="w-full">
+            <TabsList 
+                variant="ghost" 
+                className="flex items-center gap-1 overflow-x-auto pb-2 scrollbar-none no-scrollbar justify-start px-0"
             >
-              {cat}
-            </Button>
-          ))}
+              {categories.map(cat => (
+                <TabsTrigger
+                  key={cat}
+                  value={cat}
+                >
+                  {cat}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[1,2,3,4,5,6,7,8].map(i => (
-            <div key={i} className="h-[280px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl animate-pulse" />
+            <div key={i} className="h-[280px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : filteredCredentials.length === 0 ? (
@@ -349,8 +342,8 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(cred)} className="h-8 w-8 text-muted-foreground hover:text-primary"><Pencil size={14} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteCredential(cred)} className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(cred)} className="w-8 text-muted-foreground hover:text-primary"><Pencil size={14} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteCredential(cred)} className="w-8 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></Button>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4 p-3 bg-muted/30 rounded-md border">
@@ -371,7 +364,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
 
                           return (
                             <div key={key} className="space-y-0.5 min-w-0">
-                              <p className="text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest truncate">
+                              <p className="text-[7px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest truncate">
                                 {displayLabel}
                               </p>
                               <p className="text-[9px] font-bold text-slate-700 dark:text-slate-300 truncate">{value}</p>
@@ -380,15 +373,15 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                         });
                       })()}
                     </div>
-                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700">
+                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-50 dark:border-zinc-700">
                       <div className="flex items-center justify-between group/field">
                         <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                          <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-500">
                             {cred.category === 'Provider Inet' ? <Tag size={12}/> : <User size={12}/>}
                           </div>
                           <div className="flex flex-col">
-                            {cred.category === 'Provider Inet' && <span className="text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase">ID Pelanggan</span>}
-                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate max-w-[120px]">{cred.username}</span>
+                            {cred.category === 'Provider Inet' && <span className="text-[7px] font-black text-slate-400 dark:text-zinc-500 uppercase">ID Pelanggan</span>}
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 truncate max-w-[120px]">{cred.username}</span>
                           </div>
                         </div>
                         <button onClick={() => handleCopy(cred.username, `${cred.id}-user`)} className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors">{copiedId === `${cred.id}-user` ? <Check size={12}/> : <Copy size={12}/>}</button>
@@ -396,8 +389,8 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                       {cred.category !== 'Provider Inet' && (
                         <div className="flex items-center justify-between group/field">
                           <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500"><Lock size={12}/></div>
-                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 font-mono tracking-widest">
+                            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-500"><Lock size={12}/></div>
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 font-mono tracking-widest">
                               {showPasswordMap[cred.id as string] ? cred.password : '••••••••'}
                             </span>
                           </div>
@@ -430,7 +423,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                       if (!targetUrl || targetUrl === '-' || targetUrl.trim() === '') return null;
                       return <a href={targetUrl.startsWith('http') ? targetUrl : `http://${targetUrl}`} target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center gap-2 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:text-indigo-700 transition-colors group/link w-fit"><Globe size={12} /> Visit Portal <ExternalLink size={10} className="opacity-50" /></a>;
                     })()}
-                    {cred.notes && <p className="mt-4 text-[9px] text-slate-400 dark:text-slate-500 leading-relaxed bg-slate-50 dark:bg-slate-800/10 p-2 rounded-lg italic border-l-2 border-indigo-200 dark:border-indigo-800 line-clamp-3 overflow-hidden">{cred.notes}</p>}
+                    {cred.notes && <p className="mt-4 text-[9px] text-slate-400 dark:text-zinc-500 leading-relaxed bg-slate-50 dark:bg-zinc-800/10 p-2 rounded-lg italic border-l-2 border-indigo-200 dark:border-indigo-800 line-clamp-3 overflow-hidden">{cred.notes}</p>}
                   </div>
                 </div>
               ))}
@@ -453,9 +446,9 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                     <TableRow key={cred.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <TableCell className="py-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><Key size={14} /></div><span className="font-bold text-xs uppercase text-slate-700 dark:text-slate-300">{cred.title}</span></div></TableCell>
                       <TableCell><Badge variant="secondary" className="text-[9px] font-black uppercase py-0">{cred.category}</Badge></TableCell>
-                      <TableCell><div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{cred.username}</span><button onClick={() => handleCopy(cred.username, `${cred.id}-user`)} className="text-slate-300 hover:text-indigo-500">{copiedId === `${cred.id}-user` ? <Check size={10}/> : <Copy size={10}/>}</button></div></TableCell>
+                      <TableCell><div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-600 dark:text-zinc-400">{cred.username}</span><button onClick={() => handleCopy(cred.username, `${cred.id}-user`)} className="text-slate-300 hover:text-indigo-500">{copiedId === `${cred.id}-user` ? <Check size={10}/> : <Copy size={10}/>}</button></div></TableCell>
                       <TableCell><div className="flex items-center gap-2"><span className="text-xs font-mono tracking-widest text-slate-500">{showPasswordMap[cred.id as string] ? cred.password : '••••••••'}</span><button onClick={() => togglePasswordVisibility(cred.id as string)} className="text-slate-300 hover:text-indigo-500">{showPasswordMap[cred.id as string] ? <EyeOff size={12}/> : <Eye size={12}/>}</button></div></TableCell>
-                      <TableCell><div className="flex flex-wrap gap-1">{Object.entries(cred.metadata || {}).slice(0, 3).map(([key, val]) => val && val !== '-' && (<span key={key} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px] font-bold text-slate-500">{val}</span>))}</div></TableCell>
+                      <TableCell><div className="flex flex-wrap gap-1">{Object.entries(cred.metadata || {}).slice(0, 3).map(([key, val]) => val && val !== '-' && (<span key={key} className="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded text-[9px] font-bold text-slate-500">{val}</span>))}</div></TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           {cred.category === 'WiFi' && (
@@ -474,11 +467,11 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
           <div className="flex items-center justify-between pt-6 border-t mt-6">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCredentials.length)} of {filteredCredentials.length} results</p>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="h-8 px-4 text-[10px] font-bold uppercase tracking-widest">Prev</Button>
+              <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="text-[10px] font-bold uppercase tracking-widest">Prev</Button>
               {Array.from({ length: Math.ceil(filteredCredentials.length / itemsPerPage) }).map((_, i) => (
                 <Button key={i} variant={currentPage === i + 1 ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(i + 1)} className={cn("h-8 w-8 p-0 text-[10px] font-bold", currentPage === i + 1 ? "bg-primary" : "")}>{i + 1}</Button>
               ))}
-              <Button variant="outline" size="sm" disabled={currentPage === Math.ceil(filteredCredentials.length / itemsPerPage)} onClick={() => setCurrentPage(prev => prev + 1)} className="h-8 px-4 text-[10px] font-bold uppercase tracking-widest">Next</Button>
+              <Button variant="outline" size="sm" disabled={currentPage === Math.ceil(filteredCredentials.length / itemsPerPage)} onClick={() => setCurrentPage(prev => prev + 1)} className="text-[10px] font-bold uppercase tracking-widest">Next</Button>
             </div>
           </div>
         </>
@@ -531,7 +524,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
                 <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-1">PASSWORD</p>
                 <p className="text-sm font-bold text-primary font-mono tracking-wider">{selectedQr.password}</p>
               </div>
-              <Button onClick={() => setSelectedQr(null)} className="w-full font-bold uppercase tracking-widest py-6">Close Vault</Button>
+              <Button onClick={() => setSelectedQr(null)} className="w-full font-bold uppercase tracking-widest">Close Vault</Button>
             </div>
           </div>
         </div>
@@ -541,3 +534,4 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
 };
 
 export default CredentialManager;
+

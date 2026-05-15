@@ -24,7 +24,7 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-3 border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
                     <TrendingUp size={16} />
@@ -37,7 +37,7 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
                 </div>
             </div>
 
-            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-zinc-800 hidden md:block"></div>
 
             <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
@@ -51,7 +51,7 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
                 </div>
             </div>
 
-            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-zinc-800 hidden md:block"></div>
 
             <div className="flex items-center gap-2.5">
                 <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg">
@@ -65,10 +65,10 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
                 </div>
             </div>
 
-            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 hidden md:block"></div>
+            <div className="h-6 w-px bg-slate-100 dark:bg-zinc-800 hidden md:block"></div>
 
             <div className="flex items-center gap-2.5">
-                <div className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg">
+                <div className="p-1.5 bg-slate-50 dark:bg-zinc-800 text-slate-400 rounded-lg">
                     <Wallet size={16} />
                 </div>
                 <div>
@@ -81,3 +81,4 @@ export const FinancialHealthSummary: React.FC<FinancialHealthSummaryProps> = ({
         </div>
     );
 };
+

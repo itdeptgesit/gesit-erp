@@ -7,12 +7,12 @@ export const PrivacyPolicy: React.FC = () => {
     const navigate = useNavigate();
     
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-6 md:p-12 lg:p-24 selection:bg-blue-100 transition-colors duration-300">
+        <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-slate-100 p-6 md:p-12 lg:p-24 selection:bg-blue-100 transition-colors duration-300">
             <div className="max-w-4xl mx-auto space-y-8">
                 <button onClick={() => navigate('/login')} className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition-colors">
                     <ArrowLeft size={16} /> Back to Sign In
                 </button>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-800">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800">
                     <h1 className="text-3xl md:text-4xl font-black mb-8">Privacy Policy</h1>
                     <div className="prose dark:prose-invert max-w-none space-y-6">
                         <p><strong>Effective Date:</strong> January 2026</p>
@@ -47,3 +47,4 @@ export const PrivacyPolicy: React.FC = () => {
         </div>
     );
 };
+

@@ -120,36 +120,36 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
                         variant="ghost"
                         size="icon"
                         onClick={fetchGroups}
-                        className="h-9 w-9 rounded-xl hover:bg-muted"
+                        className="w-9 hover:bg-muted"
                     >
                         <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
                     </Button>
                     <Button
                         onClick={handleAdd}
-                        className="h-10 px-6 bg-slate-900 dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/10"
+                        className="dark: dark: font-bold text-[10px] uppercase tracking-widest /10"
                     >
                         <Plus size={14} className="mr-2" /> Add Group
                     </Button>
                 </div>
             </PageHeader>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-800/30">
                     <div className="relative max-w-md">
                         <Input
                             placeholder="Search group..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl font-medium"
+                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 rounded-xl font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
                     </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <Table className="w-full">
                         <TableHeader>
-                            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                            <TableRow className="bg-slate-50/50 dark:bg-zinc-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                                 <TableHead className="w-16 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">ID</TableHead>
                                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Group Name</TableHead>
                                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</TableHead>
@@ -184,7 +184,7 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
                                                 </Badge>
                                             ))}
                                             {group.allowedMenus.length > 4 && (
-                                                <Badge variant="outline" className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-[9px] font-bold">
+                                                <Badge variant="outline" className="px-1.5 py-0.5 bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 text-[9px] font-bold">
                                                     +{group.allowedMenus.length - 4} More
                                                 </Badge>
                                             )}
@@ -192,8 +192,8 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(group)} className="h-8 w-8 text-slate-500 hover:text-blue-600"><ShieldCheck size={14} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteGroup(group)} className="h-8 w-8 text-slate-500 hover:text-rose-600"><Trash2 size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(group)} className="w-8"><ShieldCheck size={14} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteGroup(group)} className="w-8"><Trash2 size={14} /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -221,3 +221,4 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
         </div>
     );
 };
+

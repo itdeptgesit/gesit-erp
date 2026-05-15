@@ -12,6 +12,9 @@ interface CompanyFormModalProps {
   initialData?: Company | null;
 }
 
+const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
+const labelClass = "block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3 ml-1";
+
 export const CompanyFormModal: React.FC<CompanyFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<Company>>({});
 
@@ -31,69 +34,79 @@ export const CompanyFormModal: React.FC<CompanyFormModalProps> = ({ isOpen, onCl
     onClose();
   };
 
-  const inputClass = "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 mt-1 bg-white";
-  const labelClass = "block text-sm font-semibold text-gray-700";
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" onClick={onClose}>
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none">
+                            {initialData ? 'Edit Company' : 'Add New Company'}
+                        </h2>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Corporate Entity Registry</p>
+                    </div>
+                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all"><X size={20} /></button>
+                </div>
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">{initialData ? 'Edit Company' : 'Add New Company'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                <form id="companyForm" onSubmit={handleSubmit} className="p-9 space-y-8 overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="col-span-1">
+                            <label className={labelClass}>Code <span className="text-rose-500">*</span></label>
+                            <input
+                                type="text" required className={`${inputClass} !font-black !tracking-widest`}
+                                value={formData.code || ''}
+                                onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                placeholder="e.g. GST"
+                                maxLength={8}
+                            />
+                        </div>
+                        <div className="col-span-2">
+                            <label className={labelClass}>Company Name <span className="text-rose-500">*</span></label>
+                            <input
+                                type="text" required className={`${inputClass} !font-black focus:ring-blue-500/10`}
+                                value={formData.name || ''}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="e.g. PT Gesit ERP Indonesia"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Address</label>
+                        <textarea
+                            required rows={3} className={`${inputClass} resize-none min-h-[80px]`}
+                            value={formData.address || ''}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                            placeholder="Complete office address..."
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className={labelClass}>Phone</label>
+                            <input
+                                type="text" className={inputClass}
+                                value={formData.phone || ''}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                placeholder="+62..."
+                            />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Website</label>
+                            <input
+                                type="text" className={inputClass}
+                                value={formData.website || ''}
+                                onChange={e => setFormData({ ...formData, website: e.target.value })}
+                                placeholder="https://..."
+                            />
+                        </div>
+                    </div>
+                </form>
+
+                <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
+                    <button type="button" onClick={onClose} className="px-6 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
+                    <button type="submit" form="companyForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Commit Registry</button>
+                </div>
+            </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-                 <div className="col-span-1">
-                    <label className={labelClass}>Code <span className="text-red-500">*</span></label>
-                    <input 
-                        type="text" required className={inputClass} 
-                        value={formData.code || ''} 
-                        onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                        placeholder="e.g. GST"
-                        maxLength={8}
-                    />
-                </div>
-                <div className="col-span-2">
-                    <label className={labelClass}>Company Name <span className="text-red-500">*</span></label>
-                    <input 
-                        type="text" required className={inputClass} 
-                        value={formData.name || ''} 
-                        onChange={e => setFormData({...formData, name: e.target.value})}
-                        placeholder="e.g. PT Gesit ERP Indonesia"
-                    />
-                </div>
-            </div>
-            
-            <div>
-                <label className={labelClass}>Address</label>
-                <textarea 
-                    required rows={3} className={inputClass} 
-                    value={formData.address || ''} 
-                    onChange={e => setFormData({...formData, address: e.target.value})}
-                />
-            </div>
-            <div>
-                <label className={labelClass}>Phone</label>
-                <input 
-                    type="text" className={inputClass} 
-                    value={formData.phone || ''} 
-                    onChange={e => setFormData({...formData, phone: e.target.value})}
-                />
-            </div>
-            <div>
-                <label className={labelClass}>Website</label>
-                <input 
-                    type="text" className={inputClass} 
-                    value={formData.website || ''} 
-                    onChange={e => setFormData({...formData, website: e.target.value})}
-                />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700 text-sm font-medium">Save Company</button>
-            </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 };

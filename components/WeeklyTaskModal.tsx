@@ -75,17 +75,17 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
     }
   };
 
-  const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mt-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
-  const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest";
+  const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
+  const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest";
 
   const isMultiDay = formData.startDate && formData.dueDate && formData.startDate !== formData.dueDate;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-zinc-800">
 
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
               <Target size={16} className="text-white" />
@@ -251,12 +251,12 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-2xl flex justify-end gap-2">
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 rounded-b-xl flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-5 py-2.5 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 disabled:opacity-50"
+            className="px-5 py-2.5 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-zinc-700 disabled:opacity-50"
           >
             Cancel
           </button>

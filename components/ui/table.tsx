@@ -12,13 +12,13 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("w-full caption-bottom text-sm border-collapse", className)}
         {...props}
       />
     </div>
   )
 }
-
+ 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
@@ -28,17 +28,17 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
     />
   )
 }
-
+ 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
+      className={cn("[&_tr]:border-b [&_tr:last-child]:border-0", className)}
       {...props}
     />
   )
 }
-
+ 
 function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
@@ -51,13 +51,14 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     />
   )
 }
-
+ 
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "relative rounded-xl [&_td:first-child]:rounded-l-xl [&_td:last-child]:rounded-r-xl",
         className
       )}
       {...props}

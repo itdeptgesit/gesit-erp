@@ -19,6 +19,9 @@ interface DepartmentFormModalProps {
   initialData?: Department | null;
 }
 
+const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
+const labelClass = "block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3 ml-1";
+
 export const DepartmentFormModal: React.FC<DepartmentFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<Department>>({});
 
@@ -38,55 +41,64 @@ export const DepartmentFormModal: React.FC<DepartmentFormModalProps> = ({ isOpen
     onClose();
   };
 
-  const inputClass = "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 mt-1 bg-white";
-  const labelClass = "block text-sm font-semibold text-gray-700";
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" onClick={onClose}>
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none">
+                            {initialData ? 'Edit Department' : 'Add New Department'}
+                        </h2>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Corporate Hierarchy Configuration</p>
+                    </div>
+                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all"><X size={20} /></button>
+                </div>
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">{initialData ? 'Edit Department' : 'Add New Department'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                <form id="departmentForm" onSubmit={handleSubmit} className="p-9 space-y-8 overflow-y-auto custom-scrollbar">
+                    <div>
+                        <label className={labelClass}>Department Name</label>
+                        <input
+                            type="text" required className={`${inputClass} !font-black focus:ring-blue-500/10`}
+                            value={formData.name || ''}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="e.g. Information Technology"
+                        />
+                    </div>
+                    <div>
+                        <label className={labelClass}>Head of Department</label>
+                        <input
+                            type="text" className={inputClass}
+                            value={formData.head || ''}
+                            onChange={e => setFormData({ ...formData, head: e.target.value })}
+                            placeholder="Full name of HOD"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className={labelClass}>Member Count</label>
+                            <input
+                                type="number" className={inputClass}
+                                value={formData.memberCount || 0}
+                                onChange={e => setFormData({ ...formData, memberCount: Number(e.target.value) })}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className={labelClass}>Description</label>
+                        <textarea
+                            rows={3} className={`${inputClass} resize-none min-h-[80px]`}
+                            value={formData.description || ''}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Role and responsibility overview..."
+                        />
+                    </div>
+                </form>
+
+                <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
+                    <button type="button" onClick={onClose} className="px-6 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
+                    <button type="submit" form="departmentForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Commit Organizational change</button>
+                </div>
+            </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div>
-                <label className={labelClass}>Department Name</label>
-                <input 
-                    type="text" required className={inputClass} 
-                    value={formData.name || ''} 
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-            </div>
-            <div>
-                <label className={labelClass}>Head of Department</label>
-                <input 
-                    type="text" className={inputClass} 
-                    value={formData.head || ''} 
-                    onChange={e => setFormData({...formData, head: e.target.value})}
-                />
-            </div>
-            <div>
-                <label className={labelClass}>Member Count</label>
-                <input 
-                    type="number" className={inputClass} 
-                    value={formData.memberCount || 0} 
-                    onChange={e => setFormData({...formData, memberCount: Number(e.target.value)})}
-                />
-            </div>
-            <div>
-                <label className={labelClass}>Description</label>
-                <textarea 
-                    rows={3} className={inputClass} 
-                    value={formData.description || ''} 
-                    onChange={e => setFormData({...formData, description: e.target.value})}
-                />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700 text-sm font-medium">Save Department</button>
-            </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 };

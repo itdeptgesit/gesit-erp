@@ -9,7 +9,7 @@ import {
     Zap, RefreshCcw, BarChart3, Sun, Moon, ArrowUpRight,
     TrendingUp, Activity, LayoutDashboard, Globe, Database,
     FileSpreadsheet, SlidersHorizontal, ChevronsLeft, ChevronsRight,
-    ClipboardList, AlertCircle, Loader2, Mic, Bell, Info
+    ClipboardList, AlertCircle, Loader2, Mic, Bell, Info, FilterX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../translations';
@@ -64,102 +64,110 @@ const PriorityBadge = ({ type }: { type: string }) => {
 
 const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpen: boolean; onClose: () => void; activity: ActivityLog | null; userAvatars: any }) => {
     const { language, t } = useLanguage();
-    if (!isOpen || !activity) return null;
 
     return (
         <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60"
-                onClick={onClose}
-            >
+            {isOpen && activity && (
                 <motion.div
-                    initial={{ scale: 0.95, y: 10, opacity: 0 }}
-                    animate={{ scale: 1, y: 0, opacity: 1 }}
-                    exit={{ scale: 0.95, y: 10, opacity: 0 }}
-                    onClick={e => e.stopPropagation()}
-                    className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
+                    onClick={onClose}
                 >
-                    {/* Modal Header */}
-                    <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
-                        <div>
-                            <div className="flex items-center gap-2 mb-3">
-                                <PriorityBadge type={activity.type} />
-                                <StatusBadge status={activity.status} />
-                            </div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{activity.activityName}</h2>
-                            <p className="text-xs font-medium text-slate-400 mt-1.5 uppercase tracking-wider">{activity.category} · {activity.location}</p>
-                        </div>
-                        <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-lg transition-all">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    {/* Modal Body */}
-                    <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Status</p>
-                                <StatusBadge status={activity.status} />
-                            </div>
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Duration</p>
-                                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-base">
-                                    <Clock size={16} className="text-blue-500" />
-                                    {activity.duration || '-'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Requester</p>
-                                <div className="flex items-center gap-3">
-                                    <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="md" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{activity.requester}</p>
-                                        <p className="text-[11px] text-slate-500 mt-1">{activity.department}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">IT Personnel</p>
-                                <div className="flex items-center gap-3">
-                                    <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="md" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">{activity.itPersonnel}</p>
-                                        <p className="text-[11px] text-slate-500 mt-1">IT Solutions</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {activity.remarks && (
-                            <div className="p-8 rounded-[1.5rem] bg-blue-50/30 dark:bg-blue-900/20 border border-blue-100/50 dark:border-blue-800/30">
-                                <p className="text-[11px] font-black text-blue-400 dark:text-blue-500 uppercase tracking-widest mb-3">Notes & Remarks</p>
-                                <p className="text-md font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                                    "{activity.remarks}"
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="flex justify-between pt-8 border-t border-slate-50 dark:border-slate-800/60">
+                    <motion.div
+                        initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                        animate={{ scale: 1, y: 0, opacity: 1 }}
+                        exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                        onClick={e => e.stopPropagation()}
+                        className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[90vh]"
+                    >
+                        {/* Modal Header */}
+                        <div className="p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
                             <div>
-                                <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Creation Date</p>
-                                <p className="text-sm font-black text-slate-700 dark:text-slate-200">{new Date(activity.createdAt).toLocaleString()}</p>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <PriorityBadge type={activity.type} />
+                                    <StatusBadge status={activity.status} />
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
+                                <p className="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-[0.2em]">{activity.category} · {activity.location}</p>
                             </div>
-                            {activity.completedAt && (
-                                <div className="text-right">
-                                    <p className="text-[11px] font-black text-emerald-400 dark:text-emerald-500 uppercase tracking-widest mb-1">Completion Date</p>
-                                    <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{new Date(activity.completedAt).toLocaleString()}</p>
+                            <button onClick={onClose} className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto p-9 space-y-8 custom-scrollbar">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Fulfillment Status</p>
+                                    <StatusBadge status={activity.status} />
+                                </div>
+                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Resolution Duration</p>
+                                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-lg">
+                                        <Clock size={16} className="text-blue-500" />
+                                        {activity.duration || '-'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-4">Request Initiator</p>
+                                    <div className="flex items-center gap-4">
+                                        <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="md" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">{activity.requester}</p>
+                                            <p className="text-[11px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">{activity.department}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-4">Handling Personnel</p>
+                                    <div className="flex items-center gap-4">
+                                        <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="md" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">{activity.itPersonnel}</p>
+                                            <p className="text-[11px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">IT Solutions Group</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {activity.remarks && (
+                                <div className="p-9 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20">
+                                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.3em] mb-4">Fulfillment Remarks</p>
+                                    <p className="text-lg font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic pr-4">
+                                        "{activity.remarks}"
+                                    </p>
                                 </div>
                             )}
+
+                            <div className="flex justify-between pt-9 border-t border-slate-50 dark:border-zinc-800/40">
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-2">Logged On</p>
+                                    <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
+                                        <Calendar size={14} />
+                                        {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : '-'}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-9 py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
+                            <button
+                                onClick={onClose}
+                                className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
+                            >
+                                Close View
+                            </button>
+                        </div>
+                    </motion.div>
                 </motion.div>
-            </motion.div>
+            )}
         </AnimatePresence>
     );
 };
@@ -385,7 +393,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
                 <div className="absolute top-0 left-0 right-0 p-10 flex justify-between items-center z-50">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                             <Activity className="text-white" size={24} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -394,13 +402,13 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={() => setIsDarkTheme(!isDarkTheme)} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                        <button onClick={() => setIsDarkTheme(!isDarkTheme)} className="p-4 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                             {isDarkTheme ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
                         </button>
-                        <button onClick={toggleFullScreen} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                        <button onClick={toggleFullScreen} className="p-4 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                             {isFullScreen ? <Minimize2 size={20} strokeWidth={2.5} /> : <Maximize2 size={20} strokeWidth={2.5} />}
                         </button>
-                        <button onClick={() => setIsPresenting(false)} className="px-6 py-4 rounded-2xl bg-rose-500 text-white font-black text-[13px] hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 flex items-center gap-2">
+                        <button onClick={() => setIsPresenting(false)} className="px-6 py-4 rounded-xl bg-rose-500 text-white font-black text-[13px] hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 flex items-center gap-2">
                             <XCircle size={18} strokeWidth={2.5} /> End Session
                         </button>
                     </div>
@@ -408,21 +416,21 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
                 {currentActivity && (
                     <motion.div key={currentActivity.id} initial={{ opacity: 0, scale: 0.9, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="relative z-40 w-full max-w-6xl px-12">
-                        <div className="bg-white dark:bg-[#1a1d23] rounded-[4rem] border border-slate-100 dark:border-slate-800 shadow-2xl p-20 overflow-hidden relative group">
+                        <div className="bg-white dark:bg-[#1a1d23] rounded-xl border border-slate-100 dark:border-zinc-800 shadow-2xl p-20 overflow-hidden relative group">
                             <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-6 transition-all duration-700">
                                 <Activity size={300} strokeWidth={1} />
                             </div>
 
                             <div className="grid grid-cols-12 gap-16 items-center relative z-10">
-                                <div className="col-span-4 flex flex-col items-center text-center border-r border-slate-50 dark:border-slate-800/60 pr-16">
+                                <div className="col-span-4 flex flex-col items-center text-center border-r border-slate-50 dark:border-zinc-800/60 pr-16">
                                     <div className="relative mb-8">
                                         <div className="absolute inset-0 bg-blue-500 rounded-full blur-2xl opacity-20 animate-pulse" />
-                                        <UserAvatar name={currentActivity.requester} url={userAvatars[currentActivity.requester] || currentActivity.avatarUrl} size="xl" className="w-56 h-56 border-8 border-white dark:border-slate-800 shadow-xl relative z-10" />
+                                        <UserAvatar name={currentActivity.requester} url={userAvatars[currentActivity.requester] || currentActivity.avatarUrl} size="xl" className="w-56 h-56 border-8 border-white dark:border-zinc-800 shadow-xl relative z-10" />
                                     </div>
                                     <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-2 leading-tight tracking-tight">{currentActivity.requester}</h3>
                                     <span className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em]">{currentActivity.department}</span>
                                     <div className="mt-8 flex flex-col gap-3 w-full">
-                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800">
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Location Anchor</p>
                                             <p className="text-sm font-black text-slate-700 dark:text-slate-200">{currentActivity.location}</p>
                                         </div>
@@ -436,7 +444,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                     </div>
                                     <h2 className="text-6xl font-black text-slate-900 dark:text-white mb-10 leading-[1.1] tracking-tighter">{currentActivity.activityName}</h2>
                                     {currentActivity.remarks && (
-                                        <div className="p-10 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2.5rem] border border-blue-100/50 dark:border-blue-800/30 mb-12 relative">
+                                        <div className="p-10 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 dark:border-blue-800/30 mb-12 relative">
                                             <div className="absolute left-6 top-6 text-blue-200 dark:text-blue-900">
                                                 <FileText size={40} strokeWidth={3} />
                                             </div>
@@ -445,11 +453,11 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                             </p>
                                         </div>
                                     )}
-                                    <div className="grid grid-cols-3 gap-10 pt-10 border-t border-slate-50 dark:border-slate-800/60">
+                                    <div className="grid grid-cols-3 gap-10 pt-10 border-t border-slate-50 dark:border-zinc-800/60">
                                         <div>
                                             <span className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Support Unit</span>
                                             <div className="flex items-center gap-3">
-                                                <UserAvatar name={currentActivity.itPersonnel} url={userAvatars[currentActivity.itPersonnel]} size="md" className="border-2 border-white dark:border-slate-700" />
+                                                <UserAvatar name={currentActivity.itPersonnel} url={userAvatars[currentActivity.itPersonnel]} size="md" className="border-2 border-white dark:border-zinc-700" />
                                                 <span className="text-lg font-black text-slate-900 dark:text-white leading-tight">{currentActivity.itPersonnel}</span>
                                             </div>
                                         </div>
@@ -475,14 +483,14 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 )}
 
                 <div className="absolute bottom-16 flex items-center gap-10">
-                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + filteredActivities.length) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
-                    <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-slate-800/50">
+                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + filteredActivities.length) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
+                    <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-zinc-800/50">
                         {filteredActivities.slice(0, 8).map((_, idx) => (
                             <div key={idx} onClick={() => setCurrentSlideIndex(idx)} className={`rounded-full transition-all duration-500 cursor-pointer ${idx === currentSlideIndex ? 'w-10 h-3 bg-blue-600 shadow-lg shadow-blue-500/40' : 'w-3 h-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300'}`} />
                         ))}
                         {filteredActivities.length > 8 && <span className="text-[11px] font-black text-slate-400 ml-2 uppercase tracking-widest leading-none">+{filteredActivities.length - 8} MORE</span>}
                     </div>
-                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % filteredActivities.length)} className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
                 </div>
             </div>
         );
@@ -498,9 +506,9 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-xl w-48" />
                 </div>
                 <div className="grid grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl" />)}
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-xl" />)}
                 </div>
-                <div className="h-[400px] bg-gray-200 dark:bg-gray-800 rounded-2xl" />
+                <div className="h-[400px] bg-gray-200 dark:bg-gray-800 rounded-xl" />
             </div>
         );
     }
@@ -514,10 +522,10 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             {/* ─── Shadcn UI Header ─────────── */}
             <PageHeader title="Activity Logs" description="Monitor and manage all system activities.">
                 <Button variant="outline" size="icon" onClick={() => { setIsPresenting(true); toggleFullScreen(); }}>
-                    <Presentation className="h-4 w-4" />
+                    <Presentation className="w-4" />
                 </Button>
                 <Button variant="outline" onClick={handleExportExcel}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
+                    <FileSpreadsheet className="mr-2 w-4" /> Export Excel
                 </Button>
                 <Button variant="outline" size="icon" onClick={fetchActivities} disabled={isLoading}>
                     <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -525,7 +533,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 {canManage && (
                     <Button
                         onClick={() => { setSelectedActivity(null); setIsFormOpen(true); }}
-                        className="bg-black hover:bg-black/90 text-white dark:bg-white dark:text-black dark:hover:bg-white/90 shadow-sm"
+                        className="/90 dark:/90"
                     >
                         <Plus className="mr-2 h-4 w-4" /> New Activity
                     </Button>
@@ -541,7 +549,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             </div>
 
             {/* ─── Activity List Table ──────────────────────────────────────── */}
-            <Card>
+            <Card className="rounded-xl border-border/40 shadow-xl overflow-hidden bg-white/50 dark:bg-zinc-900/30 backdrop-blur-sm">
                 {/* Table Header / Search & Filters */}
                 <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b">
                     <div>
@@ -549,15 +557,15 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                         <p className="text-sm text-muted-foreground mt-1">Comprehensive audit trail of internal activities.</p>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-1 max-w-2xl justify-end">
+                    <div className="flex items-center gap-2 flex-1 max-w-2xl justify-end px-2">
                         <div className="relative flex-1 max-w-xs">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
                             <Input
                                 type="text"
                                 placeholder="Search activities..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="pl-9"
+                                className="pl-10 h-10 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40"
                             />
                         </div>
 
@@ -606,10 +614,12 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 setCurrentPage(1);
                             }}
                             title="Filter by status"
-                            className="w-36 justify-start"
+                            className="border-border/50 bg-background/50 hover:bg-accent transition-all text-xs font-bold uppercase tracking-wider min-w-36 justify-between"
                         >
-                            <Filter size={16} className="mr-2" />
-                            {statusFilter === 'All' ? 'All Status' : statusFilter}
+                            <span className="flex items-center gap-2">
+                                <Filter size={14} className="text-muted-foreground" />
+                                {statusFilter === 'All' ? 'All Status' : statusFilter}
+                            </span>
                         </Button>
                     </div>
                 </CardHeader>
@@ -618,60 +628,59 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Activity Name</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Priority</TableHead>
-                                    <TableHead>Requester</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>IT Personnel</TableHead>
-                                    <TableHead className="w-12 text-right">Actions</TableHead>
+                            <TableHeader className="bg-muted/30 border-b border-border/50">
+                                <TableRow className="hover:bg-transparent border-none">
+                                    <TableHead className="pl-8 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Activity Name</TableHead>
+                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Status</TableHead>
+                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Priority</TableHead>
+                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Requester</TableHead>
+                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Date</TableHead>
+                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">IT Personnel</TableHead>
+                                    <TableHead className="w-12 text-right pr-8 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {paginatedActivities.map((act, idx) => (
                                     <TableRow
                                         key={act.id}
-                                        className="cursor-pointer group"
-                                        onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
+                                        className="group"
                                     >
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-md bg-secondary flex items-center justify-center text-muted-foreground border">
-                                                    <FileText size={16} />
+                                        <TableCell className="pl-8 py-5 cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                                    <FileText size={18} />
                                                 </div>
                                                 <div>
-                                                    <span className="font-medium text-sm group-hover:text-primary transition-colors">{act.activityName}</span>
+                                                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">{act.activityName}</span>
                                                     <div className="mt-1"><CategoryBadge category={act.category} /></div>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell><StatusBadge status={act.status} /></TableCell>
-                                        <TableCell><PriorityBadge type={act.type} /></TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2.5">
-                                                <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="sm" />
+                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}><StatusBadge status={act.status} /></TableCell>
+                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}><PriorityBadge type={act.type} /></TableCell>
+                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                            <div className="flex items-center gap-3">
+                                                <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="sm" className="border-2 border-white dark:border-zinc-800 shadow-sm" />
                                                 <div>
-                                                    <span className="font-medium text-sm block leading-none">{act.requester}</span>
-                                                    <span className="text-xs text-muted-foreground mt-1">{act.department}</span>
+                                                    <span className="font-bold text-sm block leading-none text-slate-700 dark:text-slate-300">{act.requester}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/50 mt-1">{act.department}</span>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">{formatDate(act.createdAt)}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2.5">
-                                                <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="sm" />
-                                                <span className="font-medium text-sm">{act.itPersonnel}</span>
+                                        <TableCell className="text-xs font-bold text-muted-foreground/60 cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>{formatDate(act.createdAt)}</TableCell>
+                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                            <div className="flex items-center gap-3">
+                                                <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="sm" className="border-2 border-white dark:border-zinc-800 shadow-sm" />
+                                                <span className="font-bold text-sm text-slate-700 dark:text-slate-300">{act.itPersonnel}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <TableCell className="text-right pr-8">
+                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-blue-500"
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedActivity(act); setIsDetailOpen(true); }}
+                                                    className="w-8 text-muted-foreground dark:"
                                                 >
                                                     <Eye size={16} />
                                                 </Button>
@@ -680,8 +689,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }}
-                                                        className="h-8 w-8 text-muted-foreground hover:text-emerald-500"
+                                                        onClick={(e) => { e.stopPropagation(); setSelectedActivity(act); setIsFormOpen(true); }}
+                                                        className="w-8 text-muted-foreground dark:"
                                                     >
                                                         <Edit size={16} />
                                                     </Button>
@@ -691,8 +700,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => setDeleteActivity(act)}
-                                                        className="h-8 w-8 text-muted-foreground hover:text-rose-500"
+                                                        onClick={(e) => { e.stopPropagation(); setDeleteActivity(act); }}
+                                                        className="w-8 text-muted-foreground dark:"
                                                     >
                                                         <Trash2 size={16} />
                                                     </Button>
@@ -728,43 +737,43 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     </div>
 
                     {/* Pagination */}
-                    <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-t bg-muted/40">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-border/40 bg-muted/20">
+                        <div className="flex items-center gap-6 text-[11px] font-black uppercase tracking-widest text-muted-foreground/50">
                             <span>Showing {filteredActivities.length > 0 ? startItem : 0} to {endItem} of {filteredActivities.length}</span>
-
-                            <div className="flex items-center gap-3 ml-2 pl-4 border-l">
-                                <span className="text-xs uppercase tracking-wider">Rows per page</span>
+ 
+                            <div className="flex items-center gap-4 ml-2 pl-6 border-l border-border/40">
+                                <span>Rows per page</span>
                                 <select
                                     value={rowsPerPage}
                                     onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                                    className="bg-transparent border-none outline-none text-primary font-medium cursor-pointer"
+                                    className="bg-transparent border-none outline-none text-primary font-black cursor-pointer"
                                 >
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
                                     <option value={50}>50</option>
                                 </select>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={fetchActivities} title="Refresh">
-                                    <RefreshCcw size={14} />
+                                <Button variant="ghost" size="icon" className="w-7 hover:bg-background/80" onClick={fetchActivities} title="Refresh">
+                                    <RefreshCcw size={12} className="text-muted-foreground/60" />
                                 </Button>
                             </div>
                         </div>
-
+ 
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-9 border-border/50">
                                 <ChevronsLeft size={16} />
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-9 border-border/50">
                                 <ChevronLeft size={16} />
                             </Button>
-
-                            <div className="flex items-center justify-center min-w-[32px] h-8 rounded-md bg-primary text-primary-foreground text-sm font-medium">
+ 
+                            <div className="flex items-center justify-center min-w-[36px] h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-black">
                                 {currentPage}
                             </div>
-
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="h-8 w-8">
+ 
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-9 border-border/50">
                                 <ChevronRight size={16} />
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-9 border-border/50">
                                 <ChevronsRight size={16} />
                             </Button>
                         </div>
@@ -773,7 +782,12 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             </Card>
 
             {/* ─── Modals ──────────────────────────────────────────────────── */}
-            <ActivityDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} activity={selectedActivity} userAvatars={userAvatars} />
+            <ActivityDetailModal 
+                isOpen={isDetailOpen} 
+                onClose={() => setIsDetailOpen(false)} 
+                activity={selectedActivity} 
+                userAvatars={userAvatars} 
+            />
             <ActivityFormModal
                 isOpen={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -831,3 +845,4 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         </div>
     );
 };
+

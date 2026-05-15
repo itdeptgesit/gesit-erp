@@ -154,14 +154,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           <Button
             variant="outline"
             onClick={handleExportExcel}
-            className="h-9 px-4 text-xs font-bold"
+            className="text-xs font-bold"
           >
             <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export Excel
           </Button>
           {isAdmin && (
             <Button
               onClick={() => { setEditingUser(null); setIsModalOpen(true); }}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-blue-500/20 whitespace-nowrap"
+              className="text-xs font-bold /20 whitespace-nowrap"
             >
               <Plus className="mr-2 h-3.5 w-3.5" /> Register Identity
             </Button>
@@ -169,29 +169,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
         </div>
       </PageHeader>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4">
+      <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Input placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-semibold placeholder:text-slate-400 dark:text-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <Input placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border-none rounded-xl font-semibold placeholder:text-slate-400 dark:text-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
         </div>
-        <div className="flex bg-slate-50 dark:bg-slate-800 p-1 rounded-xl">
+        <div className="flex bg-slate-50 dark:bg-zinc-800 p-1 rounded-xl">
           {['', 'Admin', 'Staff', 'User'].map(r => (
             <button key={r} onClick={() => setRoleFilter(r)} className={`px-5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${roleFilter === r ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{r || 'All'}</button>
           ))}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <Table className="w-full">
             <TableHeader>
-              <TableRow className="bg-white dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-900">
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Status</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">User Identity</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Organization / Team</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Global Role</TableHead>
-                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Last Session</TableHead>
-                <TableHead className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Actions</TableHead>
+              <TableRow className="bg-white dark:bg-zinc-900 hover:bg-white dark:hover:bg-slate-900">
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Status</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">User Identity</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Organization / Team</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Global Role</TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Last Session</TableHead>
+                <TableHead className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,20 +245,20 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm tracking-tight group-hover:text-blue-600 transition-colors">{user.fullName}</p>
-                        <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">{user.email}</p>
+                        <p className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 mt-0.5">{user.email}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 tracking-tight">{user.company || 'Unknown Entity'}</span>
-                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">{user.department || 'Global'}</span>
+                      <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{user.department || 'Global'}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>{user.role}</span></TableCell>
+                  <TableCell className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-slate-900 dark:bg-blue-600 text-white border-slate-900 dark:border-blue-500 shadow-sm' : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'}`}>{user.role}</span></TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 text-[10px] font-bold">
+                      <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 text-[10px] font-bold">
                         <Clock size={10} /> {formatRelativeTime(user.lastLogin)}
                       </div>
                       <div className="mt-2 space-y-1">
@@ -279,11 +279,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           </Table>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page {currentPage} of {totalPages || 1}</p>
           <div className="flex items-center gap-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
           </div>
         </div>
       </div>
@@ -367,3 +367,4 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
     </div>
   );
 };
+

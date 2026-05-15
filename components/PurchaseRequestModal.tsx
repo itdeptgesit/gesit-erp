@@ -60,15 +60,15 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
         onSubmit(formData);
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all font-bold placeholder:text-slate-400 shadow-none";
-    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-200 transition-all font-bold placeholder:text-slate-400 shadow-none";
+    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2";
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-2xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
-                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg w-full max-w-2xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-zinc-800">
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg">
+                        <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg">
                             <ShoppingBag size={20} />
                         </div>
                         <div>
@@ -131,7 +131,7 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
                                 <Input type="number" min="0" className={inputClass} value={formData.unitPrice || ''} onChange={(e) => handleChange('unitPrice', e.target.value)} required placeholder="0" />
                             </div>
 
-                            <div className="md:col-span-2 bg-slate-900 dark:bg-slate-950 p-6 rounded-xl border border-white/5 flex justify-between items-center shadow-lg">
+                            <div className="md:col-span-2 bg-slate-900 dark:bg-zinc-950 p-6 rounded-xl border border-white/5 flex justify-between items-center shadow-lg">
                                 <div>
                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block mb-1">Total Commitment</span>
                                     <span className="text-2xl font-black text-blue-500 tracking-tighter italic">
@@ -149,7 +149,7 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-start gap-4 shadow-inner">
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 p-6 rounded-xl border border-slate-100 dark:border-zinc-800 flex items-start gap-4 shadow-inner">
                             <Info size={16} className="text-slate-400 mt-1 shrink-0" />
                             <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
                                 Requests are routed strictly based on organizational hierarchy. Supervisors and Managers authorize the procurement node directly.
@@ -158,7 +158,7 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
                     </form>
                 </div>
 
-                <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-3 shrink-0">
+                <div className="px-8 py-5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-end gap-3 shrink-0">
                     <Button type="button" variant="outline" onClick={onClose}>
                         Cancel
                     </Button>
@@ -170,3 +170,4 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
         </div>
     );
 };
+

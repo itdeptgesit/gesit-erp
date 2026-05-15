@@ -2,31 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
-import {
-  Bell, LogOut, Sun, Moon, Mail,
-  Sparkles, BadgeCheck, CreditCard
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../translations';
 import { supabase } from '../lib/supabaseClient';
-import { cn } from "@/lib/utils";
 import { NotificationItem, UserGroup } from '../types';
 import { useTheme } from "next-themes";
 
-// SHADCN UI IMPORTS
+// LUCIDE ICONS
+import {
+  Bell,
+  LogOut,
+  Moon,
+  Sun,
+  Palette,
+  Circle,
+  Sparkles,
+  User,
+  CreditCard,
+  Globe,
+  Check,
+  Search,
+  Settings,
+} from "lucide-react";
+
+// SHADCN COMPONENTS
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { GlobalSearch } from "./global-search";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -50,26 +67,43 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onMenuClick, onLogout, onNavigate,
+  onLogout, onNavigate,
   user,
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
+  const [themeColor, setThemeColor] = useState<string>('default');
 
   const userName = user?.name || 'User';
 
+  useEffect(() => {
+    const saved = localStorage.getItem('theme-color');
+    if (saved) {
+      setThemeColor(saved);
+      document.documentElement.classList.add(`theme-${saved}`);
+    }
+  }, []);
+
+  const changeThemeColor = (color: string) => {
+    document.documentElement.classList.remove('theme-green', 'theme-rose', 'theme-orange', 'theme-default');
+    if (color !== 'default') {
+      document.documentElement.classList.add(`theme-${color}`);
+    }
+    setThemeColor(color);
+    localStorage.setItem('theme-color', color);
+  };
+
   const toggleTheme = (e: React.MouseEvent) => {
     const isDarkCurrent = resolvedTheme === 'dark';
-
     if (!document.startViewTransition) {
       setTheme(isDarkCurrent ? 'light' : 'dark');
       return;
     }
-
     document.documentElement.style.setProperty('--click-x', `${e.clientX}px`);
     document.documentElement.style.setProperty('--click-y', `${e.clientY}px`);
-
     document.startViewTransition(() => {
       flushSync(() => {
         setTheme(isDarkCurrent ? 'light' : 'dark');
@@ -79,9 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     if (!user?.email) return;
-
     const userEmail = user.email.toLowerCase();
-
     const mapNotification = (n: any): NotificationItem => ({
       id: n.id,
       userId: n.user_id || n.user_email,
@@ -92,7 +124,6 @@ export const Header: React.FC<HeaderProps> = ({
       createdAt: n.created_at,
       link: n.link
     });
-
     const fetchNotifications = async () => {
       let query = supabase.from('notifications').select('*');
       if (user?.id && userEmail) {
@@ -107,9 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
       const { data } = await query.order('created_at', { ascending: false }).limit(20);
       if (data) setNotifications(data.map(mapNotification));
     };
-
     fetchNotifications();
-
     const channel = supabase.channel(`notifications:${user?.id || userEmail}`).on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -121,7 +150,6 @@ export const Header: React.FC<HeaderProps> = ({
           setNotifications(prev => [mapped, ...prev].slice(0, 20));
         }
       }).subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user?.email]);
 
@@ -142,134 +170,199 @@ export const Header: React.FC<HeaderProps> = ({
     if (!error) setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
+  const clearAllNotifications = async () => {
+    if (!user) return;
+    const email = user.email?.toLowerCase();
+    let query = supabase.from('notifications').delete();
+    if (user.id && email) {
+      query = query.or(`user_id.eq.${user.id},user_email.ilike.${email}`);
+    } else if (user.id) {
+      query = query.eq('user_id', user.id);
+    } else if (email) {
+      query = query.ilike('user_email', email);
+    } else {
+      return;
+    }
+    
+    const { error } = await query;
+    if (!error) setNotifications([]);
+    setIsNotificationOpen(false);
+  };
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  const themeColors = [
+    { id: 'default', label: 'Default', className: 'fill-indigo-500 text-indigo-500' },
+    { id: 'green', label: 'Green', className: 'fill-emerald-500 text-emerald-500' },
+    { id: 'rose', label: 'Rose', className: 'fill-rose-500 text-rose-500' },
+    { id: 'orange', label: 'Orange', className: 'fill-orange-500 text-orange-500' },
+  ];
+
   return (
-    <div className="flex items-center gap-1">
-      {/* Mail Icon */}
-      <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent">
-        <Mail size={17} strokeWidth={1.5} />
-        <span className="absolute top-0.5 right-0.5 block h-[7px] w-[7px] rounded-full bg-rose-500" />
-      </Button>
-
-      {/* Notifications Popover */}
-      <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent">
-            <Bell size={17} strokeWidth={1.5} />
-            {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 block h-[7px] w-[7px] rounded-full bg-rose-500" />
-            )}
+    <header className="z-50 h-16 header-fixed peer/header sticky top-0 w-[inherit]">
+      <GlobalSearch open={searchOpen} setOpen={setSearchOpen} />
+      <div className="relative flex h-full items-center gap-3 p-4 sm:gap-4">
+        <div className="flex-1 w-full pl-2 md:pl-0">
+          <Button
+            variant="outline"
+            className="relative w-full max-w-sm justify-between bg-muted/50 text-sm font-normal text-muted-foreground"
+            onClick={() => setSearchOpen(true)}
+          >
+            <div className="flex items-center">
+              <Search className="mr-2 h-4 w-4 shrink-0" />
+              <span className="hidden lg:inline-flex truncate">Search command or menus...</span>
+              <span className="inline-flex lg:hidden truncate">Search...</span>
+            </div>
+            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex shrink-0">
+              <span className="text-xs">⌘</span>K
+            </kbd>
           </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-[320px] p-0 rounded-lg overflow-hidden border border-border/40 shadow-xl bg-background/95 backdrop-blur-md">
-          <div className="px-4 py-3 flex justify-between items-center border-b border-border/10 bg-muted/20">
-            <h3 className="text-[13px] font-medium text-foreground">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
-                Mark all read
-              </button>
-            )}
-          </div>
-          <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
-            {notifications.length === 0 ? (
-              <div className="py-10 text-center text-xs text-muted-foreground">Everything caught up!</div>
-            ) : (
-              <div className="flex flex-col">
-                {notifications.map(n => (
-                  <div
-                    key={n.id}
-                    onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
-                    className="px-4 py-3 flex items-start gap-3 hover:bg-accent/30 cursor-pointer transition-colors border-b border-border/5 last:border-0"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5 border border-border/10">
-                      <span className="text-[10px] font-bold text-foreground">
-                        {n.title.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-normal text-foreground truncate">{n.title}</p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-normal">{n.message}</p>
-                    </div>
-                    {!n.isRead && <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5" />}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+        </div>
 
-      {/* Theme Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-muted-foreground/60 hover:text-foreground hover:bg-transparent"
-        onClick={toggleTheme}
-      >
-        {/* Crescent moon for light mode (click to go dark), Sun for dark mode */}
-        <Moon size={17} strokeWidth={1.5} className="block dark:hidden" />
-        <Sun size={17} strokeWidth={1.5} className="hidden dark:block" />
-      </Button>
-
-      {/* User Avatar */}
-      <div className="pl-1.5 ml-1">
+        {/* Language Toggle */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 border border-border/20 shadow-sm cursor-pointer hover:ring-2 hover:ring-muted transition-all">
-                <AvatarImage src={user?.avatarUrl} alt={userName} />
-                <AvatarFallback className="text-[10px] font-bold bg-muted text-muted-foreground">
-                  {userName.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="w-8 text-muted-foreground/60 hover:text-foreground" />}>
+            <Globe className="size-4" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 rounded-xl shadow-xl border border-border/50" align="end" sideOffset={8}>
-            {/* User info */}
-            <div className="flex items-center gap-2.5 px-3 py-3 border-b border-border/30">
-              <Avatar className="h-8 w-8 rounded-lg shrink-0">
-                <AvatarImage src={user?.avatarUrl} alt={userName} />
-                <AvatarFallback className="rounded-lg bg-muted text-muted-foreground text-[11px] font-semibold">
-                  {userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="truncate text-[13px] font-medium text-foreground">{userName}</span>
-                <span className="truncate text-[11px] text-muted-foreground">{user?.email}</span>
+          <DropdownMenuContent align="end" sideOffset={8}>
+            <DropdownMenuItem onSelect={() => setLanguage('en' as any)}>
+              English
+              {language === 'en' && <Check className="ml-auto size-4 text-primary" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setLanguage('id' as any)}>
+              Indonesia
+              {language === 'id' && <Check className="ml-auto size-4 text-primary" />}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Notifications */}
+        <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+          <Tooltip>
+            <TooltipTrigger render={
+              <DropdownMenuTrigger render={
+                <Button variant="ghost" size="icon" className="relative w-8 text-muted-foreground/60 hover:text-foreground" />
+              } />
+            }>
+              <Bell className="size-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 block h-1.5 w-1.5 rounded-full bg-rose-500" />
+              )}
+            </TooltipTrigger>
+            <TooltipContent>Notifications</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" sideOffset={8} className="w-[320px] p-0">
+            <div className="px-4 py-3 flex justify-between items-center border-b border-border/10 bg-muted/20">
+              <h3 className="text-[13px] font-medium text-foreground">Notifications</h3>
+              <div className="flex gap-3">
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground">
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button onClick={clearAllNotifications} className="text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 transition-colors">
+                    Clear All
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Menu items */}
-            <div className="py-1">
-              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
-                <Sparkles className="size-4 text-muted-foreground shrink-0" />
-                <span>Upgrade to Pro</span>
-              </DropdownMenuItem>
-            </div>
-            <DropdownMenuSeparator className="my-0" />
-            <div className="py-1">
-              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5" onClick={() => onNavigate?.('profile')}>
-                <BadgeCheck className="size-4 text-muted-foreground shrink-0" />
-                <span>Account</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
-                <CreditCard className="size-4 text-muted-foreground shrink-0" />
-                <span>Billing</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5">
-                <Bell className="size-4 text-muted-foreground shrink-0" />
-                <span>Notifications</span>
-              </DropdownMenuItem>
-            </div>
-            <DropdownMenuSeparator className="my-0" />
-            <div className="py-1">
-              <DropdownMenuItem className="cursor-pointer text-[13px] py-2 px-3 font-normal gap-2.5" onClick={onLogout}>
-                <LogOut className="size-4 text-muted-foreground shrink-0" />
-                <span>Log out</span>
-              </DropdownMenuItem>
+            <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+              {notifications.length === 0 ? (
+                <div className="py-10 text-center text-xs text-muted-foreground">Everything caught up!</div>
+              ) : (
+                <div className="flex flex-col">
+                  {notifications.map(n => (
+                    <div
+                      key={n.id}
+                      onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
+                      className="px-4 py-3 flex items-start gap-3 hover:bg-accent/30 cursor-pointer transition-colors border-b border-border/5 last:border-0"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5 border border-border/10">
+                        <span className="text-[10px] font-bold text-foreground">
+                          {n.title.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-normal text-foreground truncate">{n.title}</p>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-normal">{n.message}</p>
+                      </div>
+                      {!n.isRead && <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5" />}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-8 text-muted-foreground/60 hover:text-foreground"
+          onClick={toggleTheme}
+        >
+          <Moon className="size-4 block dark:hidden" />
+          <Sun className="size-4 hidden dark:block" />
+        </Button>
+
+        {/* User Avatar & Menu */}
+        <div className="pl-1.5 ml-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" className="hover:ring-2 hover:ring-muted">
+                  <div className="h-8 w-8 rounded-full overflow-hidden border border-border/20 shadow-sm flex items-center justify-center bg-muted text-muted-foreground text-[10px] font-bold">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={userName} className="h-full w-full object-cover" />
+                    ) : (
+                      userName.substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" sideOffset={12} className="w-64 p-2">
+              <div className="flex flex-col gap-1 px-2 py-3">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 leading-none mb-1.5">
+                  {user?.role || 'USER'}
+                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="truncate text-sm font-bold text-foreground leading-tight">{userName}</span>
+                  <span className="truncate text-[11px] font-medium text-muted-foreground/70 mt-0.5">{user?.email}</span>
+                </div>
+              </div>
+              <DropdownMenuSeparator className="my-2 opacity-50" />
+              <DropdownMenuGroup className="space-y-1">
+                <DropdownMenuItem 
+                  render={<Link to="/profile" className="flex w-full items-center gap-2" />} 
+                  className="rounded-xl px-3 py-2.5 cursor-pointer"
+                >
+                  <User size={16} className="text-muted-foreground" />
+                  <span className="text-[13px] font-semibold">Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  render={<Link to="/settings" className="flex w-full items-center gap-2" />} 
+                  className="rounded-xl px-3 py-2.5 cursor-pointer"
+                >
+                  <Settings size={16} className="text-muted-foreground" />
+                  <span className="text-[13px] font-semibold">Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator className="my-2 opacity-50" />
+              <DropdownMenuItem 
+                onSelect={() => onLogout?.()} 
+                variant="destructive"
+                className="rounded-xl px-3 py-2.5 focus:bg-destructive/10 focus:text-destructive"
+              >
+                <LogOut size={16} />
+                <span className="text-[13px] font-bold">Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
+    </header>
   );
 };

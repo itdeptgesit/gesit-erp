@@ -184,13 +184,13 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
         }
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-none";
-    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-none";
+    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2";
 
     return (
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800 flex flex-col my-8">
-                <div className="bg-slate-950 dark:bg-slate-950 px-6 py-5 text-white shrink-0 border-b border-slate-800">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-zinc-800 flex flex-col my-8">
+                <div className="bg-slate-950 dark:bg-zinc-950 px-6 py-5 text-white shrink-0 border-b border-slate-800">
                     <div className="flex justify-between items-start mb-5">
                         <div>
                             <h2 className="text-xl font-bold tracking-tight uppercase">
@@ -223,7 +223,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <section className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
                             <Shield size={14} className="text-blue-500" />
                             <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Hardware Identity</h3>
                         </div>
@@ -261,7 +261,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                     </section>
 
                     <section className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
                             <Layers size={14} className="text-blue-500" />
                             <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Interface Configuration</h3>
                         </div>
@@ -348,7 +348,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                         </div>
                     </section>
 
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-3 justify-end mt-4">
+                    <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 flex gap-3 justify-end mt-4">
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancel
                         </Button>
@@ -362,3 +362,4 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
         </div>
     );
 };
+

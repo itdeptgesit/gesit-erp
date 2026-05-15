@@ -54,7 +54,7 @@ export const SwitchVisualizer: React.FC<SwitchVisualizerProps> = ({ switchDetail
 
 const AccessPointChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortClick }) => {
     return (
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-6">
+        <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm flex items-center gap-6">
             <div className="w-20 h-20 bg-slate-50 rounded-full border-4 border-white shadow-inner flex items-center justify-center relative">
                 <Wifi size={32} className="text-blue-500" />
                 <div className="absolute top-0 right-0 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-[0_0_8px_#10b981]"></div>
@@ -69,7 +69,7 @@ const AccessPointChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, on
                     </div>
                 </div>
             </div>
-            <div className="ml-auto flex gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+            <div className="ml-auto flex gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 shadow-inner">
                 {(switchDetails.ports || []).map(port => (
                     <RJ45Port key={port.id} port={port} onClick={() => onPortClick(port)} />
                 ))}
@@ -94,11 +94,11 @@ const CoreChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortCli
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
             <div
                 style={{ minWidth: `${minWidth}px` }}
-                className="bg-[#020617] rounded-2xl p-6 shadow-2xl border border-slate-800 relative flex items-center h-44 overflow-hidden"
+                className="bg-[#020617] rounded-xl p-6 shadow-2xl border border-slate-800 relative flex items-center h-44 overflow-hidden"
             >
                 {/* Chassis Texture Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-2xl opacity-20"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(59,130,246,0.1),_transparent)] pointer-events-none rounded-2xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-xl opacity-20"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(59,130,246,0.1),_transparent)] pointer-events-none rounded-xl"></div>
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_3px)] pointer-events-none"></div>
 
                 {/* Left Panel: Info */}
@@ -229,9 +229,9 @@ const SecurityChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPor
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
             <div
                 style={{ minWidth: `${minWidth}px` }}
-                className={`transition-all duration-500 ${isDvr ? 'bg-[#1e293b] border-slate-700' : 'bg-[#020617] border-slate-800'} rounded-2xl p-6 shadow-2xl border relative flex items-center h-32 overflow-hidden`}
+                className={`transition-all duration-500 ${isDvr ? 'bg-[#1e293b] border-slate-700' : 'bg-[#020617] border-slate-800'} rounded-xl p-6 shadow-2xl border relative flex items-center h-32 overflow-hidden`}
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-2xl opacity-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-xl opacity-10"></div>
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_3px)] pointer-events-none"></div>
 
                 <div className={`flex flex-col gap-1 px-6 border-r ${isDvr ? 'border-slate-700' : 'border-slate-800'} w-52 shrink-0 z-10`}>
@@ -301,7 +301,7 @@ const PabxChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortCli
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
             <div
                 style={{ minWidth: `${minWidth}px` }}
-                className="bg-slate-200 rounded-2xl p-6 shadow-xl border border-slate-300 relative flex items-center h-32 overflow-hidden"
+                className="bg-slate-200 rounded-xl p-6 shadow-xl border border-slate-300 relative flex items-center h-32 overflow-hidden"
             >
                 <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-50"></div>
                 <div className="flex flex-col gap-1 px-6 border-r border-slate-300 w-52 shrink-0 z-10">
@@ -330,10 +330,10 @@ const LsaChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortClic
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
             <div
                 style={{ minWidth: `${minWidth}px` }}
-                className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 relative flex flex-col justify-center h-40 overflow-hidden"
+                className="bg-white rounded-xl p-6 shadow-xl border border-slate-200 relative flex flex-col justify-center h-40 overflow-hidden"
             >
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] mb-6 px-4 text-center">LSA DISCONNECTION MODULE ENTRY</div>
-                <div className="flex gap-2 items-center justify-center bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 items-center justify-center bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-inner overflow-x-auto no-scrollbar">
                     {ports.map(port => (
                         <div key={port.id} onClick={() => onPortClick(port)} className="flex flex-col items-center gap-2 group cursor-pointer shrink-0 transition-all hover:scale-105">
                             <div className={`w-5 h-16 rounded-[1px] border-x-2 border-slate-200 shadow-sm transition-all ${port.status === PortStatus.ACTIVE ? 'bg-blue-500 shadow-[0_0_10px_#3b82f6]' : 'bg-slate-300 opacity-80'}`}></div>
@@ -349,10 +349,10 @@ const LsaChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortClic
 const FaceplatePanel: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortClick }) => {
     return (
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
-            <div className="grid grid-cols-6 md:grid-cols-12 gap-6 p-10 bg-white rounded-[2rem] border border-slate-100 shadow-xl">
+            <div className="grid grid-cols-6 md:grid-cols-12 gap-6 p-10 bg-white rounded-xl border border-slate-100 shadow-xl">
                 {(switchDetails.ports || []).map(port => (
                     <div key={port.id} className="flex flex-col items-center gap-3">
-                        <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+                        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center">
                             <RJ45Port port={port} onClick={() => onPortClick(port)} />
                         </div>
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{port.patchPanelPort || `FP-${port.portNumber}`}</span>

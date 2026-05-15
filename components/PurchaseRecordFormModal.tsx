@@ -167,18 +167,23 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[1400px] w-[95vw] max-h-[90vh] p-0 overflow-hidden rounded-xl border shadow-2xl bg-background flex flex-col">
-                <DialogHeader className="px-8 py-6 border-b shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/5 text-primary rounded-xl flex items-center justify-center border border-primary/10">
-                            <ShieldCheck size={24} />
+            <DialogContent showCloseButton={false} className="sm:max-w-[1400px] w-[95vw] max-h-[92vh] p-0 overflow-hidden rounded-lg border border-slate-200 dark:border-zinc-800 shadow-2xl bg-white dark:bg-zinc-900 flex flex-col">
+                <DialogHeader className="px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center border border-blue-500/10">
+                                <ShieldCheck size={24} />
+                            </div>
+                            <div className="text-left">
+                                <DialogTitle className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-none">
+                                    Purchase Record
+                                </DialogTitle>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">Procurement Documentation & Financial Registry</p>
+                            </div>
                         </div>
-                        <div className="text-left">
-                            <DialogTitle className="text-xl font-bold uppercase tracking-tight">
-                                Purchase Record
-                            </DialogTitle>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5 opacity-60">Add or edit purchase details and documentation</p>
-                        </div>
+                        <Button variant="ghost" size="icon" onClick={onClose} className="dark: transition-all">
+                            <X size={20} />
+                        </Button>
                     </div>
                 </DialogHeader>
 
@@ -407,7 +412,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                 const currentItems = formData.items || [];
                                                 setFormData({ ...formData, items: [...currentItems, { description: '', vendor: '', qty: 1, price: 0, deliveryFee: 0, insuranceFee: 0, itemDiscount: 0, shippingDiscount: 0 }] });
                                             }}
-                                            className="h-7 text-[9px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5 rounded-lg"
+                                            className="text-[9px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
                                         >
                                             <Plus className="w-3 h-3 mr-1" /> Add Item
                                         </Button>
@@ -512,14 +517,22 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                     </form>
                 </div>
 
-                <DialogFooter className="px-8 py-4 border-t shrink-0 gap-3 sm:justify-end">
-                    <Button variant="ghost" onClick={onClose} className="rounded-xl h-10 px-6 text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 hover:text-rose-600 transition-all">
+                <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all"
+                    >
                         Cancel
-                    </Button>
-                    <Button type="submit" form="recordForm" className="rounded-xl h-10 px-8 text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-95">
-                        <Save size={14} className="mr-2" /> Save Record
-                    </Button>
-                </DialogFooter>
+                    </button>
+                    <button
+                        onClick={() => onSubmit(formData)}
+                        className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-lg text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all flex items-center gap-3 shadow-xl"
+                    >
+                        <Save size={16} strokeWidth={3} />
+                        Commit Record
+                    </button>
+                </div>
             </DialogContent>
         </Dialog>
     );

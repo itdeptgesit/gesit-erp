@@ -21,7 +21,7 @@ export const LogoPreloader: React.FC<LogoPreloaderProps> = ({
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white dark:bg-slate-950 overflow-hidden"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white dark:bg-zinc-950 overflow-hidden"
         >
             {/* Background Grain/Depth */}
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
@@ -33,7 +33,7 @@ export const LogoPreloader: React.FC<LogoPreloaderProps> = ({
                 </svg>
             </div>
 
-            <div className="relative flex items-center gap-6 md:gap-8 bg-white dark:bg-slate-950 px-8 py-6 rounded-3xl">
+            <div className="relative flex items-center gap-6 md:gap-8 bg-white dark:bg-zinc-950 px-8 py-6 rounded-xl">
                 {/* Logo Container (Left) */}
                 <motion.div 
                     initial={{ opacity: 0, x: -20, scale: 0.9 }}
@@ -114,7 +114,7 @@ export const LogoPreloader: React.FC<LogoPreloaderProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.4 }}
                         transition={{ delay: 0.8, duration: 1 }}
-                        className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.5em] mt-1"
+                        className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-[0.5em] mt-1"
                     >
                         Enterprise System
                     </motion.div>
@@ -130,3 +130,4 @@ export const LogoPreloader: React.FC<LogoPreloaderProps> = ({
         </motion.div>
     );
 };
+

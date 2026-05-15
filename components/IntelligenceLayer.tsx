@@ -29,14 +29,14 @@ export const IntelligenceLayer: React.FC<IntelligenceLayerProps> = ({ insights }
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-2xl shadow-lg">
+                    <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-xl shadow-lg">
                         <Brain size={24} strokeWidth={2.5} />
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                             Intelligence Center
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                             AI-powered insights and recommendations
                         </p>
                     </div>
@@ -54,7 +54,7 @@ export const IntelligenceLayer: React.FC<IntelligenceLayerProps> = ({ insights }
                                 onClick={() => setFilter(option.value)}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
                                         ? 'bg-indigo-600 text-white shadow-lg scale-105'
-                                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                                        : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-indigo-700'
                                     }`}
                             >
                                 <IconComponent size={14} />
@@ -81,14 +81,14 @@ export const IntelligenceLayer: React.FC<IntelligenceLayerProps> = ({ insights }
                     ))}
                 </div>
             ) : (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-12 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
                         <Sparkles size={32} className="text-white" />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                         All Systems Optimal
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-md mx-auto">
                         {filter === 'all'
                             ? 'No insights to display. Your systems are running smoothly.'
                             : `No ${filter} insights at this time. Everything looks good!`
@@ -99,3 +99,4 @@ export const IntelligenceLayer: React.FC<IntelligenceLayerProps> = ({ insights }
         </div>
     );
 };
+

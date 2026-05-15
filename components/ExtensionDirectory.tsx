@@ -215,15 +215,15 @@ const ExtensionCard: React.FC<{
                     />
                     <div className="min-w-0 flex flex-col justify-center">
                         <h3 className="text-[17px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
-                            {ext.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                            {ext.name.toUpperCase()}
                         </h3>
                         <div className="flex flex-col mt-0.5">
                             <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400 truncate tracking-wide" title={ext.dept}>
-                                {ext.dept.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                                {ext.dept.toUpperCase()}
                             </p>
                             {ext.role && (
                                 <p className="text-[10px] text-slate-300 dark:text-slate-500 font-medium truncate mt-0.5">
-                                    {ext.role}
+                                    {ext.role?.toUpperCase()}
                                 </p>
                             )}
                         </div>
@@ -341,9 +341,9 @@ const ExtensionTable: React.FC<{
                                 <TableCell className="py-5">
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
-                                            {ext.name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                                            {ext.name.toUpperCase()}
                                         </span>
-                                        {ext.role && <span className="text-[10px] font-medium text-muted-foreground/70 mt-1 italic">{ext.role}</span>}
+                                        {ext.role && <span className="text-[10px] font-medium text-muted-foreground/70 mt-1 italic">{ext.role?.toUpperCase()}</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
@@ -357,7 +357,7 @@ const ExtensionTable: React.FC<{
                                 </TableCell>
                                 <TableCell className="py-5">
                                     <span className="px-3 py-1 rounded-lg bg-muted/50 dark:bg-slate-800/40 text-[10px] font-bold text-muted-foreground/80 border border-border/10">
-                                        {ext.dept.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                                        {ext.dept.toUpperCase()}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
@@ -775,14 +775,21 @@ export const ExtensionDirectory = ({
 
     return (
         <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
-            {/* Dashboard Header (Admin/Standalone) */}
-            {/* Public Header */}
+            
+
+            
+
+            
+
+            {/* Simple Public Title */}
             {variant === 'integrated' && (
-                <div className="mb-8">
-                    <PageHeader
-                        title="Phone Directory"
-                        description="GESIT Companies Network Registry • Floors 26 & 27"
-                    />
+                <div className="mb-10 pt-4">
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                        PHONE DIRECTORY
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
+                        THE CITY TOWER - FLOOR 26 & 27
+                    </p>
                 </div>
             )}
 
@@ -838,115 +845,92 @@ export const ExtensionDirectory = ({
             <InstructionPanel />
 
             {/* List Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-2">
-                <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-6 rounded-full bg-primary" />
-                    <h2 className="text-xs font-bold text-slate-700 dark:text-slate-200 tracking-wide">
-                        Directory Registry
-                    </h2>
+            <div className="flex flex-col gap-6 mb-8 px-2">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-6 rounded-full bg-primary" />
+                        <h2 className="text-xs font-black text-slate-700 dark:text-slate-200 tracking-widest uppercase">
+                            Directory Registry
+                        </h2>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-4 px-4 py-1.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-[1.5rem] border border-slate-200/60 dark:border-slate-700/60 shadow-sm flex-1 md:flex-initial">
-                    {/* Search Bar */}
-                    <div className="relative flex-1 md:w-80 group">
-                        <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+                    {/* Search Bar Container */}
+                    <div className="relative flex-1 flex items-center bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                        <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
                         <Input
                             placeholder="Find name or extension..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-transparent border-none rounded-xl font-bold focus-visible:ring-0 outline-none transition-all min-w-0 shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50 dark:placeholder:text-slate-500"
+                            className="w-full pl-11 pr-10 py-6 bg-transparent border-none rounded-2xl font-bold focus-visible:ring-0 outline-none shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm("")}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-destructive transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-destructive transition-colors"
                             >
-                                <X size={12} strokeWidth={3} />
+                                <X size={16} strokeWidth={3} />
                             </button>
                         )}
                     </div>
 
-                    {/* Quick Floor Switches */}
-                    <div className="flex items-center gap-1.5 px-3 border-l border-slate-200 dark:border-slate-800">
-                        <button
-                            onClick={() => { setFloorFilter('All'); onFloorFilterChange?.('All'); }}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 'All'
-                                ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
-                                }`}
-                        >
-                            All
-                        </button>
-                        <button
-                            onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 26
-                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
-                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
-                                }`}
-                        >
-                            Floor 26
-                        </button>
-                        <button
-                            onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 ${floorFilter === 27
-                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                                : 'text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
-                                }`}
-                        >
-                            Floor 27
-                        </button>
-                    </div>
+                    {/* Filters and View Toggles */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Quick Floor Switches */}
+                        <div className="flex items-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <button
+                                onClick={() => { setFloorFilter('All'); onFloorFilterChange?.('All'); }}
+                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 'All'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                                    }`}
+                            >
+                                ALL
+                            </button>
+                            <button
+                                onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
+                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 26
+                                    ? 'bg-emerald-500 text-white shadow-md'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                                    }`}
+                            >
+                                FLOOR 26
+                            </button>
+                            <button
+                                onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
+                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 27
+                                    ? 'bg-blue-500 text-white shadow-md'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                                    }`}
+                            >
+                                FLOOR 27
+                            </button>
+                        </div>
 
-                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-
-                    {/* View Mode Toggle */}
-                    <div className="flex gap-1">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-xl transition-all ${viewMode === 'grid'
-                                ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                }`}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('table')}
-                            className={`p-2 rounded-xl transition-all ${viewMode === 'table'
-                                ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                }`}
-                            title="Table View"
-                        >
-                            <LayoutList size={18} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="hidden md:flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300">
-                        {filteredExtensions.length} Active
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 min-w-[30px] text-center">
-                            {currentPage}/{totalPages || 1}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages || totalPages === 0}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
+                        {/* View Mode Toggles */}
+                        <div className="flex items-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50 ml-auto lg:ml-0">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-2 rounded-lg transition-all ${viewMode === 'grid'
+                                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                title="Grid View"
+                            >
+                                <LayoutGrid size={18} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`p-2 rounded-lg transition-all ${viewMode === 'table'
+                                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                title="Table View"
+                            >
+                                <LayoutList size={18} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1081,7 +1065,7 @@ export const ExtensionDirectory = ({
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:bg-white dark:focus-visible:bg-slate-700/50 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 transition-all shadow-inner"
                                     value={formData.name}
                                     placeholder="Full name..."
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                                 />
                             </div>
 
@@ -1184,7 +1168,7 @@ export const ExtensionDirectory = ({
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.dept}
                                     placeholder="Cluster..."
-                                    onChange={e => setFormData({ ...formData, dept: e.target.value })}
+                                    onChange={e => setFormData({ ...formData, dept: e.target.value.toUpperCase() })}
                                 />
                             </div>
                             <div>
@@ -1192,7 +1176,7 @@ export const ExtensionDirectory = ({
                                 <Input
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value.toUpperCase() })}
                                 />
                             </div>
                             <div>

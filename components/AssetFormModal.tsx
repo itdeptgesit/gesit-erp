@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, Tag, Shield, Building2, User, MapPin, Hash, Briefcase, Info, RefreshCw, Camera as CameraIcon } from 'lucide-react';
+import { X, Calendar, Tag, Shield, Building2, User, MapPin, Hash, Briefcase, Info, RefreshCw, Camera as CameraIcon, Zap } from 'lucide-react';
 import { ITAsset, AssetCategory } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
@@ -9,6 +10,11 @@ import { useToast } from './ToastProvider';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AssetFormModalProps {
     isOpen: boolean;
@@ -52,273 +58,183 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                 vga: initialData.specs?.vga || '',
                 processor: initialData.specs?.processor || ''
             });
-            // Keep existing ID for edits
-            const parts = initialData.assetId?.split('-');
-            idSuffixRef.current = parts && parts.length > 1 ? parts[parts.length - 1] : '???';
-        } else {
+            // Ambil suffix dari ID yang sudah ada (misal IT-GSI-LPT-001 -> suffix 001)
+            const parts = initialData.assetId.split('-');
+            idSuffixRef.current = parts[parts.length - 1];
+        } else if (isOpen) {
             setFormData({
+                item: '',
                 status: 'Active',
                 condition: 'New',
-                company: '',
-                category: '',
-                department: '',
                 purchaseDate: new Date().toISOString().split('T')[0],
+                warrantyExp: '',
+                price: 0,
                 location: '',
-                vendor: '',
-                price: 0
+                user: '',
+                assetId: 'Generating...',
+                specs: { storage: '', ram: '', vga: '', processor: '' }
             });
             setSpecs({ storage: '', ram: '', vga: '', processor: '' });
-            idSuffixRef.current = ''; // Will be populated by effect
+            idSuffixRef.current = ''; // Reset suffix utk asset baru agar generate baru
         }
     }, [initialData, isOpen]);
 
-    // Logic Otomatis Update Asset ID
+    // Generate Asset ID
     useEffect(() => {
-        if (!isOpen || !formData.company || !formData.category) return;
+        const generateId = async () => {
+            if (initialData || !formData.company || !formData.category || !isOpen) return;
 
-        const isContextChanged = initialData && (
-            formData.company !== initialData.company ||
-            formData.category !== initialData.category
-        );
+            const company = companyList.find(c => c.name === formData.company);
+            const category = categoryList.find(c => c.name === formData.category);
 
-        const currentId = formData.assetId || '';
-        const isBadId = currentId.startsWith('GEN-') || !currentId;
+            if (company && category) {
+                const prefix = `IT-${company.code}-${category.code}`;
 
-        // Jika dalam mode edit, konteks belum berubah, dan ID sudah benar -> pertahankan ID original
-        if (initialData && !isContextChanged && !isBadId) {
-            if (formData.assetId !== initialData.assetId) {
-                setFormData(prev => ({ ...prev, assetId: initialData.assetId }));
-            }
-            return;
-        }
+                try {
+                    // Cek di DB suffix tertinggi utk prefix ini
+                    const { data } = await supabase
+                        .from('it_assets')
+                        .select('asset_id')
+                        .like('asset_id', `${prefix}-%`)
+                        .order('asset_id', { ascending: false })
+                        .limit(1);
 
-        const generateSequentialId = async () => {
-            const companyObj = companyList.find(c => c.name === formData.company);
-            const categoryObj = categoryList.find(c => c.name === formData.category);
+                    let nextSuffix = '001';
+                    if (data && data.length > 0) {
+                        const lastId = data[0].asset_id;
+                        const lastSuffix = parseInt(lastId.split('-').pop() || '0');
+                        nextSuffix = (lastSuffix + 1).toString().padStart(3, '0');
+                    }
 
-            const compCode = companyObj?.code || formData.company.substring(0, 3).toUpperCase();
-            const catCode = categoryObj?.code || formData.category.substring(0, 3).toUpperCase();
-            const prefix = `${compCode}-${catCode}-`;
+                    // Gunakan suffix yang sudah di-generate dalam sesi ini agar tidak berubah-ubah saat user ngetik item name
+                    if (!idSuffixRef.current) idSuffixRef.current = nextSuffix;
 
-            // Query existing to find next number
-            const { data: existing } = await supabase
-                .from('it_assets')
-                .select('asset_id')
-                .eq('company', formData.company)
-                .eq('category', formData.category);
-
-            let nextNum = 1;
-            if (existing && existing.length > 0) {
-                const numbers = existing
-                    .map(a => {
-                        const parts = (a.asset_id || '').split('-');
-                        const last = parts[parts.length - 1];
-                        return parseInt(last, 10);
-                    })
-                    .filter(n => !isNaN(n));
-
-                if (numbers.length > 0) {
-                    nextNum = Math.max(...numbers) + 1;
+                    setFormData(prev => ({ ...prev, assetId: `${prefix}-${idSuffixRef.current}` }));
+                } catch (e) {
+                    console.error('Error generating ID:', e);
                 }
-            }
-
-            const suffix = nextNum.toString().padStart(3, '0');
-            idSuffixRef.current = suffix;
-            const newAssetId = `${prefix}${suffix}`;
-
-            if (formData.assetId !== newAssetId) {
-                setFormData(prev => ({ ...prev, assetId: newAssetId }));
             }
         };
 
-        generateSequentialId();
+        generateId();
     }, [formData.company, formData.category, companyList, categoryList, isOpen, initialData]);
-
-    if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ ...formData, specs });
+        const finalData = { ...formData, specs };
+        onSubmit(finalData);
+        onClose();
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all font-bold placeholder:text-slate-400 shadow-none";
-    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
+    const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
-    const categoryName = formData.category?.toLowerCase() || '';
-    const needsSpecs = categoryName.includes('laptop') ||
-        categoryName.includes('computer') ||
-        categoryName.includes('server') ||
-        categoryName.includes('pc') ||
-        categoryName.includes('workstation');
+    const needsSpecs = formData.category === 'Laptop' || formData.category === 'PC' || formData.category === 'Server' || formData.category === 'Workstation';
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-4xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
-                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 overflow-hidden rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh]">
+                <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                            {initialData ? t('editAsset') : t('addAsset')}
-                        </h2>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">Asset Lifecycle Registration</p>
+                        <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none">
+                            {initialData ? 'Modify Asset Profile' : 'Register New Hardware'}
+                        </DialogTitle>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Hardware Inventory & Sourcing Protocols</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400"><X size={20} /></button>
+                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                    <form onSubmit={handleSubmit} id="assetForm" className="space-y-8">
+                <div className="flex-1 overflow-y-auto p-9 custom-scrollbar">
+                    <form id="assetForm" onSubmit={handleSubmit} className="space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="md:col-span-2 p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-[24px] border border-blue-500/10 dark:border-blue-500/10">
+                                <label className={labelClass}>Asset Identification Name</label>
+                                <Input
+                                    className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-blue-500/10 !border-blue-500/20`}
+                                    value={formData.item || ''}
+                                    onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                                    required
+                                    placeholder="e.g. MacBook Pro 14 M3"
+                                />
+                            </div>
 
-                        {/* Asset ID Preview Banner */}
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-5 mb-8 flex items-center justify-between group">
-                            <div>
-                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">Generated Asset Identity</p>
-                                <div className="flex items-center gap-3">
-                                    <h2 className={`text-2xl font-black ${formData.assetId?.startsWith('GEN-') ? 'text-amber-500' : 'text-blue-100'} tracking-tight`}>{formData.assetId || 'Wait...'}</h2>
-                                    {formData.assetId?.startsWith('GEN-') && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, assetId: '' }))}
-                                            className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-500 text-[9px] font-bold uppercase rounded-lg hover:bg-amber-500 hover:text-white transition-all"
-                                        >
-                                            Fix ID Format
-                                        </button>
-                                    )}
+                            <div className="space-y-8">
+                                <div>
+                                    <label className={labelClass}>System Registry ID</label>
+                                    <div className="relative">
+                                        <Input className={`${inputClass} font-mono font-bold text-blue-600 dark:text-blue-400 bg-slate-50 dark:bg-zinc-950/50 pl-10`} value={formData.assetId || ''} readOnly />
+                                        <Hash size={14} className="absolute left-4 top-4 text-slate-400" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-3 text-right max-w-[200px]">
-                                <Info size={16} className="text-blue-400/50 shrink-0" />
-                                <p className="text-[10px] font-medium text-blue-300/60 leading-relaxed">ID updates automatically based on company and category selection.</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {/* Image Upload Section */}
-                            <div className="lg:col-span-3 flex justify-center mb-4">
-                                <div className="relative group cursor-pointer">
-                                    <div className="w-24 h-24 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden hover:border-blue-500 transition-all">
-                                        {formData.image_url ? (
-                                            <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-center p-2">
-                                                <CameraIcon size={20} className="mx-auto text-slate-400 mb-1" />
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">Add Photo</span>
-                                            </div>
-                                        )}
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                            accept="image/*"
-                                            onChange={async (e) => {
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-
-                                                // Simple Cloudinary Upload Logic (Same as Profile)
-                                                const getEnv = (key: string, fallback: string): string => {
-                                                    try {
-                                                        // @ts-ignore
-                                                        return (window.process?.env?.[key] || process?.env?.[key] || (import.meta as any).env?.[key] || fallback);
-                                                    } catch (e) {
-                                                        return fallback;
-                                                    }
-                                                };
-
-                                                const cloudName = getEnv('VITE_CLOUDINARY_CLOUD_NAME', 'dmr8bxdos');
-                                                const uploadPreset = getEnv('VITE_CLOUDINARY_UPLOAD_PRESET', 'gesit_erp_preset');
-                                                const data = new FormData();
-                                                data.append('file', file);
-                                                data.append('upload_preset', uploadPreset);
-
-                                                try {
-                                                    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: data });
-                                                    const json = await res.json();
-                                                    if (json.secure_url) {
-                                                        setFormData({ ...formData, image_url: json.secure_url });
-                                                    } else if (json.error) {
-                                                        console.error("Cloudinary error:", json.error);
-                                                        showToast(`Upload failed: ${json.error.message}`, 'error');
-                                                    }
-                                                } catch (err) {
-                                                    console.error("Upload failed", err);
-                                                    showToast("Failed to upload image. Protocol interrupted.", 'error');
-                                                }
-                                            }}
-                                        />
+                                <div>
+                                    <label className={labelClass}>Operating Entity</label>
+                                    <div className="relative">
+                                        <select className={inputClass} value={formData.company || ''} onChange={(e) => setFormData({ ...formData, company: e.target.value })} required>
+                                            <option value="">- Select Company -</option>
+                                            {companyList.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                        <Building2 size={14} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-2">
-                                <label className={labelClass}>Item Name</label>
-                                <Input className={inputClass} value={formData.item || ''} onChange={(e) => setFormData({ ...formData, item: e.target.value })} required placeholder="e.g. ThinkPad X1 Carbon Gen 10" />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Category</label>
-                                <select className={inputClass} value={formData.category || ''} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required>
-                                    <option value="">- {t('pilih')} -</option>
-                                    {categoryList.map(cat => (
-                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                    ))}
-                                </select>
+                            <div className="space-y-8">
+                                <div>
+                                    <label className={labelClass}>Brand / Manufacturer</label>
+                                    <div className="relative">
+                                        <Input className={`${inputClass} pl-10`} value={formData.brand || ''} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} required placeholder="Apple, Dell, HP, etc." />
+                                        <Tag size={14} className="absolute left-4 top-4 text-slate-400" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Asset Classification</label>
+                                    <div className="relative">
+                                        <select className={inputClass} value={formData.category || ''} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required>
+                                            <option value="">- Select Category -</option>
+                                            {categoryList.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                        <Briefcase size={14} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                             <div>
-                                <label className={labelClass}>Serial Number (S/N)</label>
-                                <Input className={inputClass} value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Unique hardware ID" />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Brand / Manufacturer</label>
-                                <Input className={inputClass} value={formData.brand || ''} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g. Lenovo, Dell, HP" />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Condition</label>
-                                <select className={inputClass} value={formData.condition || 'New'} onChange={(e) => setFormData({ ...formData, condition: e.target.value as any })} required>
-                                    <option value="New">New</option>
+                                <label className={labelClass}>Lifecycle Status</label>
+                                <select className={inputClass} value={formData.status || 'Active'} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}>
+                                    <option value="Active">Active</option>
+                                    <option value="Idle">Idle</option>
                                     <option value="Used">Used</option>
-                                    <option value="Refurbished">Refurbished</option>
+                                    <option value="Broken">Broken</option>
+                                    <option value="Disposed">Disposed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Physical Condition</label>
+                                <select className={inputClass} value={formData.condition || 'New'} onChange={(e) => setFormData({ ...formData, condition: e.target.value as any })}>
+                                    <option value="New">New</option>
+                                    <option value="Good">Good</option>
                                     <option value="Fair">Fair</option>
                                     <option value="Poor">Poor</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className={labelClass}>Status</label>
-                                <select className={inputClass} value={formData.status || 'Active'} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} required>
-                                    <option value="Active">Active</option>
-                                    <option value="Used">Used</option>
-                                    <option value="Idle">Idle</option>
-                                    <option value="Broken">Broken</option>
-                                    <option value="Repair">In Repair</option>
-                                    <option value="Disposed">Disposed</option>
-                                </select>
+                            <div className="col-span-2">
+                                <label className={labelClass}>Serial Number</label>
+                                <div className="relative">
+                                    <Input className={`${inputClass} pl-10`} value={formData.serialNumber || ''} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} placeholder="Factory S/N or Service Tag" />
+                                    <Shield size={14} className="absolute left-4 top-4 text-slate-400" />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
-                            <div>
-                                <label className={labelClass}>Company Entity</label>
-                                <select className={inputClass} value={formData.company || ''} onChange={(e) => setFormData({ ...formData, company: e.target.value })} required>
-                                    <option value="">- {t('pilih')} -</option>
-                                    {companyList.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Department Affiliation</label>
-                                <select className={inputClass} value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })}>
-                                    <option value="">- {t('pilih')} -</option>
-                                    {departmentList.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Purchase Date</label>
-                                <Input type="date" className={inputClass} value={formData.purchaseDate || ''} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
-                            </div>
-                        </div>
-
-                        <div className="p-5 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 dark:border-blue-900/20">
-                            <p className="text-[9px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <Shield size={12} /> PROCUREMENT & LIFECYCLE
+                        <div className="p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-[24px] border border-blue-500/10 dark:border-blue-500/10">
+                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                <Shield size={14} strokeWidth={3} /> PROCUREMENT & LIFECYCLE
                             </p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div>
                                     <label className={labelClass}>Vendor / Supplier</label>
                                     <Input className={inputClass} value={formData.vendor || ''} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="Store or vendor name" />
@@ -334,23 +250,23 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-50 dark:border-zinc-800">
                             <div>
                                 <label className={labelClass}>Site Location</label>
                                 <Input className={inputClass} value={formData.location || ''} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required placeholder="Floor, Room, or Data Center Rack" />
                             </div>
                             <div>
-                                <label className={labelClass}>Current User / Custodian</label>
+                                <label className={labelClass}>Current Custodian</label>
                                 <Input className={inputClass} value={formData.user || ''} onChange={(e) => setFormData({ ...formData, user: e.target.value })} placeholder="Name of employee assigned" />
                             </div>
                         </div>
 
                         {needsSpecs && (
-                            <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 shadow-inner">
-                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                    <Shield size={12} /> Hardware Architecture Specs
+                            <div className="p-7 bg-slate-50 dark:bg-zinc-800/30 rounded-[24px] border border-slate-200 dark:border-zinc-800 shadow-inner">
+                                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                    <Zap size={14} strokeWidth={3} /> Hardware Architecture Specs
                                 </p>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div><label className={labelClass}>Processor</label><Input className={inputClass} value={specs.processor} onChange={(e) => setSpecs({ ...specs, processor: e.target.value })} placeholder="i7-12700H" /></div>
                                     <div><label className={labelClass}>Memory (RAM)</label><Input className={inputClass} value={specs.ram} onChange={(e) => setSpecs({ ...specs, ram: e.target.value })} placeholder="32GB DDR5" /></div>
                                     <div><label className={labelClass}>Storage</label><Input className={inputClass} value={specs.storage} onChange={(e) => setSpecs({ ...specs, storage: e.target.value })} placeholder="1TB NVMe" /></div>
@@ -359,10 +275,10 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                         )}
 
-                        <div className="pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <div className="pt-8 border-t border-slate-50 dark:border-zinc-800">
                             <label className={labelClass}>Administrative Remarks / Notes</label>
                             <Textarea
-                                rows={3} className={`${inputClass} resize-none min-h-[5rem]`}
+                                rows={3} className={`${inputClass} resize-none min-h-[120px]`}
                                 value={formData.remarks || ''}
                                 onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                                 placeholder="Condition, warranty info, or historical deployment notes..."
@@ -371,15 +287,15 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                     </form>
                 </div>
 
-                <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-end gap-3 shrink-0">
-                    <Button type="button" variant="outline" onClick={onClose}>
+                <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
+                    <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">
                         {t('cancel')}
-                    </Button>
-                    <Button type="submit" form="assetForm" className="min-w-[120px]">
+                    </button>
+                    <button type="submit" form="assetForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">
                         {t('save')}
-                    </Button>
+                    </button>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
