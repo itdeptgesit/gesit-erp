@@ -165,6 +165,43 @@ const PublicLayout: React.FC<{
   );
 };
 
+const SleekLoader: React.FC = () => {
+  return (
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-background relative overflow-hidden">
+      {/* Inline styles for custom animations */}
+      <style>{`
+        @keyframes shimmer-line {
+          0% { transform: translateX(-150%); }
+          50% { transform: translateX(50%); }
+          100% { transform: translateX(250%); }
+        }
+        .animate-shimmer-line {
+          animation: shimmer-line 2.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+      `}</style>
+
+      {/* Sleek top glowing progress bar */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-muted/20 overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-transparent via-primary to-indigo-500 w-[60%] animate-shimmer-line absolute rounded-r-full"
+          style={{ boxShadow: '0 0 8px var(--primary)' }}
+        />
+      </div>
+      
+      {/* Premium Minimalist Centered Indicator */}
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/5 via-card to-card border border-border/60 flex items-center justify-center shadow-sm relative overflow-hidden">
+          {/* Subtle spinning glow orb */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-indigo-500/10 animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-primary/80 animate-ping absolute" />
+          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">GESIT PORTAL</p>
+      </div>
+    </div>
+  );
+};
+
 const InternalApp: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -474,17 +511,7 @@ const InternalApp: React.FC = () => {
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <AnimatePresence mode="wait">
         {isCheckingSession ? (
-          <div className="flex h-screen items-center justify-center bg-background">
-            {/* @ts-ignore */}
-            <dotlottie-player
-              src="https://lottie.host/da700cd9-b9b7-41e0-a4c5-eb3445e6b1a7/zF9KtlTdx5.lottie"
-              background="transparent"
-              speed="1"
-              style={{ width: '120px', height: '120px' }}
-              loop
-              autoplay
-            />
-          </div>
+          <SleekLoader />
         ) : (
           <motion.div
             key="app-content"
@@ -493,19 +520,7 @@ const InternalApp: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col min-h-screen"
           >
-            <React.Suspense fallback={
-              <div className="flex h-screen items-center justify-center bg-background">
-                {/* @ts-ignore */}
-                <dotlottie-player
-                  src="https://lottie.host/da700cd9-b9b7-41e0-a4c5-eb3445e6b1a7/zF9KtlTdx5.lottie"
-                  background="transparent"
-                  speed="1"
-                  style={{ width: '120px', height: '120px' }}
-                  loop
-                  autoplay
-                />
-              </div>
-            }>
+            <React.Suspense fallback={<SleekLoader />}>
               <Routes>
                 {/* Public Routes - No Sidebar */}
                 <Route path="/login" element={
