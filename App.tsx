@@ -26,7 +26,6 @@ import {
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastProvider } from './components/ToastProvider';
-import { LogoPreloader } from './components/LogoPreloader';
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { supabase } from './lib/supabaseClient';
@@ -475,11 +474,9 @@ const InternalApp: React.FC = () => {
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <AnimatePresence mode="wait">
         {isCheckingSession ? (
-          <LogoPreloader 
-            isVisible={isCheckingSession} 
-            appName={appSettings.name} 
-            logoUrl={appSettings.logo} 
-          />
+          <div className="flex h-screen items-center justify-center bg-background">
+            <Loader2 size={40} className="animate-spin text-primary opacity-50" />
+          </div>
         ) : (
           <motion.div
             key="app-content"
