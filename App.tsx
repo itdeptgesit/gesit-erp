@@ -475,7 +475,15 @@ const InternalApp: React.FC = () => {
       <AnimatePresence mode="wait">
         {isCheckingSession ? (
           <div className="flex h-screen items-center justify-center bg-background">
-            <Loader2 size={40} className="animate-spin text-muted-foreground/60" />
+            {/* @ts-ignore */}
+            <dotlottie-player
+              src="https://lottie.host/da700cd9-b9b7-41e0-a4c5-eb3445e6b1a7/zF9KtlTdx5.lottie"
+              background="transparent"
+              speed="1"
+              style={{ width: '120px', height: '120px' }}
+              loop
+              autoplay
+            />
           </div>
         ) : (
           <motion.div
@@ -485,7 +493,19 @@ const InternalApp: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col min-h-screen"
           >
-            <React.Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 size={40} className="animate-spin text-muted-foreground/60" /></div>}>
+            <React.Suspense fallback={
+              <div className="flex h-screen items-center justify-center bg-background">
+                {/* @ts-ignore */}
+                <dotlottie-player
+                  src="https://lottie.host/da700cd9-b9b7-41e0-a4c5-eb3445e6b1a7/zF9KtlTdx5.lottie"
+                  background="transparent"
+                  speed="1"
+                  style={{ width: '120px', height: '120px' }}
+                  loop
+                  autoplay
+                />
+              </div>
+            }>
               <Routes>
                 {/* Public Routes - No Sidebar */}
                 <Route path="/login" element={
