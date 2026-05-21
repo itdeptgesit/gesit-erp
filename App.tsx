@@ -475,7 +475,7 @@ const InternalApp: React.FC = () => {
       <AnimatePresence mode="wait">
         {isCheckingSession ? (
           <div className="flex h-screen items-center justify-center bg-background">
-            <Loader2 size={40} className="animate-spin text-primary opacity-50" />
+            <Loader2 size={40} className="animate-spin text-muted-foreground/60" />
           </div>
         ) : (
           <motion.div
@@ -485,7 +485,7 @@ const InternalApp: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col min-h-screen"
           >
-            <React.Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 size={40} className="animate-spin text-primary opacity-50" /></div>}>
+            <React.Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 size={40} className="animate-spin text-muted-foreground/60" /></div>}>
               <Routes>
                 {/* Public Routes - No Sidebar */}
                 <Route path="/login" element={
