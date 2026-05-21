@@ -167,36 +167,24 @@ const PublicLayout: React.FC<{
 
 const SleekLoader: React.FC = () => {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-background relative overflow-hidden">
+    <div className="h-screen w-full bg-background relative overflow-hidden">
       {/* Inline styles for custom animations */}
       <style>{`
-        @keyframes shimmer-line {
-          0% { transform: translateX(-150%); }
-          50% { transform: translateX(50%); }
-          100% { transform: translateX(250%); }
+        @keyframes top-shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
-        .animate-shimmer-line {
-          animation: shimmer-line 2.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        .animate-top-shimmer {
+          animation: top-shimmer 1.8s infinite linear;
         }
       `}</style>
 
-      {/* Sleek top glowing progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-muted/20 overflow-hidden">
+      {/* Sleek top-edge glowing progress bar */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-muted/10 overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-transparent via-primary to-indigo-500 w-[60%] animate-shimmer-line absolute rounded-r-full"
-          style={{ boxShadow: '0 0 8px var(--primary)' }}
+          className="h-full bg-gradient-to-r from-transparent via-primary to-transparent w-full animate-top-shimmer absolute"
+          style={{ boxShadow: '0 0 4px var(--primary)' }}
         />
-      </div>
-      
-      {/* Premium Minimalist Centered Indicator */}
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/5 via-card to-card border border-border/60 flex items-center justify-center shadow-sm relative overflow-hidden">
-          {/* Subtle spinning glow orb */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-indigo-500/10 animate-pulse" />
-          <div className="w-2.5 h-2.5 rounded-full bg-primary/80 animate-ping absolute" />
-          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-        </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">GESIT PORTAL</p>
       </div>
     </div>
   );
