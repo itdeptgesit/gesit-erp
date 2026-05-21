@@ -52,7 +52,19 @@ const fontPresets = [
     { name: 'Ubuntu', value: 'Ubuntu' },
     { name: 'Manrope', value: 'Manrope' },
     { name: 'Space Grotesk', value: 'Space Grotesk' },
-    { name: 'DM Sans', value: 'DM Sans' }
+    { name: 'DM Sans', value: 'DM Sans' },
+    { name: 'Geist', value: 'Geist' },
+    { name: 'Nunito', value: 'Nunito' },
+    { name: 'Raleway', value: 'Raleway' },
+    { name: 'Rubik', value: 'Rubik' },
+    { name: 'Lato', value: 'Lato' },
+    { name: 'Work Sans', value: 'Work Sans' },
+    { name: 'IBM Plex Sans', value: 'IBM Plex Sans' },
+    { name: 'Cabin', value: 'Cabin' },
+    { name: 'Fira Sans', value: 'Fira Sans' },
+    { name: 'Bricolage Grotesque', value: 'Bricolage Grotesque' },
+    { name: 'Kanit', value: 'Kanit' },
+    { name: 'Open Sans', value: 'Open Sans' }
 ];
 
 type SettingSection = 'general' | 'appearance' | 'security' | 'system';
@@ -101,6 +113,19 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
             } catch (err: any) { console.warn(err); } finally { setIsLoading(false); }
         };
         fetchSettings();
+
+        // Preload preview weights for all presets so the selection cards render correctly
+        const families = fontPresets.map(f => `family=${f.value.replace(/ /g, '+')}:wght@400;500`).join('&');
+        const presetsUrl = `https://fonts.googleapis.com/css2?${families}&display=swap`;
+
+        let link = document.getElementById('google-fonts-presets') as HTMLLinkElement;
+        if (!link) {
+            link = document.createElement('link');
+            link.id = 'google-fonts-presets';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+        link.href = presetsUrl;
     }, []);
 
     useEffect(() => {

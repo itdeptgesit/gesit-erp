@@ -259,6 +259,8 @@ export interface WeeklyPlan {
   description?: string;
   remarks?: string;
   assignee: string;
+  assigneeEmail?: string;
+  assigneeAvatar?: string;
   priority: 'Low' | 'Medium' | 'High';
   status: 'To Do' | 'In Progress' | 'Pending' | 'Done';
   dueDate: string;
@@ -267,6 +269,8 @@ export interface WeeklyPlan {
   week: string;
   category: string;
   relatedPurchaseId?: number;
+  gdriveAttachments?: Array<{ id: string; name: string; url: string; mimeType?: string; iconUrl?: string }>;
+  location?: string;
 }
 
 export interface PurchasePlan {

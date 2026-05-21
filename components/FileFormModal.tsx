@@ -2,9 +2,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Link, FileText, Folder, Type } from 'lucide-react';
+import { X, Link, FileText, Folder, Type, Cloud } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
+import { GoogleDrivePickerModal } from './GoogleDrivePickerModal';
 
 interface FileFormModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ interface FileFormModalProps {
 export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, onSubmit, folders, initialData }) => {
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [drivePickerOpen, setDrivePickerOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         category: '',
@@ -36,6 +38,31 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
             setFormData({ name: '', category: '', gdriveUrl: '', type: 'pdf' });
         }
     }, [initialData, isOpen]);
+
+    const handleSelectDriveFile = (selectedFiles: any[]) => {
+        if (selectedFiles.length === 0) return;
+        const file = selectedFiles[0];
+        
+        // Map Google mimeType to local type
+        let mappedType = 'pdf';
+        const mime = file.mimeType.toLowerCase();
+        if (mime.includes('sheet') || mime.includes('excel') || mime.includes('csv')) {
+            mappedType = 'sheet';
+        } else if (mime.includes('document') || mime.includes('word')) {
+            mappedType = 'doc';
+        } else if (mime.includes('image')) {
+            mappedType = 'image';
+        } else if (mime.includes('folder')) {
+            mappedType = 'folder';
+        }
+        
+        setFormData(prev => ({
+            ...prev,
+            name: prev.name || file.name,
+            gdriveUrl: file.webViewLink,
+            type: mappedType
+        }));
+    };
 
     if (!isOpen) return null;
 
@@ -131,7 +158,17 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
                     </div>
 
                     <div>
-                        <label className={labelClass}>Storage URI (Google Drive)</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className={labelClass}>Storage URI (Google Drive)</label>
+                            <button
+                                type="button"
+                                onClick={() => setDrivePickerOpen(true)}
+                                className="text-[9px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 uppercase tracking-wider transition-all"
+                            >
+                                <Cloud size={11} />
+                                Choose from Drive
+                            </button>
+                        </div>
                         <div className="relative">
                             <input
                                 type="url" required className={`${inputClass} pl-10`}
@@ -152,6 +189,13 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
                     </button>
                 </div>
             </div>
+
+            {/* Google Drive Picker Modal */}
+            <GoogleDrivePickerModal
+                isOpen={drivePickerOpen}
+                onClose={() => setDrivePickerOpen(false)}
+                onSelectFiles={handleSelectDriveFile}
+            />
         </div>
     );
 };

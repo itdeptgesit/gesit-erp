@@ -80,11 +80,21 @@ export const StatCard: React.FC<StatCardProps> = ({
             `}
         >
             <div className="flex justify-between items-center mb-4">
-                <p className="text-xs font-medium text-muted-foreground tracking-wide">
+                <p className="text-xs font-semibold text-muted-foreground tracking-wide">
                     {label}
                 </p>
-                <div className="text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity">
-                    <Icon size={16} strokeWidth={2} />
+                <div className="transition-all duration-300 group-hover:scale-105">
+                    {typeof Icon === 'string' ? (
+                        <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 flex items-center justify-center shadow-[0_2px_8px_-3px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_-3px_rgba(0,0,0,0.5)] p-1.5 shrink-0">
+                            <img src={Icon} className="w-full h-full object-contain" alt="" />
+                        </div>
+                    ) : (
+                        Icon && (
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100/50 dark:border-slate-700/50 flex items-center justify-center text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity">
+                                <Icon size={14} strokeWidth={2.5} />
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
 

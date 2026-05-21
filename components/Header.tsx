@@ -225,11 +225,11 @@ export const Header: React.FC<HeaderProps> = ({
             <Globe className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuItem onSelect={() => setLanguage('en' as any)}>
+            <DropdownMenuItem onClick={() => setLanguage('en' as any)}>
               English
               {language === 'en' && <Check className="ml-auto size-4 text-primary" />}
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setLanguage('id' as any)}>
+            <DropdownMenuItem onClick={() => setLanguage('id' as any)}>
               Indonesia
               {language === 'id' && <Check className="ml-auto size-4 text-primary" />}
             </DropdownMenuItem>
@@ -352,7 +352,7 @@ export const Header: React.FC<HeaderProps> = ({
               </DropdownMenuGroup>
               <DropdownMenuSeparator className="my-2 opacity-50" />
               <DropdownMenuItem 
-                onSelect={() => onLogout?.()} 
+                onClick={() => onLogout?.()} 
                 variant="destructive"
                 className="rounded-xl px-3 py-2.5 focus:bg-destructive/10 focus:text-destructive"
               >

@@ -154,7 +154,7 @@ export function AppSidebarModern({
     
     return [
       {
-        title: "Settings & Setup",
+        title: t('settingsAndSetup'),
         url: "/admin",
         icon: ICON_MAP[adminNode.iconName] || LayoutGrid,
         isActive: false,
@@ -197,7 +197,7 @@ export function AppSidebarModern({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-bold">{appName}</span>
-                <span className="truncate text-xs text-muted-foreground">Enterprise Platform</span>
+                <span className="truncate text-xs text-muted-foreground">{t('enterprisePlatform')}</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -205,8 +205,8 @@ export function AppSidebarModern({
       </SidebarHeader>
 
       <SidebarContent>
-        <NavGroup title="Main Menu" items={mainItems} />
-        {adminItems.length > 0 && <NavGroup title="Administration" items={adminItems} />}
+        <NavGroup title={t('mainMenu')} items={mainItems} />
+        {adminItems.length > 0 && <NavGroup title={t('administrationGroup')} items={adminItems} />}
       </SidebarContent>
 
       <SidebarFooter>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     FolderKanban, ListChecks, CheckCircle2,
     Calendar, Zap, TrendingUp,
@@ -6,7 +6,8 @@ import {
     ShoppingCart, Box, Shield,
     MessageSquare, RefreshCcw, ChevronRight, Info, Phone, Search, ArrowUpRight, Target,
     Wallet, CheckCircle2 as CheckCircle2Icon, Clock, Briefcase, Tag, Star,
-    Sun, Moon, Sunrise, User, Building2, Sparkles, LifeBuoy, Plus
+    Sun, Moon, Sunrise, User, Building2, Sparkles, LifeBuoy, Plus,
+    Cloud, CloudRain, CloudSnow, CloudLightning, CloudDrizzle, Wind, CloudSun
 } from 'lucide-react';
 import {
     XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -87,7 +88,103 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Weather Helper & Component ───────────────────────────────────────────────
+
+const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
+    const defaultUrl = isDaytime 
+        ? 'https://assets-v2.lottiefiles.com/a/5855a50a-1151-11ee-8713-db7d99d1cba7/0K62KcjosX.lottie'
+        : 'https://assets-v2.lottiefiles.com/a/584838ca-1151-11ee-870e-2b08e98fd879/NLTBfths9o.lottie';
+
+    if (code === null) return { condition: 'Cerah', icon: isDaytime ? Sun : Moon, lottieUrl: defaultUrl };
+    
+    switch (code) {
+        case 0:
+            return { 
+                condition: 'Cerah', 
+                icon: isDaytime ? Sun : Moon, 
+                lottieUrl: isDaytime 
+                    ? 'https://assets-v2.lottiefiles.com/a/5855a50a-1151-11ee-8713-db7d99d1cba7/0K62KcjosX.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/584838ca-1151-11ee-870e-2b08e98fd879/NLTBfths9o.lottie'
+            };
+        case 1:
+        case 2:
+            return { 
+                condition: 'Cerah Berawan', 
+                icon: isDaytime ? CloudSun : Moon, 
+                lottieUrl: isDaytime 
+                    ? 'https://assets-v2.lottiefiles.com/a/584a51a0-1151-11ee-870f-73f0e4a25c18/OiRsquuDDf.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/583b455c-1151-11ee-870b-13dd4c78db9c/9xWkK1I9gX.lottie'
+            };
+        case 3:
+            return { 
+                condition: 'Berawan', 
+                icon: Cloud, 
+                lottieUrl: isDaytime 
+                    ? 'https://assets-v2.lottiefiles.com/a/584a51a0-1151-11ee-870f-73f0e4a25c18/OiRsquuDDf.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/583b455c-1151-11ee-870b-13dd4c78db9c/9xWkK1I9gX.lottie'
+            };
+        case 45:
+        case 48:
+            return { 
+                condition: 'Kabut', 
+                icon: Wind, 
+                lottieUrl: 'https://assets-v2.lottiefiles.com/a/58360a9c-1151-11ee-8707-cf3589cbba23/k2vovxilDL.lottie'
+            };
+        case 51:
+        case 53:
+        case 55:
+            return { 
+                condition: 'Gerimis', 
+                icon: CloudDrizzle, 
+                lottieUrl: isDaytime
+                    ? 'https://assets-v2.lottiefiles.com/a/58526552-1151-11ee-8710-7f5bc355e2bb/JIYnBacuWm.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/58447ea6-1151-11ee-870c-5feb8c9a44b1/adpc1aPmVz.lottie'
+            };
+        case 56:
+        case 57:
+            return { 
+                condition: 'Gerimis Dingin', 
+                icon: CloudSnow, 
+                lottieUrl: 'https://assets-v2.lottiefiles.com/a/5837c3dc-1151-11ee-8709-1bfa94b3ca50/1JbNUYBlfw.lottie'
+            };
+        case 61:
+        case 63:
+        case 65:
+        case 80:
+        case 81:
+        case 82:
+            return { 
+                condition: 'Hujan', 
+                icon: CloudRain, 
+                lottieUrl: isDaytime 
+                    ? 'https://assets-v2.lottiefiles.com/a/58526552-1151-11ee-8710-7f5bc355e2bb/JIYnBacuWm.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/58447ea6-1151-11ee-870c-5feb8c9a44b1/adpc1aPmVz.lottie'
+            };
+        case 66:
+        case 67:
+        case 71:
+        case 73:
+        case 75:
+        case 77:
+            return { 
+                condition: 'Salju', 
+                icon: CloudSnow, 
+                lottieUrl: isDaytime 
+                    ? 'https://assets-v2.lottiefiles.com/a/5837c3dc-1151-11ee-8709-1bfa94b3ca50/1JbNUYBlfw.lottie'
+                    : 'https://assets-v2.lottiefiles.com/a/58458008-1151-11ee-870d-4fdc70664590/UqiDxC2TrX.lottie'
+            };
+        case 95:
+        case 96:
+        case 99:
+            return { 
+                condition: 'Badai Petir', 
+                icon: CloudLightning, 
+                lottieUrl: 'https://assets-v2.lottiefiles.com/a/5856708e-1151-11ee-8714-6b61dd71fb9b/2XR4PRuYfx.lottie'
+            };
+        default:
+            return { condition: 'Berawan', icon: Cloud, lottieUrl: defaultUrl };
+    }
+};
 
 export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate, userName, userRole = 'User', currentUser }) => {
     const { t } = useLanguage();
@@ -98,6 +195,23 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [activityYear, setActivityYear] = useState<string>('last_12M');
+    const [weather, setWeather] = useState<{
+        temp: number | null;
+        city: string | null;
+        condition: string | null;
+        code: number | null;
+        lottieUrl: string | null;
+        loading: boolean;
+    }>({
+        temp: null,
+        city: null,
+        condition: null,
+        code: null,
+        lottieUrl: null,
+        loading: true
+    });
+
+    const playerRef = useRef<any>(null);
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
@@ -514,6 +628,84 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
         };
     }, []);
 
+    useEffect(() => {
+        const fetchWeather = async () => {
+            try {
+                const locRes = await fetch('https://ipapi.co/json/');
+                if (locRes.ok) {
+                    const locData = await locRes.json();
+                    if (locData && locData.latitude && locData.longitude) {
+                        const lat = locData.latitude;
+                        const lon = locData.longitude;
+                        const city = locData.city || 'Lokasi Anda';
+
+                        const weatherRes = await fetch(
+                            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&current_weather=true`
+                        );
+                        if (weatherRes.ok) {
+                            const weatherData = await weatherRes.json();
+                            const current = weatherData.current || weatherData.current_weather;
+                            if (weatherData && current) {
+                                const temp = Math.round(current.temperature_2m !== undefined ? current.temperature_2m : current.temperature);
+                                const code = current.weather_code !== undefined ? current.weather_code : current.weathercode;
+                                const hour = new Date().getHours();
+                                const isDaytime = hour >= 6 && hour < 18;
+                                const details = getWeatherDetails(code, isDaytime);
+
+                                setWeather({
+                                    temp,
+                                    city,
+                                    condition: details.condition,
+                                    code,
+                                    lottieUrl: details.lottieUrl,
+                                    loading: false
+                                });
+                                return;
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Weather fetch failed, falling back to time-based greeting:', err);
+            }
+            setWeather(prev => ({ ...prev, loading: false }));
+        };
+
+        fetchWeather();
+    }, []);
+
+    useEffect(() => {
+        if (playerRef.current) {
+            try {
+                // Force attributes for standard web components
+                playerRef.current.setAttribute('autoplay', 'true');
+                playerRef.current.setAttribute('loop', 'true');
+                
+                // Add event listener for when the component is ready
+                const handleReady = () => {
+                    if (playerRef.current && typeof playerRef.current.play === 'function') {
+                        playerRef.current.play();
+                    }
+                };
+
+                playerRef.current.addEventListener('ready', handleReady);
+                
+                // Try immediate execution too
+                if (typeof playerRef.current.play === 'function') {
+                    playerRef.current.play();
+                }
+
+                return () => {
+                    if (playerRef.current) {
+                        playerRef.current.removeEventListener('ready', handleReady);
+                    }
+                };
+            } catch (e) {
+                console.warn('Lottie player control trigger failed:', e);
+            }
+        }
+    }, [weather.lottieUrl]);
+
     const filteredProjects = useMemo(() => {
         return listData.allProjects.filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
     }, [listData.allProjects, projectSearch]);
@@ -540,12 +732,24 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
         );
     }
 
-    // Dynamic greeting based on time of day
+    // Dynamic greeting based on time of day and weather
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return { text: 'Good morning', icon: Sunrise };
-        if (hour < 18) return { text: 'Good afternoon', icon: Sun };
-        return { text: 'Good evening', icon: Moon };
+        const isDaytime = hour >= 6 && hour < 18;
+        
+        let greetingText = 'Good evening';
+        if (hour < 12) greetingText = 'Good morning';
+        else if (hour < 18) greetingText = 'Good afternoon';
+
+        if (weather.code !== null) {
+            const details = getWeatherDetails(weather.code, isDaytime);
+            return { text: greetingText, icon: details.icon };
+        }
+
+        // Fallback to time-based icons
+        if (hour < 12) return { text: greetingText, icon: Sunrise };
+        if (hour < 18) return { text: greetingText, icon: Sun };
+        return { text: greetingText, icon: Moon };
     };
     const greeting = getGreeting();
     const GreetingIcon = greeting.icon;
@@ -566,14 +770,40 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                 <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
                         {/* Avatar / Icon */}
-                        <div className="hidden sm:flex w-14 h-14 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center shrink-0">
-                            <GreetingIcon size={24} className="text-primary" strokeWidth={2} />
+                        <div className="hidden sm:flex w-14 h-14 items-center justify-center shrink-0">
+                            {weather.lottieUrl ? (
+                                /* @ts-ignore */
+                                <dotlottie-player
+                                    ref={playerRef}
+                                    src={weather.lottieUrl}
+                                    background="transparent"
+                                    speed="1"
+                                    style={{ width: '64px', height: '64px' }}
+                                    loop
+                                    autoplay
+                                />
+                            ) : (
+                                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                    <GreetingIcon size={24} className="text-primary" strokeWidth={2} />
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
-                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                                 <span>{todayFormatted}</span>
-                                <span className="w-1 h-1 rounded-full bg-border" />
-                                <span className="text-primary">{greeting.text}</span>
+                                {weather.city ? (
+                                    <>
+                                        <span className="w-1 h-1 rounded-full bg-border" />
+                                        <span className="text-primary flex items-center gap-1 normal-case font-bold">
+                                            {weather.city} • {weather.temp}°C, {weather.condition}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="w-1 h-1 rounded-full bg-border" />
+                                        <span className="text-primary">{greeting.text}</span>
+                                    </>
+                                )}
                             </div>
                             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                                 {greeting.text}, {firstName}

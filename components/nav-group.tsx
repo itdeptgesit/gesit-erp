@@ -218,7 +218,7 @@ function SidebarMenuCollapsedDropdown({
           {item.items?.map((sub) => (
             <DropdownMenuItem
               key={`${sub.title}-${sub.url}`}
-              onSelect={() => onNavigate?.(sub.url.replace("/", ""))}
+              onClick={() => onNavigate?.(sub.url.replace("/", ""))}
             >
               <Link
                 to={sub.url}

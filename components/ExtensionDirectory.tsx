@@ -30,6 +30,7 @@ import {
     Share2,
     ExternalLink,
     FileDown,
+    FileText,
     UploadCloud,
     Image as ImageIcon
 } from "lucide-react";
@@ -42,6 +43,7 @@ import { useLanguage } from "../translations";
 import { UserAvatar } from "./UserAvatar";
 import { StatCard } from "./StatCard";
 import { exportToExcel } from "../lib/excelExport";
+import { exportDirectoryPDF } from "../lib/directoryPdfExport";
 import { useToast } from "./ToastProvider";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet } from "lucide-react";
@@ -50,97 +52,149 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/input";
 
 
+const capitalizeWords = (str: string) => {
+    if (!str) return "";
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+
 /* ===========================
    Components
 =========================== */
 
 // 1. Instruction Panel
 const InstructionPanel = () => {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
+
+    const floor27Steps = [
+        { label: t('pickupIncoming'), code: '#70 + Ext', icon: PhoneIncoming, color: 'text-blue-500' },
+        { label: t('callTo26thFloor'), code: '## + Ext lt.26', icon: PhoneOutgoing, color: 'text-violet-500' },
+        { label: t('outgoingCall'), code: '* + PIN + 9 + NUMBER', icon: Globe, color: 'text-indigo-400' },
+        { label: t('internationalCall'), code: '* + PIN + 9 + 01017 + CC + No.', icon: PhoneOutgoing, color: 'text-sky-500' },
+    ];
+    const floor26Steps = [
+        { label: t('pickupIncoming'), code: '#41 + Ext', icon: PhoneIncoming, color: 'text-emerald-500' },
+        { label: t('callTo27thFloor'), code: '88** + PIN + Ext lt.27', icon: PhoneOutgoing, color: 'text-teal-500' },
+        { label: t('outgoingCall'), code: '81** + PIN + NUMBER', icon: Globe, color: 'text-green-400' },
+    ];
 
     return (
         <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div
+            {/* Trigger Button */}
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                aria-expanded={isOpen}
                 className={`
-          w-full transition-all duration-500 ease-in-out overflow-hidden
-          ${isOpen ? 'rounded-[2rem] bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-500/20 shadow-2xl shadow-indigo-500/5' : 'bg-transparent'}
-        `}
+                    w-full flex items-center justify-between px-5 py-3.5 transition-all duration-300
+                    rounded-2xl border
+                    ${isOpen
+                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 rounded-b-none'
+                        : 'bg-white dark:bg-slate-900 border-border/10 dark:border-white/[0.04] shadow-sm hover:border-primary/30 hover:shadow-md'
+                    }
+                `}
             >
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    aria-expanded={isOpen}
-                    className={`w-full flex items-center justify-between px-6 py-4 transition-all duration-300 rounded-[1.25rem] border ${!isOpen ? 'bg-white dark:bg-slate-900 border-border/10 dark:border-white/[0.03] shadow-sm hover:border-primary/30' : 'border-transparent bg-slate-50 dark:bg-slate-800/50'}`}
-                >
-                    <div className="flex items-center gap-4">
-                        <div className={`
-              p-2.5 rounded-xl transition-all duration-500
-              ${isOpen ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-xl transition-all duration-300 ${isOpen ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}`}>
+                        <PhoneOutgoing className="w-4 h-4" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex flex-col items-start leading-tight">
+                        <span className={`text-sm font-black tracking-tight ${isOpen ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>
+                            {t('dialingProtocol')}
+                        </span>
+                        <span className={`text-[10px] font-semibold mt-0.5 ${isOpen ? 'text-white/70' : 'text-slate-400'}`}>
+                            {t('intercomGuide')}
+                        </span>
+                    </div>
+                </div>
+                <div className={`p-1.5 rounded-lg transition-all duration-300 ${isOpen ? 'bg-white/20 rotate-180' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    <ChevronDown className={`w-4 h-4 ${isOpen ? 'text-white' : 'text-slate-400'}`} strokeWidth={3} />
+                </div>
+            </button>
+
+            {/* Collapsible Content */}
+            <div className={`
+                grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+                ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}
             `}>
-                            <PhoneOutgoing className="w-5 h-5" strokeWidth={2.5} />
-                        </div>
-                        <div className="flex flex-col items-start leading-tight">
-                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                                Dialing Protocol
-                            </h3>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">Intercom Quick Guide</p>
-                        </div>
-                    </div>
-                    <div className={`p-2 rounded-full transition-all duration-300 ${isOpen ? 'bg-white dark:bg-slate-900 text-primary rotate-180 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                        <ChevronDown className="w-4 h-4" strokeWidth={3} />
-                    </div>
-                </button>
+                <div className="overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 border border-t-0 border-border/10 dark:border-white/[0.04] rounded-b-2xl shadow-sm">
+                        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <div className={`
-          grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-          ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}
-        `}>
-                    <div className="overflow-hidden">
-                        <div className="p-8 pt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* 27th Floor Guide */}
-                            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Building2 size={80} />
+                            {/* 27th Floor Card */}
+                            <div className="relative rounded-xl overflow-hidden border border-blue-100 dark:border-blue-500/10">
+                                {/* Gradient Header */}
+                                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-3 flex items-center gap-3">
+                                    <div className="p-1.5 bg-white/20 rounded-lg">
+                                        <Building2 size={14} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-black text-white tracking-wide">{t('floor27CityTower')}</p>
+                                    </div>
                                 </div>
-                                <h4 className="text-xs font-bold text-indigo-500 dark:text-indigo-400 flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                                    Floor 27 - City Tower
-                                </h4>
-                                <div className="space-y-4 relative z-10">
-                                    {[
-                                        { label: 'Pickup Incoming', code: '#70 + Ext' },
-                                        { label: 'Call to 26th Floor', code: '## + Ext lt.26' },
-                                        { label: 'Outgoing Call', code: '* + PIN + 9 + PHONE NUMBER' }
-                                    ].map((item, i) => (
-                                        <div key={i} className="flex justify-between items-center group/item">
-                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition-colors">{item.label}</span>
-                                            <kbd className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 shadow-sm group-hover/item:border-indigo-200 dark:group-hover/item:border-indigo-500/30 transition-all">{item.code}</kbd>
-                                        </div>
-                                    ))}
+
+                                {/* Steps */}
+                                <div className="bg-slate-50/50 dark:bg-slate-800/30 px-4 py-3 space-y-2.5">
+                                    {floor27Steps.map((step, i) => {
+                                        const Icon = step.icon;
+                                        return (
+                                            <div key={i} className="flex items-center justify-between gap-3 group/row">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className={`p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm shrink-0`}>
+                                                        <Icon size={11} className={step.color} />
+                                                    </div>
+                                                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate group-hover/row:text-blue-600 dark:group-hover/row:text-blue-400 transition-colors">
+                                                        {step.label}
+                                                    </span>
+                                                </div>
+                                                <kbd className="shrink-0 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-mono font-black text-slate-700 dark:text-slate-200 shadow-sm whitespace-nowrap group-hover/row:border-blue-300 dark:group-hover/row:border-blue-500/40 group-hover/row:text-blue-700 dark:group-hover/row:text-blue-300 transition-all">
+                                                    {step.code}
+                                                </kbd>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* 26th Floor Guide */}
-                            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <MapPin size={80} />
+                            {/* 26th Floor Card */}
+                            <div className="relative rounded-xl overflow-hidden border border-emerald-100 dark:border-emerald-500/10">
+                                {/* Gradient Header */}
+                                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-3 flex items-center gap-3">
+                                    <div className="p-1.5 bg-white/20 rounded-lg">
+                                        <MapPin size={14} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-black text-white tracking-wide">{t('floor26GesitResources')}</p>
+                                    </div>
                                 </div>
-                                <h4 className="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                                    Floor 26 - Gesit Resources
-                                </h4>
-                                <div className="space-y-4 relative z-10">
-                                    {[
-                                        { label: 'Pickup Incoming', code: '#41 + Ext' },
-                                        { label: 'Call to 27th Floor', code: '88** + PIN + Ext lt.27' },
-                                        { label: 'Outgoing Call', code: '81** + PIN + PHONE NUMBER' }
-                                    ].map((item, i) => (
-                                        <div key={i} className="flex justify-between items-center group/item">
-                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors">{item.label}</span>
-                                            <kbd className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 shadow-sm group-hover/item:border-emerald-200 dark:group-hover/item:border-emerald-500/30 transition-all">{item.code}</kbd>
-                                        </div>
-                                    ))}
+
+                                {/* Steps */}
+                                <div className="bg-slate-50/50 dark:bg-slate-800/30 px-4 py-3 space-y-2.5">
+                                    {floor26Steps.map((step, i) => {
+                                        const Icon = step.icon;
+                                        return (
+                                            <div key={i} className="flex items-center justify-between gap-3 group/row">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className={`p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm shrink-0`}>
+                                                        <Icon size={11} className={step.color} />
+                                                    </div>
+                                                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate group-hover/row:text-emerald-600 dark:group-hover/row:text-emerald-400 transition-colors">
+                                                        {step.label}
+                                                    </span>
+                                                </div>
+                                                <kbd className="shrink-0 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-mono font-black text-slate-700 dark:text-slate-200 shadow-sm whitespace-nowrap group-hover/row:border-emerald-300 dark:group-hover/row:border-emerald-500/40 group-hover/row:text-emerald-700 dark:group-hover/row:text-emerald-300 transition-all">
+                                                    {step.code}
+                                                </kbd>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -148,6 +202,7 @@ const InstructionPanel = () => {
         </div>
     );
 };
+
 
 // 2. Extension Card
 const ExtensionCard: React.FC<{
@@ -159,6 +214,7 @@ const ExtensionCard: React.FC<{
     onEdit?: (ext: PhoneExtension) => void;
     onDelete?: (id: number) => void;
 }> = ({ ext, index, canEdit, isAdmin, isFocused, onEdit, onDelete }) => {
+    const { t } = useLanguage();
     const [copied, setCopied] = useState(false);
     const is27 = ext.floor === 27;
 
@@ -205,7 +261,7 @@ const ExtensionCard: React.FC<{
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-16 -mt-16 transition-transform duration-700 group-hover:scale-150`} />
 
             {/* Left Side: Info */}
-            <div className={`flex-1 p-4 pr-2 flex flex-col justify-between relative z-10`}>
+            <div className={`flex-1 p-4 pr-2 flex flex-col justify-between relative z-10`} >
                 <div className="flex items-center gap-4">
                     <UserAvatar
                         name={ext.name}
@@ -215,15 +271,15 @@ const ExtensionCard: React.FC<{
                     />
                     <div className="min-w-0 flex flex-col justify-center">
                         <h3 className="text-[17px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={ext.name}>
-                            {ext.name.toUpperCase()}
+                            {capitalizeWords(ext.name)}
                         </h3>
                         <div className="flex flex-col mt-0.5">
                             <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400 truncate tracking-wide" title={ext.dept}>
-                                {ext.dept.toUpperCase()}
+                                {ext.dept}
                             </p>
                             {ext.role && (
                                 <p className="text-[10px] text-slate-300 dark:text-slate-500 font-medium truncate mt-0.5">
-                                    {ext.role?.toUpperCase()}
+                                    {ext.role}
                                 </p>
                             )}
                         </div>
@@ -234,7 +290,7 @@ const ExtensionCard: React.FC<{
                     <div className="flex items-center gap-2">
                         <MapPin size={10} className="text-primary/60" />
                         <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
-                            Floor {ext.floor}
+                            {t('floorLabel')} {ext.floor}
                         </span>
                     </div>
 
@@ -255,14 +311,14 @@ const ExtensionCard: React.FC<{
                     w-20 group/btn relative flex flex-col items-center justify-center cursor-pointer transition-all duration-500
                     border-l border-slate-200/30 dark:border-slate-800/30 overflow-hidden
                 `}
-                title="Click to copy extension"
+                title={t('clickToCopyExt')}
             >
                 {/* Active Hover Background */}
                 <div className={`absolute inset-0 transition-opacity duration-500 opacity-0 group-hover/btn:opacity-100 ${theme.rightBg}`} />
 
                 <div className="relative z-10 flex flex-col items-center scale-110">
                     <span className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 transition-colors duration-300 ${copied ? 'text-white' : 'text-slate-400 dark:text-slate-300 group-hover/btn:text-white/70'}`}>
-                        {copied ? 'Copied' : 'Ext'}
+                        {copied ? t('extCopied') : 'Ext'}
                     </span>
                     <span className={`text-3xl font-black tracking-tighter tabular-nums transition-all duration-300 ${copied
                         ? 'text-white scale-110'
@@ -302,6 +358,7 @@ const ExtensionTable: React.FC<{
     onEdit?: (ext: PhoneExtension) => void;
     onDelete?: (id: number) => void;
 }> = ({ extensions, canEdit, isAdmin, onEdit, onDelete }) => {
+    const { t } = useLanguage();
     const [copiedId, setCopiedId] = useState<number | null>(null);
 
     const handleCopy = (id: number, text: string) => {
@@ -316,13 +373,13 @@ const ExtensionTable: React.FC<{
                 <Table>
                     <TableHeader className="bg-slate-50/50 dark:bg-slate-900/40">
                         <TableRow className="border-border/10 dark:border-white/[0.03]">
-                            <TableHead className="w-20 text-center font-bold text-[10px] text-muted-foreground/70">Identity</TableHead>
-                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">Contact</TableHead>
-                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">Extension</TableHead>
-                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">Department</TableHead>
-                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">Location</TableHead>
-                            {isAdmin && <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">PIN</TableHead>}
-                            {(canEdit || isAdmin) && <TableHead className="text-right font-bold text-[10px] text-muted-foreground/70 pr-6">Actions</TableHead>}
+                            <TableHead className="w-20 text-center font-bold text-[10px] text-muted-foreground/70">{t('nameLabel')}</TableHead>
+                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">{t('nameLabel')}</TableHead>
+                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">{t('extensionLabel')}</TableHead>
+                            <TableHead className="font-bold text-[10px] text-muted-foreground/70">{t('deptLabel')}</TableHead>
+                            <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">{t('floorLabel')}</TableHead>
+                            {isAdmin && <TableHead className="text-center font-bold text-[10px] text-muted-foreground/70">{t('pinLabel')}</TableHead>}
+                            {(canEdit || isAdmin) && <TableHead className="text-right font-bold text-[10px] text-muted-foreground/70 pr-6">{t('actions')}</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -341,9 +398,9 @@ const ExtensionTable: React.FC<{
                                 <TableCell className="py-5">
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
-                                            {ext.name.toUpperCase()}
+                                            {capitalizeWords(ext.name)}
                                         </span>
-                                        {ext.role && <span className="text-[10px] font-medium text-muted-foreground/70 mt-1 italic">{ext.role?.toUpperCase()}</span>}
+                                        {ext.role && <span className="text-[10px] font-medium text-muted-foreground/70 mt-1 italic">{ext.role}</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
@@ -357,7 +414,7 @@ const ExtensionTable: React.FC<{
                                 </TableCell>
                                 <TableCell className="py-5">
                                     <span className="px-3 py-1 rounded-lg bg-muted/50 dark:bg-slate-800/40 text-[10px] font-bold text-muted-foreground/80 border border-border/10">
-                                        {ext.dept.toUpperCase()}
+                                        {ext.dept}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-center py-5">
@@ -366,7 +423,7 @@ const ExtensionTable: React.FC<{
                                             ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
                                             : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}
                                     `}>
-                                        Floor {ext.floor}
+                                        {t('floorLabel')} {ext.floor}
                                     </span>
                                 </TableCell>
                                 {isAdmin && (
@@ -410,6 +467,7 @@ export const ExtensionDirectory = ({
     onFloorFilterChange?: (floor: 'All' | 26 | 27) => void;
 }) => {
     const { showToast } = useToast();
+    const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState("");
     const [floorFilter, setFloorFilter] = useState<'All' | 26 | 27>('All');
     const [extensions, setExtensions] = useState<PhoneExtension[]>([]);
@@ -773,6 +831,22 @@ export const ExtensionDirectory = ({
         }
     };
 
+    const handleExportPDF = () => {
+        if (extensions.length === 0) return;
+
+        exportDirectoryPDF(extensions);
+
+        if (currentUser) {
+            trackActivity(
+                currentUser.fullName,
+                currentUser.role,
+                'Export PDF',
+                'Directory',
+                `Exported ${extensions.length} extensions to PDF`
+            );
+        }
+    };
+
     return (
         <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
             
@@ -783,13 +857,23 @@ export const ExtensionDirectory = ({
 
             {/* Simple Public Title */}
             {variant === 'integrated' && (
-                <div className="mb-10 pt-4">
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                        PHONE DIRECTORY
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
-                        THE CITY TOWER - FLOOR 26 & 27
-                    </p>
+                <div className="mb-10 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                            PHONE DIRECTORY
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
+                            THE CITY TOWER - FLOOR 26 & 27
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={handleExportPDF} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
+                            <FileText className="mr-2 h-4 w-4 text-red-500" /> {t('exportPdf')}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
+                            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-500" /> {t('exportData')}
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -797,15 +881,18 @@ export const ExtensionDirectory = ({
             {variant === 'standalone' && (
                 <div className="mb-6 pt-4">
                     <PageHeader title="Phone Directory" description="The City Tower & Infrastructure Registry">
-                        <Button variant="outline" onClick={handleExportExcel}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
+                        <Button variant="outline" onClick={handleExportPDF} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
+                            <FileText className="mr-2 h-4 w-4 text-red-500" /> {t('exportPdf')}
+                        </Button>
+                        <Button variant="outline" onClick={handleExportExcel} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
+                            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-500" /> {t('exportData')}
                         </Button>
                         {canEdit && (
                             <Button
                                 onClick={() => openModal()}
-                                className="bg-black hover:bg-black/90 text-white dark:bg-white dark:text-black dark:hover:bg-white/90 shadow-sm"
+                                className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm"
                             >
-                                <Plus className="mr-2 h-4 w-4" /> Add Extension
+                                <Plus className="mr-2 h-4 w-4" /> {t('addingExtension')}
                             </Button>
                         )}
                     </PageHeader>
@@ -821,19 +908,19 @@ export const ExtensionDirectory = ({
                             color="slate"
                         />
                         <StatCard
-                            label="27th Floor"
+                            label="The Gesit Companies"
                             value={stats.floor27}
-                            icon={Building2}
+                            icon="/image/logo.png"
                             percentageChange={2}
-                            subValue="City Tower Upper Deck"
+                            subValue="Floor 27"
                             color="blue"
                         />
                         <StatCard
-                            label="26th Floor"
+                            label="Gesit Natural Resources"
                             value={stats.floor26}
-                            icon={MapPin}
+                            icon="/image/logo.png"
                             percentageChange={5}
-                            subValue="Infrastructure Base"
+                            subValue="Floor 26"
                             color="emerald"
                             status="on-track"
                         />
@@ -860,7 +947,7 @@ export const ExtensionDirectory = ({
                     <div className="relative flex-1 flex items-center bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                         <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
                         <Input
-                            placeholder="Find name or extension..."
+                            placeholder={t('searchDirectoryPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-11 pr-10 py-6 bg-transparent border-none rounded-2xl font-bold focus-visible:ring-0 outline-none shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50"
@@ -886,7 +973,7 @@ export const ExtensionDirectory = ({
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >
-                                ALL
+                                {t('allFloors')}
                             </button>
                             <button
                                 onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
@@ -895,7 +982,7 @@ export const ExtensionDirectory = ({
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >
-                                FLOOR 26
+                                {t('floorLabel')} 26
                             </button>
                             <button
                                 onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
@@ -904,7 +991,7 @@ export const ExtensionDirectory = ({
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >
-                                FLOOR 27
+                                {t('floorLabel')} 27
                             </button>
                         </div>
 
@@ -916,7 +1003,7 @@ export const ExtensionDirectory = ({
                                     ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
                                     : 'text-slate-400 hover:text-slate-600'
                                     }`}
-                                title="Grid View"
+                                title={t('gridMode')}
                             >
                                 <LayoutGrid size={18} />
                             </button>
@@ -926,7 +1013,7 @@ export const ExtensionDirectory = ({
                                     ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
                                     : 'text-slate-400 hover:text-slate-600'
                                     }`}
-                                title="Table View"
+                                title={t('tableMode')}
                             >
                                 <LayoutList size={18} />
                             </button>
@@ -1049,7 +1136,7 @@ export const ExtensionDirectory = ({
                                     {editingExt ? <Pencil size={18} /> : <Plus size={18} />}
                                 </div>
                                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                    {editingExt ? 'Edit Record' : 'Create Record'}
+                                    {editingExt ? t('editingExtension') : t('addingExtension')}
                                 </h3>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} aria-label="Close modal" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
@@ -1059,19 +1146,19 @@ export const ExtensionDirectory = ({
 
                         <form onSubmit={handleSave} className="p-6 space-y-4">
                             <div>
-                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Identity Name</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('nameLabel')}</label>
                                 <Input
                                     required
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:bg-white dark:focus-visible:bg-slate-700/50 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 transition-all shadow-inner"
                                     value={formData.name}
                                     placeholder="Full name..."
-                                    onChange={e => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
 
                             {/* Photo Upload Section */}
                             <div>
-                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Profile Photo</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('uploadPhoto')}</label>
                                 <div className="flex gap-4 items-start">
                                     <div className="relative group shrink-0">
                                         <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden">
@@ -1113,7 +1200,7 @@ export const ExtensionDirectory = ({
                                             >
                                                 <UploadCloud size={16} />
                                                 <span className="text-[10px] font-black uppercase tracking-widest">
-                                                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                                                    {isUploading ? t('loading') : t('uploadPhoto')}
                                                 </span>
                                             </label>
                                         </div>
@@ -1140,7 +1227,7 @@ export const ExtensionDirectory = ({
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Extension Code</label>
+                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('extensionLabel')}</label>
                                     <Input
                                         required
                                         className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-black text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
@@ -1150,7 +1237,7 @@ export const ExtensionDirectory = ({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Floor Level</label>
+                                    <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('floorFieldLabel')}</label>
                                     <select
                                         className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-inner"
                                         value={formData.floor}
@@ -1162,25 +1249,27 @@ export const ExtensionDirectory = ({
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Departmental Cluster</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('deptLabel')}</label>
                                 <Input
                                     required
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.dept}
                                     placeholder="Cluster..."
-                                    onChange={e => setFormData({ ...formData, dept: e.target.value.toUpperCase() })}
+                                    onChange={e => setFormData({ ...formData, dept: e.target.value })}
+                                    onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Role Designation</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('roleLabel')}</label>
                                 <Input
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner"
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value.toUpperCase() })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Pin Code</label>
+                                <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('pinLabel')}</label>
                                 <Input
                                     className="w-full px-5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 outline-none transition-all shadow-inner font-mono"
                                     value={formData.pin}
@@ -1195,14 +1284,14 @@ export const ExtensionDirectory = ({
                                     variant="outline"
                                     onClick={() => setIsModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={isSaving}
                                 >
                                     {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : <Check size={16} className="mr-2" />}
-                                    {editingExt ? 'Save Changes' : 'Create Entry'}
+                                    {editingExt ? t('save') : t('addingExtension')}
                                 </Button>
                             </div>
                         </form>
