@@ -100,9 +100,9 @@ export const StatCard: React.FC<StatCardProps> = ({
 
             <div className="mt-auto">
                 <div className="flex items-center justify-between">
-                    <h4 className="text-3xl font-bold tracking-tight text-foreground">
+                    <div className="text-3xl font-bold tracking-tight text-foreground">
                         {value}
-                    </h4>
+                    </div>
                     {calculatedChange !== undefined && (
                         <div className={`flex items-center gap-0.5 font-bold text-xs ${trendDirection === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {trendDirection === 'up' ? <ArrowUpRight size={14} strokeWidth={2.5} /> : <ArrowDownRight size={14} strokeWidth={2.5} />}

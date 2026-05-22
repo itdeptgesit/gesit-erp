@@ -175,7 +175,7 @@ export const EcommerceDashboard: React.FC<{ userName?: string }> = ({ userName =
                             <BarChart data={earningData} layout="vertical" margin={{ left: -30 }}>
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--muted-foreground)', opacity: 0.6 }} />
-                                <Tooltip cursor={{fill: 'var(--foreground)', opacity: 0.05}} contentStyle={{ borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', background: 'var(--card)', color: 'var(--foreground)' }} />
+                                <Tooltip isAnimationActive={false} cursor={{fill: 'var(--foreground)', opacity: 0.05}} contentStyle={{ borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', background: 'var(--card)', color: 'var(--foreground)', width: '180px' }} />
                                 <Bar dataKey="value" fill="currentColor" className="text-slate-800 dark:text-white" radius={[0, 8, 8, 0]} barSize={28} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -244,7 +244,7 @@ export const EcommerceDashboard: React.FC<{ userName?: string }> = ({ userName =
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--muted-foreground)', opacity: 0.5 }} dy={15} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: 'var(--muted-foreground)', opacity: 0.5 }} />
-                                <Tooltip contentStyle={{ borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', background: 'var(--card)', color: 'var(--foreground)' }} />
+                                <Tooltip isAnimationActive={false} contentStyle={{ borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', background: 'var(--card)', color: 'var(--foreground)', width: '180px' }} />
                                 <Line type="monotone" dataKey="value" stroke="var(--foreground)" strokeWidth={4} dot={{ r: 4, stroke: 'var(--card)', strokeWidth: 2, fill: 'var(--foreground)' }} activeDot={{ r: 6 }} />
                                 <Line type="monotone" dataKey="value2" stroke="var(--muted-foreground)" strokeWidth={2} strokeDasharray="5 5" dot={false} opacity={0.4} />
                             </LineChart>

@@ -68,14 +68,16 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onLogout, onNavigate,
-  user,
+  user, userRole, userGroups = [],
 }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [themeColor, setThemeColor] = useState<string>('default');
+
+  const isAdmin = userRole === 'Admin' || userGroups.some(g => g.toLowerCase() === 'admin');
 
   const userName = user?.name || 'User';
 
@@ -199,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="z-50 h-16 header-fixed peer/header sticky top-0 w-[inherit]">
+    <div className="z-50 h-16 header-fixed peer/header w-full bg-transparent transition-all duration-300">
       <GlobalSearch open={searchOpen} setOpen={setSearchOpen} />
       <div className="relative flex h-full items-center gap-3 p-4 sm:gap-4">
         <div className="flex-1 w-full pl-2 md:pl-0">
@@ -340,15 +342,17 @@ export const Header: React.FC<HeaderProps> = ({
                   className="rounded-xl px-3 py-2.5 cursor-pointer"
                 >
                   <User size={16} className="text-muted-foreground" />
-                  <span className="text-[13px] font-semibold">Profile</span>
+                  <span className="text-[13px] font-semibold">{t('profile')}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  render={<Link to="/settings" className="flex w-full items-center gap-2" />} 
-                  className="rounded-xl px-3 py-2.5 cursor-pointer"
-                >
-                  <Settings size={16} className="text-muted-foreground" />
-                  <span className="text-[13px] font-semibold">Settings</span>
-                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem 
+                    render={<Link to="/system-settings" className="flex w-full items-center gap-2" />} 
+                    className="rounded-xl px-3 py-2.5 cursor-pointer"
+                  >
+                    <Settings size={16} className="text-muted-foreground" />
+                    <span className="text-[13px] font-semibold">{t('settings')}</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator className="my-2 opacity-50" />
               <DropdownMenuItem 
@@ -357,12 +361,12 @@ export const Header: React.FC<HeaderProps> = ({
                 className="rounded-xl px-3 py-2.5 focus:bg-destructive/10 focus:text-destructive"
               >
                 <LogOut size={16} />
-                <span className="text-[13px] font-bold">Sign Out</span>
+                <span className="text-[13px] font-bold">{t('logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-    </header>
+    </div>
   );
 };

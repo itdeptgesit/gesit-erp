@@ -100,8 +100,8 @@ const PriorityItem = ({ title, count, type, onClick }: any) => (
                 {type === 'critical' ? <AlertCircle size="S" /> : type === 'warning' ? <Clock size="S" /> : <Checklist size="S" />}
             </div>
             <div>
-                <h4 className="font-semibold text-foreground text-sm">{title}</h4>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Attention required</p>
+                <h2 className="font-semibold text-foreground text-sm">{title}</h2>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-tight">Attention required</p>
             </div>
         </div>
         <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* My Tasks Today */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">My Tasks Today</h3>
+                                <h2 className="text-base font-semibold text-foreground">My Tasks Today</h2>
                             </div>
                             <div className="space-y-4">
                                 {stats.personalTasks.slice(0, 3).map((task) => (
@@ -357,12 +357,12 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-foreground truncate">{task.task}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{task.due_date || 'Today'}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">{task.due_date || 'Today'}</p>
                                         </div>
                                         {task.status === 'Overdue' && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 font-bold">OVERDUE</Badge>}
                                     </div>
                                 ))}
-                                <Button variant="link" className="h-auto text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary mt-2" onClick={() => onNavigate('weekly')}>
+                                <Button variant="link" className="h-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-primary mt-2" onClick={() => onNavigate('weekly')}>
                                     View All Tasks
                                 </Button>
                             </div>
@@ -371,8 +371,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* My Tickets Overview Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">My Tickets</h3>
-                                <span className="text-muted-foreground"><Activity size="S" /></span>
+                                <h2 className="text-base font-semibold text-foreground">My Tickets</h2>
+                                <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
                             </div>
                             <div className="h-48 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -396,8 +396,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* My Borrowed Assets */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">My Assets</h3>
-                                <span className="text-muted-foreground"><Box size="S" /></span>
+                                <h2 className="text-base font-semibold text-foreground">My Assets</h2>
+                                <span className="text-slate-500 dark:text-zinc-400"><Box size="S" /></span>
                             </div>
                             <div className="space-y-4">
                                 {stats.upcomingLoans.slice(0, 2).map((loan: any, i) => (
@@ -407,12 +407,12 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-foreground">{loan.borrower_name || 'My Asset'}</p>
-                                            <p className="text-[10px] text-muted-foreground truncate">{loan.it_assets?.item_name || 'Device'}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{loan.it_assets?.item_name || 'Device'}</p>
                                         </div>
-                                        <div className="text-[10px] font-bold text-muted-foreground">APR 25</div>
+                                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-400">APR 25</div>
                                     </div>
                                 ))}
-                                <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-bold uppercase tracking-wider" onClick={() => onNavigate('asset-loan')}>
+                                <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-semibold uppercase tracking-wider" onClick={() => onNavigate('asset-loan')}>
                                     View All <span className="ml-1"><ChevronRight size="S" /></span>
                                 </Button>
                             </div>
@@ -422,10 +422,10 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     {/* Row 3 - Recent Activity & History */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Recent Activity</h3>
-                                <span className="text-muted-foreground"><Activity size="S" /></span>
-                            </div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-base font-semibold text-foreground">Recent Activity</h2>
+                                    <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
+                                </div>
                             <div className="space-y-6">
                                 {stats.recentActivities.length > 0 ? stats.recentActivities.slice(0, 3).map((act, i) => (
                                     <div key={i} className="flex gap-4">
@@ -434,7 +434,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-foreground">{act.activityName}</p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                 )) : (
@@ -470,7 +470,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                             <Shield size="S" />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Overdue Assets Detected</h4>
+                                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Overdue Assets Detected</h2>
                                             <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{stats.overdueLoans} asset loans are past their return date.</p>
                                         </div>
                                     </div>
@@ -490,7 +490,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                             <Help size="S" />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Active Support Tickets</h4>
+                                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Active Support Tickets</h2>
                                             <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{stats.openTickets} tickets are currently waiting for response.</p>
                                         </div>
                                     </div>
@@ -531,10 +531,10 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* Budget Utilization Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-base font-semibold text-foreground">Budget Utilization</h3>
-                                <span className="text-muted-foreground"><GraphPie size="S" /></span>
+                                <h2 className="text-base font-semibold text-foreground">Budget Utilization</h2>
+                                <span className="text-slate-500 dark:text-zinc-400"><GraphPie size="S" /></span>
                             </div>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-4 opacity-70">Paid vs Total Commitment</p>
+                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider mb-4">Paid vs Total Commitment</p>
                             
                             <div className="h-48 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -557,17 +557,17 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span className="text-2xl font-bold text-foreground">{stats.budgetUtilization.utilizationRate}%</span>
-                                    <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60">Utilized</span>
+                                    <span className="text-[8px] font-black text-slate-500 dark:text-zinc-400 uppercase">Utilized</span>
                                 </div>
                             </div>
                             
                             <div className="mt-4 flex justify-between items-center bg-muted/30 p-3 rounded-xl">
                                 <div>
-                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Paid Amount</p>
+                                    <p className="text-[8px] font-semibold text-slate-500 dark:text-zinc-400 uppercase">Paid Amount</p>
                                     <p className="text-xs font-bold text-emerald-600">{formatCurrency(stats.budgetUtilization.paid)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Total Committed</p>
+                                    <p className="text-[8px] font-semibold text-slate-500 dark:text-zinc-400 uppercase">Total Committed</p>
                                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatCurrency(stats.budgetUtilization.total)}</p>
                                 </div>
                             </div>
@@ -576,7 +576,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* Critical Alerts */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Critical Alerts</h3>
+                                <h2 className="text-base font-semibold text-foreground">Critical Alerts</h2>
                             </div>
                             <div className="space-y-3">
                                 {stats.overdueLoans > 0 && (
@@ -598,21 +598,21 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 
                                 {stats.overdueLoans === 0 && stats.openTickets === 0 && (
                                     <div className="py-8 text-center">
-                                        <span className="text-emerald-500 mx-auto mb-2 opacity-20"><CheckmarkCircle size="XXL" /></span>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">No critical alerts</p>
+                                        <span className="text-emerald-500 mx-auto mb-2 opacity-30"><CheckmarkCircle size="XXL" /></span>
+                                        <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase">No critical alerts</p>
                                     </div>
                                 )}
                             </div>
                             <div className="mt-8 text-center border-t pt-4">
-                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground" onClick={() => onNavigate('asset-loan')}>View All Asset Loans</Button>
+                                <Button variant="ghost" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-primary" onClick={() => onNavigate('asset-loan')}>View All Asset Loans</Button>
                             </div>
                         </div>
 
                         {/* Purchase by Category Chart */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-base font-semibold text-foreground">Project Revenue Trend</h3>
-                                <span className="text-muted-foreground"><GraphTrend size="XS" /></span>
+                                <h2 className="text-base font-semibold text-foreground">Project Revenue Trend</h2>
+                                <span className="text-slate-500 dark:text-zinc-400"><GraphTrend size="XS" /></span>
                             </div>
                             <div className="h-56 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -650,7 +650,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 </ResponsiveContainer>
                             </div>
                             <div className="mt-4 text-center border-t pt-2">
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Based on Verified Payments</p>
+                                <p className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em]">Based on Verified Payments</p>
                             </div>
                         </div>
                     </div>
@@ -659,7 +659,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Asset Composition Pie */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-1">
-                            <h3 className="text-sm font-semibold text-foreground mb-4">Asset Matrix</h3>
+                            <h2 className="text-sm font-semibold text-foreground mb-4">Asset Matrix</h2>
                             <div className="h-48 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RePieChart>
@@ -670,16 +670,16 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span className="text-xl font-bold">{stats.totalAssets}</span>
-                                    <span className="text-[8px] font-semibold uppercase text-muted-foreground">Total</span>
+                                    <span className="text-[8px] font-semibold uppercase text-slate-500 dark:text-zinc-400">Total</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 mt-6">
                                 <div className="text-center">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">IT UNITS</p>
+                                    <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-tight">IT UNITS</p>
                                     <p className="text-sm font-bold">251</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">GA UNITS</p>
+                                    <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-tight">GA UNITS</p>
                                     <p className="text-sm font-bold">65</p>
                                 </div>
                             </div>
@@ -688,8 +688,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         {/* Recent Purchase Activities */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-2">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-semibold text-foreground">Asset Activity Log</h3>
-                                <span className="text-muted-foreground"><Activity size="XS" /></span>
+                                <h2 className="text-base font-semibold text-foreground">Asset Activity Log</h2>
+                                <span className="text-slate-500 dark:text-zinc-400"><Activity size="XS" /></span>
                             </div>
                             <div className="space-y-4">
                                 {stats.recentActivities.length > 0 ? stats.recentActivities.map((act, i) => (
@@ -700,9 +700,9 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-0.5">
                                                 <p className="text-sm font-bold text-foreground truncate">{act.activityName}</p>
-                                                <span className="text-[10px] font-bold text-muted-foreground shrink-0">{new Date(act.createdAt).toLocaleDateString()}</span>
+                                                <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 shrink-0">{new Date(act.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{act.itPersonnel}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">{act.itPersonnel}</p>
                                         </div>
                                     </div>
                                 )) : (
@@ -713,7 +713,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
 
                         {/* Active Loans List */}
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-1">
-                            <h3 className="text-sm font-semibold text-foreground mb-4">Active Loans</h3>
+                            <h2 className="text-sm font-semibold text-foreground mb-4">Active Loans</h2>
                             <div className="space-y-4">
                                 {[1, 2, 3, 4].map((i) => (
                                     <div key={i} className="flex items-center gap-3">
@@ -722,9 +722,9 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-semibold truncate">User Name</p>
-                                            <p className="text-[9px] text-muted-foreground truncate">Laptop Device</p>
+                                            <p className="text-[9px] text-slate-500 dark:text-zinc-400 truncate">Laptop Device</p>
                                         </div>
-                                        <span className="text-[9px] font-bold text-muted-foreground/50 text-right">04/24</span>
+                                        <span className="text-[9px] font-semibold text-slate-500 dark:text-zinc-400 text-right">04/24</span>
                                     </div>
                                 ))}
                             </div>

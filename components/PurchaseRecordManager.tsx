@@ -31,6 +31,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#0f172a] text-white border-none rounded-2xl p-4 shadow-2xl w-[220px] pointer-events-none flex flex-col gap-2">
+                <p className="text-[#64748b] text-[11px] font-bold uppercase tracking-wider m-0 leading-none">{label}</p>
+                <div className="flex flex-col gap-1">
+                    {payload.map((pld: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center text-xs font-bold">
+                            <span className="text-[#94a3b8] uppercase text-[10px] tracking-wider">Audit Value</span>
+                            <span className="text-white font-mono">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(pld.value)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
     const { t } = useLanguage();
     const { showToast } = useToast();
@@ -453,7 +472,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10 pt-6">
+        <div className="space-y-8 animate-in fade-in duration-200 pb-10 pt-6">
             {/* Header & Financial Health */}
             <div className="space-y-8 mb-10">
                 <PageHeader
@@ -628,8 +647,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     <BarChart3 size={18} />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm uppercase">Fiscal Trend</h3>
-                                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Monthly transaction volume</p>
+                                    <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm uppercase">Fiscal Trend</h2>
+                                    <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Monthly transaction volume</p>
                                 </div>
                             </div>
                         </div>
@@ -646,11 +665,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 800, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
                                     <Tooltip
+                                        isAnimationActive={false}
                                         cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                        contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '16px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
-                                        itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
-                                        labelStyle={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                                        formatter={(val: number) => [new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val), 'AUDIT VALUE']}
+                                        content={<CustomTooltip />}
                                     />
                                     <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
                                     <Bar dataKey="total" barSize={30} radius={[6, 6, 0, 0]} fill="#3b82f6" opacity={0.1} />
@@ -671,8 +688,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 <Briefcase size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Departmental</h3>
-                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Utilization track</p>
+                                <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Departmental</h2>
+                                <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Utilization track</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
@@ -708,8 +725,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 <Tag size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h3 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Classified</h3>
-                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Cost breakdown</p>
+                                <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Classified</h2>
+                                <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Cost breakdown</p>
                             </div>
                         </div>
                         <div className="space-y-3 flex-1">
@@ -743,7 +760,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             <Card className="shadow-sm rounded-xl overflow-hidden border-none bg-background/50 backdrop-blur-sm">
                 <CardHeader className="px-8 py-5 border-b flex flex-row items-center justify-between bg-muted/20">
                     <div className="space-y-1">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/70">General Transaction Ledger</h3>
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-foreground/80">General Transaction Ledger</h2>
                         <div className="flex items-center gap-2">
                             <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
                             <span className="text-[11px] font-bold text-muted-foreground">{filteredRecords.length} Records Found</span>
@@ -752,16 +769,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 </CardHeader>
 
                 <CardContent className="p-0 overflow-x-auto">
-                    <Table>
+                    <Table className="table-fixed">
                         <TableHeader>
                             <TableRow className="bg-muted/50 border-b">
-                                <TableHead className="font-bold py-5 px-6">Audit Identity</TableHead>
-                                <TableHead className="font-bold py-5 px-6">Item & Procurement Details</TableHead>
-                                <TableHead className="text-right font-bold py-5 px-6">Fiscal Value</TableHead>
-                                <TableHead className="font-bold py-5 px-6">Corporate entity</TableHead>
-                                <TableHead className="font-bold py-5 px-6">Ledger Status</TableHead>
-                                <TableHead className="text-center font-bold py-5 px-6">Audit Docs</TableHead>
-                                <TableHead className="text-right font-bold pr-10 py-5 px-6">Control</TableHead>
+                                <TableHead className="font-bold py-5 px-6 w-[15%]">Audit Identity</TableHead>
+                                <TableHead className="font-bold py-5 px-6 w-[27%]">Item & Procurement Details</TableHead>
+                                <TableHead className="text-right font-bold py-5 px-6 w-[14%]">Fiscal Value</TableHead>
+                                <TableHead className="font-bold py-5 px-6 w-[14%]">Corporate entity</TableHead>
+                                <TableHead className="font-bold py-5 px-6 w-[10%]">Ledger Status</TableHead>
+                                <TableHead className="text-center font-bold py-5 px-6 w-[8%]">Audit Docs</TableHead>
+                                <TableHead className="text-right font-bold pr-10 py-5 px-6 w-[12%]">Control</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -815,8 +832,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     <TableCell className="py-7 px-6">
                                         <div className="flex flex-col gap-2 align-middle">
                                             <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md w-fit tracking-tighter border border-primary/20 shadow-sm">{record.transactionId}</span>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-semibold">
-                                                <Calendar size={11} className="opacity-70" />
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-semibold">
+                                                <Calendar size={11} className="opacity-80" />
                                                 {record.purchaseDate}
                                             </div>
                                         </div>
@@ -832,13 +849,13 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     </TableCell>
                                     <TableCell className="py-7 px-6 text-right">
                                         <p className="font-mono font-bold text-[13px] text-foreground tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Gross total</span>
+                                        <span className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Gross total</span>
                                     </TableCell>
                                     <TableCell className="py-7 px-6">
                                         <div className="flex flex-col gap-1">
                                             <p className="text-[10px] font-black text-foreground/80 uppercase tracking-widest">{record.company}</p>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold">
-                                                <Building2 size={11} className="text-primary/70" />
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-bold">
+                                                <Building2 size={11} className="text-primary" />
                                                 {record.department}
                                             </div>
                                         </div>
@@ -864,10 +881,10 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                     <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold border border-primary/20">
                                                         {Object.values(record.docs || {}).filter(v => v).length}/7
                                                     </span>
-                                                    <span className="text-[8px] font-black text-primary/70 uppercase tracking-tighter">Verified</span>
+                                                    <span className="text-[8px] font-black text-primary uppercase tracking-tighter">Verified</span>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-center gap-1 opacity-40">
+                                                <div className="flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
                                                     <span className="px-2.5 py-0.5 bg-muted text-muted-foreground rounded-md text-[10px] font-bold">0/7</span>
                                                     <span className="text-[8px] font-black uppercase tracking-tighter">Missing</span>
                                                 </div>
@@ -876,9 +893,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     </TableCell>
                                     <TableCell className="py-7 text-right pr-10 px-6">
                                         <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"><Eye size={15} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-9 text-muted-foreground"><Pencil size={15} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5"><Trash2 size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-9 text-muted-foreground hover:text-primary hover:bg-primary/5" aria-label="View Details"><Eye size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-9 text-muted-foreground" aria-label="Edit Entry"><Pencil size={15} /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5" aria-label="Delete Entry"><Trash2 size={15} /></Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>

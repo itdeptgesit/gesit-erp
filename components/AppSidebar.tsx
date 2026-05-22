@@ -156,12 +156,11 @@ export function NavigationSidebar({
 
         if (hasChildren) {
             return (
-                <Collapsible
-                    key={item.id}
-                    defaultOpen={isActive}
-                    className="group/collapsible"
-                >
-                    <SidebarMenuItem>
+                <SidebarMenuItem key={item.id}>
+                    <Collapsible
+                        defaultOpen={isActive}
+                        className="group/collapsible"
+                    >
                         <CollapsibleTrigger
                             render={
                                 <SidebarMenuButton
@@ -207,8 +206,8 @@ export function NavigationSidebar({
                                 })}
                             </SidebarMenuSub>
                         </CollapsibleContent>
-                    </SidebarMenuItem>
-                </Collapsible>
+                    </Collapsible>
+                </SidebarMenuItem>
             );
         }
 

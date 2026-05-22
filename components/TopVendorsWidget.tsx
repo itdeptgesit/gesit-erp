@@ -28,8 +28,8 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                     <Store size={16} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <h3 className="font-black text-slate-900 dark:text-white tracking-tight text-base leading-none">Key Suppliers</h3>
-                    <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">Top Entities</p>
+                    <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-base leading-none">Key Suppliers</h2>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">Top Entities</p>
                 </div>
             </div>
 

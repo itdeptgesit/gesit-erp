@@ -415,9 +415,19 @@ const InternalApp: React.FC = () => {
           isHelpdeskSupport: data.is_helpdesk_support,
           createdAt: data.created_at
         };
-        setCurrentUser(userProfile);
-        setIsAuthenticated(true);
 
+        // Load Google connection from Supabase safely
+        if (data['google_access_token']) {
+          localStorage.setItem('gcal_access_token', data['google_access_token']);
+        }
+        if (data['google_token_expiry']) {
+          localStorage.setItem('gcal_token_expiry', data['google_token_expiry']);
+        }
+        if (data['google_connected_flag'] !== undefined && data['google_connected_flag'] !== null) {
+          localStorage.setItem('google_connected_flag', String(data['google_connected_flag']));
+        }
+
+        setCurrentUser(userProfile);
         setIsAuthenticated(true);
       } else {
         // Auto-registration for missing internal accounts
@@ -751,7 +761,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
       />
       <SidebarInset>
         {/* Rest of the content */}
-        <header className="bg-background sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b">
+        <header className="bg-background/70 backdrop-blur-lg sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 px-4 border-b border-border/40 transition-all duration-300">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground/80 transition-all flex items-center justify-center border border-border/10">
               <PanelLeft size={16} strokeWidth={1.5} />

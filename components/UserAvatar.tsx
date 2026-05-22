@@ -38,7 +38,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ name, url, size = 'sm', 
     return (
         <div className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-bold text-white shadow-sm overflow-hidden border border-white/10 ring-2 ring-slate-100/50 dark:ring-white/5 shrink-0 ${url ? 'bg-slate-100' : fallbackColor} ${className}`}>
             {url ? (
-                <img src={url} alt={name} className="w-full h-full object-cover" />
+                <img src={url} alt="" aria-hidden="true" className="w-full h-full object-cover" />
             ) : initial}
         </div>
     );

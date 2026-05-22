@@ -110,7 +110,7 @@ export const AuditLogManager: React.FC<AuditLogManagerProps> = ({ currentUser })
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+        <div className="space-y-6 animate-in fade-in duration-200 pb-10">
             <PageHeader
                 title="System Tracking Log"
                 description="Audit Trail & Comprehensive Activity Monitor"

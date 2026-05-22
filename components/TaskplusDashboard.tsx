@@ -19,6 +19,8 @@ import { UserAccount, Announcement } from '../types';
 import { StatCard } from './StatCard';
 import { UserAvatar } from './UserAvatar';
 import { useLanguage } from '../translations';
+import { Mail, ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { isGoogleConnected, getStoredToken, signInWithGoogle, signOutGoogle } from '../lib/googleCalendar';
 
 // SHADCN UI IMPORTS
 import { Button } from "@/components/ui/button";
@@ -90,17 +92,19 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 // ─── Weather Helper & Component ───────────────────────────────────────────────
 
-const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
+const getWeatherDetails = (code: number | null, isDaytime: boolean, language: 'en' | 'id' = 'id') => {
     const defaultUrl = isDaytime 
         ? 'https://assets-v2.lottiefiles.com/a/5855a50a-1151-11ee-8713-db7d99d1cba7/0K62KcjosX.lottie'
         : 'https://assets-v2.lottiefiles.com/a/584838ca-1151-11ee-870e-2b08e98fd879/NLTBfths9o.lottie';
 
-    if (code === null) return { condition: 'Cerah', icon: isDaytime ? Sun : Moon, lottieUrl: defaultUrl };
+    const isEn = language === 'en';
+
+    if (code === null) return { condition: isEn ? 'Clear' : 'Cerah', icon: isDaytime ? Sun : Moon, lottieUrl: defaultUrl };
     
     switch (code) {
         case 0:
             return { 
-                condition: 'Cerah', 
+                condition: isEn ? 'Clear' : 'Cerah', 
                 icon: isDaytime ? Sun : Moon, 
                 lottieUrl: isDaytime 
                     ? 'https://assets-v2.lottiefiles.com/a/5855a50a-1151-11ee-8713-db7d99d1cba7/0K62KcjosX.lottie'
@@ -109,7 +113,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 1:
         case 2:
             return { 
-                condition: 'Cerah Berawan', 
+                condition: isEn ? 'Partly Cloudy' : 'Cerah Berawan', 
                 icon: isDaytime ? CloudSun : Moon, 
                 lottieUrl: isDaytime 
                     ? 'https://assets-v2.lottiefiles.com/a/584a51a0-1151-11ee-870f-73f0e4a25c18/OiRsquuDDf.lottie'
@@ -117,7 +121,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
             };
         case 3:
             return { 
-                condition: 'Berawan', 
+                condition: isEn ? 'Cloudy' : 'Berawan', 
                 icon: Cloud, 
                 lottieUrl: isDaytime 
                     ? 'https://assets-v2.lottiefiles.com/a/584a51a0-1151-11ee-870f-73f0e4a25c18/OiRsquuDDf.lottie'
@@ -126,7 +130,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 45:
         case 48:
             return { 
-                condition: 'Kabut', 
+                condition: isEn ? 'Foggy' : 'Kabut', 
                 icon: Wind, 
                 lottieUrl: 'https://assets-v2.lottiefiles.com/a/58360a9c-1151-11ee-8707-cf3589cbba23/k2vovxilDL.lottie'
             };
@@ -134,7 +138,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 53:
         case 55:
             return { 
-                condition: 'Gerimis', 
+                condition: isEn ? 'Drizzle' : 'Gerimis', 
                 icon: CloudDrizzle, 
                 lottieUrl: isDaytime
                     ? 'https://assets-v2.lottiefiles.com/a/58526552-1151-11ee-8710-7f5bc355e2bb/JIYnBacuWm.lottie'
@@ -143,7 +147,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 56:
         case 57:
             return { 
-                condition: 'Gerimis Dingin', 
+                condition: isEn ? 'Freezing Drizzle' : 'Gerimis Dingin', 
                 icon: CloudSnow, 
                 lottieUrl: 'https://assets-v2.lottiefiles.com/a/5837c3dc-1151-11ee-8709-1bfa94b3ca50/1JbNUYBlfw.lottie'
             };
@@ -154,7 +158,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 81:
         case 82:
             return { 
-                condition: 'Hujan', 
+                condition: isEn ? 'Rainy' : 'Hujan', 
                 icon: CloudRain, 
                 lottieUrl: isDaytime 
                     ? 'https://assets-v2.lottiefiles.com/a/58526552-1151-11ee-8710-7f5bc355e2bb/JIYnBacuWm.lottie'
@@ -167,7 +171,7 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 75:
         case 77:
             return { 
-                condition: 'Salju', 
+                condition: isEn ? 'Snowy' : 'Salju', 
                 icon: CloudSnow, 
                 lottieUrl: isDaytime 
                     ? 'https://assets-v2.lottiefiles.com/a/5837c3dc-1151-11ee-8709-1bfa94b3ca50/1JbNUYBlfw.lottie'
@@ -177,17 +181,488 @@ const getWeatherDetails = (code: number | null, isDaytime: boolean) => {
         case 96:
         case 99:
             return { 
-                condition: 'Badai Petir', 
+                condition: isEn ? 'Thunderstorm' : 'Badai Petir', 
                 icon: CloudLightning, 
                 lottieUrl: 'https://assets-v2.lottiefiles.com/a/5856708e-1151-11ee-8714-6b61dd71fb9b/2XR4PRuYfx.lottie'
             };
-        default:
-            return { condition: 'Berawan', icon: Cloud, lottieUrl: defaultUrl };
     }
 };
 
+const formatGmailDate = (dateStr: string, lang: 'en' | 'id'): string => {
+    if (!dateStr) return '';
+    try {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - d.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+
+        if (diffMins < 1) return lang === 'id' ? 'Baru saja' : 'Just now';
+        if (diffMins < 60) return lang === 'id' ? `${diffMins} mnt lalu` : `${diffMins}m ago`;
+        if (diffHours < 24) return lang === 'id' ? `${diffHours} jam lalu` : `${diffHours}h ago`;
+        
+        return d.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
+            month: 'short',
+            day: 'numeric',
+        });
+    } catch (e) {
+        return dateStr;
+    }
+};
+
+interface GmailMessage {
+    id: string;
+    sender: string;
+    senderEmail: string;
+    subject: string;
+    snippet: string;
+    date: string;
+    isUnread: boolean;
+}
+
+interface GmailWidgetProps {
+    language: 'en' | 'id';
+    t: (key: string) => string;
+}
+
+const GmailWidget: React.FC<GmailWidgetProps> = ({ language, t }) => {
+    const [connected, setConnected] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [emails, setEmails] = useState<GmailMessage[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [selectedEmail, setSelectedEmail] = useState<GmailMessage | null>(null);
+
+    const checkConnection = () => {
+        setConnected(isGoogleConnected());
+    };
+
+    useEffect(() => {
+        checkConnection();
+        const interval = setInterval(checkConnection, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const loadEmails = async (search = '') => {
+        const token = getStoredToken();
+        if (!token) {
+            setConnected(false);
+            return;
+        }
+
+        try {
+            setError(null);
+            const query = search 
+                ? `&q=is:unread is:inbox ${encodeURIComponent(search)}` 
+                : '&q=is:unread is:inbox';
+            const listRes = await fetch(
+                `https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=15${query}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (listRes.status === 401) {
+                signOutGoogle();
+                setConnected(false);
+                return;
+            }
+
+            if (!listRes.ok) {
+                throw new Error(`Gmail API error: ${listRes.status}`);
+            }
+
+            const listData = await listRes.json();
+            const messages = listData.messages || [];
+            if (messages.length === 0) {
+                setEmails([]);
+                return;
+            }
+
+            const details = await Promise.all(
+                messages.map(async (msg: { id: string }) => {
+                    const detailRes = await fetch(
+                        `https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    if (!detailRes.ok) return null;
+                    const detailData = await detailRes.json();
+
+                    const headers = detailData.payload?.headers || [];
+                    const fromHeader = headers.find((h: any) => h.name.toLowerCase() === 'from')?.value || 'Unknown Sender';
+                    const subjectHeader = headers.find((h: any) => h.name.toLowerCase() === 'subject')?.value || '(No Subject)';
+                    const dateHeader = headers.find((h: any) => h.name.toLowerCase() === 'date')?.value || '';
+
+                    let sender = fromHeader;
+                    let senderEmail = '';
+                    const emailMatch = fromHeader.match(/<([^>]+)>/);
+                    if (emailMatch) {
+                        sender = fromHeader.replace(/<[^>]+>/, '').trim();
+                        senderEmail = emailMatch[1];
+                    } else if (fromHeader.includes('@')) {
+                        senderEmail = fromHeader;
+                        sender = fromHeader.split('@')[0];
+                    }
+
+                    sender = sender.replace(/^["']|["']$/g, '');
+                    const isUnread = detailData.labelIds?.includes('UNREAD') || false;
+
+                    return {
+                        id: msg.id,
+                        sender,
+                        senderEmail,
+                        subject: subjectHeader,
+                        snippet: detailData.snippet || '',
+                        date: dateHeader,
+                        isUnread,
+                    };
+                })
+            );
+
+            setEmails(details.filter((d): d is GmailMessage => d !== null));
+        } catch (err: any) {
+            console.error('Failed to load Gmail messages:', err);
+            setError(err.message || 'Failed to fetch emails');
+        }
+    };
+
+    const handleSelectEmail = async (email: GmailMessage) => {
+        setSelectedEmail(email);
+
+        if (email.isUnread) {
+            const token = getStoredToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch(
+                    `https://www.googleapis.com/gmail/v1/users/me/messages/${email.id}/modify`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            removeLabelIds: ['UNREAD'],
+                        }),
+                    }
+                );
+
+                if (res.ok) {
+                    setEmails(prev => prev.filter(e => e.id !== email.id));
+                }
+            } catch (err) {
+                console.error('Failed to mark email as read:', err);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (connected) {
+            setLoading(true);
+            loadEmails().finally(() => setLoading(false));
+        } else {
+            setEmails([]);
+        }
+    }, [connected]);
+
+    const handleConnect = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            await signInWithGoogle();
+            setConnected(true);
+            await loadEmails();
+        } catch (err: any) {
+            console.error('Google authorization failed:', err);
+            setError(err.message || 'Google authorization failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDisconnect = () => {
+        signOutGoogle();
+        setConnected(false);
+        setEmails([]);
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setRefreshing(true);
+        loadEmails(searchTerm).finally(() => setRefreshing(false));
+    };
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        loadEmails(searchTerm).finally(() => setRefreshing(false));
+    };
+
+    return (
+        <Card className="rounded-xl border-border shadow-sm overflow-hidden relative backdrop-blur-md bg-white/40 dark:bg-zinc-900/40 border border-white/20 dark:border-zinc-800/40 mt-6">
+            <CardHeader className="p-6 pb-4 border-b border-border/40 bg-muted/20">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center border border-red-500/20 shadow-inner">
+                            <Mail size={16} strokeWidth={2.2} />
+                        </div>
+                        <span>Gmail Workspace</span>
+                        {connected && !loading && emails.filter(e => e.isUnread).length > 0 && (
+                            <Badge variant="destructive" className="bg-red-500 text-white border-0 font-bold px-1.5 h-5 rounded-full text-[10px]">
+                                {emails.filter(e => e.isUnread).length} New
+                            </Badge>
+                        )}
+                    </CardTitle>
+
+                    {connected && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-60">
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder={language === 'id' ? 'Cari email...' : 'Search email...'}
+                                    className="h-8 pl-8 pr-3 text-xs rounded-lg border-border/60 bg-background/50 focus:bg-background transition-all"
+                                />
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+                            </form>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground bg-background/50 hover:bg-background"
+                                onClick={handleRefresh}
+                                disabled={refreshing || loading}
+                            >
+                                <RefreshCcw size={13} className={refreshing ? 'animate-spin' : ''} />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs font-semibold border-destructive/20 hover:bg-destructive/10 text-destructive bg-background/50"
+                                onClick={handleDisconnect}
+                            >
+                                Disconnect
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                {loading ? (
+                    <div className="p-8 flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="animate-spin text-red-500" size={28} />
+                        <p className="text-xs font-medium text-muted-foreground">Connecting to Gmail...</p>
+                    </div>
+                ) : !connected ? (
+                    <div className="p-8 text-center flex flex-col items-center max-w-lg mx-auto">
+                        <div className="relative w-16 h-16 mb-4">
+                            <div className="absolute inset-0 bg-red-500/10 rounded-2xl blur-md" />
+                            <div className="relative w-16 h-16 bg-red-500/5 rounded-2xl flex items-center justify-center border border-red-500/20">
+                                <Mail className="text-red-500" size={28} strokeWidth={1.8} />
+                            </div>
+                        </div>
+                        <h3 className="text-sm font-bold text-foreground mb-1">
+                            {language === 'id' ? 'Hubungkan Google Workspace Anda' : 'Connect Your Google Workspace'}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+                            {language === 'id' 
+                                ? 'Integrasikan inbox Gmail Anda ke dashboard untuk membaca pesan masuk secara real-time dan meningkatkan alur kerja Anda.'
+                                : 'Integrate your Gmail inbox into the dashboard to read incoming messages in real-time and streamline your workspace flow.'}
+                        </p>
+                        {error && (
+                            <div className="mb-4 text-xs font-semibold text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20 flex items-center gap-2">
+                                <AlertCircle size={14} />
+                                <span>{error}</span>
+                            </div>
+                        )}
+                        <Button
+                            className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-red-500/20 flex items-center gap-2 group transition-all"
+                            onClick={handleConnect}
+                        >
+                            <span>{language === 'id' ? 'Hubungkan Gmail' : 'Connect Gmail'}</span>
+                            <ArrowRight size={13} strokeWidth={2.2} className="group-hover:translate-x-0.5 transition-transform" />
+                        </Button>
+                    </div>
+                ) : emails.length === 0 ? (
+                    <div className="p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+                        {error ? (
+                            <>
+                                <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 mb-3 animate-bounce">
+                                    <AlertCircle size={20} strokeWidth={2.2} />
+                                </div>
+                                <p className="text-xs font-bold text-foreground mb-1">
+                                    {language === 'id' ? 'Gagal Memuat Kotak Masuk' : 'Failed to Load Inbox'}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed">
+                                    {error.includes('403') 
+                                        ? (language === 'id' 
+                                            ? 'Akun Google Anda terhubung sebelum fitur Gmail diaktifkan. Silakan klik "Disconnect" di kanan atas, lalu hubungkan kembali untuk mengizinkan akses email.' 
+                                            : 'Your Google account was connected before Gmail integration was enabled. Please click "Disconnect" at the top right, then reconnect to grant email access.')
+                                        : error}
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs font-semibold border-amber-500/20 hover:bg-amber-500/10 text-amber-600 bg-background/50"
+                                    onClick={handleRefresh}
+                                >
+                                    {language === 'id' ? 'Coba Lagi' : 'Try Again'}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 mb-3">
+                                    <Check size={20} strokeWidth={2.5} />
+                                </div>
+                                <p className="text-xs font-bold text-foreground mb-1">
+                                    {language === 'id' ? 'Inbox Anda Bersih!' : 'Your Inbox is Clean!'}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                    {language === 'id' ? 'Tidak ada email baru yang ditemukan di kotak masuk.' : 'No new emails found in your inbox.'}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    <div className="divide-y divide-border/40 max-h-[350px] overflow-y-auto custom-scrollbar">
+                        {emails.map((email) => (
+                            <div
+                                key={email.id}
+                                className={`flex items-start gap-4 p-4 hover:bg-muted/40 cursor-pointer transition-all ${
+                                    email.isUnread ? 'bg-primary/5 dark:bg-primary/5' : ''
+                                }`}
+                                onClick={() => handleSelectEmail(email)}
+                            >
+                                <div className="relative mt-0.5 shrink-0">
+                                    <div className="w-8 h-8 rounded-full bg-muted/80 text-muted-foreground flex items-center justify-center text-xs font-black uppercase border border-border/60">
+                                        {email.sender.substring(0, 2)}
+                                    </div>
+                                    {email.isUnread && (
+                                        <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-background shadow-sm" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <h4 className={`text-xs truncate ${email.isUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}>
+                                            {email.sender}
+                                        </h4>
+                                        <span className="text-[10px] text-muted-foreground/80 font-medium shrink-0">
+                                            {formatGmailDate(email.date, language)}
+                                        </span>
+                                    </div>
+                                    <p className={`text-xs truncate mt-0.5 ${email.isUnread ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                                        {email.subject}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground/70 truncate mt-0.5 font-medium leading-relaxed">
+                                        {email.snippet}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+            {connected && emails.length > 0 && (
+                <div className="p-3 border-t border-border/40 bg-muted/10 text-center">
+                    <a
+                        href="https://mail.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider"
+                    >
+                        <span>{language === 'id' ? 'Buka Gmail Selengkapnya' : 'Go to Gmail Inbox'}</span>
+                        <ArrowUpRight size={12} strokeWidth={2.5} />
+                    </a>
+                </div>
+            )}
+
+            {/* Email Detail Modal */}
+            <AnimatePresence>
+                {selectedEmail && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setSelectedEmail(null)}
+                        />
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="relative w-full max-w-xl bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-10"
+                        >
+                            <div className="p-6 border-b border-border/60 flex items-start justify-between bg-muted/20">
+                                <div className="flex gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-sm uppercase border border-border/80 text-foreground shrink-0">
+                                        {selectedEmail.sender.substring(0, 2)}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-bold text-foreground leading-tight">{selectedEmail.sender}</h4>
+                                        <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{selectedEmail.senderEmail}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border/40">
+                                        {new Date(selectedEmail.date).toLocaleString(language === 'id' ? 'id-ID' : 'en-US')}
+                                    </span>
+                                    <button
+                                        onClick={() => setSelectedEmail(null)}
+                                        className="w-8 h-8 rounded-lg bg-background hover:bg-muted border border-border/60 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        <Plus size={16} className="rotate-45" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6 space-y-4 max-h-[350px] overflow-y-auto custom-scrollbar">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Subject</span>
+                                    <h2 className="text-base font-bold text-foreground mt-0.5 leading-snug">{selectedEmail.subject}</h2>
+                                </div>
+                                <div className="border-t border-border/40 pt-4">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80 block mb-2">Message Snippet</span>
+                                    <p className="text-xs text-foreground/90 leading-relaxed bg-muted/40 p-4 rounded-xl border border-border/40 font-medium">
+                                        {selectedEmail.snippet}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-border/60 bg-muted/10 flex items-center justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs font-semibold"
+                                    onClick={() => setSelectedEmail(null)}
+                                >
+                                    Close
+                                </Button>
+                                <a
+                                    href={`https://mail.google.com/mail/u/0/#inbox/${selectedEmail.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-xs transition-colors animate-pulse"
+                                >
+                                    <span>Reply in Gmail</span>
+                                    <ArrowUpRight size={13} strokeWidth={2.2} />
+                                </a>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </Card>
+    );
+};
+
 export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate, userName, userRole = 'User', currentUser }) => {
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
     const [isLoading, setIsLoading] = useState(true);
     const [projectSearch, setProjectSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -630,45 +1105,118 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
     useEffect(() => {
         const fetchWeather = async () => {
-            try {
-                const locRes = await fetch('https://ipapi.co/json/');
-                if (locRes.ok) {
-                    const locData = await locRes.json();
-                    if (locData && locData.latitude && locData.longitude) {
-                        const lat = locData.latitude;
-                        const lon = locData.longitude;
-                        const city = locData.city || 'Lokasi Anda';
+            const fetchWeatherData = async (lat: number, lon: number, cityName: string) => {
+                try {
+                    const weatherRes = await fetch(
+                        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&current_weather=true`
+                    );
+                    if (weatherRes.ok) {
+                        const weatherData = await weatherRes.json();
+                        const current = weatherData.current || weatherData.current_weather;
+                        if (weatherData && current) {
+                            const temp = Math.round(current.temperature_2m !== undefined ? current.temperature_2m : current.temperature);
+                            const code = current.weather_code !== undefined ? current.weather_code : current.weathercode;
+                            const hour = new Date().getHours();
+                            const isDaytime = hour >= 6 && hour < 18;
+                            const details = getWeatherDetails(code, isDaytime, language);
 
-                        const weatherRes = await fetch(
-                            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&current_weather=true`
-                        );
-                        if (weatherRes.ok) {
-                            const weatherData = await weatherRes.json();
-                            const current = weatherData.current || weatherData.current_weather;
-                            if (weatherData && current) {
-                                const temp = Math.round(current.temperature_2m !== undefined ? current.temperature_2m : current.temperature);
-                                const code = current.weather_code !== undefined ? current.weather_code : current.weathercode;
-                                const hour = new Date().getHours();
-                                const isDaytime = hour >= 6 && hour < 18;
-                                const details = getWeatherDetails(code, isDaytime);
-
-                                setWeather({
-                                    temp,
-                                    city,
-                                    condition: details.condition,
-                                    code,
-                                    lottieUrl: details.lottieUrl,
-                                    loading: false
-                                });
-                                return;
-                            }
+                            setWeather({
+                                temp,
+                                city: cityName,
+                                condition: details.condition,
+                                code,
+                                lottieUrl: details.lottieUrl,
+                                loading: false
+                            });
+                            return true;
                         }
                     }
+                } catch (err) {
+                    console.warn('Error fetching weather data from coordinates:', err);
                 }
-            } catch (err) {
-                console.warn('Weather fetch failed, falling back to time-based greeting:', err);
+                return false;
+            };
+
+            const fetchByIpFallback = async () => {
+                // 1. Try FreeIPAPI (highly reliable HTTPS endpoint)
+                try {
+                    const locRes = await fetch('https://freeipapi.com/api/json');
+                    if (locRes.ok) {
+                        const locData = await locRes.json();
+                        if (locData && locData.latitude && locData.longitude) {
+                            const lat = locData.latitude;
+                            const lon = locData.longitude;
+                            const city = locData.cityName || 'Jakarta';
+                            const success = await fetchWeatherData(lat, lon, city);
+                            if (success) return true;
+                        }
+                    }
+                } catch (freeIpErr) {
+                    console.warn('FreeIPAPI failed, trying ipapi.co:', freeIpErr);
+                }
+
+                // 2. Try original IPAPI.co
+                try {
+                    const locRes = await fetch('https://ipapi.co/json/');
+                    if (locRes.ok) {
+                        const locData = await locRes.json();
+                        if (locData && locData.latitude && locData.longitude) {
+                            const lat = locData.latitude;
+                            const lon = locData.longitude;
+                            const city = locData.city || 'Jakarta';
+                            const success = await fetchWeatherData(lat, lon, city);
+                            if (success) return true;
+                        }
+                    }
+                } catch (ipErr) {
+                    console.warn('IP-based weather fallback also failed:', ipErr);
+                }
+                return false;
+            };
+
+            // Start general IP-based weather loading immediately for zero loading latency
+            const ipFetchPromise = fetchByIpFallback();
+
+            // Then try browser GPS to refine to exact high-accuracy coordinate in parallel
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        let resolvedCity = '';
+
+                        try {
+                            const geoRes = await fetch(
+                                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`,
+                                { headers: { 'Accept-Language': language === 'en' ? 'en' : 'id' } }
+                            );
+                            if (geoRes.ok) {
+                                const geoData = await geoRes.json();
+                                const address = geoData.address || {};
+                                resolvedCity = address.suburb || address.village || address.city_district || address.town || address.city;
+                            }
+                        } catch (geoErr) {
+                            console.warn('Reverse geocoding failed:', geoErr);
+                        }
+
+                        // Refine with exact GPS coordinates and the suburb name
+                        await fetchWeatherData(lat, lon, resolvedCity || 'Pecenongan');
+                    },
+                    async (error) => {
+                        console.log('HTML5 Geolocation declined or timed out, using fallback:', error.message);
+                        const ipResolved = await ipFetchPromise;
+                        if (!ipResolved) {
+                            setWeather(prev => ({ ...prev, loading: false }));
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 3000 }
+                );
+            } else {
+                const ipResolved = await ipFetchPromise;
+                if (!ipResolved) {
+                    setWeather(prev => ({ ...prev, loading: false }));
+                }
             }
-            setWeather(prev => ({ ...prev, loading: false }));
         };
 
         fetchWeather();
@@ -736,13 +1284,14 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     const getGreeting = () => {
         const hour = new Date().getHours();
         const isDaytime = hour >= 6 && hour < 18;
+        const isEn = language === 'en';
         
-        let greetingText = 'Good evening';
-        if (hour < 12) greetingText = 'Good morning';
-        else if (hour < 18) greetingText = 'Good afternoon';
+        let greetingText = isEn ? 'Good evening' : 'Selamat malam';
+        if (hour < 12) greetingText = isEn ? 'Good morning' : 'Selamat pagi';
+        else if (hour < 18) greetingText = isEn ? 'Good afternoon' : 'Selamat siang';
 
         if (weather.code !== null) {
-            const details = getWeatherDetails(weather.code, isDaytime);
+            const details = getWeatherDetails(weather.code, isDaytime, language);
             return { text: greetingText, icon: details.icon };
         }
 
@@ -754,7 +1303,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     const greeting = getGreeting();
     const GreetingIcon = greeting.icon;
     const firstName = (userName || currentUser?.fullName || 'there').split(' ')[0];
-    const todayFormatted = new Date().toLocaleDateString('en-US', {
+    const todayFormatted = new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'id-ID', {
         weekday: 'long', month: 'long', day: 'numeric'
     });
 
@@ -795,7 +1344,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <>
                                         <span className="w-1 h-1 rounded-full bg-border" />
                                         <span className="text-primary flex items-center gap-1 normal-case font-bold">
-                                            {weather.city} • {weather.temp}°C, {weather.condition}
+                                            {weather.city} • {weather.temp}°C, {getWeatherDetails(weather.code, new Date().getHours() >= 6 && new Date().getHours() < 18, language).condition}
                                         </span>
                                     </>
                                 ) : (
@@ -1031,6 +1580,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     </CardContent>
                                 </Card>
                             </div>
+                            <GmailWidget language={language} t={t} />
                         </div>
 
                         {/* 5. My Borrowed Assets */}

@@ -4,7 +4,7 @@
  * Reuses OAuth tokens and silent refresh from lib/googleCalendar.ts.
  */
 
-import { getStoredToken, silentRefresh } from './googleCalendar';
+import { getStoredToken, silentRefresh, clearToken } from './googleCalendar';
 
 // ── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -41,28 +41,43 @@ export interface EmailNotificationPayload {
 const googleApiFetch = async (url: string, options: RequestInit = {}): Promise<any> => {
   let token = getStoredToken();
   if (!token) {
-    token = await silentRefresh();
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
-
-  if (!res.ok) {
-    let errMsg = `Google API error ${res.status}`;
     try {
-      const errJson = await res.json();
-      errMsg = errJson.error?.message || errMsg;
-    } catch (_) {}
-    throw new Error(errMsg);
+      token = await silentRefresh();
+    } catch (refreshErr) {
+      clearToken();
+      throw new Error('Google connection expired. Please reconnect.');
+    }
   }
 
-  return res.json();
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        clearToken();
+      }
+      let errMsg = `Google API error ${res.status}`;
+      try {
+        const errJson = await res.json();
+        errMsg = errJson.error?.message || errMsg;
+      } catch (_) {}
+      throw new Error(errMsg);
+    }
+
+    return res.json();
+  } catch (err: any) {
+    if (err.message?.includes('401') || err.message?.includes('403')) {
+      clearToken();
+    }
+    throw err;
+  }
 };
 
 // ── GOOGLE DRIVE API ───────────────────────────────────────────────────────

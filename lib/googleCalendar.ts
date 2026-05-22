@@ -1,11 +1,8 @@
-/**
- * lib/googleCalendar.ts
- * Google Calendar API v3 — Browser-side OAuth via Google Identity Services (GIS)
- * Uses Bearer-token flow (no API Key needed, no Client Secret in browser)
- */
+import { supabase } from './supabaseClient';
+
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.emails.read https://www.googleapis.com/auth/gmail.send';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.emails.read https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify';
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 const TOKEN_STORAGE_KEY = 'gcal_access_token';
 const TOKEN_EXPIRY_KEY  = 'gcal_token_expiry';
@@ -42,6 +39,25 @@ export interface GCalCalendar {
 }
 
 // ── Token helpers ──────────────────────────────────────────────────────────
+export const saveTokensToSupabase = async (token: string, expiry: string, connected: boolean) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const email = session?.user?.email;
+        if (!email) return;
+
+        await supabase
+            .from('user_accounts')
+            .update({
+                google_access_token: token || null,
+                google_token_expiry: expiry || null,
+                google_connected_flag: connected
+            })
+            .eq('email', email);
+    } catch (err: any) {
+        console.warn('Failed to sync Google connection to Supabase:', err.message);
+    }
+};
+
 export const getStoredToken = (): string | null => {
     const token  = localStorage.getItem(TOKEN_STORAGE_KEY);
     const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
@@ -55,16 +71,23 @@ export const getStoredToken = (): string | null => {
 };
 
 const storeToken = (token: string, expiresInSeconds: number) => {
+    const expiry = String(Date.now() + expiresInSeconds * 1000);
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + expiresInSeconds * 1000));
+    localStorage.setItem(TOKEN_EXPIRY_KEY, expiry);
+    localStorage.setItem('google_connected_flag', 'true');
+    saveTokensToSupabase(token, expiry, true);
 };
 
 export const clearToken = () => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
+    localStorage.removeItem('google_connected_flag');
+    saveTokensToSupabase('', '', false);
 };
 
-export const isGoogleConnected = (): boolean => !!getStoredToken();
+export const isGoogleConnected = (): boolean => {
+    return localStorage.getItem('google_connected_flag') === 'true';
+};
 
 // ── OAuth ──────────────────────────────────────────────────────────────────
 declare const google: any;
@@ -118,24 +141,39 @@ export const signOutGoogle = () => {
 const gFetch = async (url: string, options: RequestInit = {}): Promise<any> => {
     let token = getStoredToken();
     if (!token) {
-        token = await silentRefresh();
+        try {
+            token = await silentRefresh();
+        } catch (refreshErr) {
+            clearToken();
+            throw new Error('Google connection expired. Please reconnect.');
+        }
     }
 
-    const res = await fetch(url, {
-        ...options,
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            ...(options.headers || {}),
-        },
-    });
+    try {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                ...(options.headers || {}),
+            },
+        });
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `GCal API error ${res.status}`);
+        if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+                clearToken();
+            }
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error?.message || `Google API error ${res.status}`);
+        }
+
+        return res.json();
+    } catch (err: any) {
+        if (err.message?.includes('401') || err.message?.includes('403')) {
+            clearToken();
+        }
+        throw err;
     }
-
-    return res.json();
 };
 
 // ── Calendar list ──────────────────────────────────────────────────────────

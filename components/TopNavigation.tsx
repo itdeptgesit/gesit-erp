@@ -222,7 +222,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                             </LayoutGroup>
                         </div>
 
-                        <button onClick={onShare} className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="Share">
+                        <button onClick={onShare} aria-label="Share page" className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" title="Share">
                             <Share2 size={16} />
                         </button>
                         <button onClick={toggleTheme} aria-label="Toggle light/dark theme" className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
@@ -234,7 +234,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                 <header className="relative z-20 h-14 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-6 flex items-center justify-between gap-6 transition-all">
                     {/* Left: Mobile menu + Search */}
                     <div className="flex items-center gap-4 flex-1">
-                        <button onClick={onMenuClick} className="md:hidden p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        <button onClick={onMenuClick} aria-label="Toggle navigation menu" className="md:hidden p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                             <Menu size={20} />
                         </button>
 
@@ -256,7 +256,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                     {/* Right: Controls */}
                     <div className="flex items-center gap-1">
                         {/* Theme Toggle */}
-                        <button onClick={toggleTheme} className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button onClick={toggleTheme} aria-label="Toggle dark mode" className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
                             {isDark ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
@@ -264,6 +264,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
                         <div className="relative" ref={notificationRef}>
                             <button
                                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                aria-label="Notifications"
                                 className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all relative rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                                 <Bell size={18} />

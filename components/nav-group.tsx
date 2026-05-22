@@ -144,11 +144,11 @@ function SidebarMenuCollapsible({
   const { setOpenMobile } = useSidebar()
 
   return (
-    <Collapsible
-      defaultOpen={checkIsActive(href, item, true)}
-      className="group/collapsible"
-    >
-      <SidebarMenuItem>
+    <SidebarMenuItem>
+      <Collapsible
+        defaultOpen={checkIsActive(href, item, true)}
+        className="group/collapsible"
+      >
         <CollapsibleTrigger
           render={<SidebarMenuButton tooltip={item.title} />}
         >
@@ -179,8 +179,8 @@ function SidebarMenuCollapsible({
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
+      </Collapsible>
+    </SidebarMenuItem>
   )
 }
 
