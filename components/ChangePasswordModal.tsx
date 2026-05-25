@@ -55,7 +55,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
             <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900 border-slate-100 dark:border-white/5 rounded-xl p-0 overflow-hidden shadow-2xl">
                 <DialogHeader className="p-8 pb-4 relative overflow-hidden bg-slate-50/50 dark:bg-white/[0.02]">
                     <div className="absolute top-0 right-0 p-8 opacity-5">

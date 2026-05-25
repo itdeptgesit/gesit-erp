@@ -56,11 +56,11 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
   const parentMenus = APP_MENU_STRUCTURE.filter(m => !m.parentId);
   
   const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
-  const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
+  const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" onClick={onClose}>
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[92vh] border border-slate-200 dark:border-zinc-800" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[92vh] border border-slate-200 dark:border-zinc-800">
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none">
@@ -95,7 +95,7 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-8 rounded-[24px] border border-slate-200 dark:border-zinc-800 space-y-7">
+                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-8 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-7">
                             <h3 className="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.2em] mb-4 border-b border-slate-200 dark:border-zinc-700 pb-4 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                                 Menu Access Permissions Cluster
@@ -106,7 +106,7 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
                                     const isParentChecked = formData.allowedMenus.includes(parent.id);
 
                                     return (
-                                        <div key={parent.id} className={`border rounded-xl p-4 transition-all ${isParentChecked ? 'border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 ring-1 ring-blue-500/10' : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-850'}`}>
+                                        <div key={parent.id} className={`border rounded-md p-4 transition-all ${isParentChecked ? 'border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 ring-1 ring-blue-500/10' : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-850'}`}>
                                             <label className="flex items-center gap-3 cursor-pointer mb-3 group">
                                                 <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isParentChecked ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 group-hover:border-blue-400'}`}>
                                                     {isParentChecked && <Check size={14} strokeWidth={3} />}
@@ -147,7 +147,7 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="groupForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Commit Policy</button>
+                    <button type="submit" form="groupForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Save</button>
                 </div>
             </div>
         </div>

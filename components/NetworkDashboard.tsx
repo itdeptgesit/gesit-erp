@@ -539,7 +539,11 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+        <div className={`animate-in fade-in duration-500 ${
+            activeTab === 'topology' 
+                ? 'flex flex-col space-y-4 h-[calc(100vh-115px)] overflow-hidden pb-0' 
+                : 'space-y-8 pb-20'
+        }`}>
             <PageHeader
                 title="NetVision Infrastructure"
                 description="Sentralisasi manajemen infrastruktur IT & monitoring jaringan real-time"
@@ -588,7 +592,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
 
 
 
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col flex-1">
                 <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-800 shadow-sm">
                     <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
                         {[{ id: 'topology', label: 'Topology', icon: GitBranch }, { id: 'status', label: 'Nodes', icon: Layout }, { id: 'wiring', label: 'Wiring', icon: Cable }, { id: 'devices', label: 'Hardware', icon: Server }].map(tab => (
@@ -616,7 +620,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     </div>
                 </div>
-                <div className="p-0 flex-1 min-h-[600px] relative">
+                <div className={`p-0 flex-1 relative ${activeTab === 'topology' ? 'h-full overflow-hidden flex flex-col' : 'min-h-[600px]'}`}>
                     <AnimatePresence mode="wait">
                         {isLoading ? (
                             <motion.div 
@@ -636,10 +640,10 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-                                className="w-full h-full"
+                                className="w-full h-full flex flex-col"
                             >
                                 {activeTab === 'topology' ? (
-                                    <div className="h-[750px] w-full relative overflow-hidden">
+                                    <div className="h-full w-full relative overflow-hidden flex-1 flex flex-col">
                                         <TopologyDiagram
                                             switches={switches}
                                             internetPos={internetPos}

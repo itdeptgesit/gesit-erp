@@ -124,12 +124,12 @@ export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => 
                 </div>
             </PageHeader>
 
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-800/30">
                     <div className="relative max-w-md">
                         <Input
                             placeholder="Search records..."
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 rounded-xl font-medium"
+                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 rounded-md font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -163,7 +163,7 @@ export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => 
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/50">
+                                            <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/50">
                                                 <Building2 size={16} />
                                             </div>
                                             <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{company.name}</span>

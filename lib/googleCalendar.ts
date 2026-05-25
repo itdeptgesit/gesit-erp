@@ -86,7 +86,7 @@ export const clearToken = () => {
 };
 
 export const isGoogleConnected = (): boolean => {
-    return localStorage.getItem('google_connected_flag') === 'true';
+    return localStorage.getItem('google_connected_flag') === 'true' && getStoredToken() !== null;
 };
 
 // ── OAuth ──────────────────────────────────────────────────────────────────

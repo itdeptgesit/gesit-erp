@@ -481,7 +481,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.fullName}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
+                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -490,7 +490,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.jobTitle}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
+                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -499,13 +499,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         value={formData.phone}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
+                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Department</Label>
                                     <Select disabled={!isEditing} value={formData.department} onValueChange={(val) => setFormData({ ...formData, department: val })}>
-                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
+                                        <SelectTrigger className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
                                             <SelectValue placeholder="Select division" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -522,7 +522,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Company</Label>
                                     <Select disabled={!isEditing} value={formData.company} onValueChange={(val) => setFormData({ ...formData, company: val })}>
-                                        <SelectTrigger className="h-12 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
+                                        <SelectTrigger className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
                                             <SelectValue placeholder="Select company" />
                                         </SelectTrigger>
                                         <SelectContent>

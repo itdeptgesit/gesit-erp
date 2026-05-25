@@ -110,11 +110,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
         });
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
     const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
             <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 overflow-hidden rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh]">
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
@@ -127,9 +127,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-9 space-y-9 custom-scrollbar">
-                    <form id="userForm" onSubmit={handleSubmit} className="space-y-9">
+                     <form id="userForm" onSubmit={handleSubmit} className="space-y-9">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="md:col-span-2 p-7 rounded-[24px] bg-blue-600/5 dark:bg-blue-600/5 border border-blue-500/10 dark:border-blue-500/10">
+                            <div className="md:col-span-2 p-7 rounded-lg bg-blue-600/5 dark:bg-blue-600/5 border border-blue-500/10 dark:border-blue-500/10">
                                 <label className={labelClass}>Full Identity Name</label>
                                 <input type="text" required className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-blue-500/10 !border-blue-500/20`} value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} placeholder="e.g. John Doe" />
                             </div>
@@ -146,8 +146,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
                             <div className="md:col-span-2">
                                 <label className={labelClass}>User Avatar</label>
-                                <div className="flex items-center gap-6 mt-2 p-6 bg-slate-50 dark:bg-zinc-800/30 rounded-[24px] border border-dashed border-slate-200 dark:border-zinc-700">
-                                    <div className="w-20 h-20 rounded-[20px] bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 overflow-hidden flex items-center justify-center text-slate-300 shadow-sm">
+                                <div className="flex items-center gap-6 mt-2 p-6 bg-slate-50 dark:bg-zinc-800/30 rounded-lg border border-dashed border-slate-200 dark:border-zinc-700">
+                                    <div className="w-20 h-20 rounded-md bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 overflow-hidden flex items-center justify-center text-slate-300 shadow-sm">
                                         {formData.avatarUrl ? (
                                             <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                         ) : (
@@ -157,7 +157,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                                     <div className="flex-1">
                                         <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3">Cloudinary Secured Upload</p>
                                         <div className="flex gap-3">
-                                            <label className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 cursor-pointer transition-all shadow-sm">
+                                            <label className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 cursor-pointer transition-all shadow-sm">
                                                 {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} strokeWidth={2.5} />}
                                                 {isUploading ? 'Uploading...' : 'Choose Photo'}
                                                 <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
@@ -166,7 +166,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                                                 <button
                                                     type="button"
                                                     onClick={() => setFormData(prev => ({ ...prev, avatarUrl: '' }))}
-                                                    className="px-5 py-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
+                                                    className="px-5 py-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-md text-[11px] font-black uppercase tracking-widest transition-all"
                                                 >
                                                     Remove
                                                 </button>
@@ -177,7 +177,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-[24px] border border-slate-200 dark:border-zinc-800 space-y-8">
+                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-8">
                             <div className="flex items-center gap-3 mb-2 border-b border-slate-200 dark:border-zinc-700 pb-4">
                                 <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Corporate Assignment</h3>
@@ -228,7 +228,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-[24px] border border-slate-200 dark:border-zinc-800 space-y-5">
+                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-5">
                             <div className="flex items-center justify-between mb-2 border-b border-slate-200 dark:border-zinc-700 pb-4">
                                 <div className="flex items-center gap-3">
                                     <LifeBuoy size={20} className="text-indigo-600 dark:text-indigo-400" />
@@ -249,14 +249,14 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                             </p>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-[24px] border border-slate-200 dark:border-zinc-800 space-y-6">
+                        <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-6">
                             <div className="flex items-center gap-3 mb-2 border-b border-slate-200 dark:border-zinc-700 pb-4">
                                 <Layers size={20} className="text-blue-600 dark:text-blue-500" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Group Membership</h3>
                             </div>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 {availableGroups.map(group => (
-                                    <label key={group.id} className={`flex items-center gap-3 cursor-pointer bg-white dark:bg-zinc-900 px-4 py-3 rounded-xl border transition-all ${formData.groups?.includes(group.id) ? 'border-primary dark:border-blue-500 bg-primary/5 dark:bg-blue-900/10 ring-1 ring-primary dark:ring-blue-500 shadow-sm' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}>
+                                    <label key={group.id} className={`flex items-center gap-3 cursor-pointer bg-white dark:bg-zinc-900 px-4 py-3 rounded-md border transition-all ${formData.groups?.includes(group.id) ? 'border-primary dark:border-blue-500 bg-primary/5 dark:bg-blue-900/10 ring-1 ring-primary dark:ring-blue-500 shadow-sm' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}>
                                         <input type="checkbox" checked={formData.groups?.includes(group.id)} onChange={() => toggleGroup(group.id)} className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
                                         <span className="text-[13px] font-bold text-slate-900 dark:text-zinc-100 tracking-tight">{group.name}</span>
                                     </label>
@@ -264,7 +264,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                             </div>
                         </div>
 
-                        <div className="bg-blue-600/5 dark:bg-blue-900/10 p-7 rounded-[24px] border border-blue-500/10 dark:border-blue-900/30 space-y-6">
+                        <div className="bg-blue-600/5 dark:bg-blue-900/10 p-7 rounded-lg border border-blue-500/10 dark:border-blue-900/30 space-y-6">
                             <div className="flex items-center gap-3 mb-2 border-b border-blue-200 dark:border-blue-900/50 pb-4">
                                 <UserCheck size={20} className="text-blue-600 dark:text-blue-400" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Approval Hierarchy</h3>
@@ -291,7 +291,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="userForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl active:scale-[0.98]">Commit Identity</button>
+                    <button type="submit" form="userForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl active:scale-[0.98]">Save</button>
                 </div>
             </DialogContent>
         </Dialog>

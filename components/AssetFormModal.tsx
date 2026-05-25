@@ -126,13 +126,13 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
         onClose();
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
     const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
     const needsSpecs = formData.category === 'Laptop' || formData.category === 'PC' || formData.category === 'Server' || formData.category === 'Workstation';
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
             <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 overflow-hidden rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh]">
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
@@ -141,15 +141,15 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                         </DialogTitle>
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Hardware Inventory & Sourcing Protocols</p>
                     </div>
-                    <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-md transition-all text-slate-400 dark:text-zinc-500 hover:text-slate-600">
+                        <X size={18} />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-9 custom-scrollbar">
                     <form id="assetForm" onSubmit={handleSubmit} className="space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="md:col-span-2 p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-[24px] border border-blue-500/10 dark:border-blue-500/10">
+                            <div className="md:col-span-2 p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-lg border border-blue-500/10 dark:border-blue-500/10">
                                 <label className={labelClass}>Asset Identification Name</label>
                                 <Input
                                     className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-blue-500/10 !border-blue-500/20`}
@@ -230,7 +230,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                         </div>
 
-                        <div className="p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-[24px] border border-blue-500/10 dark:border-blue-500/10">
+                        <div className="p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-lg border border-blue-500/10 dark:border-blue-500/10">
                             <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                                 <Shield size={14} strokeWidth={3} /> PROCUREMENT & LIFECYCLE
                             </p>
@@ -262,7 +262,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                         </div>
 
                         {needsSpecs && (
-                            <div className="p-7 bg-slate-50 dark:bg-zinc-800/30 rounded-[24px] border border-slate-200 dark:border-zinc-800 shadow-inner">
+                            <div className="p-7 bg-slate-50 dark:bg-zinc-800/30 rounded-lg border border-slate-200 dark:border-zinc-800 shadow-inner">
                                 <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                                     <Zap size={14} strokeWidth={3} /> Hardware Architecture Specs
                                 </p>
@@ -291,7 +291,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">
                         {t('cancel')}
                     </button>
-                    <button type="submit" form="assetForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">
+                    <button type="submit" form="assetForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">
                         {t('save')}
                     </button>
                 </div>

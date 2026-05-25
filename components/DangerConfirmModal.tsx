@@ -39,7 +39,7 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
   const buttonText = confirmText || (title.endsWith('?') ? title.slice(0, -1) : title);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
             <DialogContent showCloseButton={false} className="sm:max-w-[440px] p-0 overflow-hidden bg-white dark:bg-zinc-900 rounded-xl border-none shadow-2xl">
                 <div className="p-10">
                     <div className="flex flex-col">

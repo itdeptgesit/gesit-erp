@@ -166,12 +166,12 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
             <DialogContent showCloseButton={false} className="sm:max-w-[1400px] w-[95vw] max-h-[92vh] p-0 overflow-hidden rounded-lg border border-slate-200 dark:border-zinc-800 shadow-2xl bg-white dark:bg-zinc-900 flex flex-col">
                 <DialogHeader className="px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center border border-blue-500/10">
+                            <div className="w-12 h-12 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center border border-blue-500/10">
                                 <ShieldCheck size={24} />
                             </div>
                             <div className="text-left">
@@ -181,9 +181,9 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">Procurement Documentation & Financial Registry</p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={onClose} className="dark: transition-all">
-                            <X size={20} />
-                        </Button>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-md transition-all text-slate-400 dark:text-zinc-500 hover:text-slate-600">
+                            <X size={18} />
+                        </button>
                     </div>
                 </DialogHeader>
 
@@ -202,7 +202,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                         <div className="space-y-2">
                                             <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Description</Label>
                                             <Textarea
-                                                className="min-h-[120px] resize-none font-medium text-sm bg-muted/20 border-muted-foreground/10 focus:border-primary focus:bg-background rounded-xl p-4 transition-all"
+                                                className="min-h-[120px] resize-none font-medium text-sm bg-muted/20 border-muted-foreground/10 focus:border-primary focus:bg-background rounded-md p-4 transition-all"
                                                 value={formData.description || ''}
                                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                                                 required
@@ -213,7 +213,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Reference ID</Label>
                                                 <Input
-                                                    className={cn("font-mono font-bold h-11 bg-muted/20 border-muted-foreground/10 rounded-xl text-primary", isGeneratingId && "animate-pulse")}
+                                                    className={cn("font-mono font-bold h-11 bg-muted/20 border-muted-foreground/10 rounded-md text-primary", isGeneratingId && "animate-pulse")}
                                                     value={formData.transactionId || ''}
                                                     onChange={e => setFormData({ ...formData, transactionId: e.target.value })}
                                                     required
@@ -224,10 +224,10 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Company</Label>
                                                     <Select value={formData.company || ''} onValueChange={val => setFormData({ ...formData, company: val })}>
-                                                        <SelectTrigger className="font-bold h-11 border-muted-foreground/10 rounded-xl bg-muted/20">
+                                                        <SelectTrigger className="font-bold h-11 border-muted-foreground/10 rounded-md bg-muted/20">
                                                             <SelectValue placeholder={`- ${t('pilih')} -`} />
                                                         </SelectTrigger>
-                                                        <SelectContent className="rounded-xl">
+                                                        <SelectContent className="rounded-md">
                                                             {companies.map(c => <SelectItem key={c.name} value={c.name} className="font-bold">{c.name}</SelectItem>)}
                                                         </SelectContent>
                                                     </Select>
@@ -235,10 +235,10 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Status</Label>
                                                     <Select value={formData.status || 'Pending'} onValueChange={val => setFormData({ ...formData, status: val as any })}>
-                                                        <SelectTrigger className="font-bold h-11 border-muted-foreground/10 rounded-xl bg-muted/20">
+                                                        <SelectTrigger className="font-bold h-11 border-muted-foreground/10 rounded-md bg-muted/20">
                                                             <SelectValue placeholder="Select Status" />
                                                         </SelectTrigger>
-                                                        <SelectContent className="rounded-xl">
+                                                        <SelectContent className="rounded-md">
                                                             <SelectItem value="Pending" className="font-bold text-amber-600">Pending</SelectItem>
                                                             <SelectItem value="Paid" className="font-bold text-emerald-600">Paid</SelectItem>
                                                             <SelectItem value="Rejected" className="font-bold text-rose-600">Rejected</SelectItem>
@@ -251,7 +251,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                 </div>
 
                                 {/* Section 2: Stakeholders & Sourcing */}
-                                <div className="space-y-6 p-6 bg-muted/5 rounded-xl border">
+                                <div className="space-y-6 p-6 bg-muted/5 rounded-lg border">
                                     <div className="flex items-center gap-3 border-b pb-2">
                                         <div className="w-1 h-4 bg-primary rounded-full"></div>
                                         <h3 className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">Purchase Details</h3>
@@ -350,7 +350,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                             {/* --- RIGHT COLUMN: FINANCIALS & DOCUMENTS (5/12) --- */}
                             <div className="lg:col-span-5 space-y-8">
                                 {/* Financial Ledger Section */}
-                                <div className="bg-slate-950 p-8 rounded-xl text-white shadow-xl relative overflow-hidden group border border-slate-800">
+                                <div className="bg-slate-950 p-8 rounded-lg text-white shadow-xl relative overflow-hidden group border border-slate-800">
                                     <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
                                         <Receipt size={80} />
                                     </div>
@@ -425,7 +425,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                             </div>
                                         ) : (
                                             (formData.items || []).map((item, idx) => (
-                                                <Card key={idx} className="rounded-xl border border-muted shadow-sm group relative overflow-hidden">
+                                                <Card key={idx} className="rounded-lg border border-muted shadow-sm group relative overflow-hidden">
                                                     <div className="p-4 space-y-3">
                                                         <Input
                                                             className="font-bold h-8 bg-muted/30 border-none rounded-lg text-[10px] uppercase"
@@ -478,7 +478,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                                 </div>
 
                                 {/* Documentation Matrix */}
-                                <div className="bg-emerald-500/5 p-5 rounded-xl border border-emerald-500/10 space-y-3">
+                                <div className="bg-emerald-500/5 p-5 rounded-lg border border-emerald-500/10 space-y-3">
                                     <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
                                         <CheckCircle2 size={14} /> Checklist / Documents
                                     </h3>
@@ -527,10 +527,10 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                     </button>
                     <button
                         onClick={() => onSubmit(formData)}
-                        className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-lg text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all flex items-center gap-3 shadow-xl"
+                        className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all flex items-center gap-3 shadow-xl"
                     >
                         <Save size={16} strokeWidth={3} />
-                        Commit Record
+                        Save
                     </button>
                 </div>
             </DialogContent>

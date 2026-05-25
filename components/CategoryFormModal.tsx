@@ -12,7 +12,7 @@ interface CategoryFormModalProps {
   initialData?: AssetCategory | null;
 }
 
-const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
+const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
 const labelClass = "block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3 ml-1";
 
 export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
@@ -35,8 +35,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, on
   };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto font-sans" onClick={onClose}>
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto font-sans">
+            <div className="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800">
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">
@@ -92,7 +92,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, on
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-6 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="categoryForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Commit Meta</button>
+                    <button type="submit" form="categoryForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Save</button>
                 </div>
             </div>
         </div>

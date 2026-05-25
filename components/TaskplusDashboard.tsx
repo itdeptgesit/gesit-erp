@@ -19,7 +19,7 @@ import { UserAccount, Announcement } from '../types';
 import { StatCard } from './StatCard';
 import { UserAvatar } from './UserAvatar';
 import { useLanguage } from '../translations';
-import { Mail, ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, ArrowRight, Check, AlertCircle, Loader2, X, AlertTriangle } from 'lucide-react';
 import { isGoogleConnected, getStoredToken, signInWithGoogle, signOutGoogle } from '../lib/googleCalendar';
 
 // SHADCN UI IMPORTS
@@ -669,6 +669,19 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     const [activeMode, setActiveMode] = useState<'PERSONAL' | 'ORGANIZATION'>(currentUser?.role === 'Admin' ? 'ORGANIZATION' : 'PERSONAL');
     const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [dismissedAnnouncements, setDismissedAnnouncements] = useState<number[]>(() => {
+        try {
+            const saved = localStorage.getItem('dismissed_broadcasts');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+    const [sessionDismissed, setSessionDismissed] = useState<number[]>([]);
+
+    const activeModalAnn = useMemo(() => {
+        return announcements.find(ann => !dismissedAnnouncements.includes(ann.id!) && !sessionDismissed.includes(ann.id!));
+    }, [announcements, dismissedAnnouncements, sessionDismissed]);
     const [activityYear, setActivityYear] = useState<string>('last_12M');
     const [weather, setWeather] = useState<{
         temp: number | null;
@@ -1309,6 +1322,97 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
 
     return (
         <div className="w-full space-y-8 animate-in fade-in duration-700 pb-16">
+
+            {/* --- SYSTEM BROADCASTS MODAL POP-UP --- */}
+            <AnimatePresence>
+                {activeModalAnn && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        {/* Blur Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                            onClick={() => setSessionDismissed(prev => [...prev, activeModalAnn.id!])}
+                        />
+
+                        {/* Modal Dialog */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            className="relative w-full max-w-lg bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-10 p-6 space-y-6"
+                        >
+                            {/* Decorative Orb */}
+                            <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
+
+                            <div className="flex items-start gap-4">
+                                <div className={`p-3 rounded-xl shrink-0 ${
+                                    activeModalAnn.type === 'info' ? 'bg-blue-500/10 text-blue-500' :
+                                    activeModalAnn.type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
+                                    activeModalAnn.type === 'error' ? 'bg-rose-500/10 text-rose-500' :
+                                    'bg-emerald-500/10 text-emerald-500'
+                                }`}>
+                                    <Megaphone size={22} strokeWidth={2.2} className="animate-pulse" />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                                            activeModalAnn.type === 'info' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
+                                            activeModalAnn.type === 'warning' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                                            activeModalAnn.type === 'error' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' :
+                                            'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                        }`}>
+                                            {activeModalAnn.type} Broadcast
+                                        </span>
+                                        {activeModalAnn.created_at && (
+                                            <span className="text-[10px] text-muted-foreground/80 font-medium">
+                                                {new Date(activeModalAnn.created_at).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US')}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h2 className="text-lg font-bold tracking-tight text-foreground leading-snug">{activeModalAnn.title}</h2>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-border/40 pt-4">
+                                <p className="text-xs text-foreground/90 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border/40 font-medium whitespace-pre-wrap max-h-[250px] overflow-y-auto custom-scrollbar">
+                                    {activeModalAnn.content}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full sm:w-auto text-xs font-semibold h-9 rounded-xl border-border/60"
+                                    onClick={() => setSessionDismissed(prev => [...prev, activeModalAnn.id!])}
+                                >
+                                    {language === 'id' ? 'Tutup' : 'Close'}
+                                </Button>
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    className={`w-full sm:w-auto text-xs font-bold h-9 rounded-xl shadow-sm text-white border-0 ${
+                                        activeModalAnn.type === 'info' ? 'bg-blue-500 hover:bg-blue-600' :
+                                        activeModalAnn.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600' :
+                                        activeModalAnn.type === 'error' ? 'bg-rose-500 hover:bg-rose-600' :
+                                        'bg-emerald-500 hover:bg-emerald-600'
+                                    }`}
+                                    onClick={() => {
+                                        const updated = [...dismissedAnnouncements, activeModalAnn.id!];
+                                        setDismissedAnnouncements(updated);
+                                        localStorage.setItem('dismissed_broadcasts', JSON.stringify(updated));
+                                    }}
+                                >
+                                    {language === 'id' ? 'Jangan Tampilkan Lagi' : "Don't Show Again"}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* --- HERO HEADER --- */}
             <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8">
