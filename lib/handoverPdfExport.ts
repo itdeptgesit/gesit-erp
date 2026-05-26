@@ -748,59 +748,56 @@ export async function exportAssetTransferForm(
   currentY += 13.5;
 
   // --- 8. SECTION: SIGNATURES BLOCK ---
-  // Table bordered box for signatures
+  // Hardcode signatures block and footer elements to sit exactly at the bottom of the A4 page!
+  const sigY = 241;
   const sigBoxH = 32;
   const sigW = contentW / 3;
 
   doc.setDrawColor(80, 80, 80);
   doc.setLineWidth(0.3);
-  doc.rect(marginL, currentY, contentW, sigBoxH);
+  doc.rect(marginL, sigY, contentW, sigBoxH);
 
   // Division vertical lines
-  doc.line(marginL + sigW, currentY, marginL + sigW, currentY + sigBoxH);
-  doc.line(marginL + (sigW * 2), currentY, marginL + (sigW * 2), currentY + sigBoxH);
+  doc.line(marginL + sigW, sigY, marginL + sigW, sigY + sigBoxH);
+  doc.line(marginL + (sigW * 2), sigY, marginL + (sigW * 2), sigY + sigBoxH);
 
   // Row header horizontal lines
-  doc.line(marginL, currentY + 8, pageW - marginR, currentY + 8);
+  doc.line(marginL, sigY + 8, pageW - marginR, sigY + 8);
 
   const drawSignatureCell = (x: number, label: string, role: string) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(148, 163, 184);
-    doc.text(label, x + 2, currentY + 3.5);
+    doc.text(label, x + 2, sigY + 3.5);
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(15, 23, 42);
-    doc.text(role, x + 2, currentY + 6.8);
+    doc.text(role, x + 2, sigY + 6.8);
 
     // Inside signature space
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(148, 163, 184);
-    doc.text('Signature:', x + 2, currentY + 11.5);
-    doc.text('Date:', x + 2, currentY + 30);
+    doc.text('Signature:', x + 2, sigY + 11.5);
+    doc.text('Date:', x + 2, sigY + 30);
   };
 
   drawSignatureCell(marginL, 'PREPARED by:', 'IT');
   drawSignatureCell(marginL + sigW, 'VERIFIED by:', 'Office Manager');
   drawSignatureCell(marginL + (sigW * 2), 'RECEIVED by:', 'User');
 
-  currentY += sigBoxH + 4.5;
-
   // 9. THICK BLACK FOOTER LINE
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.6);
-  doc.line(marginL, currentY, pageW - marginR, currentY);
-
-  currentY += 4.5;
+  doc.line(marginL, 278, pageW - marginR, 278);
 
   // Footer notes on left
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(15, 32, 67);
-  doc.text('INFORMATION TECHNOLOGY', marginL, currentY);
-  doc.text(info.originatorCompany.toUpperCase(), marginL, currentY + 4.2);
+  doc.text('INFORMATION TECHNOLOGY', marginL, 283);
+  doc.text(info.originatorCompany.toUpperCase(), marginL, 287.2);
 
   // Save Document
   const cleanName = info.recipientName.replace(/\s+/g, '-').substring(0, 15);
