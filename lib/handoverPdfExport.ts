@@ -391,57 +391,49 @@ export function exportAssetTransferForm(
 
   const pageW = 210;
   const pageH = 297;
-  const marginL = 15;
-  const marginR = 15;
-  const contentW = pageW - marginL - marginR; // 180mm
+  const marginL = 10;
+  const marginR = 10;
+  const contentW = pageW - marginL - marginR; // 190mm
 
-  // 1. Top Decorative Bar
-  doc.setFillColor(15, 32, 67); // Corporate Dark Blue
-  doc.rect(0, 0, pageW, 5, 'F');
+  // 1. Single Outer Rectangular Page Border (matching the thin outer frame in screenshot)
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.4);
+  doc.rect(4, 4, pageW - 8, pageH - 8);
 
-  let currentY = 14;
+  let currentY = 10;
 
-  // Title block on left (bordered box)
-  doc.setDrawColor(15, 32, 67);
-  doc.setLineWidth(0.6);
-  doc.rect(marginL, currentY, 75, 12);
-  
+  // 2. Title Header Area
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(22);
   doc.setTextColor(15, 32, 67);
-  doc.text('ASSET TRANSFER FORM', marginL + 5, currentY + 7.5);
+  doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
 
-  // Logo text on right
+  // Stylized Gold Brand Logo on Top Right
+  const logoCenterY = currentY + 3;
+  const logoCenterX = pageW - marginR - 10;
+  doc.setDrawColor(197, 160, 89); // Gold Accent
+  doc.setLineWidth(1.2);
+  doc.ellipse(logoCenterX, logoCenterY, 3, 3, 'S');
+  doc.line(logoCenterX, logoCenterY + 3, logoCenterX + 1.5, logoCenterY - 2.5);
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(71, 85, 105);
-  doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 5.5, { align: 'right' });
+  doc.setFontSize(6.5);
+  doc.setTextColor(197, 160, 89);
+  doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 10, { align: 'right' });
 
-  // Thin line below brand header
-  currentY += 16;
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.3);
+  // Thin separator line
+  currentY += 12;
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.8);
   doc.line(marginL, currentY, pageW - marginR, currentY);
 
-  currentY += 4;
+  currentY += 2;
 
-  // Top Metadata Grid (Right side)
-  const metaX = pageW - marginR - 80;
-  const metaW = 80;
-  
-  const drawMetaRow = (label: string, val: string, yPos: number) => {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(15, 32, 67);
-    doc.text(label, metaX, yPos);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(15, 23, 42);
-    doc.text(`:  ${val}`, metaX + 32, yPos);
-  };
+  // 3. Metadata Panel (Grey outline box containing Date, Return Date, Doc No, Return Condition)
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.25);
+  doc.rect(marginL, currentY, contentW, 14);
 
-  // Convert handover date to DD-MMM-YY format (e.g. 20-Apr-26)
   const formatShortMMM = (dateStr: string) => {
     if (!dateStr) return '-';
     try {
@@ -455,298 +447,328 @@ export function exportAssetTransferForm(
     }
   };
 
-  drawMetaRow('HANDOVER DATE', formatShortMMM(info.handoverDate), currentY);
-  drawMetaRow('DOC NO', info.docNo, currentY + 4.5);
-  drawMetaRow('RETURN DATE', ':', currentY + 9);
-  drawMetaRow('RETURN CONDITION', ':  __________________', currentY + 13.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 23, 42);
 
-  currentY += 18;
+  // Row 1
+  doc.text('HANDOVER DATE', marginL + 3, currentY + 4.5);
+  doc.text(`:  ${formatShortMMM(info.handoverDate)}`, marginL + 35, currentY + 4.5);
+  doc.text('DOC NO', marginL + 120, currentY + 4.5);
+  doc.text(`:  ${info.docNo}`, marginL + 138, currentY + 4.5);
 
-  // Helper to draw Section Header
+  // Row 2
+  doc.text('RETURN DATE', marginL + 3, currentY + 10.5);
+  doc.text(':', marginL + 35, currentY + 10.5);
+  doc.text('RETURN CONDITION', marginL + 102, currentY + 10.5);
+  doc.text(':  __________________________________', marginL + 138, currentY + 10.5);
+
+  currentY += 17;
+
+  // Section Header Generator (Rich Navy centered bar)
   const drawSectionHeader = (title: string, yPos: number) => {
-    doc.setFillColor(15, 32, 67); // Corporate Dark Blue
-    doc.rect(marginL, yPos, contentW, 6, 'F');
+    doc.setFillColor(12, 35, 90); // Solid Dark Navy
+    doc.rect(marginL, yPos, contentW, 5.5, 'F');
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(255, 255, 255);
-    doc.text(title, marginL + 3, yPos + 4.2);
+    doc.text(title, pageW / 2, yPos + 3.8, { align: 'center' });
   };
 
-  // --- 2. SECTION: DATA ORIGINATOR ---
-  drawSectionHeader('DATA ORIGINATOR', currentY);
-  currentY += 6;
-
-  // Grid for Originator
-  const origGridY = currentY;
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.25);
-  doc.rect(marginL, origGridY, contentW, 14);
-  
-  // Vertical split line
-  doc.line(marginL + (contentW / 2), origGridY, marginL + (contentW / 2), origGridY + 14);
-  doc.line(marginL, origGridY + 7, pageW - marginR, origGridY + 7);
-
-  const drawFieldInGrid = (label: string, value: string, x: number, y: number) => {
+  // Helper to draw clean white bordered input boxes
+  const drawLabelAndInputBox = (
+    label: string,
+    value: string,
+    labelX: number,
+    colonX: number,
+    boxX: number,
+    boxW: number,
+    y: number,
+    boxH: number = 4.8
+  ) => {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text(label, x + 3, y + 4.5);
+    doc.setFontSize(8);
+    doc.setTextColor(15, 32, 67);
+    doc.text(label, labelX, y + 3.5);
     
+    doc.text(':', colonX, y + 3.5);
+    
+    // Draw white input box
+    doc.setDrawColor(100, 100, 100);
+    doc.setLineWidth(0.2);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(boxX, y, boxW, boxH, 'FD');
+    
+    // Write capitalized text inside
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(15, 23, 42);
-    doc.text(value || '-', x + 35, y + 4.5);
+    doc.text(value.toUpperCase(), boxX + 2, y + 3.5);
   };
 
-  drawFieldInGrid('COMPANY', info.originatorCompany, marginL, origGridY);
-  drawFieldInGrid('NAME', info.originatorName, marginL + (contentW / 2), origGridY);
-  drawFieldInGrid('POSITION', info.originatorPosition, marginL, origGridY + 7);
-  drawFieldInGrid('DEPARTMENT', info.originatorDept, marginL + (contentW / 2), origGridY + 7);
+  // --- 4. SECTION: DATA ORIGINATOR ---
+  drawSectionHeader('DATA ORIGINATOR', currentY);
+  currentY += 7.5;
 
-  currentY += 19;
-
-  // --- 3. SECTION: DATA FIXED ASET ---
-  drawSectionHeader('DATA FIXED ASSET', currentY);
+  drawLabelAndInputBox('COMPANY', info.originatorCompany, marginL + 1, marginL + 41, marginL + 43, 146, currentY);
   currentY += 6.5;
 
-  // Asset Type indicator
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(15, 32, 67);
-  doc.text('ASSET TYPE', marginL, currentY + 3.5);
-  
-  doc.setFillColor(15, 32, 67);
-  doc.rect(marginL + 25, currentY + 1, 3, 3, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  doc.text('Hardware', marginL + 30, currentY + 3.5);
+  drawLabelAndInputBox('NAME', info.originatorName, marginL + 1, marginL + 41, marginL + 43, 146, currentY);
+  currentY += 6.5;
 
-  doc.setDrawColor(15, 32, 67);
-  doc.rect(marginL + 55, currentY + 1, 3, 3, 'S');
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Software', marginL + 60, currentY + 3.5);
+  drawLabelAndInputBox('POSITION', info.originatorPosition, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
+  drawLabelAndInputBox('DEPARTMENT', info.originatorDept, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+
+  currentY += 10.5;
+
+  // --- 5. SECTION: DATA FIXED ASSET ---
+  drawSectionHeader('DATA FIXED ASSET', currentY);
+  currentY += 7.5;
+
+  // Asset type indicator block
+  doc.setFillColor(12, 35, 90);
+  doc.rect(marginL, currentY, contentW, 5.5, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('ASSET TYPE', marginL + 2, currentY + 3.8);
+  doc.text(':', marginL + 41, currentY + 3.8);
+  
+  doc.text('Hardware', marginL + 48, currentY + 3.8);
+  doc.text('Software', marginL + 80, currentY + 3.8);
 
   currentY += 7.5;
 
-  // Table 1: Main Asset Table
-  const drawMainAssetTable = (yPos: number) => {
-    const tableW = [10, 60, 40, 40, 30]; // Sums to 180 (contentW)
-    const tableX = [
-      marginL,
-      marginL + tableW[0],
-      marginL + tableW[0] + tableW[1],
-      marginL + tableW[0] + tableW[1] + tableW[2],
-      marginL + tableW[0] + tableW[1] + tableW[2] + tableW[3]
-    ];
+  // TABLE 1: Main Fixed Asset Table
+  const table1W = [10, 68, 42, 42, 28]; // Sums to 190 (contentW)
+  const table1X = [
+    marginL,
+    marginL + table1W[0],
+    marginL + table1W[0] + table1W[1],
+    marginL + table1W[0] + table1W[1] + table1W[2],
+    marginL + table1W[0] + table1W[1] + table1W[2] + table1W[3]
+  ];
 
-    // Header Row
-    doc.setFillColor(241, 245, 249);
-    doc.rect(marginL, yPos, contentW, 6, 'F');
-    doc.setDrawColor(203, 213, 225);
-    doc.rect(marginL, yPos, contentW, 6);
+  // Table 1 Header
+  doc.setFillColor(12, 35, 90);
+  doc.rect(marginL, currentY, contentW, 5.5, 'F');
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.rect(marginL, currentY, contentW, 5.5);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(15, 32, 67);
-    doc.text('NO', tableX[0] + tableW[0] / 2, yPos + 4.2, { align: 'center' });
-    doc.text('ASSET NAME', tableX[1] + 3, yPos + 4.2);
-    doc.text('SERIAL NO', tableX[2] + 3, yPos + 4.2);
-    doc.text('ASSET REGISTER NO', tableX[3] + 3, yPos + 4.2);
-    doc.text('REMARKS', tableX[4] + 3, yPos + 4.2);
-
-    // Row 1 (Data)
-    const rowY = yPos + 6;
-    doc.rect(marginL, rowY, contentW, 8);
-    
-    // Vertical grid lines
-    for (let i = 1; i < tableX.length; i++) {
-      doc.line(tableX[i], yPos, tableX[i], rowY + 8);
-    }
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(15, 23, 42);
-    doc.text('1', tableX[0] + tableW[0] / 2, rowY + 5.2, { align: 'center' });
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text(asset.item || 'Vivobook', tableX[1] + 3, rowY + 5.2);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(asset.serialNumber || '-', tableX[2] + 3, rowY + 5.2);
-    doc.setFont('helvetica', 'bold');
-    doc.text(asset.assetId || '-', tableX[3] + 3, rowY + 5.2);
-    doc.setFont('helvetica', 'normal');
-    doc.text(asset.remarks || asset.brand || '-', tableX[4] + 3, rowY + 5.2);
-
-    // Rows 2 & 3 (Blank Placeholders)
-    const row2Y = rowY + 8;
-    doc.rect(marginL, row2Y, contentW, 6);
-    doc.rect(marginL, row2Y + 6, contentW, 6);
-    for (let i = 1; i < tableX.length; i++) {
-      doc.line(tableX[i], row2Y, tableX[i], row2Y + 12);
-    }
-  };
-
-  drawMainAssetTable(currentY);
-  currentY += 28;
-
-  // Table 2: Supporting Equipment
-  const drawSupportingEquipmentTable = (yPos: number) => {
-    const tableW = [10, 80, 45, 45]; // Sums to 180 (contentW)
-    const tableX = [
-      marginL,
-      marginL + tableW[0],
-      marginL + tableW[0] + tableW[1],
-      marginL + tableW[0] + tableW[1] + tableW[2]
-    ];
-
-    // Header Row
-    doc.setFillColor(241, 245, 249);
-    doc.rect(marginL, yPos, contentW, 6, 'F');
-    doc.setDrawColor(203, 213, 225);
-    doc.rect(marginL, yPos, contentW, 6);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(15, 32, 67);
-    doc.text('NO', tableX[0] + tableW[0] / 2, yPos + 4.2, { align: 'center' });
-    doc.text('SUPPORTING EQUIPMENT', tableX[1] + 3, yPos + 4.2);
-    doc.text('SERIAL NO', tableX[2] + 3, yPos + 4.2);
-    doc.text('REMARKS', tableX[3] + 3, yPos + 4.2);
-
-    const rowH = 6;
-    // Print supporting equip rows dynamically
-    for (let i = 0; i < 5; i++) {
-      const rowY = yPos + 6 + (i * rowH);
-      doc.rect(marginL, rowY, contentW, rowH);
-      for (let j = 1; j < tableX.length; j++) {
-        doc.line(tableX[j], yPos, tableX[j], rowY + rowH);
-      }
-
-      const equip = info.supportingEquipment[i];
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.2);
-      doc.setTextColor(15, 23, 42);
-      doc.text(String(i + 1), tableX[0] + tableW[0] / 2, rowY + 4.2, { align: 'center' });
-      
-      if (equip) {
-        doc.setFont('helvetica', 'bold');
-        doc.text(equip.name || '', tableX[1] + 3, rowY + 4.2);
-        doc.setFont('helvetica', 'normal');
-        doc.text(equip.serialNo || '-', tableX[2] + 3, rowY + 4.2);
-        doc.text(equip.remarks || '-', tableX[3] + 3, rowY + 4.2);
-      }
-    }
-  };
-
-  drawSupportingEquipmentTable(currentY);
-  currentY += 38;
-
-  // Note Banner Box
-  doc.setFillColor(15, 32, 67);
-  doc.rect(marginL, currentY, 20, 6, 'F');
-  
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
-  doc.text('Note :', marginL + 3, currentY + 4.2);
+  doc.text('NO', table1X[0] + table1W[0]/2, currentY + 3.8, { align: 'center' });
+  doc.text('ASSET NAME', table1X[1] + table1W[1]/2, currentY + 3.8, { align: 'center' });
+  doc.text('SERIAL NO', table1X[2] + table1W[2]/2, currentY + 3.8, { align: 'center' });
+  doc.text('ASSET REGISTER NO', table1X[3] + table1W[3]/2, currentY + 3.8, { align: 'center' });
+  doc.text('REMARKS', table1X[4] + table1W[4]/2, currentY + 3.8, { align: 'center' });
 
-  doc.setDrawColor(15, 32, 67);
-  doc.rect(marginL + 20, currentY, contentW - 20, 6);
+  // Row 1 (Data)
+  let rowY = currentY + 5.5;
+  doc.setFillColor(255, 255, 255);
+  doc.rect(marginL, rowY, contentW, 7, 'F');
+  doc.rect(marginL, rowY, contentW, 7);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 23, 42);
+  doc.text('1', table1X[0] + table1W[0]/2, rowY + 4.5, { align: 'center' });
   
   doc.setFont('helvetica', 'bold');
+  doc.text(asset.item || '', table1X[1] + 6, rowY + 4.5);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text(asset.serialNumber || '-', table1X[2] + table1W[2]/2, rowY + 4.5, { align: 'center' });
+  doc.text(asset.assetId || '-', table1X[3] + table1W[3]/2, rowY + 4.5, { align: 'center' });
+  doc.text(asset.remarks || asset.brand || '-', table1X[4] + table1W[4]/2, rowY + 4.5, { align: 'center' });
+
+  // Row 2 (Blank Placeholder)
+  doc.rect(marginL, rowY + 7, contentW, 5.5);
+  // Row 3 (Blank Placeholder)
+  doc.rect(marginL, rowY + 12.5, contentW, 5.5);
+
+  // Vertical Divider gridlines
+  for (let i = 1; i < table1X.length; i++) {
+    doc.line(table1X[i], currentY, table1X[i], rowY + 18);
+  }
+
+  currentY += 26.5;
+
+  // TABLE 2: Supporting Equipment Table
+  const table2W = [10, 80, 50, 50]; // Sums to 190 (contentW)
+  const table2X = [
+    marginL,
+    marginL + table2W[0],
+    marginL + table2W[0] + table2W[1],
+    marginL + table2W[0] + table2W[1] + table2W[2]
+  ];
+
+  doc.setFillColor(12, 35, 90);
+  doc.rect(marginL, currentY, contentW, 5.5, 'F');
+  doc.rect(marginL, currentY, contentW, 5.5);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text('NO', table2X[0] + table2W[0]/2, currentY + 3.8, { align: 'center' });
+  doc.text('SUPPORTING EQUIPMENT', table2X[1] + table2W[1]/2, currentY + 3.8, { align: 'center' });
+  doc.text('SERIAL NO', table2X[2] + table2W[2]/2, currentY + 3.8, { align: 'center' });
+  doc.text('REMARKS', table2X[3] + table2W[3]/2, currentY + 3.8, { align: 'center' });
+
+  // Print 5 rows cleanly (filling with checkboxes or blank placeholders)
+  const rowH = 5.5;
+  for (let i = 0; i < 5; i++) {
+    const rY = currentY + 5.5 + (i * rowH);
+    doc.rect(marginL, rY, contentW, rowH);
+    for (let j = 1; j < table2X.length; j++) {
+      doc.line(table2X[j], currentY, table2X[j], rY + rowH);
+    }
+
+    const equip = info.supportingEquipment[i];
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(String(i + 1), table2X[0] + table2W[0]/2, rY + 3.8, { align: 'center' });
+    
+    if (equip) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(equip.name || '', table2X[1] + 6, rY + 3.8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(equip.serialNo || '-', table2X[2] + table2W[2]/2, rY + 3.8, { align: 'center' });
+      doc.text(equip.remarks || '-', table2X[3] + table2W[3]/2, rY + 3.8, { align: 'center' });
+    }
+  }
+
+  currentY += 36;
+
+  // Note Section (matching note bar in screenshot)
+  doc.setFillColor(12, 35, 90);
+  doc.rect(marginL, currentY, contentW, 5.5, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Note :', marginL + 2, currentY + 3.8);
+
+  doc.rect(marginL, currentY + 5.5, contentW, 10);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(info.note || '-', marginL + 3, currentY + 11.8);
+
+  currentY += 19;
+
+  // --- 6. SECTION: DATA RECIPIENT ---
+  drawSectionHeader('DATA RECIPIENT', currentY);
+  currentY += 7.5;
+
+  drawLabelAndInputBox('NAME', info.recipientName, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
+  drawLabelAndInputBox('COMPANY', info.recipientCompany, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  currentY += 6.5;
+
+  drawLabelAndInputBox('POSITION', info.recipientPosition, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
+  drawLabelAndInputBox('DIVISION', info.recipientDivision, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  currentY += 6.5;
+
+  drawLabelAndInputBox('DEPARTEMENT', info.recipientDept, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
+  drawLabelAndInputBox('LOCATION', info.recipientLocation, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+
+  currentY += 10.5;
+
+  // Dotted line before Acknowledgement
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(marginL, currentY, pageW - marginR, currentY);
+  doc.setLineDashPattern([], 0); // reset dash pattern
+
+  currentY += 3.5;
+
+  // --- 7. SECTION: ACKNOWLEDGEMENT AND DECLARATION ---
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 32, 67);
+  doc.text('ACKNOWLEDGEMENT AND DECLARATION', marginL, currentY);
+  
+  // Dotted underline
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(marginL, currentY + 1.2, marginL + 65, currentY + 1.2);
+  doc.setLineDashPattern([], 0);
+
+  currentY += 4.5;
+
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(15, 23, 42);
-  doc.text(info.note || '-', marginL + 23, currentY + 4.2);
-
-  currentY += 11;
-
-  // --- 4. SECTION: DATA RECIPIENT ---
-  drawSectionHeader('DATA RECIPIENT', currentY);
-  currentY += 6;
-
-  // Symmetrical Grid of fields
-  const recipGridY = currentY;
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.25);
-  doc.rect(marginL, recipGridY, contentW, 21);
-  
-  // Horizontal splits
-  doc.line(marginL, recipGridY + 7, pageW - marginR, recipGridY + 7);
-  doc.line(marginL, recipGridY + 14, pageW - marginR, recipGridY + 14);
-  // Vertical split
-  doc.line(marginL + (contentW / 2), recipGridY, marginL + (contentW / 2), recipGridY + 21);
-
-  drawFieldInGrid('NAME', info.recipientName, marginL, recipGridY);
-  drawFieldInGrid('COMPANY', info.recipientCompany, marginL + (contentW / 2), recipGridY);
-  drawFieldInGrid('POSITION', info.recipientPosition, marginL, recipGridY + 7);
-  drawFieldInGrid('DIVISION', info.recipientDivision, marginL + (contentW / 2), recipGridY + 7);
-  drawFieldInGrid('DEPARTEMENT', info.recipientDept, marginL, recipGridY + 14);
-  drawFieldInGrid('LOCATION', info.recipientLocation, marginL + (contentW / 2), recipGridY + 14);
-
-  currentY += 27;
-
-  // --- 5. SECTION: ACKNOWLEDGEMENT AND DECLARATION ---
-  const declY = currentY;
-  doc.setFillColor(248, 250, 252);
-  doc.rect(marginL, declY, contentW, 14, 'F');
-  doc.setDrawColor(226, 232, 240);
-  doc.rect(marginL, declY, contentW, 14);
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7.5);
-  doc.setTextColor(71, 85, 105);
   const declText = 'I, as received, hereby acknowledge that I received above mentioned asset. I understand that asset belong to company and hereby assure that I will take care of the assets of the company to the best possible extend. Minimum for next 3 years.';
-  const splitDecl = doc.splitTextToSize(declText, contentW - 8);
-  doc.text(splitDecl, marginL + 4, declY + 4.8);
+  const splitDecl = doc.splitTextToSize(declText, contentW);
+  doc.text(splitDecl, marginL, currentY);
 
-  currentY += 20;
+  currentY += 13.5;
 
-  // --- 6. SECTION: SIGNATURES BLOCK ---
+  // --- 8. SECTION: SIGNATURES BLOCK ---
+  // Table bordered box for signatures
+  const sigBoxH = 32;
   const sigW = contentW / 3;
-  const drawSigColumn = (header: string, role: string, xPos: number, yPos: number) => {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(15, 32, 67);
-    doc.text(header, xPos + (sigW / 2), yPos, { align: 'center' });
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(100, 116, 139);
-    doc.text(role, xPos + (sigW / 2), yPos + 4, { align: 'center' });
 
-    // Signature Area Box outline
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(xPos + 5, yPos + 6, sigW - 10, 15);
+  doc.setDrawColor(80, 80, 80);
+  doc.setLineWidth(0.3);
+  doc.rect(marginL, currentY, contentW, sigBoxH);
 
+  // Division vertical lines
+  doc.line(marginL + sigW, currentY, marginL + sigW, currentY + sigBoxH);
+  doc.line(marginL + (sigW * 2), currentY, marginL + (sigW * 2), currentY + sigBoxH);
+
+  // Row header horizontal lines
+  doc.line(marginL, currentY + 8, pageW - marginR, currentY + 8);
+
+  const drawSignatureCell = (x: number, label: string, role: string) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(148, 163, 184);
-    doc.text('Signature:', xPos + 8, yPos + 25);
-    doc.text('Date:', xPos + 8, yPos + 29);
+    doc.text(label, x + 2, currentY + 3.5);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text(role, x + 2, currentY + 6.8);
+
+    // Inside signature space
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Signature:', x + 2, currentY + 11.5);
+    doc.text('Date:', x + 2, currentY + 30);
   };
 
-  drawSigColumn('PREPARED by:', 'IT Specialist', marginL, currentY);
-  drawSigColumn('VERIFIED by:', 'Office Manager', marginL + sigW, currentY);
-  drawSigColumn('RECEIVED by:', 'User / Recipient', marginL + (sigW * 2), currentY);
+  drawSignatureCell(marginL, 'PREPARED by:', 'IT');
+  drawSignatureCell(marginL + sigW, 'VERIFIED by:', 'Office Manager');
+  drawSignatureCell(marginL + (sigW * 2), 'RECEIVED by:', 'User');
 
-  currentY += 34;
+  currentY += sigBoxH + 4.5;
 
-  // Footer notes
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(100, 116, 139);
-  doc.text('INFORMATION TECHNOLOGY', marginL, pageH - 8);
-  
+  // 9. THICK BLACK FOOTER LINE
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.6);
+  doc.line(marginL, currentY, pageW - marginR, currentY);
+
+  currentY += 4.5;
+
+  // Footer notes on left
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(15, 32, 67);
-  doc.text(info.originatorCompany.toUpperCase(), pageW - marginR, pageH - 8, { align: 'right' });
+  doc.text('INFORMATION TECHNOLOGY', marginL, currentY);
+  doc.text(info.originatorCompany.toUpperCase(), marginL, currentY + 4.2);
 
   // Save Document
   const cleanName = info.recipientName.replace(/\s+/g, '-').substring(0, 15);
   doc.save(`Asset_Transfer_Form_${asset.assetId}_${cleanName}.pdf`);
 }
+
 
