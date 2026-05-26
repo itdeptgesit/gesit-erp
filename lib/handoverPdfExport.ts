@@ -421,9 +421,17 @@ export async function exportAssetTransferForm(
   doc.setTextColor(15, 32, 67);
   doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
 
-  // Render the official logo on top-right
+  // Render the official logo on top-right with perfect, un-skewed aspect ratio
   if (logoImg) {
-    doc.addImage(logoImg, 'PNG', pageW - marginR - 22, currentY + 0.5, 22, 10);
+    const originalW = logoImg.naturalWidth || logoImg.width || 100;
+    const originalH = logoImg.naturalHeight || logoImg.height || 100;
+    const aspect = originalW / originalH;
+    
+    // We target a fixed height of 8.5mm to keep it elegant and neat
+    const targetH = 8.5;
+    const targetW = targetH * aspect;
+    
+    doc.addImage(logoImg, 'PNG', pageW - marginR - targetW, currentY + 0.5, targetW, targetH);
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
