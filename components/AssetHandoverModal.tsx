@@ -69,8 +69,8 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       const year = today.getFullYear();
       const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
       const romanMonth = romanMonths[today.getMonth()];
-      const cleanDept = (asset.department || 'DAS').toUpperCase().replace(/\s+/g, '');
-      setDocNo(`ATF-${cleanDept}/01/${romanMonth}/${year}`);
+      const companyPrefix = asset.assetId ? asset.assetId.split('-')[0].toUpperCase() : 'GI';
+      setDocNo(`ATF-${companyPrefix}/001/${romanMonth}/${year}`);
 
       // Set Notes
       setNote(`New member ${asset.company || 'Dharma Alumas Sakti'} - ${asset.user || 'Kiki Meisara'}`);
