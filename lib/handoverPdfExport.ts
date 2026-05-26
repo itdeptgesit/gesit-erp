@@ -556,7 +556,7 @@ export async function exportAssetTransferForm(
   drawLabelAndInputBox('POSITION', info.originatorPosition, 11, 32, 34, 75, currentY);
   drawLabelAndInputBox('DEPARTMENT', info.originatorDept, 117, 138, 140, 60, currentY);
 
-  currentY += 10.5;
+  currentY += 13;
 
   // --- 5. SECTION: DATA FIXED ASSET ---
   drawSectionHeader('DATA FIXED ASSET', currentY);
@@ -640,7 +640,7 @@ export async function exportAssetTransferForm(
     doc.line(table1X[i], currentY, table1X[i], rowY + 18);
   }
 
-  currentY += 26.5;
+  currentY += 31;
 
   // TABLE 2: Supporting Equipment Table
   const table2W = [10, 80, 50, 50]; // Sums to 190 (contentW)
@@ -687,7 +687,7 @@ export async function exportAssetTransferForm(
     }
   }
 
-  currentY += 36;
+  currentY += 40.5;
 
   // Note Section (matching note bar in screenshot)
   doc.setFillColor(12, 35, 90);
@@ -705,7 +705,7 @@ export async function exportAssetTransferForm(
   doc.setTextColor(15, 23, 42);
   doc.text(info.note || '-', marginL + 3, currentY + 11.8);
 
-  currentY += 19;
+  currentY += 23;
 
   // --- 6. SECTION: DATA RECIPIENT ---
   drawSectionHeader('DATA RECIPIENT', currentY);
@@ -722,7 +722,7 @@ export async function exportAssetTransferForm(
   drawLabelAndInputBox('DEPARTEMENT', info.recipientDept, 11, 32, 34, 75, currentY);
   drawLabelAndInputBox('LOCATION', info.recipientLocation, 117, 138, 140, 60, currentY);
 
-  currentY += 10.5;
+  currentY += 14.5;
 
   // Dotted line before Acknowledgement
   doc.setDrawColor(100, 116, 139);
@@ -757,7 +757,7 @@ export async function exportAssetTransferForm(
 
   // --- 8. SECTION: SIGNATURES BLOCK ---
   // Hardcode signatures block and footer elements to sit exactly at the bottom of the A4 page!
-  const sigY = 241;
+  const sigY = 246;
   const sigBoxH = 32;
   const sigW = contentW / 3;
 
@@ -798,14 +798,14 @@ export async function exportAssetTransferForm(
   // 9. THICK BLACK FOOTER LINE
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.6);
-  doc.line(marginL, 278, pageW - marginR, 278);
+  doc.line(marginL, 281, pageW - marginR, 281);
 
   // Footer notes on left
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(15, 32, 67);
-  doc.text('INFORMATION TECHNOLOGY', marginL, 283);
-  doc.text(info.originatorCompany.toUpperCase(), marginL, 287.2);
+  doc.text('INFORMATION TECHNOLOGY', marginL, 285.5);
+  doc.text(info.originatorCompany.toUpperCase(), marginL, 289.5);
 
   // Save Document
   const cleanName = info.recipientName.replace(/\s+/g, '-').substring(0, 15);
