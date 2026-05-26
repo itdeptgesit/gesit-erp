@@ -432,6 +432,12 @@ export async function exportAssetTransferForm(
     const targetW = targetH * aspect;
     
     doc.addImage(logoImg, 'PNG', pageW - marginR - targetW, currentY + 0.5, targetW, targetH);
+    
+    // Sub-label text "THE GESIT COMPANIES" below the image logo
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(197, 160, 89); // Elegant Gold Color
+    doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 11.2, { align: 'right' });
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
