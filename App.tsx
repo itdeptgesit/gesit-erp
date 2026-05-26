@@ -48,6 +48,7 @@ const MainDashboard = React.lazy(() => import('./components/MainDashboard').then
 const NetworkDashboard = React.lazy(() => import('./components/NetworkDashboard').then(m => ({ default: m.NetworkDashboard })));
 const AssetManager = React.lazy(() => import('./components/AssetManager').then(m => ({ default: m.AssetManager })));
 const AssetLoanManager = React.lazy(() => import('./components/AssetLoanManager').then(m => ({ default: m.AssetLoanManager })));
+const AssetHandoverManager = React.lazy(() => import('./components/AssetHandoverManager').then(m => ({ default: m.AssetHandoverManager })));
 const ActivityLogManager = React.lazy(() => import('./components/ActivityLogManager').then(m => ({ default: m.ActivityLogManager })));
 const WeeklyPlanManager = React.lazy(() => import('./components/WeeklyPlanManager').then(m => ({ default: m.WeeklyPlanManager })));
 const PurchasePlanManager = React.lazy(() => import('./components/PurchasePlanManager').then(m => ({ default: m.PurchasePlanManager })));
@@ -594,6 +595,7 @@ const InternalApp: React.FC = () => {
                             <Route path="network" element={<NetworkDashboard onBack={() => navigate('/')} currentUser={currentUser} />} />
                             <Route path="assets" element={<AssetManager currentUser={currentUser} />} />
                             <Route path="asset-loan" element={<AssetLoanManager currentUser={currentUser} />} />
+                            <Route path="asset-handover" element={<AssetHandoverManager currentUser={currentUser} />} />
                             <Route path="files" element={<FileManager currentUser={currentUser} />} />
                             <Route path="extension-directory" element={<ExtensionDirectory currentUser={currentUser} externalFloorFilter={globalFloorFilter} onFloorFilterChange={setGlobalFloorFilter} />} />
                             <Route path="users" element={<UserManagement onUpdateSuccess={refreshUserProfile} currentUser={currentUser} />} />
