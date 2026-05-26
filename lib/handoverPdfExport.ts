@@ -417,9 +417,9 @@ export async function exportAssetTransferForm(
 
   // 2. Title Header Area
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
+  doc.setFontSize(17);
   doc.setTextColor(15, 32, 67);
-  doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
+  doc.text('ASSET TRANSFER FORM', marginL, currentY + 6.5);
 
   // Render the official logo on top-right with perfect aspect ratio, centering logo and sub-label, and aligning rightmost edge perfectly to right margin
   if (logoImg) {
