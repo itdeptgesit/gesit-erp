@@ -319,7 +319,7 @@ const InternalApp: React.FC = () => {
           document.documentElement.style.setProperty('--font-sans', `"${newSettings.fontFamily}", sans-serif`);
 
           // Dynamically load font from Google Fonts
-          const fontUrl = `https://fonts.googleapis.com/css2?family=${newSettings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+          const fontUrl = `https://fonts.googleapis.com/css2?family=${newSettings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800;900&display=swap`;
           let link = document.getElementById('google-fonts') as HTMLLinkElement;
           if (!link) {
             link = document.createElement('link');

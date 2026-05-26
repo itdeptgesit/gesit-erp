@@ -63,7 +63,7 @@ export const AssetQRModal: React.FC<AssetQRModalProps> = ({ isOpen, onClose, ass
             <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-tighter text-sm">Identity Tag</h3>
             <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Registry Authentication</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="dark: w-8">
+          <Button variant="ghost" size="icon" onClick={onClose} className="w-8 h-8 rounded-md text-slate-400 dark:text-zinc-500">
             <X size={18} />
           </Button>
         </div>

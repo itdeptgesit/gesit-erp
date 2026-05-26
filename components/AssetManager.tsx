@@ -229,8 +229,9 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       existingAssets?.forEach(a => {
         const parts = (a.asset_id || '').split('-');
         if (parts.length >= 3) {
-          const prefix = `${parts[0]}-${parts[1]}`;
-          const num = parseInt(parts[2], 10);
+          const isIT = parts[0].toUpperCase() === 'IT';
+          const prefix = isIT ? `${parts[1]}-${parts[2]}` : `${parts[0]}-${parts[1]}`;
+          const num = parseInt(parts[parts.length - 1], 10);
           if (!isNaN(num)) {
             counters[prefix] = Math.max(counters[prefix] || 0, num);
           }
