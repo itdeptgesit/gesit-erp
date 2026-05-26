@@ -445,8 +445,8 @@ export async function exportAssetTransferForm(
     doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 7, { align: 'right' });
   }
 
-  // Thin separator line
-  currentY += 12;
+  // Thin separator line (increased spacing by 3mm to give breathing room for sub-label text!)
+  currentY += 15;
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.8);
   doc.line(marginL, currentY, pageW - marginR, currentY);
@@ -485,7 +485,11 @@ export async function exportAssetTransferForm(
   doc.text('RETURN DATE', marginL + 3, currentY + 10.5);
   doc.text(':', marginL + 35, currentY + 10.5);
   doc.text('RETURN CONDITION', marginL + 102, currentY + 10.5);
-  doc.text(':  __________________________________', marginL + 138, currentY + 10.5);
+  doc.text(':', marginL + 138, currentY + 10.5);
+  // Draw a perfect straight vector line instead of messy underscore characters that overflow!
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineWidth(0.3);
+  doc.line(marginL + 141, currentY + 10.5, pageW - marginR - 3, currentY + 10.5);
 
   currentY += 17;
 
@@ -550,18 +554,26 @@ export async function exportAssetTransferForm(
   drawSectionHeader('DATA FIXED ASSET', currentY);
   currentY += 7.5;
 
-  // Asset type indicator block
+  // Asset type indicator block (mathematically aligned columns and white square outline checkboxes)
   doc.setFillColor(12, 35, 90);
   doc.rect(marginL, currentY, contentW, 5.5, 'F');
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(255, 255, 255);
-  doc.text('ASSET TYPE', marginL + 2, currentY + 3.8);
-  doc.text(':', marginL + 41, currentY + 3.8);
+  doc.text('ASSET TYPE', 11, currentY + 3.8);
+  doc.text(':', 32, currentY + 3.8);
   
-  doc.text('Hardware', marginL + 48, currentY + 3.8);
-  doc.text('Software', marginL + 80, currentY + 3.8);
+  // Hardware Checkbox (Checked by default for physical device inventory handovers)
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.25);
+  doc.rect(34, currentY + 1.25, 3, 3);
+  doc.text('X', 34.8, currentY + 3.65);
+  doc.text('Hardware', 39, currentY + 3.8);
+  
+  // Software Checkbox (Unchecked placeholder)
+  doc.rect(65, currentY + 1.25, 3, 3);
+  doc.text('Software', 70, currentY + 3.8);
 
   currentY += 7.5;
 
