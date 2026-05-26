@@ -421,7 +421,7 @@ export async function exportAssetTransferForm(
   doc.setTextColor(15, 32, 67);
   doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
 
-  // Render the official logo on top-right with perfect, un-skewed aspect ratio
+  // Render the official logo on top-right with perfect, un-skewed aspect ratio and center-aligned sub-label
   if (logoImg) {
     const originalW = logoImg.naturalWidth || logoImg.width || 100;
     const originalH = logoImg.naturalHeight || logoImg.height || 100;
@@ -431,18 +431,21 @@ export async function exportAssetTransferForm(
     const targetH = 8.5;
     const targetW = targetH * aspect;
     
-    doc.addImage(logoImg, 'PNG', pageW - marginR - targetW, currentY + 0.5, targetW, targetH);
+    // Define a shared vertical center axis for the branding block to center the logo and text perfectly relative to each other!
+    const brandCenterX = pageW - marginR - 15;
     
-    // Sub-label text "THE GESIT COMPANIES" below the image logo
+    doc.addImage(logoImg, 'PNG', brandCenterX - (targetW / 2), currentY + 0.5, targetW, targetH);
+    
+    // Sub-label text "THE GESIT COMPANIES" centered exactly below the image logo
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(197, 160, 89); // Elegant Gold Color
-    doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 11.2, { align: 'right' });
+    doc.text('THE GESIT COMPANIES', brandCenterX, currentY + 11.2, { align: 'center' });
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(197, 160, 89);
-    doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 7, { align: 'right' });
+    doc.text('THE GESIT COMPANIES', pageW - marginR - 15, currentY + 7, { align: 'center' });
   }
 
   // Thin separator line (increased spacing by 3mm to give breathing room for sub-label text!)
