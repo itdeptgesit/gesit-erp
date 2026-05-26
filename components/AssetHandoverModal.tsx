@@ -104,7 +104,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     setCustomEquipments(updated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recipientName) return;
 
@@ -147,7 +147,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       note
     };
 
-    exportAssetTransferForm(asset, info);
+    await exportAssetTransferForm(asset, info);
     onClose();
   };
 

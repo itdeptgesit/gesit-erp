@@ -359,6 +359,16 @@ export function exportHandoverBAST(loan: ITAssetLoan) {
   doc.save(`BAST-${loan.loanId}-${cleanName}.pdf`);
 }
 
+const loadLogoImage = (): Promise<HTMLImageElement | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = '/image/logo.png';
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+  });
+};
+
 export interface AssetTransferInfo {
   originatorCompany: string;
   originatorName: string;
@@ -379,7 +389,7 @@ export interface AssetTransferInfo {
   note: string;
 }
 
-export function exportAssetTransferForm(
+export async function exportAssetTransferForm(
   asset: ITAsset,
   info: AssetTransferInfo
 ) {
@@ -395,6 +405,9 @@ export function exportAssetTransferForm(
   const marginR = 10;
   const contentW = pageW - marginL - marginR; // 190mm
 
+  // Load logo image from local public assets folder asynchronously
+  const logoImg = await loadLogoImage();
+
   // 1. Single Outer Rectangular Page Border (matching the thin outer frame in screenshot)
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.4);
@@ -408,18 +421,15 @@ export function exportAssetTransferForm(
   doc.setTextColor(15, 32, 67);
   doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
 
-  // Stylized Gold Brand Logo on Top Right
-  const logoCenterY = currentY + 3;
-  const logoCenterX = pageW - marginR - 10;
-  doc.setDrawColor(197, 160, 89); // Gold Accent
-  doc.setLineWidth(1.2);
-  doc.ellipse(logoCenterX, logoCenterY, 3, 3, 'S');
-  doc.line(logoCenterX, logoCenterY + 3, logoCenterX + 1.5, logoCenterY - 2.5);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(197, 160, 89);
-  doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 10, { align: 'right' });
+  // Render the official logo on top-right
+  if (logoImg) {
+    doc.addImage(logoImg, 'PNG', pageW - marginR - 22, currentY + 0.5, 22, 10);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(197, 160, 89);
+    doc.text('THE GESIT COMPANIES', pageW - marginR, currentY + 7, { align: 'right' });
+  }
 
   // Thin separator line
   currentY += 12;
@@ -511,14 +521,14 @@ export function exportAssetTransferForm(
   drawSectionHeader('DATA ORIGINATOR', currentY);
   currentY += 7.5;
 
-  drawLabelAndInputBox('COMPANY', info.originatorCompany, marginL + 1, marginL + 41, marginL + 43, 146, currentY);
+  drawLabelAndInputBox('COMPANY', info.originatorCompany, 11, 32, 34, 166, currentY);
   currentY += 6.5;
 
-  drawLabelAndInputBox('NAME', info.originatorName, marginL + 1, marginL + 41, marginL + 43, 146, currentY);
+  drawLabelAndInputBox('NAME', info.originatorName, 11, 32, 34, 166, currentY);
   currentY += 6.5;
 
-  drawLabelAndInputBox('POSITION', info.originatorPosition, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
-  drawLabelAndInputBox('DEPARTMENT', info.originatorDept, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  drawLabelAndInputBox('POSITION', info.originatorPosition, 11, 32, 34, 75, currentY);
+  drawLabelAndInputBox('DEPARTMENT', info.originatorDept, 117, 138, 140, 60, currentY);
 
   currentY += 10.5;
 
@@ -667,16 +677,16 @@ export function exportAssetTransferForm(
   drawSectionHeader('DATA RECIPIENT', currentY);
   currentY += 7.5;
 
-  drawLabelAndInputBox('NAME', info.recipientName, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
-  drawLabelAndInputBox('COMPANY', info.recipientCompany, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  drawLabelAndInputBox('NAME', info.recipientName, 11, 32, 34, 75, currentY);
+  drawLabelAndInputBox('COMPANY', info.recipientCompany, 117, 138, 140, 60, currentY);
   currentY += 6.5;
 
-  drawLabelAndInputBox('POSITION', info.recipientPosition, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
-  drawLabelAndInputBox('DIVISION', info.recipientDivision, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  drawLabelAndInputBox('POSITION', info.recipientPosition, 11, 32, 34, 75, currentY);
+  drawLabelAndInputBox('DIVISION', info.recipientDivision, 117, 138, 140, 60, currentY);
   currentY += 6.5;
 
-  drawLabelAndInputBox('DEPARTEMENT', info.recipientDept, marginL + 1, marginL + 41, marginL + 43, 58, currentY);
-  drawLabelAndInputBox('LOCATION', info.recipientLocation, marginL + 107, marginL + 130, marginL + 133, 56, currentY);
+  drawLabelAndInputBox('DEPARTEMENT', info.recipientDept, 11, 32, 34, 75, currentY);
+  drawLabelAndInputBox('LOCATION', info.recipientLocation, 117, 138, 140, 60, currentY);
 
   currentY += 10.5;
 
