@@ -29,6 +29,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const [isGenerating, setIsGenerating] = useState(false);
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  // 1b. Master Data States
+  const [masterCompanies, setMasterCompanies] = useState<Array<{ id: number; name: string; code?: string }>>([]);
+  const [masterDepartments, setMasterDepartments] = useState<Array<{ id: number; name: string }>>([]);
+
   // 2. Originator Details States (Prefilled with currently logged-in user details)
   const [originatorCompany, setOriginatorCompany] = useState('PT Gesit Alumas');
   const [originatorName, setOriginatorName] = useState('');
@@ -91,6 +95,15 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           }))
         );
       }
+
+      // Fetch companies from master DB table
+      const { data: companyData } = await supabase.from('companies').select('id, name, code').order('name');
+      if (companyData) setMasterCompanies(companyData);
+
+      // Fetch departments from master DB table
+      const { data: deptData } = await supabase.from('departments').select('id, name').order('name');
+      if (deptData) setMasterDepartments(deptData);
+
     } catch (err) {
       console.error('Error fetching assets:', err);
       showNotification('Failed to fetch assets list.', 'error');
@@ -560,12 +573,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Company</Label>
-                  <Input
+                  <select
                     value={originatorCompany}
                     onChange={(e) => setOriginatorCompany(e.target.value)}
-                    placeholder="e.g. PT Gesit Alumas"
-                    className="rounded-xl h-10 text-sm"
-                  />
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                  >
+                    <option value="">- Select Company -</option>
+                    {masterCompanies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Position</Label>
@@ -578,12 +593,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Department</Label>
-                  <Input
+                  <select
                     value={originatorDept}
                     onChange={(e) => setOriginatorDept(e.target.value)}
-                    placeholder="e.g. IT"
-                    className="rounded-xl h-10 text-sm"
-                  />
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                  >
+                    <option value="">- Select Department -</option>
+                    {masterDepartments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  </select>
                 </div>
               </div>
             </div>
@@ -608,12 +625,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Company</Label>
-                  <Input
+                  <select
                     value={recipientCompany}
                     onChange={(e) => setRecipientCompany(e.target.value)}
-                    placeholder="e.g. PT Dharma Alumas Sakti"
-                    className="rounded-xl h-10 text-sm"
-                  />
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                  >
+                    <option value="">- Select Company -</option>
+                    {masterCompanies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Position</Label>
@@ -635,12 +654,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Department</Label>
-                  <Input
+                  <select
                     value={recipientDept}
                     onChange={(e) => setRecipientDept(e.target.value)}
-                    placeholder="e.g. Finance"
-                    className="rounded-xl h-10 text-sm"
-                  />
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                  >
+                    <option value="">- Select Department -</option>
+                    {masterDepartments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  </select>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Location</Label>
