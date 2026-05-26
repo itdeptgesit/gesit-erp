@@ -3,12 +3,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, Plus, Pencil, QrCode, RefreshCcw, Trash2, Package, CheckCircle2, History,
-  Download, FileSpreadsheet, ChevronLeft, ChevronRight, Clock, AlertCircle, XCircle, RotateCcw
+  Download, FileSpreadsheet, ChevronLeft, ChevronRight, Clock, AlertCircle, XCircle, RotateCcw,
+  FileText
 } from 'lucide-react';
 import { AssetFormModal } from './AssetFormModal';
 import { AssetQRModal } from './AssetQRModal';
 import { AssetDetailModal } from './AssetDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
+import { AssetHandoverModal } from './AssetHandoverModal';
 import { ITAsset, UserAccount } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
@@ -47,6 +49,8 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const [qrAsset, setQrAsset] = useState<ITAsset | null>(null);
   const [detailAsset, setDetailAsset] = useState<ITAsset | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isHandoverOpen, setIsHandoverOpen] = useState(false);
+  const [handoverAsset, setHandoverAsset] = useState<ITAsset | null>(null);
   const [notification, setNotification] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -487,6 +491,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                     <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
                       <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="w-8 dark: dark:" title="Label"><QrCode size={14} /></Button>
 
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => { setHandoverAsset(asset); setIsHandoverOpen(true); }} 
+                        className="w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300" 
+                        title="Cetak BAST (Handover)"
+                      >
+                        <FileText size={14} />
+                      </Button>
+
                       {canManage && (
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="w-8 dark: dark:" title="Edit">
                           <Pencil size={14} />
@@ -597,6 +611,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       }} initialData={editingAsset} />
       <AssetQRModal isOpen={isQROpen} onClose={() => setIsQROpen(false)} asset={qrAsset} />
       <AssetDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} asset={detailAsset} />
+      <AssetHandoverModal isOpen={isHandoverOpen} onClose={() => { setIsHandoverOpen(false); setHandoverAsset(null); }} asset={handoverAsset} currentUser={currentUser} />
       <DangerConfirmModal isOpen={!!deleteAsset} onClose={() => setDeleteAsset(null)} onConfirm={async () => {
         if (!deleteAsset) return;
         const { error } = await supabase.from('it_assets').delete().eq('id', deleteAsset.id);
