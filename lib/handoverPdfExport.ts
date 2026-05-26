@@ -536,11 +536,22 @@ export async function exportAssetTransferForm(
     doc.setFillColor(255, 255, 255);
     doc.rect(boxX, y, boxW, boxH, 'FD');
     
-    // Write capitalized text inside
+    // Write capitalized text inside with dynamic font scaling to perfectly fit the white input box bounds
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
+    let fitFontSize = 8;
+    doc.setFontSize(fitFontSize);
+    const textVal = (value || '').toUpperCase();
+    
+    // Scale font size down dynamically if it is too wide for the box
+    while (doc.getTextWidth(textVal) > (boxW - 4) && fitFontSize > 5.5) {
+      fitFontSize -= 0.5;
+      doc.setFontSize(fitFontSize);
+    }
+    
     doc.setTextColor(15, 23, 42);
-    doc.text(value.toUpperCase(), boxX + 2, y + 3.5);
+    // Keep it centered vertically as font size scales
+    const yOffset = 3.5 + (8 - fitFontSize) * 0.15;
+    doc.text(textVal, boxX + 2, y + yOffset);
   };
 
   // --- 4. SECTION: DATA ORIGINATOR ---
@@ -623,7 +634,17 @@ export async function exportAssetTransferForm(
   doc.text('1', table1X[0] + table1W[0]/2, rowY + 4.5, { align: 'center' });
   
   doc.setFont('helvetica', 'bold');
-  doc.text(asset.item || '', table1X[1] + 6, rowY + 4.5);
+  const itemName = asset.item || '';
+  const maxW = table1W[1] - 5; // allow padding
+  const nameLines = doc.splitTextToSize(itemName, maxW);
+  if (nameLines.length > 1) {
+    doc.setFontSize(6.5);
+    doc.text(nameLines[0], table1X[1] + 2.5, rowY + 2.8);
+    doc.text(nameLines[1], table1X[1] + 2.5, rowY + 5.6);
+  } else {
+    doc.setFontSize(7.5);
+    doc.text(itemName, table1X[1] + 2.5, rowY + 4.5);
+  }
   
   doc.setFont('helvetica', 'normal');
   doc.text(asset.serialNumber || '-', table1X[2] + table1W[2]/2, rowY + 4.5, { align: 'center' });
@@ -680,8 +701,19 @@ export async function exportAssetTransferForm(
     
     if (equip) {
       doc.setFont('helvetica', 'bold');
-      doc.text(equip.name || '', table2X[1] + 6, rY + 3.8);
+      const eqName = equip.name || '';
+      const eqMaxW = table2W[1] - 5;
+      const eqLines = doc.splitTextToSize(eqName, eqMaxW);
+      if (eqLines.length > 1) {
+        doc.setFontSize(6.2);
+        doc.text(eqLines[0], table2X[1] + 2.5, rY + 2.2);
+        doc.text(eqLines[1], table2X[1] + 2.5, rY + 4.4);
+      } else {
+        doc.setFontSize(7.5);
+        doc.text(eqName, table2X[1] + 2.5, rY + 3.8);
+      }
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
       doc.text(equip.serialNo || '-', table2X[2] + table2W[2]/2, rY + 3.8, { align: 'center' });
       doc.text(equip.remarks || '-', table2X[3] + table2W[3]/2, rY + 3.8, { align: 'center' });
     }
@@ -719,7 +751,7 @@ export async function exportAssetTransferForm(
   drawLabelAndInputBox('DIVISION', info.recipientDivision, 117, 138, 140, 60, currentY);
   currentY += 6.5;
 
-  drawLabelAndInputBox('DEPARTEMENT', info.recipientDept, 11, 32, 34, 75, currentY);
+  drawLabelAndInputBox('DEPARTMENT', info.recipientDept, 11, 32, 34, 75, currentY);
   drawLabelAndInputBox('LOCATION', info.recipientLocation, 117, 138, 140, 60, currentY);
 
   currentY += 14.5;
