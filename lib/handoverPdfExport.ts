@@ -421,7 +421,7 @@ export async function exportAssetTransferForm(
   doc.setTextColor(15, 32, 67);
   doc.text('ASSET TRANSFER FORM', marginL, currentY + 7);
 
-  // Render the official logo on top-right with perfect, un-skewed aspect ratio and center-aligned sub-label
+  // Render the official logo on top-right with perfect aspect ratio, centering logo and sub-label, and aligning rightmost edge perfectly to right margin
   if (logoImg) {
     const originalW = logoImg.naturalWidth || logoImg.width || 100;
     const originalH = logoImg.naturalHeight || logoImg.height || 100;
@@ -431,21 +431,26 @@ export async function exportAssetTransferForm(
     const targetH = 8.5;
     const targetW = targetH * aspect;
     
-    // Define a shared vertical center axis for the branding block to center the logo and text perfectly relative to each other!
-    const brandCenterX = pageW - marginR - 15;
+    // Measure exact width of sub-label text to align its right edge exactly with the document margin (X=200)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    const textW = doc.getTextWidth('THE GESIT COMPANIES');
+    
+    // Calculate the perfect center axis so that the rightmost edge of the text touches the right margin
+    const brandCenterX = (pageW - marginR) - (textW / 2);
     
     doc.addImage(logoImg, 'PNG', brandCenterX - (targetW / 2), currentY + 0.5, targetW, targetH);
     
     // Sub-label text "THE GESIT COMPANIES" centered exactly below the image logo
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
     doc.setTextColor(197, 160, 89); // Elegant Gold Color
     doc.text('THE GESIT COMPANIES', brandCenterX, currentY + 11.2, { align: 'center' });
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
+    const textW = doc.getTextWidth('THE GESIT COMPANIES');
+    const brandCenterX = (pageW - marginR) - (textW / 2);
     doc.setTextColor(197, 160, 89);
-    doc.text('THE GESIT COMPANIES', pageW - marginR - 15, currentY + 7, { align: 'center' });
+    doc.text('THE GESIT COMPANIES', brandCenterX, currentY + 7, { align: 'center' });
   }
 
   // Thin separator line (increased spacing by 3mm to give breathing room for sub-label text!)
