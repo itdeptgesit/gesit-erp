@@ -233,6 +233,9 @@ export interface ITAssetLoan {
   status: 'Pending' | 'Active' | 'Returned' | 'Overdue' | 'Rejected';
   remarks?: string;
   itPersonnel?: string;
+  assetCategory?: string;
+  assetBrand?: string;
+  assetSerial?: string;
 }
 
 export interface ActivityLog {

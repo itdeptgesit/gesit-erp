@@ -13,6 +13,7 @@ import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { LoanFormModal } from './LoanFormModal';
 import { exportToExcel } from '../lib/excelExport';
+import { exportHandoverBAST } from '../lib/handoverPdfExport';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,10 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
           *,
           it_assets (
             item_name,
-            asset_id
+            asset_id,
+            category,
+            brand,
+            serial_number
           )
         `)
                 .order('id', { ascending: false });
@@ -98,7 +102,10 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                     actualReturnDate: item.actual_return_date,
                     status: item.status,
                     remarks: item.remarks,
-                    itPersonnel: item.it_personnel
+                    itPersonnel: item.it_personnel,
+                    assetCategory: item.it_assets?.category || '-',
+                    assetBrand: item.it_assets?.brand || '-',
+                    assetSerial: item.it_assets?.serial_number || '-'
                 })));
             }
         } catch (error) {
@@ -459,6 +466,10 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                                 <DropdownMenuItem onClick={() => { setSelectedLoan(loan); }}><FileText className="mr-2 h-4 w-4" /><span>View Receipt</span></DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => { exportHandoverBAST(loan); }} className="text-blue-600 dark:text-blue-400 font-bold focus:text-blue-700 dark:focus:text-blue-300">
+                                                                    <FileText className="mr-2 h-4 w-4 text-blue-500" />
+                                                                    <span>Cetak BAST (PDF)</span>
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem onClick={() => { setEditingLoan(loan); setIsModalOpen(true); }}><Pencil className="mr-2 h-4 w-4" /><span>Edit Record</span></DropdownMenuItem>
                                                                 {isAdmin && (
                                                                     <>
@@ -534,8 +545,12 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                 </button>
                                             )}
 
-                                            <button onClick={() => setSelectedLoan(loan)} className="p-2.5 text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl transition-all">
+                                            <button onClick={() => setSelectedLoan(loan)} className="p-2.5 text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl transition-all" title="View Receipt">
                                                 <FileText size={18} />
+                                            </button>
+
+                                            <button onClick={() => exportHandoverBAST(loan)} className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl transition-all" title="Cetak BAST (PDF)">
+                                                <FileText size={18} className="text-blue-600" />
                                             </button>
 
                                             <button onClick={() => { setEditingLoan(loan); setIsModalOpen(true); }} className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl transition-all">
@@ -946,12 +961,16 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                     </div>
                                 </div>
                             </div>
-                            <div className="px-10 pb-10 flex items-center justify-center gap-4 no-print">
-                                <button onClick={() => window.print()} className="flex-1 max-w-[200px] h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center gap-3 group hover:border-blue-500 transition-all font-bold text-slate-600 dark:text-slate-300 text-[11px] uppercase tracking-widest">
+                            <div className="px-10 pb-10 flex flex-wrap items-center justify-center gap-4 no-print">
+                                <button onClick={() => window.print()} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center gap-3 group hover:border-blue-500 transition-all font-bold text-slate-600 dark:text-slate-300 text-[11px] uppercase tracking-widest">
                                     <div className="p-2 bg-slate-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-colors"><Download size={14} /></div>
                                     {t('printReceipt')}
                                 </button>
-                                <button onClick={() => setSelectedLoan(null)} className="flex-1 max-w-[200px] h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-950/20">
+                                <button onClick={() => exportHandoverBAST(selectedLoan)} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center gap-3 group transition-all font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                                    <div className="p-2 bg-blue-700 rounded-lg"><FileText size={14} className="text-white" /></div>
+                                    Cetak BAST
+                                </button>
+                                <button onClick={() => setSelectedLoan(null)} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-950/20">
                                     {t('closeReceipt')}
                                 </button>
                             </div>
