@@ -45,9 +45,10 @@ TO authenticated
 USING (true) 
 WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow read for anonymous users" ON public.it_asset_handovers;
-CREATE POLICY "Allow read for anonymous users" 
+DROP POLICY IF EXISTS "Allow all actions for anonymous users" ON public.it_asset_handovers;
+CREATE POLICY "Allow all actions for anonymous users" 
 ON public.it_asset_handovers 
-FOR SELECT 
+FOR ALL 
 TO anon 
-USING (true);
+USING (true)
+WITH CHECK (true);

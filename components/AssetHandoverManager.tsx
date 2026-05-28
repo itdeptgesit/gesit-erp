@@ -328,6 +328,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
         if (updateError) {
           console.error('Error updating asset assignment:', updateError);
+          alert(`Gagal memperbarui data status kepemilikan aset di database: ${updateError.message}`);
         } else {
           // Re-fetch assets list to show updated details in the table instantly!
           await fetchAssets();
@@ -369,7 +370,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           .insert([handoverPayload]);
 
         if (insertError) {
-          console.warn('Could not save to it_asset_handovers table (check if migration ran):', insertError.message);
+          console.error('Error saving BAST:', insertError);
+          alert(`Gagal menyimpan riwayat BAST ke database: ${insertError.message}\n\nSilakan pastikan Anda telah menjalankan script SQL migrasi it_asset_handovers di editor SQL Supabase Anda.`);
         } else {
           await fetchHandovers();
         }

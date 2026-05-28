@@ -201,6 +201,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
 
       if (updateError) {
         console.error('Error updating asset assignment:', updateError);
+        alert(`Gagal memperbarui data status kepemilikan aset di database: ${updateError.message}`);
       }
 
       // Save formal BAST handover history record to it_asset_handovers table!
@@ -239,7 +240,8 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
         .insert([handoverPayload]);
 
       if (insertError) {
-        console.warn('Could not save to it_asset_handovers table (check if migration ran):', insertError.message);
+        console.error('Error saving BAST:', insertError);
+        alert(`Gagal menyimpan riwayat BAST ke database: ${insertError.message}\n\nSilakan pastikan Anda telah menjalankan script SQL migrasi it_asset_handovers di editor SQL Supabase Anda.`);
       }
     }
 
