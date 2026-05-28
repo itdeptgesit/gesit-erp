@@ -12,6 +12,7 @@ import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 interface AssetHandoverManagerProps {
   currentUser: UserAccount | null;
@@ -256,6 +257,27 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         supportingEquipment,
         note
       };
+
+      // Automatically update the asset custodian details in Supabase database!
+      if (selectedAsset) {
+        const { error: updateError } = await supabase
+          .from('it_assets')
+          .update({
+            user_assigned: recipientName,
+            company: recipientCompany,
+            department: recipientDept,
+            location: recipientLocation,
+            remarks: note || selectedAsset.remarks
+          })
+          .eq('id', selectedAsset.id);
+
+        if (updateError) {
+          console.error('Error updating asset assignment:', updateError);
+        } else {
+          // Re-fetch assets list to show updated details in the table instantly!
+          await fetchAssets();
+        }
+      }
 
       await exportAssetTransferForm(selectedAsset, info);
       showNotification('Asset Transfer Form (BAST) PDF generated successfully!', 'success');
@@ -750,6 +772,81 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         </div>
 
       </form>
+
+      {/* Handover List / History Table */}
+      <div className="bg-card border border-border/50 rounded-3xl p-6 shadow-sm space-y-4 mt-8">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
+            <FileText size={16} className="text-blue-500" />
+            DAFTAR SERAH TERIMA ASET (HANDOVER LIST)
+          </h3>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full">
+            {assets.filter(a => a.user).length} Active Custodians
+          </span>
+        </div>
+
+        <div className="overflow-x-auto border border-border/40 rounded-2xl">
+          <Table>
+            <TableHeader className="bg-muted/20">
+              <TableRow>
+                <TableHead className="font-bold text-xs">Asset ID</TableHead>
+                <TableHead className="font-bold text-xs">Device Name</TableHead>
+                <TableHead className="font-bold text-xs">Custodian (Penerima)</TableHead>
+                <TableHead className="font-bold text-xs">Company / Dept</TableHead>
+                <TableHead className="font-bold text-xs">Location</TableHead>
+                <TableHead className="font-bold text-xs text-center">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assets.filter(a => a.user).length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
+                    Belum ada aset yang diserahterimakan (No active custodians).
+                  </TableCell>
+                </TableRow>
+              ) : (
+                assets.filter(a => a.user).map((asset) => (
+                  <TableRow key={asset.id} className="hover:bg-muted/10">
+                    <TableCell className="font-bold text-xs text-blue-600 dark:text-blue-400">{asset.assetId}</TableCell>
+                    <TableCell className="font-semibold text-xs">{asset.item}</TableCell>
+                    <TableCell className="font-bold text-xs text-foreground/90">{asset.user}</TableCell>
+                    <TableCell className="text-xs">
+                      <div className="font-semibold">{asset.company}</div>
+                      <div className="text-[10px] text-muted-foreground">{asset.department || '-'}</div>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{asset.location}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAsset(asset);
+                          setRecipientName(asset.user || '');
+                          setRecipientCompany(asset.company || '');
+                          setRecipientDept(asset.department || '');
+                          setRecipientLocation(asset.location || 'Head Office - The City Tower');
+                          if (asset.specs?.processor) {
+                            setRecipientPosition('User Custodian');
+                          } else {
+                            setRecipientPosition('');
+                          }
+                          setNote(asset.remarks || `Handover ${asset.item} - ${asset.user}`);
+                          // Scroll to form smoothly
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold text-xs gap-1.5"
+                      >
+                        <FileText size={14} /> Cetak BAST
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };

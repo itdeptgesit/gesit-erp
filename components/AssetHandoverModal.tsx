@@ -6,6 +6,7 @@ import { ITAsset, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { exportAssetTransferForm, AssetTransferInfo } from '../lib/handoverPdfExport';
+import { supabase } from '../lib/supabaseClient';
 
 interface AssetHandoverModalProps {
   isOpen: boolean;
@@ -157,6 +158,24 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       supportingEquipment,
       note
     };
+
+    // Automatically update the asset custodian details in Supabase database!
+    if (asset) {
+      const { error: updateError } = await supabase
+        .from('it_assets')
+        .update({
+          user_assigned: recipientName,
+          company: recipientCompany,
+          department: recipientDept,
+          location: recipientLocation,
+          remarks: note || asset.remarks
+        })
+        .eq('id', asset.id);
+
+      if (updateError) {
+        console.error('Error updating asset assignment:', updateError);
+      }
+    }
 
     await exportAssetTransferForm(asset, info);
     onClose();

@@ -11,6 +11,7 @@ import { AssetQRModal } from './AssetQRModal';
 import { AssetDetailModal } from './AssetDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { ITAsset, UserAccount } from '../types';
+import { AssetHandoverModal } from './AssetHandoverModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
 import { trackActivity } from '../lib/auditLogger';
@@ -51,6 +52,8 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const [notification, setNotification] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [handoverAsset, setHandoverAsset] = useState<ITAsset | null>(null);
+  const [isHandoverOpen, setIsHandoverOpen] = useState(false);
 
   // RBAC Logic
   const isAdmin = currentUser?.role === 'Admin';
@@ -488,6 +491,19 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                     <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
                       <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="w-8 dark: dark:" title="Label"><QrCode size={14} /></Button>
 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setHandoverAsset(asset);
+                          setIsHandoverOpen(true);
+                        }}
+                        className="w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                        title="Cetak BAST (PDF)"
+                      >
+                        <FileText size={14} />
+                      </Button>
+
                       {canManage && (
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="w-8 dark: dark:" title="Edit">
                           <Pencil size={14} />
@@ -613,6 +629,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         setDeleteAsset(null);
         await fetchAssets();
       }} title="Purge Record" message={`Irreversibly remove "${deleteAsset?.item}" node?`} />
+      <AssetHandoverModal
+        isOpen={isHandoverOpen}
+        onClose={() => {
+          setIsHandoverOpen(false);
+          setHandoverAsset(null);
+          fetchAssets();
+        }}
+        asset={handoverAsset}
+        currentUser={currentUser}
+      />
     </div>
   );
 };
