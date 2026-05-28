@@ -76,7 +76,12 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       setDocNo(`ATF-${companyPrefix}/001/${romanMonth}/${year}`);
 
       // Set Notes
-      setNote(`New member ${asset.company || 'Dharma Alumas Sakti'} - ${asset.user || 'Kiki Meisara'}`);
+      const cleanRemarks = asset.remarks ? asset.remarks.replace('[BAST]', '').trim() : '';
+      if (cleanRemarks) {
+        setNote(cleanRemarks);
+      } else {
+        setNote(`New member ${asset.company || 'Dharma Alumas Sakti'} - ${asset.user || 'Kiki Meisara'}`);
+      }
       
       setIncludeBag(true);
       setIncludeCharger(true);
@@ -161,6 +166,11 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
 
     // Automatically update the asset custodian details in Supabase database!
     if (asset) {
+      let newRemarks = (note || '').trim();
+      if (!newRemarks.includes('[BAST]')) {
+        newRemarks = (newRemarks + ' [BAST]').trim();
+      }
+
       const { error: updateError } = await supabase
         .from('it_assets')
         .update({
@@ -168,7 +178,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
           company: recipientCompany,
           department: recipientDept,
           location: recipientLocation,
-          remarks: note || asset.remarks
+          remarks: newRemarks
         })
         .eq('id', asset.id);
 

@@ -30,6 +30,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const [isGenerating, setIsGenerating] = useState(false);
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  const handoverAssets = useMemo(() => {
+    return assets.filter(a => a.user && (a.remarks || '').includes('[BAST]'));
+  }, [assets]);
+
   // 1b. Master Data States
   const [masterCompanies, setMasterCompanies] = useState<Array<{ id: number; name: string; code?: string }>>([]);
   const [masterDepartments, setMasterDepartments] = useState<Array<{ id: number; name: string }>>([]);
@@ -260,6 +264,11 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
       // Automatically update the asset custodian details in Supabase database!
       if (selectedAsset) {
+        let newRemarks = (note || '').trim();
+        if (!newRemarks.includes('[BAST]')) {
+          newRemarks = (newRemarks + ' [BAST]').trim();
+        }
+
         const { error: updateError } = await supabase
           .from('it_assets')
           .update({
@@ -267,7 +276,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             company: recipientCompany,
             department: recipientDept,
             location: recipientLocation,
-            remarks: note || selectedAsset.remarks
+            remarks: newRemarks
           })
           .eq('id', selectedAsset.id);
 
@@ -781,7 +790,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             DAFTAR SERAH TERIMA ASET (HANDOVER LIST)
           </h3>
           <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full">
-            {assets.filter(a => a.user).length} Active Custodians
+            {handoverAssets.length} Active Custodians
           </span>
         </div>
 
@@ -798,14 +807,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets.filter(a => a.user).length === 0 ? (
+              {handoverAssets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                    Belum ada aset yang diserahterimakan (No active custodians).
+                    Belum ada aset yang pernah dicetak BAST nya di sini.
                   </TableCell>
                 </TableRow>
               ) : (
-                assets.filter(a => a.user).map((asset) => (
+                handoverAssets.map((asset) => (
                   <TableRow key={asset.id} className="hover:bg-muted/10">
                     <TableCell className="font-bold text-xs text-blue-600 dark:text-blue-400">{asset.assetId}</TableCell>
                     <TableCell className="font-semibold text-xs">{asset.item}</TableCell>
@@ -831,7 +840,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                           } else {
                             setRecipientPosition('');
                           }
-                          setNote(asset.remarks || `Handover ${asset.item} - ${asset.user}`);
+                          const cleanedRemarks = asset.remarks ? asset.remarks.replace('[BAST]', '').trim() : '';
+                          setNote(cleanedRemarks);
                           // Scroll to form smoothly
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
