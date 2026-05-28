@@ -185,6 +185,38 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       if (updateError) {
         console.error('Error updating asset assignment:', updateError);
       }
+
+      // Save formal BAST handover history record to it_asset_handovers table!
+      const handoverPayload = {
+        asset_id: asset.id,
+        doc_no: docNo,
+        handover_date: handoverDate,
+        recipient_name: recipientName,
+        recipient_company: recipientCompany,
+        recipient_position: recipientPosition,
+        recipient_division: recipientDivision,
+        recipient_dept: recipientDept,
+        recipient_location: recipientLocation,
+        originator_name: originatorName,
+        originator_company: originatorCompany,
+        originator_position: originatorPosition,
+        originator_dept: originatorDept,
+        include_bag: includeBag,
+        include_charger: includeCharger,
+        include_mouse: includeMouse,
+        mouse_model: includeMouse ? mouseModel : null,
+        custom_equipments: customEquipments.filter(e => e.name.trim()),
+        note: note,
+        created_by: currentUser?.fullName || 'System'
+      };
+
+      const { error: insertError } = await supabase
+        .from('it_asset_handovers')
+        .insert([handoverPayload]);
+
+      if (insertError) {
+        console.warn('Could not save to it_asset_handovers table (check if migration ran):', insertError.message);
+      }
     }
 
     await exportAssetTransferForm(asset, info);

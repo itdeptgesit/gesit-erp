@@ -34,6 +34,39 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     return assets.filter(a => a.user && (a.remarks || '').includes('[BAST]'));
   }, [assets]);
 
+  const [handovers, setHandovers] = useState<any[]>([]);
+  const [isLoadingHandovers, setIsLoadingHandovers] = useState(false);
+
+  const fetchHandovers = async () => {
+    setIsLoadingHandovers(true);
+    try {
+      const { data, error } = await supabase
+        .from('it_asset_handovers')
+        .select(`
+          *,
+          it_assets (
+            id,
+            asset_id,
+            item_name,
+            brand,
+            serial_number
+          )
+        `)
+        .order('handover_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('it_asset_handovers table check:', error.message);
+      } else if (data) {
+        setHandovers(data);
+      }
+    } catch (err) {
+      console.error('Error fetching handovers:', err);
+    } finally {
+      setIsLoadingHandovers(false);
+    }
+  };
+
   // 1b. Master Data States
   const [masterCompanies, setMasterCompanies] = useState<Array<{ id: number; name: string; code?: string }>>([]);
   const [masterDepartments, setMasterDepartments] = useState<Array<{ id: number; name: string }>>([]);
@@ -121,6 +154,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
   useEffect(() => {
     fetchAssets();
+    fetchHandovers();
 
     // Default Dates Setup
     const today = new Date();
@@ -285,6 +319,40 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         } else {
           // Re-fetch assets list to show updated details in the table instantly!
           await fetchAssets();
+        }
+
+        // Save formal BAST handover history record to it_asset_handovers table!
+        const handoverPayload = {
+          asset_id: selectedAsset.id,
+          doc_no: finalDocNo,
+          handover_date: handoverDate,
+          recipient_name: recipientName,
+          recipient_company: recipientCompany,
+          recipient_position: recipientPosition,
+          recipient_division: recipientDivision,
+          recipient_dept: recipientDept,
+          recipient_location: recipientLocation,
+          originator_name: originatorName,
+          originator_company: originatorCompany,
+          originator_position: originatorPosition,
+          originator_dept: originatorDept,
+          include_bag: includeBag,
+          include_charger: includeCharger,
+          include_mouse: includeMouse,
+          mouse_model: includeMouse ? mouseModel : null,
+          custom_equipments: customEquipments.filter(e => e.name.trim()),
+          note: note,
+          created_by: currentUser?.fullName || 'System'
+        };
+
+        const { error: insertError } = await supabase
+          .from('it_asset_handovers')
+          .insert([handoverPayload]);
+
+        if (insertError) {
+          console.warn('Could not save to it_asset_handovers table (check if migration ran):', insertError.message);
+        } else {
+          await fetchHandovers();
         }
       }
 
@@ -787,10 +855,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
             <FileText size={16} className="text-blue-500" />
-            DAFTAR SERAH TERIMA ASET (HANDOVER LIST)
+            DAFTAR SERAH TERIMA ASET (HANDOVER HISTORY)
           </h3>
           <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full">
-            {handoverAssets.length} Active Custodians
+            {handovers.length} BAST Generated
           </span>
         </div>
 
@@ -798,60 +866,78 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           <Table>
             <TableHeader className="bg-muted/20">
               <TableRow>
+                <TableHead className="font-bold text-xs">No. Dokumen</TableHead>
                 <TableHead className="font-bold text-xs">Asset ID</TableHead>
                 <TableHead className="font-bold text-xs">Device Name</TableHead>
                 <TableHead className="font-bold text-xs">Custodian (Penerima)</TableHead>
                 <TableHead className="font-bold text-xs">Company / Dept</TableHead>
-                <TableHead className="font-bold text-xs">Location</TableHead>
+                <TableHead className="font-bold text-xs">Handover Date</TableHead>
                 <TableHead className="font-bold text-xs text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {handoverAssets.length === 0 ? (
+              {handovers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
                     Belum ada aset yang pernah dicetak BAST nya di sini.
                   </TableCell>
                 </TableRow>
               ) : (
-                handoverAssets.map((asset) => (
-                  <TableRow key={asset.id} className="hover:bg-muted/10">
-                    <TableCell className="font-bold text-xs text-blue-600 dark:text-blue-400">{asset.assetId}</TableCell>
-                    <TableCell className="font-semibold text-xs">{asset.item}</TableCell>
-                    <TableCell className="font-bold text-xs text-foreground/90">{asset.user}</TableCell>
-                    <TableCell className="text-xs">
-                      <div className="font-semibold">{asset.company}</div>
-                      <div className="text-[10px] text-muted-foreground">{asset.department || '-'}</div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{asset.location}</TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAsset(asset);
-                          setRecipientName(asset.user || '');
-                          setRecipientCompany(asset.company || '');
-                          setRecipientDept(asset.department || '');
-                          setRecipientLocation(asset.location || 'Head Office - The City Tower');
-                          if (asset.specs?.processor) {
-                            setRecipientPosition('User Custodian');
-                          } else {
-                            setRecipientPosition('');
-                          }
-                          const cleanedRemarks = asset.remarks ? asset.remarks.replace('[BAST]', '').trim() : '';
-                          setNote(cleanedRemarks);
-                          // Scroll to form smoothly
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold text-xs gap-1.5"
-                      >
-                        <FileText size={14} /> Cetak BAST
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                handovers.map((handover) => {
+                  const deviceCode = handover.it_assets?.asset_id || '-';
+                  const deviceName = handover.it_assets?.item_name || 'Deleted Asset';
+                  return (
+                    <TableRow key={handover.id} className="hover:bg-muted/10">
+                      <TableCell className="font-mono text-xs font-semibold text-slate-500">{handover.doc_no}</TableCell>
+                      <TableCell className="font-bold text-xs text-blue-600 dark:text-blue-400">{deviceCode}</TableCell>
+                      <TableCell className="font-semibold text-xs">{deviceName}</TableCell>
+                      <TableCell className="font-bold text-xs text-foreground/90">{handover.recipient_name}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="font-semibold">{handover.recipient_company}</div>
+                        <div className="text-[10px] text-muted-foreground">{handover.recipient_dept || '-'}</div>
+                      </TableCell>
+                      <TableCell className="text-xs font-medium font-mono text-slate-500">{handover.handover_date}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            // Restore selected asset
+                            const relatedAsset = assets.find(a => a.id === handover.asset_id);
+                            if (relatedAsset) {
+                              setSelectedAsset(relatedAsset);
+                            }
+                            setRecipientName(handover.recipient_name || '');
+                            setRecipientCompany(handover.recipient_company || '');
+                            setRecipientPosition(handover.recipient_position || '');
+                            setRecipientDivision(handover.recipient_division || '');
+                            setRecipientDept(handover.recipient_dept || '');
+                            setRecipientLocation(handover.recipient_location || 'Head Office - The City Tower');
+                            
+                            setOriginatorName(handover.originator_name || '');
+                            setOriginatorCompany(handover.originator_company || '');
+                            setOriginatorPosition(handover.originator_position || '');
+                            setOriginatorDept(handover.originator_dept || '');
+
+                            setIncludeBag(handover.include_bag !== false);
+                            setIncludeCharger(handover.include_charger !== false);
+                            setIncludeMouse(handover.include_mouse !== false);
+                            setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
+                            setCustomEquipments(handover.custom_equipments || []);
+                            setNote(handover.note || '');
+
+                            // Scroll to form smoothly
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold text-xs gap-1.5"
+                        >
+                          <FileText size={14} /> Cetak BAST
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
