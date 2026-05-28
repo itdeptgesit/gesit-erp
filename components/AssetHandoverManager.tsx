@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  FileText, Search, ShieldCheck, UserCheck, Plus, Trash2, Cpu, Info, Check, ChevronsUpDown, Loader2
+  FileText, Search, ShieldCheck, UserCheck, Plus, Trash2, Cpu, Info, Check, ChevronsUpDown, Loader2, RotateCcw
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { ITAsset, UserAccount } from '../types';
@@ -14,6 +14,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { WarningConfirmModal } from './WarningConfirmModal';
+import { DangerConfirmModal } from './DangerConfirmModal';
 
 interface AssetHandoverManagerProps {
   currentUser: UserAccount | null;
@@ -32,6 +33,9 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [existingDocNo, setExistingDocNo] = useState('');
+  const [handoverSearchTerm, setHandoverSearchTerm] = useState('');
+  const [deleteHandover, setDeleteHandover] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handoverAssets = useMemo(() => {
     return assets.filter(a => a.user && (a.remarks || '').includes('[BAST]'));
@@ -427,6 +431,168 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
       );
     });
   }, [assets, assetSearchTerm]);
+
+  // Filtered Handovers list for search bar
+  const filteredHandovers = useMemo(() => {
+    return handovers.filter(h => {
+      const q = handoverSearchTerm.toLowerCase();
+      const docNo = (h.doc_no || '').toLowerCase();
+      const assetId = (h.it_assets?.asset_id || '').toLowerCase();
+      const deviceName = (h.it_assets?.item_name || '').toLowerCase();
+      const recipient = (h.recipient_name || '').toLowerCase();
+      const company = (h.recipient_company || '').toLowerCase();
+      const dept = (h.recipient_dept || '').toLowerCase();
+      return docNo.includes(q) || assetId.includes(q) || deviceName.includes(q) || recipient.includes(q) || company.includes(q) || dept.includes(q);
+    });
+  }, [handovers, handoverSearchTerm]);
+
+  // Instant Cetak Ulang PDF
+  const handleInstantCetakUlang = async (handover: any) => {
+    const relatedAsset = assets.find(a => a.id === handover.asset_id) || {
+      id: handover.asset_id,
+      assetId: handover.it_assets?.asset_id || '-',
+      item: handover.it_assets?.item_name || 'Deleted Asset',
+      brand: handover.it_assets?.brand || '-',
+      serialNumber: handover.it_assets?.serial_number || '-',
+      specs: {}
+    } as ITAsset;
+
+    const supportingEquipment: Array<{ name: string; serialNo: string; remarks: string }> = [];
+    if (handover.include_bag) {
+      supportingEquipment.push({
+        name: 'Tas Laptop',
+        serialNo: handover.bag_serial || '-',
+        remarks: handover.bag_remarks || 'Black'
+      });
+    }
+    if (handover.include_charger) {
+      supportingEquipment.push({
+        name: 'Charger Laptop',
+        serialNo: handover.charger_serial || '-',
+        remarks: handover.charger_remarks || 'Black'
+      });
+    }
+    if (handover.include_mouse) {
+      supportingEquipment.push({
+        name: handover.mouse_model || 'Mouse Wireless Logitech B170',
+        serialNo: handover.mouse_serial || '-',
+        remarks: handover.mouse_remarks || 'Black'
+      });
+    }
+    if (handover.custom_equipments) {
+      handover.custom_equipments.forEach((eq: any) => {
+        if (eq.name) supportingEquipment.push(eq);
+      });
+    }
+
+    const info: AssetTransferInfo = {
+      originatorCompany: handover.originator_company,
+      originatorName: handover.originator_name,
+      originatorPosition: handover.originator_position,
+      originatorDept: handover.originator_dept,
+      recipientName: handover.recipient_name,
+      recipientCompany: handover.recipient_company,
+      recipientPosition: handover.recipient_position,
+      recipientDivision: handover.recipient_division,
+      recipientDept: handover.recipient_dept,
+      recipientLocation: handover.recipient_location,
+      handoverDate: handover.handover_date,
+      docNo: handover.doc_no,
+      supportingEquipment,
+      note: handover.note
+    };
+
+    try {
+      setIsGenerating(true);
+      await exportAssetTransferForm(relatedAsset, info);
+      showNotification('Berhasil mencetak ulang PDF!', 'success');
+    } catch (err) {
+      console.error('Error printing again:', err);
+      showNotification('Gagal mencetak ulang PDF.', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Return / Pengembalian Aset
+  const handleReturnAsset = (handover: any) => {
+    const relatedAsset = assets.find(a => a.id === handover.asset_id);
+    if (relatedAsset) {
+      setSelectedAsset(relatedAsset);
+    }
+    
+    // Swap: Originator is now the previous Recipient (User)
+    setOriginatorName(handover.recipient_name || '');
+    setOriginatorCompany(handover.recipient_company || '');
+    setOriginatorPosition(handover.recipient_position || '');
+    setOriginatorDept(handover.recipient_dept || '');
+
+    // Recipient is now IT (prefetch logged-in IT user if available)
+    if (currentUser) {
+      setRecipientName(currentUser.fullName || '');
+      setRecipientCompany(currentUser.company || 'PT Gesit Alumas');
+      setRecipientPosition(currentUser.jobTitle || 'IT Specialist');
+      setRecipientDept(currentUser.department || 'IT');
+      setRecipientLocation('Head Office - The City Tower');
+      setRecipientDivision('');
+    }
+
+    // Load accessories
+    setIncludeBag(handover.include_bag !== false);
+    setBagSerial(handover.bag_serial || '');
+    setBagRemarks(handover.bag_remarks || 'Black');
+    
+    setIncludeCharger(handover.include_charger !== false);
+    setChargerSerial(handover.charger_serial || '');
+    setChargerRemarks(handover.charger_remarks || 'Black');
+    
+    setIncludeMouse(handover.include_mouse !== false);
+    setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
+    setMouseSerial(handover.mouse_serial || '');
+    setMouseRemarks(handover.mouse_remarks || 'Black');
+
+    setCustomEquipments(handover.custom_equipments || []);
+    
+    // Elegant return note
+    setNote(`PENGEMBALIAN ASET: Pengembalian aset dari ${handover.recipient_name} kepada IT`);
+    setAssetRemark(handover.asset_remark || '');
+
+    // Generate an elegant return document sequence
+    if (handover.doc_no) {
+      const parts = handover.doc_no.split('/');
+      if (parts.length >= 4) {
+        setCustomDocNo(`ATF-RET/${parts[1]}/${parts[2]}/${parts[3]}`);
+      }
+    }
+
+    showNotification('Formulir pengembalian aset berhasil disiapkan di atas!', 'success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Delete Handover Record
+  const handleDeleteHandover = async () => {
+    if (!deleteHandover) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('it_asset_handovers')
+        .delete()
+        .eq('id', deleteHandover.id);
+
+      if (error) {
+        console.error('Error deleting handover:', error);
+        showNotification('Gagal menghapus riwayat serah terima.', 'error');
+      } else {
+        showNotification('Riwayat serah terima berhasil dihapus.', 'success');
+        await fetchHandovers();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+      setDeleteHandover(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -983,14 +1149,32 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
       {/* Handover List / History Table */}
       <div className="bg-card border border-border/50 rounded-3xl p-6 shadow-sm space-y-4 mt-8">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
-            <FileText size={16} className="text-blue-500" />
-            DAFTAR SERAH TERIMA ASET (HANDOVER HISTORY)
-          </h3>
-          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full">
-            {handovers.length} BAST Generated
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
+              <FileText size={16} className="text-blue-500" />
+              DAFTAR SERAH TERIMA ASET (HANDOVER HISTORY)
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full sm:hidden animate-pulse">
+              {filteredHandovers.length} BAST
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+              <Input
+                type="text"
+                placeholder="Cari BAST (No Dokumen, Asset ID, Custodian...)"
+                value={handoverSearchTerm}
+                onChange={(e) => setHandoverSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-xs rounded-full border-border/40 focus-visible:ring-blue-500/20"
+              />
+            </div>
+            <span className="text-[10px] hidden sm:inline-block font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full shrink-0">
+              {filteredHandovers.length} BAST
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto border border-border/40 rounded-2xl">
@@ -1007,14 +1191,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {handovers.length === 0 ? (
+              {filteredHandovers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                    Belum ada aset yang pernah dicetak BAST nya di sini.
+                    {handoverSearchTerm ? 'Tidak ditemukan riwayat serah terima BAST yang cocok.' : 'Belum ada aset yang pernah dicetak BAST nya di sini.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                handovers.map((handover) => {
+                filteredHandovers.map((handover) => {
                   const deviceCode = handover.it_assets?.asset_id || '-';
                   const deviceName = handover.it_assets?.item_name || 'Deleted Asset';
                   return (
@@ -1029,49 +1213,90 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                       </TableCell>
                       <TableCell className="text-xs font-medium font-mono text-slate-500">{handover.handover_date}</TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            // Restore selected asset
-                            const relatedAsset = assets.find(a => a.id === handover.asset_id);
-                            if (relatedAsset) {
-                              setSelectedAsset(relatedAsset);
-                            }
-                            setRecipientName(handover.recipient_name || '');
-                            setRecipientCompany(handover.recipient_company || '');
-                            setRecipientPosition(handover.recipient_position || '');
-                            setRecipientDivision(handover.recipient_division || '');
-                            setRecipientDept(handover.recipient_dept || '');
-                            setRecipientLocation(handover.recipient_location || 'Head Office - The City Tower');
-                            
-                            setOriginatorName(handover.originator_name || '');
-                            setOriginatorCompany(handover.originator_company || '');
-                            setOriginatorPosition(handover.originator_position || '');
-                            setOriginatorDept(handover.originator_dept || '');
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Cetak Ulang Button */}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleInstantCetakUlang(handover)}
+                            className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
+                            title="Cetak Ulang PDF"
+                          >
+                            <FileText size={14} />
+                          </Button>
 
-                            setIncludeBag(handover.include_bag !== false);
-                            setBagSerial(handover.bag_serial || '');
-                            setBagRemarks(handover.bag_remarks || 'Black');
-                            setIncludeCharger(handover.include_charger !== false);
-                            setChargerSerial(handover.charger_serial || '');
-                            setChargerRemarks(handover.charger_remarks || 'Black');
-                            setIncludeMouse(handover.include_mouse !== false);
-                            setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
-                            setMouseSerial(handover.mouse_serial || '');
-                            setMouseRemarks(handover.mouse_remarks || 'Black');
-                            setCustomEquipments(handover.custom_equipments || []);
-                            setNote(handover.note || '');
-                            setAssetRemark(handover.asset_remark || '');
+                          {/* Edit / Reload Form Button */}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              // Restore selected asset
+                              const relatedAsset = assets.find(a => a.id === handover.asset_id);
+                              if (relatedAsset) {
+                                setSelectedAsset(relatedAsset);
+                              }
+                              setRecipientName(handover.recipient_name || '');
+                              setRecipientCompany(handover.recipient_company || '');
+                              setRecipientPosition(handover.recipient_position || '');
+                              setRecipientDivision(handover.recipient_division || '');
+                              setRecipientDept(handover.recipient_dept || '');
+                              setRecipientLocation(handover.recipient_location || 'Head Office - The City Tower');
+                              
+                              setOriginatorName(handover.originator_name || '');
+                              setOriginatorCompany(handover.originator_company || '');
+                              setOriginatorPosition(handover.originator_position || '');
+                              setOriginatorDept(handover.originator_dept || '');
 
-                            // Scroll to form smoothly
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold text-xs gap-1.5"
-                        >
-                          <FileText size={14} /> Cetak BAST
-                        </Button>
+                              setIncludeBag(handover.include_bag !== false);
+                              setBagSerial(handover.bag_serial || '');
+                              setBagRemarks(handover.bag_remarks || 'Black');
+                              setIncludeCharger(handover.include_charger !== false);
+                              setChargerSerial(handover.charger_serial || '');
+                              setChargerRemarks(handover.charger_remarks || 'Black');
+                              setIncludeMouse(handover.include_mouse !== false);
+                              setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
+                              setMouseSerial(handover.mouse_serial || '');
+                              setMouseRemarks(handover.mouse_remarks || 'Black');
+                              setCustomEquipments(handover.custom_equipments || []);
+                              setNote(handover.note || '');
+                              setAssetRemark(handover.asset_remark || '');
+
+                              // Scroll to form smoothly
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              showNotification('Data BAST berhasil dimuat kembali ke formulir di atas!', 'success');
+                            }}
+                            className="h-8 w-8 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full"
+                            title="Edit / Muat Ulang ke Formulir"
+                          >
+                            <Cpu size={14} />
+                          </Button>
+
+                          {/* Return / Pengembalian Button */}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleReturnAsset(handover)}
+                            className="h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full"
+                            title="Return (Pengembalian Aset dari User ke IT)"
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+
+                          {/* Hapus Button */}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteHandover(handover)}
+                            className="h-8 w-8 text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full"
+                            title="Hapus Riwayat BAST"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -1098,6 +1323,21 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         }
         confirmText="Buat BAST Baru"
         cancelText="Batal"
+      />
+
+      <DangerConfirmModal
+        isOpen={!!deleteHandover}
+        onClose={() => setDeleteHandover(null)}
+        onConfirm={handleDeleteHandover}
+        title="Hapus Riwayat Handover?"
+        message={
+          <div className="space-y-2">
+            <p>Apakah Anda yakin ingin menghapus riwayat serah terima (BAST) dengan No. Dokumen: <strong>{deleteHandover?.doc_no}</strong>?</p>
+            <p className="text-rose-500 font-bold text-[11px] uppercase tracking-wider">Tindakan ini permanen dan tidak dapat dibatalkan.</p>
+          </div>
+        }
+        isLoading={isDeleting}
+        confirmText="Hapus"
       />
     </div>
   );
