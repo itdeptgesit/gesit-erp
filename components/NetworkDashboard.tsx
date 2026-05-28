@@ -554,7 +554,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             variant="ghost"
                             size="icon"
                             onClick={handleExportSwitches}
-                            className="w-8 dark:"
+                            className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                             title="Export Nodes"
                         >
                             <FileSpreadsheet size={16} />
@@ -563,7 +563,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             variant="ghost"
                             size="icon"
                             onClick={handleExportWiring}
-                            className="w-8 dark:"
+                            className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                             title="Export Wiring"
                         >
                             <Server size={16} />
@@ -572,7 +572,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     {canManage && (
                         <Button
                             onClick={() => { setEditingDevice(null); setIsAddDeviceOpen(true); }}
-                            className="dark: font-semibold text-xs"
+                            className="font-semibold text-xs"
                         >
                             <Plus size={14} className="mr-2" /> Provision Node
                         </Button>
@@ -714,7 +714,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                                                 </TableCell>
                                                                 <TableCell className="px-6 py-4">
                                                                     <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 dark:hover:"><Pencil size={14} /></Button>}
+                                                                        {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"><Pencil size={14} /></Button>}
                                                                         {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="w-8"><Trash2 size={14} /></Button>}
                                                                     </div>
                                                                 </TableCell>

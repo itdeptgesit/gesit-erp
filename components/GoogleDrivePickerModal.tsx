@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Search, FileText, FileSpreadsheet, FileImage, FileCode, FileVideo, FileAudio, File, Loader2, Globe, Check, Cloud } from 'lucide-react';
 import { fetchDriveFiles, DriveFile } from '../lib/googleApi';
 import { isGoogleConnected, signInWithGoogle } from '../lib/googleCalendar';
@@ -119,8 +120,8 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
 
   const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
 
-  return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col h-[80vh] max-h-[600px] border border-slate-200 dark:border-zinc-800">
         
         {/* Header */}
@@ -164,7 +165,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col justify-center">
           {!isConnected ? (
             <div className="text-center py-12 px-6 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4 text-blue-500">
+              <div className="w-16 h-16 rounded-full bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center mb-4 text-zinc-900 dark:text-zinc-100">
                 <Cloud size={32} />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-2">Connect Google Account</h3>
@@ -174,7 +175,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
               <button
                 onClick={handleConnect}
                 disabled={connecting}
-                className="flex items-center justify-center gap-2.5 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
+                className="flex items-center justify-center gap-2.5 px-6 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow shadow-zinc-900/10 active:scale-95 disabled:opacity-50"
               >
                 {connecting ? <Loader2 size={14} className="animate-spin" /> : null}
                 {connecting ? 'Connecting...' : 'Authorize Google Drive'}
@@ -182,7 +183,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
             </div>
           ) : loading && files.length === 0 ? (
             <div className="text-center py-12 flex flex-col items-center justify-center">
-              <Loader2 size={24} className="animate-spin text-blue-500 mb-2" />
+              <Loader2 size={24} className="animate-spin text-zinc-900 dark:text-zinc-100 mb-2" />
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Searching Drive...</p>
             </div>
           ) : files.length === 0 ? (
@@ -201,7 +202,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
                     onClick={() => toggleSelectFile(file)}
                     className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
                       isSel
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm'
+                        ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-slate-100 dark:border-zinc-800/80 hover:border-slate-200 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900'
                     }`}
                   >
@@ -238,7 +239,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
                       )}
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
                         isSel
-                          ? 'bg-blue-600 border-blue-600 text-white'
+                          ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-zinc-50 dark:text-zinc-900'
                           : 'border-slate-200 dark:border-zinc-700'
                       }`}>
                         {isSel && <Check size={11} strokeWidth={3} />}
@@ -268,7 +269,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
               type="button"
               disabled={selectedFiles.length === 0}
               onClick={handleConfirmSelect}
-              className="px-5 py-2 bg-blue-600 disabled:opacity-40 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/10"
+              className="px-5 py-2 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow active:scale-95 disabled:opacity-40"
             >
               Attach Select
             </button>
@@ -276,6 +277,7 @@ export const GoogleDrivePickerModal: React.FC<GoogleDrivePickerModalProps> = ({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

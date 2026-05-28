@@ -325,7 +325,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-zinc-800 shadow-lg relative bg-slate-100 dark:bg-zinc-800">
                             <Avatar className="w-full h-full rounded-none">
                                 <AvatarImage src={avatarUrl} className="object-cover" />
-                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 capitalize">
+                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-100 capitalize">
                                     {userInitial}
                                 </AvatarFallback>
                             </Avatar>
@@ -373,10 +373,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                     {/* Edit Profile Button */}
                     <div className="flex-shrink-0">
                         <Button
+                            variant={isEditing ? 'outline' : 'default'}
                             onClick={() => setIsEditing(!isEditing)}
-                            className="dark: dark: font-bold transition-all"
+                            className="font-bold rounded-xl px-6 transition-all"
                         >
-                            {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                            <Edit3 size={15} className="mr-2" />
+                            {isEditing ? 'Cancel' : 'Edit Profile'}
                         </Button>
                     </div>
                 </div>
@@ -424,7 +426,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Visibility</h4>
                                     <p className="text-slate-500 dark:text-zinc-400 text-xs">Make your profile visible to other users</p>
                                 </div>
-                                <Switch defaultChecked className="data-[state=checked]:bg-slate-900 dark:data-[state=checked]:bg-blue-600" />
+                                <Switch defaultChecked className="data-[state=checked]:bg-zinc-800 dark:data-[state=checked]:bg-zinc-100" />
                             </div>
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
@@ -435,7 +437,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Data Export</h4>
                                     <p className="text-slate-500 dark:text-zinc-400 text-xs">Download a copy of your data</p>
                                 </div>
-                                <Button variant="outline" className="w-full sm:w-auto font-bold border-slate-200 dark:border-white/10 dark:/5">
+                                <Button variant="outline" className="w-full sm:w-auto font-bold border-border dark:border-zinc-700 rounded-xl">
                                     Export Data
                                 </Button>
                             </div>
@@ -455,8 +457,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                     <h4 className="text-base font-bold text-slate-900 dark:text-white">Delete Account</h4>
                                     <p className="text-slate-500 dark:text-zinc-400 text-xs">Permanently delete your account and all data</p>
                                 </div>
-                                <Button variant="destructive" className="w-full sm:w-auto font-bold dark:/10 flex items-center justify-center gap-2">
-                                    <Trash2 size={18} /> Delete Account
+                                <Button variant="destructive" className="w-full sm:w-auto font-bold rounded-xl flex items-center justify-center gap-2">
+                                    <Trash2 size={16} /> Delete Account
                                 </Button>
                             </div>
                         </div>
@@ -536,9 +538,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
 
                             {isEditing && (
                                 <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto dark: font-bold flex justify-center items-center gap-2">
-                                        {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
-                                        Save Information
+                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto font-bold rounded-xl flex justify-center items-center gap-2">
+                                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                        Save Changes
                                     </Button>
                                 </div>
                             )}
@@ -609,7 +611,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         </TableHeader>
                                         <TableBody>
                                             {activeSessions.map((session, index) => (
-                                                <TableRow key={session.sessionToken || index} className={`border-b border-slate-100/50 dark:border-white/5 ${session.isCurrent ? 'bg-blue-50/20 dark:bg-blue-600/5 hover:bg-blue-50/30 dark:hover:bg-blue-600/10' : 'hover:bg-slate-50/50 dark:hover:bg-white/5'} transition-colors`}>
+                                                <TableRow key={session.sessionToken || index} className={`border-b border-slate-100/50 dark:border-white/5 ${session.isCurrent ? 'bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100/50 dark:hover:bg-zinc-800' : 'hover:bg-slate-50/50 dark:hover:bg-white/5'} transition-colors`}>
                                                     <TableCell className="py-6 px-6">
                                                         <div className="flex flex-col">
                                                             <div className="flex items-center gap-2">
@@ -636,7 +638,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="text-xs font-bold dark: .5 h-auto"
+                                                                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 h-auto px-3"
                                                                 onClick={async () => {
                                                                     if (session.sessionToken) {
                                                                         await supabase.from('user_sessions').delete().eq('session_token', session.sessionToken);

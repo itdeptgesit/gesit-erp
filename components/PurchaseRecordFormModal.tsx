@@ -527,7 +527,7 @@ export const PurchaseRecordFormModal: React.FC<PurchaseRecordFormModalProps> = (
                     </button>
                     <button
                         onClick={() => onSubmit(formData)}
-                        className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all flex items-center gap-3 shadow-xl"
+                        className="px-10 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all flex items-center gap-3 shadow-xl"
                     >
                         <Save size={16} strokeWidth={3} />
                         Save

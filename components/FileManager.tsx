@@ -113,8 +113,8 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 <div className="flex gap-2 w-full md:w-auto">
 
                     <div className="flex bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl border border-slate-200 dark:border-zinc-700">
-                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><LayoutGrid size={16} /></button>
-                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><List size={16} /></button>
+                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><LayoutGrid size={16} /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-zinc-500'}`}><List size={16} /></button>
                     </div>
                 </div>
             </div>
@@ -126,12 +126,12 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">{paginatedFiles.map(file => (
                     <div key={file.id} className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-slate-100 dark:border-zinc-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group relative flex flex-col items-center text-center">
-                        <div className="w-14 h-14 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{file.type === 'pdf' ? <FileType size={28} /> : file.type === 'sheet' ? <FileSpreadsheet size={28} /> : <FileText size={28} />}</div>
-                        <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-200 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">{file.name}</h4><p className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-tighter">{file.category || 'Global'}</p>
+                        <div className="w-14 h-14 bg-slate-100 dark:bg-zinc-700/70 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner text-slate-500 dark:text-zinc-300">{file.type === 'pdf' ? <FileType size={28} /> : file.type === 'sheet' ? <FileSpreadsheet size={28} /> : <FileText size={28} />}</div>
+                        <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">{file.name}</h4><p className="text-[9px] font-black text-slate-400 dark:text-zinc-400 uppercase tracking-tighter">{file.category || 'Global'}</p>
                         <div className="mt-5 flex gap-2 w-full">
                             <a href={file.gdriveUrl} target="_blank" rel="noreferrer" className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5"><ExternalLink size={12} /> Open</a>
-                            {isAdmin && <button onClick={() => { setEditingFile(file); setIsModalOpen(true); }} className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><Pencil size={14} /></button>}
-                            {canDelete && <button onClick={() => setDeleteFile(file)} className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={14} /></button>}
+                            {isAdmin && <button onClick={() => { setEditingFile(file); setIsModalOpen(true); }} className="p-2 bg-blue-50 dark:bg-blue-500/15 text-blue-500 dark:text-blue-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><Pencil size={14} /></button>}
+                            {canDelete && <button onClick={() => setDeleteFile(file)} className="p-2 bg-rose-50 dark:bg-rose-500/15 text-rose-500 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={14} /></button>}
                         </div>
                     </div>
                 ))}</div>
@@ -179,8 +179,8 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                     <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
                         <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredFiles.length} documents)</p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-500 dark:text-zinc-300 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
+                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-500 dark:text-zinc-300 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
                         </div>
                     </div>
                 </div>

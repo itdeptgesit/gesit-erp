@@ -33,10 +33,14 @@ interface SystemSettings {
 }
 
 const colorPresets = [
-    { name: 'Blue', value: '#2563eb' }, { name: 'Indigo', value: '#4f46e5' },
-    { name: 'Red', value: '#e11d48' }, { name: 'Green', value: '#059669' },
-    { name: 'Purple', value: '#7c3aed' }, { name: 'Amber', value: '#d97706' },
-    { name: 'Slate', value: '#475569' },
+    { name: 'ChatGPT Green', value: '#10a37f' },
+    { name: 'Threads Black', value: '#000000' },
+    { name: 'Blue', value: '#2563eb' },
+    { name: 'Indigo', value: '#4f46e5' },
+    { name: 'Red', value: '#e11d48' },
+    { name: 'Green', value: '#059669' },
+    { name: 'Purple', value: '#7c3aed' },
+    { name: 'Amber', value: '#d97706' },
 ];
 
 const fontPresets = [
@@ -129,8 +133,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
     }, []);
 
     useEffect(() => {
-        document.documentElement.style.setProperty('--primary', settings.primaryColor);
-        document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
+        if (settings.primaryColor === '#000000') {
+            document.documentElement.style.removeProperty('--primary');
+            document.documentElement.style.removeProperty('--color-primary');
+        } else {
+            document.documentElement.style.setProperty('--primary', settings.primaryColor);
+            document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
+        }
         document.documentElement.style.setProperty('--font-sans', `"${settings.fontFamily}", sans-serif`);
 
         const fontUrl = `https://fonts.googleapis.com/css2?family=${settings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;

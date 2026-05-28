@@ -50,7 +50,7 @@ export const WarningConfirmModal: React.FC<WarningConfirmModalProps> = ({
               <button
                 onClick={onConfirm}
                 disabled={isLoading}
-                className="px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all flex-1 flex items-center justify-center gap-2 shadow-lg bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20"
+                className="px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all flex-1 flex items-center justify-center gap-2 shadow-lg bg-zinc-900 text-zinc-50 hover:bg-zinc-900/90 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 shadow-zinc-900/10 dark:shadow-none"
               >
                 {isLoading && <Loader2 size={14} className="animate-spin" strokeWidth={3} />}
                 {confirmText}

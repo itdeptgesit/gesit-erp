@@ -238,7 +238,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                 <div className="px-8 py-6 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-800/50 rounded-t-xl">
                     <div>
                         <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">
-                            {department.name} <span className="text-blue-600 dark:text-blue-400">Personnel</span>
+                            {department.name} <span className="text-zinc-950 dark:text-zinc-50">Personnel</span>
                         </h2>
                         <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.3em] mt-1">Management Engine</p>
                     </div>
@@ -256,16 +256,16 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                     )}
 
                     {showAddMode ? (
-                        <div className="p-8 bg-blue-50/50 dark:bg-blue-900/10 m-6 rounded-xl border border-blue-100 dark:border-blue-900/30 animate-in slide-in-from-right-4 duration-300 shadow-inner">
+                        <div className="p-8 bg-zinc-50 dark:bg-zinc-800/30 m-6 rounded-xl border border-slate-200 dark:border-zinc-800 animate-in slide-in-from-right-4 duration-300 shadow-inner">
                             <div className="flex items-center gap-2 mb-4">
-                                <UserPlus size={18} className="text-blue-600 dark:text-blue-400" />
+                                <UserPlus size={18} className="text-zinc-900 dark:text-zinc-100" />
                                 <h4 className="font-black text-slate-800 dark:text-slate-200 text-xs uppercase tracking-widest">Assign Personnel</h4>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="relative">
                                     <select
-                                        className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 appearance-none font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50 shadow-sm"
+                                        className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 appearance-none font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50 shadow-sm"
                                         value={selectedUserId}
                                         onChange={(e) => setSelectedUserId(e.target.value)}
                                         disabled={isActionLoading}
@@ -293,7 +293,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                                     <button
                                         onClick={handleAddMember}
                                         disabled={!selectedUserId || isActionLoading}
-                                        className="flex items-center gap-2 px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 disabled:opacity-50 transition-all active:scale-95"
+                                        className="flex items-center gap-2 px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-50 bg-zinc-900 dark:text-zinc-900 dark:bg-zinc-50 rounded-xl hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 shadow disabled:opacity-50 transition-all active:scale-95"
                                     >
                                         {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <UserCheck size={14} />}
                                         Confirm Assignment
@@ -307,7 +307,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                             <button
                                 onClick={handleOpenAdd}
                                 disabled={isLoading || isActionLoading}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-blue-700 shadow-lg shadow-slate-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 shadow transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <Plus size={14} /> Assign Person
                             </button>
@@ -317,7 +317,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                     <ul className="divide-y divide-slate-50 dark:divide-slate-800">
                         {isLoading && members.length === 0 ? (
                             <li className="p-12 text-center flex flex-col items-center gap-4">
-                                <Loader2 size={32} className="animate-spin text-blue-500" />
+                                <Loader2 size={32} className="animate-spin text-zinc-900 dark:text-zinc-100" />
                                 <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Syncing Personnel Data...</p>
                             </li>
                         ) : (members.length === 0 && !showAddMode) ? (
@@ -342,7 +342,7 @@ export const DepartmentMembersModal: React.FC<DepartmentMembersModalProps> = ({ 
                                                     if (!cleanDept) return null;
                                                     const isCurrent = cleanDept.toLowerCase() === department.name.trim().toLowerCase();
                                                     return (
-                                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border ${isCurrent ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/50' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'}`}>
+                                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border ${isCurrent ? 'bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 border-zinc-900 dark:border-zinc-50 shadow-sm' : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'}`}>
                                                             {cleanDept}
                                                         </span>
                                                     );

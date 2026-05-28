@@ -129,9 +129,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                 <div className="flex-1 overflow-y-auto p-9 space-y-9 custom-scrollbar">
                      <form id="userForm" onSubmit={handleSubmit} className="space-y-9">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="md:col-span-2 p-7 rounded-lg bg-blue-600/5 dark:bg-blue-600/5 border border-blue-500/10 dark:border-blue-500/10">
+                            <div className="md:col-span-2 p-7 rounded-lg bg-zinc-100/50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-800">
                                 <label className={labelClass}>Full Identity Name</label>
-                                <input type="text" required className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-blue-500/10 !border-blue-500/20`} value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} placeholder="e.g. John Doe" />
+                                <input type="text" required className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-primary/10 !border-slate-200 dark:!border-zinc-700`} value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} placeholder="e.g. John Doe" />
                             </div>
 
                             <div>
@@ -179,7 +179,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
                         <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-8">
                             <div className="flex items-center gap-3 mb-2 border-b border-slate-200 dark:border-zinc-700 pb-4">
-                                <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
+                                <Building2 size={20} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Corporate Assignment</h3>
                             </div>
 
@@ -251,22 +251,22 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
                         <div className="bg-slate-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-6">
                             <div className="flex items-center gap-3 mb-2 border-b border-slate-200 dark:border-zinc-700 pb-4">
-                                <Layers size={20} className="text-blue-600 dark:text-blue-500" />
+                                <Layers size={20} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Group Membership</h3>
                             </div>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 {availableGroups.map(group => (
-                                    <label key={group.id} className={`flex items-center gap-3 cursor-pointer bg-white dark:bg-zinc-900 px-4 py-3 rounded-md border transition-all ${formData.groups?.includes(group.id) ? 'border-primary dark:border-blue-500 bg-primary/5 dark:bg-blue-900/10 ring-1 ring-primary dark:ring-blue-500 shadow-sm' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}>
-                                        <input type="checkbox" checked={formData.groups?.includes(group.id)} onChange={() => toggleGroup(group.id)} className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
+                                    <label key={group.id} className={`flex items-center gap-3 cursor-pointer bg-white dark:bg-zinc-900 px-4 py-3 rounded-md border transition-all ${formData.groups?.includes(group.id) ? 'border-zinc-900 dark:border-zinc-50 bg-zinc-900/5 dark:bg-zinc-50/5 ring-1 ring-zinc-900 dark:ring-zinc-50 shadow-sm' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}>
+                                        <input type="checkbox" checked={formData.groups?.includes(group.id)} onChange={() => toggleGroup(group.id)} className="w-4 h-4 rounded text-zinc-900 dark:text-zinc-100 border-slate-300 focus:ring-zinc-900 dark:focus:ring-zinc-100" />
                                         <span className="text-[13px] font-bold text-slate-900 dark:text-zinc-100 tracking-tight">{group.name}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="bg-blue-600/5 dark:bg-blue-900/10 p-7 rounded-lg border border-blue-500/10 dark:border-blue-900/30 space-y-6">
-                            <div className="flex items-center gap-3 mb-2 border-b border-blue-200 dark:border-blue-900/50 pb-4">
-                                <UserCheck size={20} className="text-blue-600 dark:text-blue-400" />
+                        <div className="bg-zinc-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-6">
+                            <div className="flex items-center gap-3 mb-2 border-b border-slate-200 dark:border-zinc-800 pb-4">
+                                <UserCheck size={20} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Approval Hierarchy</h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -291,7 +291,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="userForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl active:scale-[0.98]">Save</button>
+                    <button type="submit" form="userForm" className="px-12 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 shadow-xl active:scale-[0.98]">Save</button>
                 </div>
             </DialogContent>
         </Dialog>

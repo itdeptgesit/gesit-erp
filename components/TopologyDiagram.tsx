@@ -155,7 +155,7 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
             <div 
                 className={`relative w-full h-full rounded-xl flex items-center gap-3 px-4 py-2 border transition-all duration-300 group cursor-pointer ${
                     isSelected 
-                        ? 'bg-slate-900/95 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.35)] dark:bg-zinc-950/95 scale-105 z-50' 
+                        ? 'bg-slate-900/95 border-zinc-400 shadow-[0_0_20px_rgba(250,250,250,0.15)] dark:bg-zinc-950/95 dark:border-zinc-500 scale-105 z-50' 
                         : isImpacted 
                         ? 'bg-slate-900/80 border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.2)] dark:bg-zinc-950/80 animate-pulse' 
                         : isInternet 
@@ -170,12 +170,12 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                 }}
             >
                 {/* Subtle Glow Layer for Selected state */}
-                {isSelected && <div className="absolute inset-0 bg-blue-500/5 blur-lg rounded-xl pointer-events-none" />}
+                {isSelected && <div className="absolute inset-0 bg-zinc-500/5 blur-lg rounded-xl pointer-events-none" />}
 
                 {/* Left side: Colored Icon Container */}
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300 ${
                     isSelected 
-                        ? 'bg-blue-500/20 text-blue-400' 
+                        ? 'bg-zinc-500/20 text-zinc-100' 
                         : isImpacted 
                         ? 'bg-rose-500/20 text-rose-400' 
                         : isInternet 
@@ -192,7 +192,7 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                 {/* Right side: Texts */}
                 <div className="flex flex-col min-w-0 flex-1 text-left">
                     <span className={`text-[10px] font-black tracking-wide truncate transition-all uppercase leading-tight ${
-                        isSelected ? 'text-blue-400' : isImpacted ? 'text-rose-400' : 'text-slate-200'
+                        isSelected ? 'text-zinc-100' : isImpacted ? 'text-rose-400' : 'text-slate-200'
                     }`}>
                         {switchData.name}
                     </span>
@@ -204,23 +204,23 @@ const DiagramNode: React.FC<NodeProps> = React.memo(({ switchData, x, y, scale, 
                 {/* Tiny top connection pin */}
                 {!isInternet && (
                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center shadow-lg pointer-events-none">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
                     </div>
                 )}
 
                 {/* Tiny bottom connection pin */}
                 <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center shadow-lg pointer-events-none">
-                    <div className={`w-1.5 h-1.5 rounded-full ${isInternet ? 'bg-emerald-500' : 'bg-blue-500'} animate-pulse`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${isInternet ? 'bg-emerald-500' : 'bg-zinc-400'} animate-pulse`} />
                 </div>
 
                 {/* Tiny left connection pin */}
                 <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center shadow-lg pointer-events-none">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
                 </div>
 
                 {/* Tiny right connection pin */}
                 <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-slate-950 border border-white/10 flex items-center justify-center shadow-lg pointer-events-none">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
                 </div>
             </div>
         </div>
@@ -997,7 +997,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute inset-0 bg-[#030712]" />
                 {/* Nebula Gradients */}
-                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-zinc-600/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/10 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
                 <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-600/5 blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
 
@@ -1029,14 +1029,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             >
                 <div className="p-5 border-b border-white/5 space-y-4 bg-white/[0.02]">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] leading-none">NetVision Library</span>
+                        <span className="text-[10px] font-black text-zinc-100 uppercase tracking-[0.3em] leading-none">NetVision Library</span>
                     </div>
                     <div className="relative group">
-                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-zinc-200 transition-colors" />
                         <input
                             type="text"
                             placeholder="Search hardware..."
-                            className="w-full pl-10 pr-3 py-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
+                            className="w-full pl-10 pr-3 py-2.5 bg-black/30 border border-white/5 rounded-xl text-[10px] text-white placeholder:text-slate-600 focus:outline-none focus:border-zinc-500/40 focus:ring-1 focus:ring-zinc-500/20 transition-all font-medium"
                             value={paletteSearch}
                             onChange={(e) => setPaletteSearch(e.target.value)}
                         />
@@ -1056,9 +1056,9 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                         e.dataTransfer.setData('deviceType', item.type);
                                         e.dataTransfer.setData('modelName', item.label);
                                     }}
-                                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all cursor-grab active:cursor-grabbing hover:scale-[1.02]"
+                                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all cursor-grab active:cursor-grabbing hover:scale-[1.02]"
                                 >
-                                    <item.icon size={18} className="text-slate-400 group-hover:text-blue-400 mb-1.5" />
+                                    <item.icon size={18} className="text-slate-400 group-hover:text-zinc-100 mb-1.5" />
                                     <span className="text-[8px] font-bold text-slate-300 group-hover:text-white text-center truncate w-full">{item.label}</span>
                                 </div>
                             ))}
@@ -1069,7 +1069,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     <div className="space-y-3">
                         <div className="flex items-center justify-between px-1">
                             <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Active Nodes Library</span>
-                            <span className="text-[8px] font-black text-blue-500">{existingNodesPalette.length}</span>
+                            <span className="text-[8px] font-black text-zinc-400">{existingNodesPalette.length}</span>
                         </div>
                         <div className="space-y-2">
                             {existingNodesPalette.map((node) => {
@@ -1090,7 +1090,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                             <span className="text-[8px] font-bold text-white truncate leading-tight uppercase">{node.name}</span>
                                             <div className="flex items-center gap-1.5 opacity-60">
                                                 <span className="text-[7px] font-bold text-slate-400 truncate uppercase">{node.model}</span>
-                                                <span className="text-[7px] font-mono text-blue-400">{node.ip}</span>
+                                                <span className="text-[7px] font-mono text-zinc-400">{node.ip}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1105,7 +1105,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-slate-950/60 backdrop-blur-3xl p-2 rounded-[24px] border border-white/[0.08] shadow-2xl">
                 <div className="flex items-center bg-white/[0.03] rounded-xl border border-white/5">
                     <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 hover:bg-white/5 text-slate-400 hover:text-white transition-all"><Minus size={16} /></button>
-                    <div className="px-1 text-[10px] font-black text-blue-500 font-mono w-12 text-center tracking-tighter">{Math.round(scale * 100)}%</div>
+                    <div className="px-1 text-[10px] font-black text-zinc-400 font-mono w-12 text-center tracking-tighter">{Math.round(scale * 100)}%</div>
                     <button onClick={() => setScale(s => Math.min(s + 0.1, 4))} className="p-3 hover:bg-white/5 text-slate-400 hover:text-white transition-all"><Plus size={16} /></button>
                 </div>
 
@@ -1121,7 +1121,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     </button>
                     <button 
                         onClick={() => setSnapToGrid(!snapToGrid)} 
-                        className={`p-3 rounded-xl transition-all ${snapToGrid ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:bg-white/5'}`}
+                        className={`p-3 rounded-xl transition-all ${snapToGrid ? 'bg-zinc-100/10 text-zinc-100 shadow-lg shadow-zinc-500/5' : 'text-slate-400 hover:bg-white/5'}`}
                         title="Grid"
                     >
                         <Grid3X3 size={16} />
@@ -1140,14 +1140,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 <div className="flex items-center gap-1">
                     <button 
                         onClick={() => setShowLibrary(!showLibrary)} 
-                        className={`p-3 rounded-xl transition-all ${showLibrary ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:bg-white/5'}`}
+                        className={`p-3 rounded-xl transition-all ${showLibrary ? 'bg-zinc-100/10 text-zinc-100 shadow-lg shadow-zinc-500/5' : 'text-slate-400 hover:bg-white/5'}`}
                         title={showLibrary ? "Hide Library" : "Show Library"}
                     >
                         <PanelLeft size={16} />
                     </button>
                     <button 
                         onClick={() => setShowLegend(!showLegend)} 
-                        className={`p-3 rounded-xl transition-all ${showLegend ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:bg-white/5'}`}
+                        className={`p-3 rounded-xl transition-all ${showLegend ? 'bg-zinc-100/10 text-zinc-100 shadow-lg shadow-zinc-500/5' : 'text-slate-400 hover:bg-white/5'}`}
                         title={showLegend ? "Hide Legend" : "Show Legend"}
                     >
                         <PanelRight size={16} />
@@ -1204,13 +1204,13 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                         setViewMode(viewMode === 'simplified' ? 'detailed' : 'simplified');
                         setExpandedGroups(new Set());
                     }}
-                    className={`p-3 rounded-xl transition-all ${viewMode === 'simplified' ? 'text-blue-400' : 'text-slate-400 hover:bg-white/5'}`}
+                    className={`p-3 rounded-xl transition-all ${viewMode === 'simplified' ? 'text-zinc-100' : 'text-slate-400 hover:bg-white/5'}`}
                     title={viewMode === 'simplified' ? 'Switch to Detailed' : 'Switch to Simplified'}
                 >
                     {viewMode === 'simplified' ? <Maximize size={16} /> : <LayoutTemplate size={16} />}
                 </button>
 
-                <button onClick={handleDownload} className="p-3 text-slate-400 hover:text-white hover:bg-blue-600/20 rounded-xl transition-all" title="Export PNG">
+                <button onClick={handleDownload} className="p-3 text-slate-400 hover:text-white hover:bg-zinc-800/40 rounded-xl transition-all" title="Export PNG">
                     <Download size={16} />
                 </button>
                 <button onClick={handleAutoLayout} className="p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all" title="Auto Layout">
@@ -1218,7 +1218,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 </button>
                 <button 
                     onClick={toggleFullscreen} 
-                    className={`p-3 rounded-xl transition-all ${isFullscreen ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`} 
+                    className={`p-3 rounded-xl transition-all ${isFullscreen ? 'bg-zinc-100/10 text-zinc-100 shadow-lg shadow-zinc-500/5' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`} 
                     title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                 >
                     {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -1234,7 +1234,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     <div className="p-6 border-b border-white/5 bg-black/60">
                         <div className="flex justify-between items-start">
                             <div>
-                                <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] block mb-1">Identity node</span>
+                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] block mb-1">Identity node</span>
                                 <h3 className="text-lg font-black text-white uppercase tracking-tight leading-none truncate max-w-[200px]">{selectedNode.name}</h3>
                             </div>
                             <button onClick={() => setSelectedNodeId(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-500"><X size={20} /></button>
@@ -1244,7 +1244,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                 <span className="text-[8px] font-black text-slate-500 uppercase block mb-1 tracking-widest">Interface IP</span>
-                                <span className="text-xs font-mono font-black text-blue-400">{(selectedNode as any).ip}</span>
+                                <span className="text-xs font-mono font-black text-zinc-300">{(selectedNode as any).ip}</span>
                             </div>
                             <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                 <span className="text-[8px] font-black text-slate-500 uppercase block mb-1 tracking-widest">Rack Pos</span>
@@ -1260,7 +1260,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             {selectedNode.vlan && (
                                 <div className="flex justify-between items-center text-[10px] font-bold">
                                     <span className="text-slate-500 uppercase tracking-widest">Logic VLAN</span>
-                                    <span className="text-blue-400">ID {selectedNode.vlan}</span>
+                                    <span className="text-zinc-300">ID {selectedNode.vlan}</span>
                                 </div>
                             )}
                             {selectedNode.ports?.[0]?.macAddress && (
@@ -1285,17 +1285,17 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             </div>
                             <div className="flex justify-between items-center text-[10px] font-bold">
                                 <span className="text-slate-500 uppercase tracking-widest">Global Tier</span>
-                                <span className="text-blue-500 uppercase">{nodeTiers.get(selectedNode.id)}</span>
+                                <span className="text-zinc-400 uppercase">{nodeTiers.get(selectedNode.id)}</span>
                             </div>
                         </div>
 
                         <div className="h-24 w-full bg-black/40 rounded-xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden mb-6">
                             <div className="flex items-center gap-1.5 opacity-40 mb-3">
                                 {[3, 7, 4, 9, 5, 11, 6].map((h, i) => (
-                                    <div key={i} className="w-1.5 bg-blue-500 rounded-full animate-pulse" style={{ height: `${h * 4}px`, animationDelay: `${i * 0.1}s` }}></div>
+                                    <div key={i} className="w-1.5 bg-zinc-400 rounded-full animate-pulse" style={{ height: `${h * 4}px`, animationDelay: `${i * 0.1}s` }}></div>
                                 ))}
                             </div>
-                            <span className="text-[8px] font-mono font-black text-blue-500/60 uppercase tracking-[0.4em]">Monitoring Logical stream...</span>
+                            <span className="text-[8px] font-mono font-black text-zinc-400/60 uppercase tracking-[0.4em]">Monitoring Logical stream...</span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -1309,7 +1309,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             {canManage && !selectedNode.id.toString().startsWith('temp-') && (
                                 <button
                                     onClick={() => onEditNode && onEditNode(selectedNode)}
-                                    className="flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/20"
+                                    className="flex items-center justify-center gap-3 py-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-zinc-500/10"
                                 >
                                     <Pencil size={16} />
                                     Edit
@@ -1353,7 +1353,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 <div className="flex flex-col gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-1 h-4 bg-blue-500 rounded-full" />
+                            <div className="w-1 h-4 bg-zinc-400 rounded-full" />
                             <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Network Key</span>
                         </div>
                         <div className="space-y-3">
@@ -1366,7 +1366,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                    <div className="w-2 h-2 rounded-full bg-zinc-400 shadow-[0_0_8px_rgba(250,250,250,0.2)]" />
                                     <span className="text-[8px] font-bold text-slate-300">Distribution</span>
                                 </div>
                                 <span className="text-[7px] font-mono text-slate-500 font-bold uppercase tracking-widest">Trunk</span>
@@ -1403,10 +1403,10 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                         </div>
                     </div>
 
-                    <div className="mt-2 p-3 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                    <div className="mt-2 p-3 bg-zinc-500/5 rounded-xl border border-zinc-800">
                         <div className="flex items-center gap-2 mb-1">
-                            <Info size={10} className="text-blue-400" />
-                            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Map Status</span>
+                            <Info size={10} className="text-zinc-400" />
+                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Map Status</span>
                         </div>
                         <p className="text-[8px] text-slate-500 leading-relaxed font-bold uppercase tracking-tight">Sync active with Supabase Realtime Hub.</p>
                     </div>
@@ -1424,7 +1424,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                     {/* Office Floor Plan Blueprint Background Layer */}
                     {viewType === 'floorplan' && floorplanImg && (
                         <div 
-                            className="absolute pointer-events-none select-none rounded-[32px] overflow-hidden border-4 border-dashed border-blue-500/20 bg-[#080d16]/30 backdrop-blur-sm shadow-inner"
+                            className="absolute pointer-events-none select-none rounded-[32px] overflow-hidden border-4 border-dashed border-zinc-500/20 bg-[#080d16]/30 backdrop-blur-sm shadow-inner"
                             style={{ 
                                 left: 900, 
                                 top: 900,
@@ -1450,8 +1450,8 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                 height: 800,
                             }}
                         >
-                            <div className="p-6 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6 animate-pulse">
-                                <Globe size={48} className="text-blue-500" />
+                            <div className="p-6 rounded-full bg-zinc-500/10 border border-zinc-800 mb-6 animate-pulse">
+                                <Globe size={48} className="text-zinc-400" />
                             </div>
                             <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Floor Plan Blueprint Active</h3>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest max-w-md leading-relaxed mb-6">
@@ -1472,9 +1472,9 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
-                            <div className="w-24 h-[2px] bg-gradient-to-r from-blue-500 to-transparent" />
+                            <div className="w-24 h-[2px] bg-gradient-to-r from-zinc-500 to-transparent" />
                             <div>
-                                <span className="text-[12px] font-black text-blue-500 uppercase tracking-[0.6em] block">L2 • Core Infrastructure</span>
+                                <span className="text-[12px] font-black text-zinc-400 uppercase tracking-[0.6em] block">L2 • Core Infrastructure</span>
                                 <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">High-Speed Backbone Switching</span>
                             </div>
                         </div>
@@ -1592,14 +1592,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                         {switches.map(sw => (
                             <div
                                 key={sw.id}
-                                className="bg-blue-500 rounded-sm absolute"
+                                className="bg-zinc-400 rounded-sm absolute"
                                 style={{ left: sw.posX || 0, top: sw.posY || 0, width: NODE_WIDTH, height: NODE_HEIGHT }}
                             />
                         ))}
                     </div>
                     {/* Viewport Indicator */}
                     <div
-                        className="absolute border-2 border-blue-500/50 bg-blue-500/5 rounded pointer-events-none"
+                        className="absolute border-2 border-zinc-500/50 bg-zinc-500/5 rounded pointer-events-none"
                         style={{
                             left: (-offset.x / scale) * 0.04 + 10,
                             top: (-offset.y / scale) * 0.04 + 10,
@@ -1616,14 +1616,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                 switches.length === 0 && !searchTerm && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-[50]">
                         <div className="relative mb-8">
-                            <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full" />
+                            <div className="absolute inset-0 bg-zinc-500/20 blur-[100px] rounded-full" />
                             <div className="relative bg-slate-900/40 backdrop-blur-3xl p-10 rounded-xl border border-white/10 shadow-2xl flex flex-col items-center">
                                 <div className="w-20 h-20 bg-slate-800 rounded-xl flex items-center justify-center mb-6 border border-white/5 shadow-xl group">
-                                    <Radio size={40} className="text-blue-500 animate-pulse group-hover:scale-110 transition-transform" />
+                                    <Radio size={40} className="text-zinc-400 animate-pulse group-hover:scale-110 transition-transform" />
                                 </div>
                                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Nexus Empty</h3>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest max-w-[200px] text-center opacity-60">No active infrastructure nodes detected in the current sector.</p>
-                                <button onClick={handleAutoLayout} className="mt-8 px-8 py-3 bg-blue-600/90 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95">Re-scan Area</button>
+                                <button onClick={handleAutoLayout} className="mt-8 px-8 py-3 bg-zinc-100/90 hover:bg-zinc-200 text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:shadow-[0_0_30px_rgba(250,250,250,0.15)] active:scale-95">Re-scan Area</button>
                             </div>
                         </div>
                     </div>
@@ -1643,13 +1643,13 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                                     <button onClick={() => setRelinkingSwitch(null)} className="p-3 hover:bg-white/5 rounded-xl text-slate-500 transition-all border border-white/5"><X size={20} /></button>
                                 </div>
                                 <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-3">
-                                    <button onClick={() => handleRelink(relinkingSwitch.id, 'internet')} className={`w-full flex items-center gap-4 p-5 rounded-xl border transition-all ${relinkingSwitch.uplinkId === 'internet' ? 'bg-emerald-500/10 border-emerald-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
+                                    <button onClick={() => handleRelink(relinkingSwitch.id, 'internet')} className={`w-full flex items-center gap-4 p-5 rounded-xl border transition-all ${relinkingSwitch.uplinkId === 'internet' ? 'bg-emerald-500/10 border-emerald-500' : 'bg-white/5 border-white/5 hover:border-zinc-400'}`}>
                                         <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg"><Globe size={20} /></div>
                                         <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">ISP Gateway</span></div>
                                     </button>
                                     {switches.filter(s => s.id !== relinkingSwitch.id && !s.id.startsWith('port-device-')).map(sw => (
-                                        <button key={sw.id} onClick={() => handleRelink(relinkingSwitch.id, sw.id)} className={`w-full flex items-center gap-4 p-5 rounded-xl border transition-all ${relinkingSwitch.uplinkId === sw.id ? 'bg-blue-500/10 border-blue-500' : 'bg-white/5 border-white/5 hover:border-blue-500'}`}>
-                                            <div className="w-10 h-10 rounded-xl bg-slate-800 text-blue-400 flex items-center justify-center border border-white/5"><Router size={20} /></div>
+                                        <button key={sw.id} onClick={() => handleRelink(relinkingSwitch.id, sw.id)} className={`w-full flex items-center gap-4 p-5 rounded-xl border transition-all ${relinkingSwitch.uplinkId === sw.id ? 'bg-zinc-500/10 border-zinc-500' : 'bg-white/5 border-white/5 hover:border-zinc-400'}`}>
+                                            <div className="w-10 h-10 rounded-xl bg-slate-800 text-zinc-400 flex items-center justify-center border border-white/5"><Router size={20} /></div>
                                             <div className="text-left"><span className="text-xs font-black uppercase text-white tracking-widest">{sw.name}</span></div>
                                         </button>
                                     ))}
@@ -1681,7 +1681,7 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 rounded-xl text-slate-300 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider"
                         >
-                            <Info size={14} className="text-blue-400" />
+                            <Info size={14} className="text-zinc-400" />
                             Device Profile
                         </button>
                         <button 

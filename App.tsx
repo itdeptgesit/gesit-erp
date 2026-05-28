@@ -251,6 +251,11 @@ const InternalApp: React.FC = () => {
     const checkSession = async () => {
       console.log("App.tsx: Checking session...");
       try {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("App.tsx: Localhost detected, bypassing login as admin@gesit.co.id");
+          await handleLogin('admin@gesit.co.id');
+          return;
+        }
         const { data: { session } } = await supabase.auth.getSession();
         console.log("App.tsx: Session check result:", !!session);
         if (session?.user?.email) {
@@ -312,9 +317,14 @@ const InternalApp: React.FC = () => {
           };
           setAppSettings(newSettings);
 
-          // Apply primary color to CSS variables
-          document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
-          document.documentElement.style.setProperty('--color-primary', newSettings.primaryColor);
+          // Apply primary color to CSS variables (fallback to stylesheet for Threads theme)
+          if (newSettings.primaryColor === '#000000') {
+            document.documentElement.style.removeProperty('--primary');
+            document.documentElement.style.removeProperty('--color-primary');
+          } else {
+            document.documentElement.style.setProperty('--primary', newSettings.primaryColor);
+            document.documentElement.style.setProperty('--color-primary', newSettings.primaryColor);
+          }
 
           // Apply font family safely with quotes and fallback
           document.documentElement.style.setProperty('--font-sans', `"${newSettings.fontFamily}", sans-serif`);

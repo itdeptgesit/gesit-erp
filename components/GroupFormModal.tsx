@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 import { UserGroup } from '../types';
 import { APP_MENU_STRUCTURE } from '../constants';
@@ -58,8 +59,8 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
   const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
   const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium placeholder:text-slate-400";
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
             <div className="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[92vh] border border-slate-200 dark:border-zinc-800">
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <div>
@@ -96,8 +97,8 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
                         </div>
 
                         <div className="bg-slate-50 dark:bg-zinc-800/30 p-8 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-7">
-                            <h3 className="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.2em] mb-4 border-b border-slate-200 dark:border-zinc-700 pb-4 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            <h3 className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] mb-4 border-b border-slate-200 dark:border-zinc-700 pb-4 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
                                 Menu Access Permissions Cluster
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[400px] overflow-y-auto pr-3 custom-scrollbar">
@@ -106,9 +107,9 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
                                     const isParentChecked = formData.allowedMenus.includes(parent.id);
 
                                     return (
-                                        <div key={parent.id} className={`border rounded-md p-4 transition-all ${isParentChecked ? 'border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 ring-1 ring-blue-500/10' : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-850'}`}>
+                                        <div key={parent.id} className={`border rounded-md p-4 transition-all ${isParentChecked ? 'border-primary/20 bg-primary/5 ring-1 ring-primary/10' : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-850'}`}>
                                             <label className="flex items-center gap-3 cursor-pointer mb-3 group">
-                                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isParentChecked ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 group-hover:border-blue-400'}`}>
+                                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isParentChecked ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-zinc-50 dark:text-zinc-900 shadow-md shadow-zinc-900/10' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 group-hover:border-primary'}`}>
                                                     {isParentChecked && <Check size={14} strokeWidth={3} />}
                                                 </div>
                                                 <input type="checkbox" className="hidden"
@@ -124,7 +125,7 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
                                                         const isChildChecked = formData.allowedMenus.includes(child.id);
                                                         return (
                                                             <label key={child.id} className="flex items-center gap-3 cursor-pointer group/child">
-                                                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${isChildChecked ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 group-hover/child:border-blue-400'}`}>
+                                                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${isChildChecked ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-zinc-50 dark:text-zinc-900 shadow-sm shadow-zinc-900/5' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 group-hover/child:border-primary'}`}>
                                                                     {isChildChecked && <Check size={10} strokeWidth={4} />}
                                                                 </div>
                                                                 <input type="checkbox" className="hidden"
@@ -147,9 +148,10 @@ export const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose,
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="groupForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Save</button>
+                    <button type="submit" form="groupForm" className="px-10 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow-xl">Save</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

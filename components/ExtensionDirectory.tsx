@@ -222,7 +222,7 @@ const ExtensionCard: React.FC<{
         border: is27 ? 'border-primary/10 dark:border-primary/5' : 'border-emerald-500/10 dark:border-emerald-500/5',
         activeRing: is27 ? 'ring-primary/20' : 'ring-emerald-500/20',
         rightBg: is27 ? 'group-hover:bg-primary' : 'group-hover:bg-emerald-500',
-        rightText: is27 ? 'text-primary dark:text-blue-400' : 'text-emerald-500 dark:text-emerald-400',
+        rightText: is27 ? 'text-foreground dark:text-zinc-100' : 'text-emerald-500 dark:text-emerald-400',
         badge: is27 ? 'bg-primary/5 text-primary' : 'bg-emerald-500/5 text-emerald-500'
     };
 
@@ -323,7 +323,7 @@ const ExtensionCard: React.FC<{
                     <span className={`text-3xl font-black tracking-tighter tabular-nums transition-all duration-300 ${copied
                         ? 'text-white scale-110'
                         : `group-hover/btn:text-white group-active/btn:scale-95 ${is27
-                            ? 'text-blue-600 dark:text-blue-400'
+                            ? 'text-foreground dark:text-zinc-100'
                             : 'text-emerald-500 dark:text-emerald-400'
                         }`
                         }`}>
@@ -420,7 +420,7 @@ const ExtensionTable: React.FC<{
                                 <TableCell className="text-center py-5">
                                     <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold
                                         ${ext.floor === 27
-                                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                            ? 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-300 border border-zinc-400/20'
                                             : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}
                                     `}>
                                         {t('floorLabel')} {ext.floor}
@@ -990,7 +990,7 @@ export const ExtensionDirectory = ({
                             <button
                                 onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
                                 className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 27
-                                    ? 'bg-blue-500 text-white shadow-md'
+                                    ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >

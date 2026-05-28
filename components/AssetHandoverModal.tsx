@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { exportAssetTransferForm, AssetTransferInfo } from '../lib/handoverPdfExport';
 import { supabase } from '../lib/supabaseClient';
 import { WarningConfirmModal } from './WarningConfirmModal';
+import { useLanguage } from '../translations';
 
 interface AssetHandoverModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface AssetHandoverModalProps {
 }
 
 export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, onClose, asset, currentUser }) => {
+  const { t, language } = useLanguage();
+  const isId = language === 'id';
   const [activeTab, setActiveTab] = useState<'recipient' | 'originator' | 'equipment'>('recipient');
 
   // 1. Data Originator States
@@ -776,15 +779,24 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
           setWarningModalOpen(false);
           proceedSubmit();
         }}
-        title="Asset Handover Sudah Pernah Dibuat"
+        title={isId ? "Asset Handover Sudah Pernah Dibuat" : "Asset Handover Already Exists"}
         message={
           <div className="space-y-2">
-            <p>Perhatian: BAST Handover untuk aset ini sudah pernah dibuat sebelumnya dengan <strong>No. Dokumen: {existingDocNo}</strong>.</p>
-            <p>Apakah Anda yakin ingin tetap membuat dan mencetak BAST baru?</p>
+            <p>
+              {isId 
+                ? "Perhatian: BAST Handover untuk aset ini sudah pernah dibuat sebelumnya dengan " 
+                : "Attention: BAST Handover for this asset has already been created with "}
+              <strong>No. Dokumen: {existingDocNo}</strong>.
+            </p>
+            <p>
+              {isId 
+                ? "Apakah Anda yakin ingin tetap membuat dan mencetak BAST baru?" 
+                : "Are you sure you want to create and print a new BAST?"}
+            </p>
           </div>
         }
-        confirmText="Buat BAST Baru"
-        cancelText="Batal"
+        confirmText={isId ? "Buat BAST Baru" : "Create New BAST"}
+        cancelText={isId ? "Batal" : "Cancel"}
       />
     </div>
   );

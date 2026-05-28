@@ -92,7 +92,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({ isOpen, on
 
                 <div className="px-9 py-7 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end gap-4 shrink-0">
                     <button type="button" onClick={onClose} className="px-6 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">Cancel</button>
-                    <button type="submit" form="categoryForm" className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">Save</button>
+                    <button type="submit" form="categoryForm" className="px-10 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow-xl">Save</button>
                 </div>
             </div>
         </div>

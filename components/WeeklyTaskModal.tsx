@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, User, Tag, Loader2, Target, Info, CalendarRange, Cloud, Trash2, Globe, MapPin } from 'lucide-react';
 import { WeeklyPlan } from '../types';
 import { searchPeople, PeopleContact, DriveFile } from '../lib/googleApi';
@@ -144,15 +145,15 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
 
   const isMultiDay = formData.startDate && formData.dueDate && formData.startDate !== formData.dueDate;
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-zinc-800">
 
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
-              <Target size={16} className="text-white" />
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shadow-sm">
+              <Target size={16} className="text-zinc-50 dark:text-zinc-900" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -204,7 +205,7 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
                 <button
                   type="button"
                   onClick={() => setDrivePickerOpen(true)}
-                  className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 uppercase tracking-wider transition-colors"
+                  className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 hover:underline flex items-center gap-1 uppercase tracking-wider transition-colors"
                 >
                   <Cloud size={11} />
                   Add from Drive
@@ -300,7 +301,7 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
                 </div>
               </div>
               {isMultiDay && (
-                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg">
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg">
                   <CalendarRange size={11} />
                   Multi-day event: {formData.startDate} → {formData.dueDate}
                 </div>
@@ -433,7 +434,7 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
             type="submit"
             form="taskForm"
             disabled={isSubmitting}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow-lg shadow-zinc-900/10 dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
             {isSubmitting ? <Loader2 size={13} className="animate-spin" /> : null}
             {initialData ? 'Update Event' : 'Create Event'}
@@ -447,7 +448,8 @@ export const WeeklyTaskModal: React.FC<WeeklyTaskModalProps> = ({ isOpen, onClos
           onSelectFiles={handleSelectDriveFiles}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

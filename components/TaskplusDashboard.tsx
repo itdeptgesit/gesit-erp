@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     FolderKanban, ListChecks, CheckCircle2,
     Calendar, Zap, TrendingUp,
@@ -75,7 +76,7 @@ interface TaskplusDashboardProps {
 const StatusBadge = ({ status }: { status: string }) => {
     const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", bg?: string, dot: string }> = {
         'Completed': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
-        'In Progress': { variant: 'outline', bg: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50', dot: 'bg-blue-500' },
+        'In Progress': { variant: 'outline', bg: 'bg-zinc-100/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700', dot: 'bg-zinc-900 dark:bg-zinc-100' },
         'On Hold': { variant: 'outline', bg: 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/50', dot: 'bg-amber-500' },
         'Pending': { variant: 'outline', bg: 'bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700/50', dot: 'bg-slate-400' },
         'Done': { variant: 'outline', bg: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50', dot: 'bg-emerald-500' },
@@ -584,13 +585,13 @@ const GmailWidget: React.FC<GmailWidgetProps> = ({ language, t }) => {
 
             {/* Email Detail Modal */}
             <AnimatePresence>
-                {selectedEmail && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {selectedEmail && typeof window !== 'undefined' && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                             onClick={() => setSelectedEmail(null)}
                         />
 
@@ -598,7 +599,7 @@ const GmailWidget: React.FC<GmailWidgetProps> = ({ language, t }) => {
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative w-full max-w-xl bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-10"
+                            className="relative w-full max-w-xl bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-[10000]"
                         >
                             <div className="p-6 border-b border-border/60 flex items-start justify-between bg-muted/20">
                                 <div className="flex gap-3">
@@ -654,7 +655,8 @@ const GmailWidget: React.FC<GmailWidgetProps> = ({ language, t }) => {
                                 </a>
                             </div>
                         </motion.div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </AnimatePresence>
         </Card>
@@ -1321,18 +1323,17 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     });
 
     return (
-        <div className="w-full space-y-8 animate-in fade-in duration-700 pb-16">
-
+        <>
             {/* --- SYSTEM BROADCASTS MODAL POP-UP --- */}
             <AnimatePresence>
-                {activeModalAnn && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {activeModalAnn && typeof window !== 'undefined' && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         {/* Blur Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                            className="fixed inset-0 bg-black/60 backdrop-blur-md"
                             onClick={() => setSessionDismissed(prev => [...prev, activeModalAnn.id!])}
                         />
 
@@ -1342,14 +1343,14 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 15 }}
                             transition={{ duration: 0.25, ease: 'easeOut' }}
-                            className="relative w-full max-w-lg bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-10 p-6 space-y-6"
+                            className="relative w-full max-w-lg bg-background border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden z-[10000] p-6 space-y-6"
                         >
                             {/* Decorative Orb */}
                             <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
 
                             <div className="flex items-start gap-4">
                                 <div className={`p-3 rounded-xl shrink-0 ${
-                                    activeModalAnn.type === 'info' ? 'bg-blue-500/10 text-blue-500' :
+                                    activeModalAnn.type === 'info' ? 'bg-zinc-500/10 dark:bg-zinc-400/10 text-zinc-900 dark:text-zinc-100' :
                                     activeModalAnn.type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
                                     activeModalAnn.type === 'error' ? 'bg-rose-500/10 text-rose-500' :
                                     'bg-emerald-500/10 text-emerald-500'
@@ -1359,7 +1360,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                 <div className="flex-1 min-w-0 space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                                            activeModalAnn.type === 'info' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
+                                            activeModalAnn.type === 'info' ? 'bg-zinc-500/15 text-zinc-900 dark:text-zinc-100' :
                                             activeModalAnn.type === 'warning' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
                                             activeModalAnn.type === 'error' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' :
                                             'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
@@ -1394,8 +1395,8 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                 <Button
                                     variant="default"
                                     size="sm"
-                                    className={`w-full sm:w-auto text-xs font-bold h-9 rounded-xl shadow-sm text-white border-0 ${
-                                        activeModalAnn.type === 'info' ? 'bg-blue-500 hover:bg-blue-600' :
+                                    className={`w-full sm:w-auto text-xs font-bold h-9 rounded-xl shadow-sm text-zinc-50 dark:text-zinc-900 border-0 ${
+                                        activeModalAnn.type === 'info' ? 'bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-50 dark:hover:bg-zinc-200' :
                                         activeModalAnn.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600' :
                                         activeModalAnn.type === 'error' ? 'bg-rose-500 hover:bg-rose-600' :
                                         'bg-emerald-500 hover:bg-emerald-600'
@@ -1410,9 +1411,12 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                 </Button>
                             </div>
                         </motion.div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </AnimatePresence>
+
+            <div className="w-full space-y-8 animate-in fade-in duration-700 pb-16">
 
             {/* --- HERO HEADER --- */}
             <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-card p-6 md:p-8">
@@ -1776,18 +1780,18 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             {stats.totalOpenTickets > 0 && (
                                 <div 
                                     onClick={() => onNavigate('helpdesk')}
-                                    className="w-full md:w-auto pr-6 bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-blue-500/15 transition-all"
+                                    className="w-full md:w-auto pr-6 bg-zinc-500/10 border border-slate-200 dark:border-zinc-800 p-3 rounded-xl flex items-center justify-between group cursor-pointer hover:bg-zinc-500/15 dark:hover:bg-zinc-800/50 transition-all"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                                        <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center">
                                             <MessageSquare size={16} />
                                         </div>
                                         <div className="mr-8">
-                                            <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 leading-none mb-1">Tiket Masuk!</h4>
-                                            <p className="text-[11px] font-medium text-blue-600/80 dark:text-blue-400/80">{stats.totalOpenTickets} tiket baru butuh balasan.</p>
+                                            <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-none mb-1">Tiket Masuk!</h4>
+                                            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">{stats.totalOpenTickets} tiket baru butuh balasan.</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={16} className="text-blue-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight size={16} className="text-zinc-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                 </div>
                             )}
                         </div>
@@ -1829,9 +1833,9 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                                     <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Liability</p>
                                     <p className="text-base font-bold text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalLiability)}</p>
                                 </div>
-                                <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg text-center">
+                                <div className="p-3 bg-zinc-500/5 border border-slate-200 dark:border-zinc-800 rounded-lg text-center">
                                     <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Volume</p>
-                                    <p className="text-base font-bold text-blue-600 dark:text-blue-400 tracking-tight">{formatCurrency(stats.purchaseSummary.totalDisbursed + stats.purchaseSummary.totalLiability)}</p>
+                                    <p className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{formatCurrency(stats.purchaseSummary.totalDisbursed + stats.purchaseSummary.totalLiability)}</p>
                                 </div>
                                 <div className="p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-lg text-center">
                                     <p className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Records</p>
@@ -1969,12 +1973,12 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
                             <div className="w-full bg-card/80 backdrop-blur-md border border-border/50 rounded-lg p-3 flex flex-col flex-none relative z-10 shadow-sm">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-[9px] font-bold uppercase text-foreground/70">{t('serviceHealth')}</span>
-                                    <span className="text-[9px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-md">
+                                    <span className="text-[9px] font-black text-zinc-900 bg-zinc-500/10 dark:text-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
                                         {Number(stats.supportRating) >= 4 ? t('excellent') : t('good')}
                                     </span>
                                 </div>
                                 <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-blue-400 to-primary rounded-full transition-all duration-1000" style={{ width: `${Math.min((Number(stats.supportRating) / 5) * 100, 100)}%` }} />
+                                    <div className="h-full bg-gradient-to-r from-zinc-400 to-zinc-900 dark:from-zinc-600 dark:to-zinc-100 rounded-full transition-all duration-1000" style={{ width: `${Math.min((Number(stats.supportRating) / 5) * 100, 100)}%` }} />
                                 </div>
                             </div>
                         </Card>
@@ -2273,6 +2277,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             )}
             
         </div>
+    </>
     );
 };
 

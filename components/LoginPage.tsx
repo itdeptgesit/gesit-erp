@@ -139,7 +139,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     };
 
     return (
-        <div className="h-screen w-full bg-white dark:bg-zinc-950 flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300 overflow-hidden">
+        <div className="h-screen w-full bg-background text-foreground flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300 overflow-hidden">
             <style>{`
                 @keyframes pulse-slow {
                     0%, 100% { opacity: 0.35; transform: scale(1.05); }
@@ -297,7 +297,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
 
                 {/* Right Login Side */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-slate-50 dark:bg-zinc-950/50 relative overflow-hidden transition-all duration-500">
+                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-background/50 relative overflow-hidden transition-all duration-500">
                     {/* Animated Background Orbs */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
                         <motion.div

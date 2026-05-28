@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Cpu, Server, PhoneCall, Video, Radio, Database, HardDrive, Hash, Layers, Save, Cable, MapPin, ListOrdered, Shield, Link2 } from 'lucide-react';
 import { NetworkSwitch, SwitchPort, PortStatus, DeviceType, DeviceStatus } from '../types';
 import { supabase } from '../lib/supabaseClient';
@@ -187,8 +188,8 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
     const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-slate-400 shadow-none";
     const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
-    return (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
             <div className="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden shadow-2xl w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 flex flex-col border border-slate-200 dark:border-zinc-800 my-8">
                 {/* Header */}
                 <div className="flex justify-between items-center px-9 py-7 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
@@ -217,7 +218,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                                     onClick={() => setCategory(cat.id as any)}
                                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md transition-all ${category === cat.id ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-sm border border-slate-200/30 dark:border-zinc-700/30 font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 disabled:opacity-30'}`}
                                 >
-                                    <cat.icon size={14} className={category === cat.id ? 'text-blue-500' : 'text-slate-400'} />
+                                    <cat.icon size={14} className={category === cat.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-slate-400'} />
                                     <span className="text-[10px] font-black uppercase tracking-widest">{cat.label}</span>
                                 </button>
                             ))}
@@ -225,7 +226,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
 
                         <section className="space-y-4">
                             <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
-                                <Shield size={14} className="text-blue-500" />
+                                <Shield size={14} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Hardware Identity</h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -263,7 +264,7 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
 
                         <section className="space-y-4">
                             <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2">
-                                <Layers size={14} className="text-blue-500" />
+                                <Layers size={14} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Interface Configuration</h3>
                             </div>
 
@@ -354,14 +355,15 @@ export const SwitchFormModal: React.FC<SwitchFormModalProps> = ({ isOpen, onClos
                         <Button type="button" variant="outline" onClick={onClose} className="rounded-md font-bold text-[10px] uppercase tracking-widest">
                             Cancel
                         </Button>
-                        <Button type="submit" className="rounded-md font-bold text-[10px] uppercase tracking-widest px-6 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white">
+                        <Button type="submit" className="rounded-md font-bold text-[10px] uppercase tracking-widest px-6 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 shadow">
                             <Save size={14} className="mr-2" />
                             {initialData ? 'Save Changes' : 'Save'}
                         </Button>
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

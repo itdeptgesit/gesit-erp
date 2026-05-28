@@ -108,7 +108,7 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
         }
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-zinc-300 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all";
     const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
     const dynamicFields = getDynamicFields(formData.category || '');
@@ -162,7 +162,7 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
                         {/* DYNAMIC METADATA FIELDS SECTION */}
                         {dynamicFields.length > 0 && (
                             <div className="p-4 bg-slate-50/50 dark:bg-zinc-800/30 rounded-xl border border-slate-100 dark:border-zinc-800/50 space-y-4">
-                                <p className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mb-2 px-1">Specific Metadata Specifications</p>
+                                <p className="text-[9px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] mb-2 px-1">Specific Metadata Specifications</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {dynamicFields.map(field => (
                                         <div key={field.key}>
@@ -243,7 +243,7 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
                         <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 text-xs font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                            className="px-8 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 shadow text-xs font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
                         >
                             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             {initialData ? 'Update Secret' : 'Store Secret'}

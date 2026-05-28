@@ -21,7 +21,8 @@ interface AssetHandoverManagerProps {
 }
 
 export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ currentUser }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isId = language === 'id';
 
   // 1. Core States
   const [assets, setAssets] = useState<ITAsset[]>([]);
@@ -78,7 +79,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const calculateNextSequence = (handoversList: any[]) => {
     const currentYear = new Date().getFullYear();
     let maxSeq = 0;
-    
+
     handoversList.forEach(h => {
       if (h.doc_no) {
         const parts = h.doc_no.split('/');
@@ -218,7 +219,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     const year = dateObj.getFullYear();
     const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const romanMonth = romanMonths[dateObj.getMonth()];
-    
+
     let companyPrefix = 'GI';
     if (selectedAsset?.assetId) {
       const parts = selectedAsset.assetId.split('-');
@@ -232,7 +233,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         companyPrefix = recipientCompany.substring(0, 3).toUpperCase();
       }
     }
-    
+
     const paddedSeq = String(docSequence).padStart(3, '0');
     return `ATF-${companyPrefix}/${paddedSeq}/${romanMonth}/${year}`;
   }, [selectedAsset, recipientCompany, handoverDate, docSequence]);
@@ -241,7 +242,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const handleAssetSelect = (asset: ITAsset) => {
     setSelectedAsset(asset);
     setIsAssetDropdownOpen(false);
-    
+
     // Auto-fill recipient details if asset has assigned user
     if (asset.user) setRecipientName(asset.user);
     if (asset.company) setRecipientCompany(asset.company);
@@ -249,7 +250,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     setRecipientPosition(asset.specs?.processor ? 'User Custodian' : 'User');
     setRecipientDivision('');
     setRecipientLocation(asset.location || 'Head Office - The City Tower');
-    
+
     // Auto-generate elegant default note
     setNote(`New member ${asset.company || 'Gesit Company'} - ${asset.user || 'User'}`);
 
@@ -529,10 +530,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     try {
       setIsGenerating(true);
       await exportAssetTransferForm(relatedAsset, info);
-      showNotification('Berhasil mencetak ulang PDF!', 'success');
+      showNotification(isId ? 'Berhasil mencetak ulang PDF!' : 'PDF successfully reprinted!', 'success');
     } catch (err) {
       console.error('Error printing again:', err);
-      showNotification('Gagal mencetak ulang PDF.', 'error');
+      showNotification(isId ? 'Gagal mencetak ulang PDF.' : 'Failed to reprint PDF.', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -544,7 +545,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     if (relatedAsset) {
       setSelectedAsset(relatedAsset);
     }
-    
+
     // Swap: Originator is now the previous Recipient (User)
     setOriginatorName(handover.recipient_name || '');
     setOriginatorCompany(handover.recipient_company || '');
@@ -565,20 +566,23 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     setIncludeBag(handover.include_bag !== false);
     setBagSerial(handover.bag_serial || '');
     setBagRemarks(handover.bag_remarks || 'Black');
-    
+
     setIncludeCharger(handover.include_charger !== false);
     setChargerSerial(handover.charger_serial || '');
     setChargerRemarks(handover.charger_remarks || 'Black');
-    
+
     setIncludeMouse(handover.include_mouse !== false);
     setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
     setMouseSerial(handover.mouse_serial || '');
     setMouseRemarks(handover.mouse_remarks || 'Black');
 
     setCustomEquipments(handover.custom_equipments || []);
-    
+
     // Elegant return note
-    setNote(`PENGEMBALIAN ASET: Pengembalian aset dari ${handover.recipient_name} kepada IT`);
+    setNote(isId
+      ? `PENGEMBALIAN ASET: Pengembalian aset dari ${handover.recipient_name} kepada IT`
+      : `ASSET RETURN: Asset returned from ${handover.recipient_name} to IT`
+    );
     setAssetRemark(handover.asset_remark || '');
 
     // Generate an elegant return document sequence
@@ -589,7 +593,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
       }
     }
 
-    showNotification('Formulir pengembalian aset berhasil disiapkan di atas!', 'success');
+    showNotification(
+      isId ? 'Formulir pengembalian aset berhasil disiapkan di atas!' : 'Asset return form prepared successfully above!',
+      'success'
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -605,9 +612,9 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
       if (error) {
         console.error('Error deleting handover:', error);
-        showNotification('Gagal menghapus riwayat serah terima.', 'error');
+        showNotification(isId ? 'Gagal menghapus riwayat serah terima.' : 'Failed to delete handover history.', 'error');
       } else {
-        showNotification('Riwayat serah terima berhasil dihapus.', 'success');
+        showNotification(isId ? 'Riwayat serah terima berhasil dihapus.' : 'Handover history deleted successfully.', 'success');
         await fetchHandovers();
       }
     } catch (err) {
@@ -629,25 +636,24 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
       {/* Notification Toast */}
       {notification && (
-        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 px-5 py-4.5 rounded-2xl shadow-xl border animate-in fade-in slide-in-from-bottom-5 duration-300 ${
-          notification.type === 'success'
+        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 px-5 py-4.5 rounded-2xl shadow-xl border animate-in fade-in slide-in-from-bottom-5 duration-300 ${notification.type === 'success'
             ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
             : 'bg-rose-500/10 dark:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-400'
-        }`}>
+          }`}>
           <div className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
           <span className="text-sm font-semibold">{notification.text}</span>
         </div>
       )}
 
       <form onSubmit={handleCetakBAST} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* LEFT COLUMN: Asset Selector & Accessories */}
         <div className="lg:col-span-4 space-y-6">
-          
+
           {/* Asset Selector Section */}
           <div className="bg-card border border-border/50 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
-              <Cpu size={16} className="text-blue-500" />
+            <h3 className="text-sm font-bold text-foreground dark:text-zinc-100 flex items-center gap-2">
+              <Cpu size={16} className="text-primary" />
               SELECT ASSET
             </h3>
 
@@ -657,14 +663,14 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               <button
                 type="button"
                 onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-background border border-border/80 hover:border-border rounded-xl text-left text-sm font-medium transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-background dark:bg-zinc-800 border border-border/80 dark:border-zinc-700 hover:border-border dark:hover:border-zinc-500 rounded-xl text-left text-sm font-medium transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:text-zinc-100"
               >
                 {selectedAsset ? (
                   <span className="truncate text-foreground font-semibold">
                     {selectedAsset.assetId} - {selectedAsset.item}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground font-normal">Choose device from inventory...</span>
+                  <span className="text-muted-foreground dark:text-zinc-500 font-normal">Choose device from inventory...</span>
                 )}
                 <ChevronsUpDown size={15} className="text-muted-foreground" />
               </button>
@@ -695,9 +701,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                           key={asset.id}
                           type="button"
                           onClick={() => handleAssetSelect(asset)}
-                          className={`w-full text-left px-4 py-2.5 hover:bg-muted/60 border-b border-border/30 last:border-0 flex items-center justify-between text-xs transition-all ${
-                            selectedAsset?.id === asset.id ? 'bg-primary/5 text-primary' : 'text-foreground'
-                          }`}
+                          className={`w-full text-left px-4 py-2.5 hover:bg-muted/60 border-b border-border/30 last:border-0 flex items-center justify-between text-xs transition-all ${selectedAsset?.id === asset.id ? 'bg-primary/5 text-primary' : 'text-foreground'
+                            }`}
                         >
                           <div className="space-y-0.5 max-w-[80%]">
                             <p className="font-bold truncate">{asset.item}</p>
@@ -705,7 +710,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                               ID: <span className="font-bold text-foreground/80">{asset.assetId}</span> | S/N: {asset.serialNumber || '-'}
                             </p>
                             {asset.user && (
-                              <p className="text-[9px] text-blue-500 font-semibold uppercase tracking-wider">
+                              <p className="text-[9px] text-primary font-semibold uppercase tracking-wider">
                                 Assigned to: {asset.user}
                               </p>
                             )}
@@ -723,7 +728,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             {selectedAsset && (
               <div className="mt-4 p-4 bg-muted/30 border border-border/40 rounded-2xl space-y-3 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                  <div className="p-2 bg-primary/10 text-primary rounded-xl">
                     <Cpu size={15} />
                   </div>
                   <div>
@@ -761,7 +766,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
           {/* Accessories Block */}
           <div className="bg-card border border-border/50 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground dark:text-zinc-100 flex items-center gap-2">
               <Plus size={16} className="text-emerald-500" />
               SUPPORTING ACCESSORIES
             </h3>
@@ -777,8 +782,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                     className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                   />
                   <div className="text-xs">
-                    <p className="font-bold">Tas Laptop</p>
-                    <p className="text-[10px] text-muted-foreground font-medium">Standard laptop bag</p>
+                    <p className="font-bold text-foreground dark:text-zinc-100">Tas Laptop</p>
+                    <p className="text-[10px] text-muted-foreground dark:text-zinc-500 font-medium">Standard laptop bag</p>
                   </div>
                 </label>
                 {includeBag && (
@@ -815,8 +820,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                     className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                   />
                   <div className="text-xs">
-                    <p className="font-bold">Charger Laptop</p>
-                    <p className="text-[10px] text-muted-foreground font-medium">Standard power adapter</p>
+                    <p className="font-bold text-foreground dark:text-zinc-100">Charger Laptop</p>
+                    <p className="text-[10px] text-muted-foreground dark:text-zinc-500 font-medium">Standard power adapter</p>
                   </div>
                 </label>
                 {includeCharger && (
@@ -853,8 +858,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                     className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                   />
                   <div className="text-xs">
-                    <p className="font-bold">Mouse Wireless</p>
-                    <p className="text-[10px] text-muted-foreground font-medium">Specify mouse model, S/N & remarks</p>
+                    <p className="font-bold text-foreground dark:text-zinc-100">Mouse Wireless</p>
+                    <p className="text-[10px] text-muted-foreground dark:text-zinc-500 font-medium">Specify mouse model, S/N & remarks</p>
                   </div>
                 </label>
                 {includeMouse && (
@@ -957,7 +962,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         {/* RIGHT COLUMN: Handover Form & Info */}
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-card border border-border/50 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
-            
+
             {/* Header Document Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -979,7 +984,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                       if (!isManualDocNo) setCustomDocNo(generatedDocNo);
                       setIsManualDocNo(!isManualDocNo);
                     }}
-                    className="text-[9.5px] font-bold text-blue-500 hover:underline uppercase"
+                    className="text-[9.5px] font-bold text-primary hover:underline uppercase"
                   >
                     {isManualDocNo ? 'Auto-Generate' : 'Manual Edit'}
                   </button>
@@ -999,7 +1004,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                       placeholder="Seq"
                       className="w-20 rounded-xl h-10 text-center font-bold text-sm"
                     />
-                    <div className="flex-1 flex items-center px-3.5 bg-muted/40 border border-border/60 rounded-xl font-bold text-[12.5px] text-foreground/80 select-none overflow-hidden truncate">
+                    <div className="flex-1 flex items-center px-3.5 bg-muted/40 dark:bg-zinc-800/80 border border-border/60 rounded-xl font-bold text-[12.5px] text-foreground/80 dark:text-zinc-200 select-none overflow-hidden truncate">
                       {generatedDocNo}
                     </div>
                   </div>
@@ -1012,7 +1017,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             {/* DATA ORIGINATOR */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-2">
-                <ShieldCheck size={14} className="text-blue-500" />
+                <ShieldCheck size={14} className="text-primary" />
                 1. Data Originator (IT Manager / Staff)
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1030,7 +1035,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   <select
                     value={originatorCompany}
                     onChange={(e) => setOriginatorCompany(e.target.value)}
-                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background dark:bg-zinc-800 text-foreground dark:text-zinc-100 transition-all"
                   >
                     <option value="">- Select Company -</option>
                     {masterCompanies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1050,7 +1055,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   <select
                     value={originatorDept}
                     onChange={(e) => setOriginatorDept(e.target.value)}
-                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background dark:bg-zinc-800 text-foreground dark:text-zinc-100 transition-all"
                   >
                     <option value="">- Select Department -</option>
                     {masterDepartments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -1082,7 +1087,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   <select
                     value={recipientCompany}
                     onChange={(e) => setRecipientCompany(e.target.value)}
-                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background dark:bg-zinc-800 text-foreground dark:text-zinc-100 transition-all"
                   >
                     <option value="">- Select Company -</option>
                     {masterCompanies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1111,7 +1116,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   <select
                     value={recipientDept}
                     onChange={(e) => setRecipientDept(e.target.value)}
-                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background text-foreground transition-all"
+                    className="w-full border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring h-10 bg-background dark:bg-zinc-800 text-foreground dark:text-zinc-100 transition-all"
                   >
                     <option value="">- Select Department -</option>
                     {masterDepartments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -1141,7 +1146,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                 <Input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. New member Gesit Intrade - Hilalludin"
+                  placeholder="e.g. New member The Gesit Companies - Bendry"
                   className="rounded-xl h-10 text-xs"
                 />
               </div>
@@ -1152,7 +1157,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               <Button
                 type="submit"
                 disabled={isGenerating || !selectedAsset || !recipientName}
-                className="rounded-2xl h-12 px-8 font-black uppercase tracking-wider text-xs shadow-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-all flex items-center gap-2"
+                className="rounded-2xl h-12 px-8 font-black uppercase tracking-wider text-xs shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 {isGenerating ? (
                   <>
@@ -1178,8 +1183,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div className="flex items-center justify-between w-full sm:w-auto">
             <h3 className="text-sm font-bold text-foreground/80 flex items-center gap-2">
-              <FileText size={16} className="text-blue-500" />
-              DAFTAR SERAH TERIMA ASET (HANDOVER HISTORY)
+              <FileText size={16} className="text-primary" />
+              {isId ? "DAFTAR SERAH TERIMA ASET (RIWAYAT)" : "ASSET HANDOVER REGISTRY (HISTORY)"}
             </h3>
             <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full sm:hidden animate-pulse">
               {filteredHandovers.length} BAST
@@ -1191,10 +1196,10 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
               <Input
                 type="text"
-                placeholder="Cari BAST (No Dokumen, Asset ID, Custodian...)"
+                placeholder={isId ? "Cari BAST (No Dokumen, Asset ID, Penerima...)" : "Search BAST (Doc No, Asset ID, Recipient...)"}
                 value={handoverSearchTerm}
                 onChange={(e) => setHandoverSearchTerm(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-full border-border/40 focus-visible:ring-blue-500/20"
+                className="pl-9 h-9 text-xs rounded-full border-border/40 focus-visible:ring-primary/20"
               />
             </div>
             <span className="text-[10px] hidden sm:inline-block font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest bg-muted/40 px-3 py-1 rounded-full shrink-0">
@@ -1207,20 +1212,22 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           <Table>
             <TableHeader className="bg-muted/20">
               <TableRow>
-                <TableHead className="font-bold text-xs">No. Dokumen</TableHead>
+                <TableHead className="font-bold text-xs">{isId ? "No. Dokumen" : "Doc. Number"}</TableHead>
                 <TableHead className="font-bold text-xs">Asset ID</TableHead>
-                <TableHead className="font-bold text-xs">Device Name</TableHead>
-                <TableHead className="font-bold text-xs">Custodian (Penerima)</TableHead>
+                <TableHead className="font-bold text-xs">{isId ? "Nama Perangkat" : "Device Name"}</TableHead>
+                <TableHead className="font-bold text-xs">{isId ? "Custodian (Penerima)" : "Custodian (Recipient)"}</TableHead>
                 <TableHead className="font-bold text-xs">Company / Dept</TableHead>
-                <TableHead className="font-bold text-xs">Handover Date</TableHead>
-                <TableHead className="font-bold text-xs text-center">Action</TableHead>
+                <TableHead className="font-bold text-xs">{isId ? "Tanggal Penyerahan" : "Handover Date"}</TableHead>
+                <TableHead className="font-bold text-xs text-center">{isId ? "Aksi" : "Action"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredHandovers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                    {handoverSearchTerm ? 'Tidak ditemukan riwayat serah terima BAST yang cocok.' : 'Belum ada aset yang pernah dicetak BAST nya di sini.'}
+                    {handoverSearchTerm
+                      ? (isId ? 'Tidak ditemukan riwayat serah terima BAST yang cocok.' : 'No matching BAST handover history found.')
+                      : (isId ? 'Belum ada aset yang pernah dicetak BAST nya di sini.' : 'No assets have had a BAST printed here yet.')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1229,15 +1236,15 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   const deviceName = handover.it_assets?.item_name || 'Deleted Asset';
                   return (
                     <TableRow key={handover.id} className="hover:bg-muted/10">
-                      <TableCell className="font-mono text-xs font-semibold text-slate-500">{handover.doc_no}</TableCell>
-                      <TableCell className="font-bold text-xs text-blue-600 dark:text-blue-400">{deviceCode}</TableCell>
-                      <TableCell className="font-semibold text-xs">{deviceName}</TableCell>
+                      <TableCell className="font-mono text-xs font-semibold text-slate-500 dark:text-zinc-400">{handover.doc_no}</TableCell>
+                      <TableCell className="font-bold text-xs text-primary">{deviceCode}</TableCell>
+                      <TableCell className="font-semibold text-xs text-foreground/90">{deviceName}</TableCell>
                       <TableCell className="font-bold text-xs text-foreground/90">{handover.recipient_name}</TableCell>
                       <TableCell className="text-xs">
-                        <div className="font-semibold">{handover.recipient_company}</div>
+                        <div className="font-semibold text-foreground/80">{handover.recipient_company}</div>
                         <div className="text-[10px] text-muted-foreground">{handover.recipient_dept || '-'}</div>
                       </TableCell>
-                      <TableCell className="text-xs font-medium font-mono text-slate-500">{handover.handover_date}</TableCell>
+                      <TableCell className="text-xs font-medium font-mono text-slate-500 dark:text-zinc-400">{handover.handover_date}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           {/* Cetak Ulang Button */}
@@ -1246,8 +1253,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                             variant="ghost"
                             size="icon"
                             onClick={() => handleInstantCetakUlang(handover)}
-                            className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
-                            title="Cetak Ulang PDF"
+                            className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full"
+                            title={isId ? "Cetak Ulang PDF" : "Reprint PDF"}
                           >
                             <FileText size={14} />
                           </Button>
@@ -1269,7 +1276,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                               setRecipientDivision(handover.recipient_division || '');
                               setRecipientDept(handover.recipient_dept || '');
                               setRecipientLocation(handover.recipient_location || 'Head Office - The City Tower');
-                              
+
                               setOriginatorName(handover.originator_name || '');
                               setOriginatorCompany(handover.originator_company || '');
                               setOriginatorPosition(handover.originator_position || '');
@@ -1334,7 +1341,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           </Table>
         </div>
       </div>
-      
+
       <WarningConfirmModal
         isOpen={warningModalOpen}
         onClose={() => setWarningModalOpen(false)}

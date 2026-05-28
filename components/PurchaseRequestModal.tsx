@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, ShoppingBag, ShieldCheck, Info } from 'lucide-react';
 import { PurchasePlan, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
@@ -63,8 +64,8 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
     const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:border-blue-500 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-200 transition-all font-medium placeholder:text-slate-400 shadow-none";
     const labelClass = "block text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2";
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg w-full max-w-2xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-slate-200 dark:border-zinc-800">
                 <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800">
                     <div className="flex items-center gap-4">
@@ -167,7 +168,8 @@ export const PurchaseRequestModal: React.FC<PurchaseRequestModalProps> = ({ isOp
                     </Button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

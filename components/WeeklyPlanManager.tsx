@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Calendar, Plus, ChevronLeft, ChevronRight, RefreshCcw,
     Loader2, Pencil, Trash2, CalendarRange, LayoutList, X,
@@ -1000,8 +1001,8 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                     )}
 
                     {/* ── TASK DETAIL POPOVER ── */}
-                    {selectedTask && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setSelectedTask(null)}>
+                    {selectedTask && typeof window !== 'undefined' && createPortal(
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setSelectedTask(null)}>
                             <div
                                 ref={popoverRef}
                                 onClick={(e) => e.stopPropagation()}
@@ -1121,12 +1122,13 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* ── GCAL EVENT DETAIL POPOVER ── */}
-                    {selectedGcalEvent && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedGcalEvent(null)}>
+                    {selectedGcalEvent && typeof window !== 'undefined' && createPortal(
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedGcalEvent(null)}>
                             <div
                                 ref={popoverRef}
                                 onClick={(e) => e.stopPropagation()}
@@ -1233,7 +1235,8 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* ── DAY OVERVIEW MODAL ── */}
@@ -1249,8 +1252,8 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                             const startB = b.type === 'supabase' ? (b.data.startDate || b.data.dueDate || '') : gcalStartDate(b.data);
                             return startA.localeCompare(startB);
                         });
-                        return (
-                            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setSelectedDayEvents(null)}>
+                        return typeof window !== 'undefined' && createPortal(
+                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setSelectedDayEvents(null)}>
                                 <div
                                     onClick={(e) => e.stopPropagation()}
                                     className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-[460px] max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
@@ -1381,11 +1384,6 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                                                                 ))}
                                                             </div>
                                                         )}
-
-
-
-
-
                                                     </div>
                                                     <div className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 transition-colors self-center shrink-0">
                                                         <ChevronRight size={14} />
@@ -1395,7 +1393,8 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
                                         })}
                                     </div>
                                 </div>
-                            </div>
+                            </div>,
+                            document.body
                         );
                     })()}
                 </div>

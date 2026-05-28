@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Link, FileText, Folder, Type, Cloud } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
@@ -97,11 +98,11 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
         }
     };
 
-    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
+    const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-slate-100 transition-all font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600";
     const labelClass = "block text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest ml-1";
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh] border border-white/20 dark:border-zinc-800">
                 <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-zinc-800">
                     <div>
@@ -163,7 +164,7 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
                             <button
                                 type="button"
                                 onClick={() => setDrivePickerOpen(true)}
-                                className="text-[9px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 uppercase tracking-wider transition-all"
+                                className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100 hover:text-black dark:hover:text-white flex items-center gap-1 uppercase tracking-wider transition-all"
                             >
                                 <Cloud size={11} />
                                 Choose from Drive
@@ -184,7 +185,7 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
 
                 <div className="px-8 py-6 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 rounded-b-xl flex justify-end gap-3">
                     <button type="button" onClick={onClose} className="px-6 py-2.5 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-zinc-700">Cancel</button>
-                    <button type="submit" form="fileForm" disabled={isSubmitting} className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50">
+                    <button type="submit" form="fileForm" disabled={isSubmitting} className="px-8 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow active:scale-95 disabled:opacity-50">
                         {isSubmitting ? 'Processing...' : (initialData ? 'Update Document' : 'Commit to Library')}
                     </button>
                 </div>
@@ -196,7 +197,8 @@ export const FileFormModal: React.FC<FileFormModalProps> = ({ isOpen, onClose, o
                 onClose={() => setDrivePickerOpen(false)}
                 onSelectFiles={handleSelectDriveFile}
             />
-        </div>
+        </div>,
+        document.body
     );
 };
 

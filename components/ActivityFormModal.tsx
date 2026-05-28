@@ -149,7 +149,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                                     {initialData ? 'Edit Activity' : 'New Activity Entry'}
                                 </h2>
                                 <p className="text-[11px] font-medium text-slate-400 mt-1 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 animate-pulse" />
                                     Activity documentation & records
                                 </p>
                             </div>
@@ -161,11 +161,11 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                             <form id="activityForm" onSubmit={handleSubmit} className="space-y-6">
                                 {/* Activity Name */}
-                                <div className="p-5 rounded-xl bg-blue-50/20 dark:bg-blue-600/5 border border-blue-500/10 dark:border-blue-500/5">
+                                <div className="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-800">
                                     <label className={labelClass}>Activity Summary</label>
                                     <input
                                         type="text"
-                                        className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-base focus:ring-blue-100 dark:focus:ring-blue-900/10`}
+                                        className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-base focus:ring-primary/10`}
                                         value={formData.activityName || ''}
                                         onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
                                         required
@@ -219,13 +219,13 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                                                             <button
                                                                 type="button"
                                                                 onClick={handleManualEntry}
-                                                                className="w-full text-left p-4 bg-blue-50/50 dark:bg-blue-900/30 hover:bg-blue-100/50 dark:hover:bg-blue-900/50 flex items-center gap-4 transition-all rounded-xl mt-1"
+                                                                className="w-full text-left p-4 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 flex items-center gap-4 transition-all rounded-xl mt-1"
                                                             >
-                                                                <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                                                <div className="w-9 h-9 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center shadow shadow-zinc-900/10">
                                                                     <Plus size={16} strokeWidth={3} />
                                                                 </div>
                                                                 <div>
-                                                                    <p className="text-sm font-bold text-blue-600 dark:text-blue-400 leading-none">Add "{userSearch}"</p>
+                                                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-none">Add "{userSearch}"</p>
                                                                     <p className="text-[10px] font-medium text-slate-400 mt-1">Manual entry</p>
                                                                 </div>
                                                             </button>
@@ -280,13 +280,13 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                                         <div className="relative">
                                             <input
                                                 type="date"
-                                                className={`${inputClass} cursor-pointer border-blue-100 dark:border-blue-900/30`}
+                                                className={`${inputClass} cursor-pointer`}
                                                 onClick={(e) => e.currentTarget.showPicker()}
                                                 value={formData.status === 'Completed' ? completedAt : updatedAt}
                                                 onChange={(e) => formData.status === 'Completed' ? setCompletedAt(e.target.value) : setUpdatedAt(e.target.value)}
                                                 required
                                             />
-                                            <Clock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500/50 pointer-events-none" />
+                                            <Clock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400/50 pointer-events-none" />
                                         </div>
                                     </div>
                                 </div>
@@ -421,7 +421,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
                                 type="submit"
                                 form="activityForm"
                                 disabled={isSubmitting}
-                                className="px-8 py-2.5 bg-blue-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-blue-700 dark:hover:bg-blue-500 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                                className="px-8 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all flex items-center gap-2 shadow active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} strokeWidth={2.5} />}
                                 {initialData ? 'Update Record' : 'Save Activity'}

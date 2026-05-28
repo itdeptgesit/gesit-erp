@@ -123,11 +123,11 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                     </button>
 
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                        <div className="w-14 h-14 rounded-xl bg-zinc-900 dark:bg-zinc-50 flex items-center justify-center text-zinc-50 dark:text-zinc-900 shadow shadow-zinc-950/10">
                             <Server size={28} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] block mb-1">Network Identity</span>
+                            <span className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.3em] block mb-1">Network Identity</span>
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">{device.name}</h2>
                         </div>
                     </div>
@@ -153,7 +153,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-blue-600 shadow-sm border border-slate-200 dark:border-zinc-700' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-sm border border-slate-200 dark:border-zinc-700 font-extrabold' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                         >
                             <tab.icon size={14} />
                             {tab.label}
@@ -165,7 +165,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-48 space-y-4">
-                            <Activity className="animate-spin text-blue-500" size={32} />
+                            <Activity className="animate-spin text-zinc-900 dark:text-zinc-100" size={32} />
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resending digital pulses...</p>
                         </div>
                     ) : (
@@ -191,9 +191,9 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
 
                                     {/* Core Stats */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/20">
-                                            <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-1">Logic IP</span>
-                                            <span className="text-sm font-mono font-bold text-slate-900 dark:text-blue-400 tracking-tight">{device.ip || 'DHCP'}</span>
+                                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-850">
+                                            <span className="text-[8px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] block mb-1">Logic IP</span>
+                                            <span className="text-sm font-mono font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{device.ip || 'DHCP'}</span>
                                         </div>
                                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Uptime</span>
@@ -234,13 +234,13 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                     {/* Audit Trail Section */}
                                     <div className="p-6 rounded-xl bg-slate-900 border border-white/5 space-y-4">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <History size={14} className="text-blue-500" />
+                                            <History size={14} className="text-zinc-400" />
                                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Digital Audit Trail</span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="space-y-1">
                                                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Provisioned By</span>
-                                                <p className="text-[10px] font-bold text-blue-400 leading-tight">{device.createdBy || 'System'}</p>
+                                                <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 leading-tight">{device.createdBy || 'System'}</p>
                                                 <p className="text-[8px] text-slate-500 font-mono">{device.createdAt ? new Date(device.createdAt).toLocaleString() : 'Historical'}</p>
                                             </div>
                                             <div className="space-y-1">
@@ -260,12 +260,12 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                             </div>
                                             <Cloud size={18} className="text-emerald-500 group-hover:text-white" />
                                         </button>
-                                        <button className="flex items-center justify-between p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 group hover:bg-blue-500 hover:text-white transition-all">
+                                        <button className="flex items-center justify-between p-4 rounded-xl border border-zinc-500/20 bg-zinc-500/5 group hover:bg-zinc-900 dark:hover:bg-zinc-50 hover:text-white dark:hover:text-zinc-950 transition-all">
                                             <div className="text-left">
-                                                <span className="text-[8px] font-black uppercase text-blue-500 group-hover:text-white/80 block">Specs</span>
+                                                <span className="text-[8px] font-black uppercase text-zinc-500 group-hover:text-white/85 dark:group-hover:text-zinc-950/85 block">Specs</span>
                                                 <span className="text-[10px] font-black uppercase tracking-widest">Datasheet</span>
                                             </div>
-                                            <ExternalLink size={18} className="text-blue-500 group-hover:text-white" />
+                                            <ExternalLink size={18} className="text-zinc-500 group-hover:text-white dark:group-hover:text-zinc-950" />
                                         </button>
                                     </div>
                                 </div>
@@ -293,7 +293,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8 mb-4">Lifecycle & Warranty</h3>
                                     <div className="bg-slate-900 rounded-xl p-6 border border-white/5 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-8 opacity-10">
-                                            <Shield size={64} className="text-blue-500" />
+                                            <Shield size={64} className="text-zinc-500" />
                                         </div>
                                         <div className="relative z-10 space-y-4">
                                             <div className="flex justify-between items-center text-[10px] font-black uppercase">
@@ -308,7 +308,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                             </div>
                                             <div className="pt-4 mt-2 border-t border-white/5 flex gap-2">
                                                 <button className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Claim Support</button>
-                                                <button className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-500/20">Renew Logic</button>
+                                                <button className="flex-1 py-3 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 text-zinc-50 dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow">Renew Logic</button>
                                             </div>
                                         </div>
                                     </div>
@@ -319,7 +319,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Operational Logs</h3>
-                                        <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline">+ New Entry</button>
+                                        <button className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-widest hover:underline">+ New Entry</button>
                                     </div>
 
                                     {maintenanceLogs.length === 0 ? (
@@ -331,7 +331,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                         <div className="space-y-4">
                                             {maintenanceLogs.map((log, i) => (
                                                 <div key={i} className="relative pl-6 pb-6 border-l border-slate-100 dark:border-zinc-800 last:pb-0">
-                                                    <div className="absolute top-0 -left-1.5 w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] border-2 border-white dark:border-[#0b1120]" />
+                                                    <div className="absolute top-0 -left-1.5 w-3 h-3 rounded-full bg-zinc-900 dark:bg-zinc-100 shadow-[0_0_10px_rgba(0,0,0,0.1)] border-2 border-white dark:border-[#0b1120]" />
                                                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-100 dark:border-zinc-800">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <h4 className="text-[11px] font-black text-slate-900 dark:text-white uppercase leading-none">{log.activityName}</h4>
@@ -340,7 +340,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
                                                         <p className="text-[10px] text-slate-500 dark:text-zinc-400 leading-relaxed line-clamp-2 italic mb-3">"{log.remarks || 'No technical notes recorded.'}"</p>
                                                         <div className="flex items-center gap-2">
                                                             <UserAvatar name={log.itPersonnel} size="xs" />
-                                                            <span className="text-[10px] font-black uppercase text-blue-500">{log.itPersonnel}</span>
+                                                            <span className="text-[10px] font-black uppercase text-zinc-900 dark:text-zinc-100">{log.itPersonnel}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -355,7 +355,7 @@ export const DeviceProfileDrawer: React.FC<DeviceProfileDrawerProps> = ({ device
 
                 {/* Footer / External Search */}
                 <div className="p-8 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
-                    <button className="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-500/10 hover:shadow-blue-500/30">
+                    <button className="w-full flex items-center justify-center gap-3 py-4 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow">
                         <Activity size={16} />
                         Live Network Probe
                     </button>

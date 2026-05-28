@@ -227,10 +227,10 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                 <div className="flex-1 overflow-y-auto p-9 custom-scrollbar">
                     <form id="assetForm" onSubmit={handleSubmit} className="space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="md:col-span-2 p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-lg border border-blue-500/10 dark:border-blue-500/10">
+                            <div className="md:col-span-2 p-7 bg-zinc-50 dark:bg-zinc-800/30 rounded-lg border border-slate-200 dark:border-zinc-800">
                                 <label className={labelClass}>Asset Identification Name</label>
                                 <Input
-                                    className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-blue-500/10 !border-blue-500/20`}
+                                    className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-xl !font-black !py-3.5 focus:ring-primary/10 !border-primary/20`}
                                     value={formData.item || ''}
                                     onChange={(e) => setFormData({ ...formData, item: e.target.value })}
                                     required
@@ -242,7 +242,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                                 <div>
                                     <label className={labelClass}>System Registry ID</label>
                                     <div className="relative">
-                                        <Input className={`${inputClass} font-mono font-bold text-blue-600 dark:text-blue-400 bg-slate-50 dark:bg-zinc-950/50 pl-10`} value={formData.assetId || ''} readOnly />
+                                        <Input className={`${inputClass} font-mono font-bold text-zinc-900 dark:text-zinc-100 bg-slate-50 dark:bg-zinc-950/50 pl-10`} value={formData.assetId || ''} readOnly />
                                         <Hash size={14} className="absolute left-4 top-4 text-slate-400" />
                                     </div>
                                 </div>
@@ -308,8 +308,8 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                             </div>
                         </div>
 
-                        <div className="p-7 bg-blue-600/5 dark:bg-blue-600/5 rounded-lg border border-blue-500/10 dark:border-blue-500/10">
-                            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                        <div className="p-7 bg-zinc-50 dark:bg-zinc-800/30 rounded-lg border border-slate-200 dark:border-zinc-800">
+                            <p className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                                 <Shield size={14} strokeWidth={3} /> PROCUREMENT & LIFECYCLE
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -360,7 +360,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
 
                         {needsSpecs && (
                             <div className="p-7 bg-slate-50 dark:bg-zinc-800/30 rounded-lg border border-slate-200 dark:border-zinc-800 shadow-inner">
-                                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                <p className="text-[10px] font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                                     <Zap size={14} strokeWidth={3} /> Hardware Architecture Specs
                                 </p>
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -373,7 +373,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                         )}
 
                         <div className="p-7 bg-slate-50 dark:bg-zinc-800/30 rounded-lg border border-slate-200 dark:border-zinc-800">
-                            <p className={labelClass + " flex items-center gap-3 !text-blue-600 dark:!text-blue-400"}>
+                            <p className={labelClass + " flex items-center gap-3 !text-zinc-900 dark:!text-zinc-100"}>
                                 <CameraIcon size={14} strokeWidth={3} /> Asset Photo / Illustration
                             </p>
                             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
@@ -449,7 +449,7 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
                     <button type="button" onClick={onClose} className="px-8 py-3 text-[12px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">
                         {t('cancel')}
                     </button>
-                    <button type="submit" form="assetForm" className="px-12 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all shadow-xl">
+                    <button type="submit" form="assetForm" className="px-12 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all shadow-xl">
                         {t('save')}
                     </button>
                 </div>

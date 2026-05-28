@@ -203,7 +203,7 @@ export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser 
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center py-20"><RefreshCcw className="animate-spin text-zinc-900 dark:text-zinc-100 mx-auto" size={24} /></TableCell></TableRow>
                             ) : filteredDepts.length === 0 ? (
                                 <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-500 font-medium">No department records found.</TableCell></TableRow>
                             ) : filteredDepts.map((dept) => (
@@ -211,7 +211,7 @@ export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser 
                                     <TableCell className="text-slate-500 font-mono text-xs text-center">{dept.id}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/50">
+                                            <div className="w-9 h-9 rounded-md bg-zinc-50 dark:bg-zinc-800/30 text-zinc-900 dark:text-zinc-100 flex items-center justify-center border border-slate-200 dark:border-zinc-800 shadow-sm">
                                                 <Users size={16} />
                                             </div>
                                             <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">{dept.name}</span>
@@ -221,7 +221,7 @@ export const MasterDepartment: React.FC<MasterDepartmentProps> = ({ currentUser 
                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">{dept.head || '-'}</span>
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant="outline" className="cursor-pointer px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase border-blue-100 dark:border-blue-800 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white transition-all" onClick={() => handleManageMembers(dept)}>
+                                        <Badge variant="outline" className="cursor-pointer px-3 py-1 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 text-[10px] font-bold uppercase border-zinc-900 dark:border-zinc-50 hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 hover:text-zinc-50 dark:hover:text-zinc-900 transition-all" onClick={() => handleManageMembers(dept)}>
                                             {dept.memberCount} Members
                                         </Badge>
                                     </TableCell>

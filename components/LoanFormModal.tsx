@@ -230,7 +230,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({
                             </div>
 
                             <div className="space-y-9">
-                                <div className="bg-blue-600/5 dark:bg-blue-900/10 p-7 rounded-lg border border-blue-500/10 dark:border-blue-900/30 space-y-6">
+                                <div className="bg-zinc-50 dark:bg-zinc-800/30 p-7 rounded-lg border border-slate-200 dark:border-zinc-800 space-y-6">
                                     <label className={labelClass}>Handover Schedule</label>
                                     <div className="space-y-5">
                                         <div>
@@ -302,7 +302,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({
                         type="submit"
                         form="loanForm"
                         disabled={isLoading}
-                        className="px-10 py-3 bg-slate-950 dark:bg-blue-600 text-white rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-blue-500 transition-all flex items-center gap-3 shadow-xl disabled:opacity-50"
+                        className="px-10 py-3 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-md text-[12px] font-black uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all flex items-center gap-3 shadow-xl disabled:opacity-50"
                     >
                         {isLoading ? (
                             <RefreshCcw className="animate-spin" size={16} strokeWidth={3} />
