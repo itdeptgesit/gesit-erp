@@ -41,6 +41,11 @@ import {
   Key,
   User,
   LayoutGrid,
+  Receipt,
+  ArrowLeftRight,
+  FileCheck,
+  Fingerprint,
+  History,
 } from "lucide-react"
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -63,6 +68,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Megaphone: Megaphone,
   Key: Key,
   User: User,
+  Receipt: Receipt,
+  ArrowLeftRight: ArrowLeftRight,
+  FileCheck: FileCheck,
+  Fingerprint: Fingerprint,
+  History: History,
 }
 
 interface AppSidebarProps {

@@ -72,10 +72,10 @@ const InstructionPanel = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     const floor27Steps = [
-        { label: t('pickupIncoming'), code: '#70 + Ext', icon: PhoneIncoming, color: 'text-blue-500' },
-        { label: t('callTo26thFloor'), code: '## + Ext lt.26', icon: PhoneOutgoing, color: 'text-violet-500' },
-        { label: t('outgoingCall'), code: '* + PIN + 9 + NUMBER', icon: Globe, color: 'text-indigo-400' },
-        { label: t('internationalCall'), code: '* + PIN + 9 + 01017 + CC + No.', icon: PhoneOutgoing, color: 'text-sky-500' },
+        { label: t('pickupIncoming'), code: '#70 + Ext', icon: PhoneIncoming, color: 'text-[#B8860B] dark:text-[#D4AF37]' },
+        { label: t('callTo26thFloor'), code: '## + Ext lt.26', icon: PhoneOutgoing, color: 'text-[#D4AF37]' },
+        { label: t('outgoingCall'), code: '* + PIN + 9 + NUMBER', icon: Globe, color: 'text-[#B8860B] dark:text-[#D4AF37]' },
+        { label: t('internationalCall'), code: '* + PIN + 9 + 01017 + CC + No.', icon: PhoneOutgoing, color: 'text-[#D4AF37]' },
     ];
     const floor26Steps = [
         { label: t('pickupIncoming'), code: '#41 + Ext', icon: PhoneIncoming, color: 'text-emerald-500' },
@@ -126,9 +126,9 @@ const InstructionPanel = () => {
                         <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
 
                             {/* 27th Floor Card */}
-                            <div className="relative rounded-xl overflow-hidden border border-blue-100 dark:border-blue-500/10">
+                            <div className="relative rounded-xl overflow-hidden border border-[#D4AF37]/30 dark:border-[#D4AF37]/10">
                                 {/* Gradient Header */}
-                                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-3 flex items-center gap-3">
+                                <div className="bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#B8860B] px-5 py-3 flex items-center gap-3">
                                     <div className="p-1.5 bg-white/20 rounded-lg">
                                         <Building2 size={14} className="text-white" />
                                     </div>
@@ -147,11 +147,11 @@ const InstructionPanel = () => {
                                                     <div className={`p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm shrink-0`}>
                                                         <Icon size={11} className={step.color} />
                                                     </div>
-                                                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate group-hover/row:text-blue-600 dark:group-hover/row:text-blue-400 transition-colors">
+                                                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate group-hover/row:text-[#B8860B] dark:group-hover/row:text-[#D4AF37] transition-colors">
                                                         {step.label}
                                                     </span>
                                                 </div>
-                                                <kbd className="shrink-0 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-mono font-black text-slate-700 dark:text-slate-200 shadow-sm whitespace-nowrap group-hover/row:border-blue-300 dark:group-hover/row:border-blue-500/40 group-hover/row:text-blue-700 dark:group-hover/row:text-blue-300 transition-all">
+                                                <kbd className="shrink-0 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-mono font-black text-slate-700 dark:text-slate-200 shadow-sm whitespace-nowrap group-hover/row:border-[#D4AF37]/40 dark:group-hover/row:border-[#D4AF37]/20 group-hover/row:text-[#B8860B] dark:group-hover/row:text-[#D4AF37] transition-all">
                                                     {step.code}
                                                 </kbd>
                                             </div>
@@ -870,8 +870,14 @@ export const ExtensionDirectory = ({
                         <Button variant="outline" size="sm" onClick={handleExportPDF} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
                             <FileText className="mr-2 h-4 w-4 text-red-500" /> {t('exportPdf')}
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
-                            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-500" /> {t('exportData')}
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={toggleTheme}
+                            className="rounded-xl bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200 h-9 w-9 shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+                            title="Toggle Theme"
+                        >
+                            {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-amber-500" /> : <Moon className="h-4.5 w-4.5 text-indigo-500" />}
                         </Button>
                     </div>
                 </div>
@@ -883,9 +889,6 @@ export const ExtensionDirectory = ({
                     <PageHeader title="Phone Directory" description="The City Tower & Infrastructure Registry">
                         <Button variant="outline" onClick={handleExportPDF} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
                             <FileText className="mr-2 h-4 w-4 text-red-500" /> {t('exportPdf')}
-                        </Button>
-                        <Button variant="outline" onClick={handleExportExcel} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
-                            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-500" /> {t('exportData')}
                         </Button>
                         {canEdit && (
                             <Button
