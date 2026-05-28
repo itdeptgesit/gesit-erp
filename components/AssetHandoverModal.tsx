@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { exportAssetTransferForm, AssetTransferInfo } from '../lib/handoverPdfExport';
 import { supabase } from '../lib/supabaseClient';
+import { WarningConfirmModal } from './WarningConfirmModal';
 
 interface AssetHandoverModalProps {
   isOpen: boolean;
@@ -52,6 +53,8 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
   const [mouseSerial, setMouseSerial] = useState('');
   const [mouseRemarks, setMouseRemarks] = useState('Black');
   const [assetRemark, setAssetRemark] = useState('');
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [existingDocNo, setExistingDocNo] = useState('');
 
   useEffect(() => {
     if (isOpen && asset) {
@@ -131,27 +134,8 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     setCustomEquipments(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!recipientName) return;
-
-    // Check if handover already exists for this asset in it_asset_handovers
-    const { data: existingHandovers, error: checkError } = await supabase
-      .from('it_asset_handovers')
-      .select('id, doc_no')
-      .eq('asset_id', asset.id)
-      .limit(1);
-
-    if (checkError) {
-      console.warn('Error checking existing handovers:', checkError);
-    }
-
-    if (existingHandovers && existingHandovers.length > 0) {
-      const proceed = window.confirm(`Perhatian: Asset Handover (BAST) untuk aset ini sudah pernah dibuat sebelumnya dengan No. Dokumen: ${existingHandovers[0].doc_no}.\n\nApakah Anda yakin ingin tetap membuat dan mencetak BAST baru?`);
-      if (!proceed) {
-        return;
-      }
-    }
+  const proceedSubmit = async () => {
+    if (!asset) return;
 
     // Assemble supporting equipments
     const supportingEquipment: Array<{ name: string; serialNo: string; remarks: string }> = [];
@@ -200,71 +184,97 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     };
 
     // Automatically update the asset custodian details in Supabase database!
-    if (asset) {
-      let finalRemarks = (assetRemark || '').trim();
-      if (!finalRemarks.includes('[BAST]')) {
-        finalRemarks = (finalRemarks + ' [BAST]').trim();
-      }
+    let finalRemarks = (assetRemark || '').trim();
+    if (!finalRemarks.includes('[BAST]')) {
+      finalRemarks = (finalRemarks + ' [BAST]').trim();
+    }
 
-      const { error: updateError } = await supabase
-        .from('it_assets')
-        .update({
-          user_assigned: recipientName,
-          company: recipientCompany,
-          department: recipientDept,
-          location: recipientLocation,
-          remarks: finalRemarks
-        })
-        .eq('id', asset.id);
+    const { error: updateError } = await supabase
+      .from('it_assets')
+      .update({
+        user_assigned: recipientName,
+        company: recipientCompany,
+        department: recipientDept,
+        location: recipientLocation,
+        remarks: finalRemarks
+      })
+      .eq('id', asset.id);
 
-      if (updateError) {
-        console.error('Error updating asset assignment:', updateError);
-        alert(`Gagal memperbarui data status kepemilikan aset di database: ${updateError.message}`);
-      }
+    if (updateError) {
+      console.error('Error updating asset assignment:', updateError);
+      alert(`Gagal memperbarui data status kepemilikan aset di database: ${updateError.message}`);
+    }
 
-      // Save formal BAST handover history record to it_asset_handovers table!
-      const handoverPayload = {
-        asset_id: asset.id,
-        doc_no: docNo,
-        handover_date: handoverDate,
-        recipient_name: recipientName,
-        recipient_company: recipientCompany,
-        recipient_position: recipientPosition,
-        recipient_division: recipientDivision,
-        recipient_dept: recipientDept,
-        recipient_location: recipientLocation,
-        originator_name: originatorName,
-        originator_company: originatorCompany,
-        originator_position: originatorPosition,
-        originator_dept: originatorDept,
-        include_bag: includeBag,
-        bag_serial: includeBag ? bagSerial : null,
-        bag_remarks: includeBag ? bagRemarks : null,
-        include_charger: includeCharger,
-        charger_serial: includeCharger ? chargerSerial : null,
-        charger_remarks: includeCharger ? chargerRemarks : null,
-        include_mouse: includeMouse,
-        mouse_model: includeMouse ? mouseModel : null,
-        mouse_serial: includeMouse ? mouseSerial : null,
-        mouse_remarks: includeMouse ? mouseRemarks : null,
-        custom_equipments: customEquipments.filter(e => e.name.trim()),
-        note: note,
-        asset_remark: assetRemark,
-        created_by: currentUser?.fullName || 'System'
-      };
+    // Save formal BAST handover history record to it_asset_handovers table!
+    const handoverPayload = {
+      asset_id: asset.id,
+      doc_no: docNo,
+      handover_date: handoverDate,
+      recipient_name: recipientName,
+      recipient_company: recipientCompany,
+      recipient_position: recipientPosition,
+      recipient_division: recipientDivision,
+      recipient_dept: recipientDept,
+      recipient_location: recipientLocation,
+      originator_name: originatorName,
+      originator_company: originatorCompany,
+      originator_position: originatorPosition,
+      originator_dept: originatorDept,
+      include_bag: includeBag,
+      bag_serial: includeBag ? bagSerial : null,
+      bag_remarks: includeBag ? bagRemarks : null,
+      include_charger: includeCharger,
+      charger_serial: includeCharger ? chargerSerial : null,
+      charger_remarks: includeCharger ? chargerRemarks : null,
+      include_mouse: includeMouse,
+      mouse_model: includeMouse ? mouseModel : null,
+      mouse_serial: includeMouse ? mouseSerial : null,
+      mouse_remarks: includeMouse ? mouseRemarks : null,
+      custom_equipments: customEquipments.filter(e => e.name.trim()),
+      note: note,
+      asset_remark: assetRemark,
+      created_by: currentUser?.fullName || 'System'
+    };
 
-      const { error: insertError } = await supabase
-        .from('it_asset_handovers')
-        .insert([handoverPayload]);
+    const { error: insertError } = await supabase
+      .from('it_asset_handovers')
+      .insert([handoverPayload]);
 
-      if (insertError) {
-        console.error('Error saving BAST:', insertError);
-        alert(`Gagal menyimpan riwayat BAST ke database: ${insertError.message}\n\nSilakan pastikan Anda telah menjalankan script SQL migrasi it_asset_handovers di editor SQL Supabase Anda.`);
-      }
+    if (insertError) {
+      console.error('Error saving BAST:', insertError);
+      alert(`Gagal menyimpan riwayat BAST ke database: ${insertError.message}\n\nSilakan pastikan Anda telah menjalankan script SQL migrasi it_asset_handovers di editor SQL Supabase Anda.`);
     }
 
     await exportAssetTransferForm(asset, info);
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recipientName) return;
+
+    try {
+      // Check if handover already exists for this asset in it_asset_handovers
+      const { data: existingHandovers, error: checkError } = await supabase
+        .from('it_asset_handovers')
+        .select('id, doc_no')
+        .eq('asset_id', asset.id)
+        .limit(1);
+
+      if (checkError) {
+        console.warn('Error checking existing handovers:', checkError);
+      }
+
+      if (existingHandovers && existingHandovers.length > 0) {
+        setExistingDocNo(existingHandovers[0].doc_no);
+        setWarningModalOpen(true);
+        return;
+      }
+
+      await proceedSubmit();
+    } catch (err) {
+      console.error('Error in BAST check:', err);
+    }
   };
 
   return (
@@ -759,6 +769,23 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
         </form>
 
       </div>
+      <WarningConfirmModal
+        isOpen={warningModalOpen}
+        onClose={() => setWarningModalOpen(false)}
+        onConfirm={() => {
+          setWarningModalOpen(false);
+          proceedSubmit();
+        }}
+        title="Asset Handover Sudah Pernah Dibuat"
+        message={
+          <div className="space-y-2">
+            <p>Perhatian: BAST Handover untuk aset ini sudah pernah dibuat sebelumnya dengan <strong>No. Dokumen: {existingDocNo}</strong>.</p>
+            <p>Apakah Anda yakin ingin tetap membuat dan mencetak BAST baru?</p>
+          </div>
+        }
+        confirmText="Buat BAST Baru"
+        cancelText="Batal"
+      />
     </div>
   );
 };
