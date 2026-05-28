@@ -99,6 +99,15 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const [customEquipments, setCustomEquipments] = useState<Array<{ name: string; serialNo: string; remarks: string }>>([]);
   const [note, setNote] = useState('');
 
+  // 6. Optional Accessory details & Asset Remarks states
+  const [bagSerial, setBagSerial] = useState('');
+  const [bagRemarks, setBagRemarks] = useState('Black');
+  const [chargerSerial, setChargerSerial] = useState('');
+  const [chargerRemarks, setChargerRemarks] = useState('Black');
+  const [mouseSerial, setMouseSerial] = useState('');
+  const [mouseRemarks, setMouseRemarks] = useState('Black');
+  const [assetRemark, setAssetRemark] = useState('');
+
   // Fetch all assets from Supabase
   const fetchAssets = async () => {
     setIsLoadingAssets(true);
@@ -212,6 +221,9 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     
     // Auto-generate elegant default note
     setNote(`New member ${asset.company || 'Gesit Company'} - ${asset.user || 'User'}`);
+
+    // Auto-prefill Asset Remark
+    setAssetRemark(asset.remarks ? asset.remarks.replace('[BAST]', '').trim() : '');
   };
 
   // Keep manual or auto document number aligned
@@ -255,22 +267,22 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
       if (includeBag) {
         supportingEquipment.push({
           name: 'Tas Laptop',
-          serialNo: '-',
-          remarks: 'Black'
+          serialNo: bagSerial.trim() || '-',
+          remarks: bagRemarks.trim() || 'Black'
         });
       }
       if (includeCharger) {
         supportingEquipment.push({
           name: 'Charger Laptop',
-          serialNo: '-',
-          remarks: 'Black'
+          serialNo: chargerSerial.trim() || '-',
+          remarks: chargerRemarks.trim() || 'Black'
         });
       }
       if (includeMouse) {
         supportingEquipment.push({
           name: mouseModel || 'Mouse Wireless Logitech B170',
-          serialNo: '-',
-          remarks: 'Black'
+          serialNo: mouseSerial.trim() || '-',
+          remarks: mouseRemarks.trim() || 'Black'
         });
       }
       customEquipments.forEach(eq => {
@@ -298,9 +310,9 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
       // Automatically update the asset custodian details in Supabase database!
       if (selectedAsset) {
-        let newRemarks = (note || '').trim();
-        if (!newRemarks.includes('[BAST]')) {
-          newRemarks = (newRemarks + ' [BAST]').trim();
+        let finalRemarks = (assetRemark || '').trim();
+        if (!finalRemarks.includes('[BAST]')) {
+          finalRemarks = (finalRemarks + ' [BAST]').trim();
         }
 
         const { error: updateError } = await supabase
@@ -310,7 +322,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             company: recipientCompany,
             department: recipientDept,
             location: recipientLocation,
-            remarks: newRemarks
+            remarks: finalRemarks
           })
           .eq('id', selectedAsset.id);
 
@@ -337,11 +349,18 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
           originator_position: originatorPosition,
           originator_dept: originatorDept,
           include_bag: includeBag,
+          bag_serial: includeBag ? bagSerial : null,
+          bag_remarks: includeBag ? bagRemarks : null,
           include_charger: includeCharger,
+          charger_serial: includeCharger ? chargerSerial : null,
+          charger_remarks: includeCharger ? chargerRemarks : null,
           include_mouse: includeMouse,
           mouse_model: includeMouse ? mouseModel : null,
+          mouse_serial: includeMouse ? mouseSerial : null,
+          mouse_remarks: includeMouse ? mouseRemarks : null,
           custom_equipments: customEquipments.filter(e => e.name.trim()),
           note: note,
+          asset_remark: assetRemark,
           created_by: currentUser?.fullName || 'System'
         };
 
@@ -503,9 +522,16 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground block text-[9.5px]">Specifications</span>
-                    <span className="font-medium text-foreground/80">
+                    <span className="font-medium text-foreground/80 block mb-2">
                       {selectedAsset.specs?.processor || ''} {selectedAsset.specs?.ram ? `| ${selectedAsset.specs.ram}` : ''} {selectedAsset.specs?.storage ? `| ${selectedAsset.specs.storage}` : ''}
                     </span>
+                    <Label className="text-[9.5px] text-muted-foreground block mb-1">Asset Remark (Catatan Aset - Bisa Diisi Manual)</Label>
+                    <Input
+                      value={assetRemark}
+                      onChange={(e) => setAssetRemark(e.target.value)}
+                      placeholder="e.g. Kondisi fisik mulus, segel utuh, baterai normal"
+                      className="h-8 text-xs rounded-xl"
+                    />
                   </div>
                 </div>
               </div>
@@ -519,35 +545,86 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               SUPPORTING ACCESSORIES
             </h3>
 
-            <div className="space-y-2">
-              <label className="flex items-center gap-2.5 p-3 hover:bg-muted/20 border border-border/40 rounded-xl cursor-pointer transition-all select-none">
-                <input
-                  type="checkbox"
-                  checked={includeBag}
-                  onChange={(e) => setIncludeBag(e.target.checked)}
-                  className="rounded border-border text-primary focus:ring-primary h-4 w-4"
-                />
-                <div className="text-xs">
-                  <p className="font-bold">Tas Laptop</p>
-                  <p className="text-[10px] text-muted-foreground font-medium">Standard laptop bag</p>
-                </div>
-              </label>
+            <div className="space-y-3">
+              {/* Tas Laptop Accessory */}
+              <div className="p-3 hover:bg-muted/20 border border-border/40 rounded-xl transition-all space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={includeBag}
+                    onChange={(e) => setIncludeBag(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <p className="font-bold">Tas Laptop</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Standard laptop bag</p>
+                  </div>
+                </label>
+                {includeBag && (
+                  <div className="grid grid-cols-2 gap-2 mt-1 pt-1 border-t border-border/20">
+                    <div>
+                      <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Serial Number (S/N)</Label>
+                      <Input
+                        value={bagSerial}
+                        onChange={(e) => setBagSerial(e.target.value)}
+                        placeholder="-"
+                        className="h-7 text-[11px] rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Remarks (Catatan)</Label>
+                      <Input
+                        value={bagRemarks}
+                        onChange={(e) => setBagRemarks(e.target.value)}
+                        placeholder="Black"
+                        className="h-7 text-[11px] rounded-lg"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <label className="flex items-center gap-2.5 p-3 hover:bg-muted/20 border border-border/40 rounded-xl cursor-pointer transition-all select-none">
-                <input
-                  type="checkbox"
-                  checked={includeCharger}
-                  onChange={(e) => setIncludeCharger(e.target.checked)}
-                  className="rounded border-border text-primary focus:ring-primary h-4 w-4"
-                />
-                <div className="text-xs">
-                  <p className="font-bold">Charger Laptop</p>
-                  <p className="text-[10px] text-muted-foreground font-medium">Standard power adapter</p>
-                </div>
-              </label>
+              {/* Charger Laptop Accessory */}
+              <div className="p-3 hover:bg-muted/20 border border-border/40 rounded-xl transition-all space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={includeCharger}
+                    onChange={(e) => setIncludeCharger(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <p className="font-bold">Charger Laptop</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Standard power adapter</p>
+                  </div>
+                </label>
+                {includeCharger && (
+                  <div className="grid grid-cols-2 gap-2 mt-1 pt-1 border-t border-border/20">
+                    <div>
+                      <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Serial Number (S/N)</Label>
+                      <Input
+                        value={chargerSerial}
+                        onChange={(e) => setChargerSerial(e.target.value)}
+                        placeholder="-"
+                        className="h-7 text-[11px] rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Remarks (Catatan)</Label>
+                      <Input
+                        value={chargerRemarks}
+                        onChange={(e) => setChargerRemarks(e.target.value)}
+                        placeholder="Black"
+                        className="h-7 text-[11px] rounded-lg"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <div className="p-3 hover:bg-muted/20 border border-border/40 rounded-xl transition-all select-none space-y-2">
-                <label className="flex items-center gap-2.5 cursor-pointer">
+              {/* Mouse Wireless Accessory */}
+              <div className="p-3 hover:bg-muted/20 border border-border/40 rounded-xl transition-all space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={includeMouse}
@@ -556,16 +633,41 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   />
                   <div className="text-xs">
                     <p className="font-bold">Mouse Wireless</p>
-                    <p className="text-[10px] text-muted-foreground font-medium">Specify mouse model below</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Specify mouse model, S/N & remarks</p>
                   </div>
                 </label>
                 {includeMouse && (
-                  <Input
-                    value={mouseModel}
-                    onChange={(e) => setMouseModel(e.target.value)}
-                    placeholder="e.g. Mouse Wireless Logitech B170"
-                    className="h-8 text-xs font-semibold rounded-lg mt-1"
-                  />
+                  <div className="space-y-2 mt-1 pt-1 border-t border-border/20">
+                    <div>
+                      <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Mouse Model (Ketik Manual)</Label>
+                      <Input
+                        value={mouseModel}
+                        onChange={(e) => setMouseModel(e.target.value)}
+                        placeholder="e.g. Mouse Wireless Logitech B170"
+                        className="h-8 text-xs font-semibold rounded-lg"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Serial Number (S/N)</Label>
+                        <Input
+                          value={mouseSerial}
+                          onChange={(e) => setMouseSerial(e.target.value)}
+                          placeholder="-"
+                          className="h-7 text-[11px] rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[9px] mb-0.5 text-muted-foreground block font-bold">Remarks (Catatan)</Label>
+                        <Input
+                          value={mouseRemarks}
+                          onChange={(e) => setMouseRemarks(e.target.value)}
+                          placeholder="Black"
+                          className="h-7 text-[11px] rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -921,11 +1023,18 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                             setOriginatorDept(handover.originator_dept || '');
 
                             setIncludeBag(handover.include_bag !== false);
+                            setBagSerial(handover.bag_serial || '');
+                            setBagRemarks(handover.bag_remarks || 'Black');
                             setIncludeCharger(handover.include_charger !== false);
+                            setChargerSerial(handover.charger_serial || '');
+                            setChargerRemarks(handover.charger_remarks || 'Black');
                             setIncludeMouse(handover.include_mouse !== false);
                             setMouseModel(handover.mouse_model || 'Mouse Wireless Logitech B170');
+                            setMouseSerial(handover.mouse_serial || '');
+                            setMouseRemarks(handover.mouse_remarks || 'Black');
                             setCustomEquipments(handover.custom_equipments || []);
                             setNote(handover.note || '');
+                            setAssetRemark(handover.asset_remark || '');
 
                             // Scroll to form smoothly
                             window.scrollTo({ top: 0, behavior: 'smooth' });

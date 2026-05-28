@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, FileText, User, Building2, Phone, Calendar, Info, ShieldCheck, Briefcase, MapPin, Plus, Trash2 } from 'lucide-react';
+import { X, FileText, User, Building2, Phone, Calendar, Info, ShieldCheck, Briefcase, MapPin, Plus, Trash2, Cpu } from 'lucide-react';
 import { ITAsset, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,15 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
   const [customEquipments, setCustomEquipments] = useState<Array<{ name: string; serialNo: string; remarks: string }>>([]);
   const [note, setNote] = useState('');
 
+  // 5. Optional Accessory details & Asset Remarks states
+  const [bagSerial, setBagSerial] = useState('');
+  const [bagRemarks, setBagRemarks] = useState('Black');
+  const [chargerSerial, setChargerSerial] = useState('');
+  const [chargerRemarks, setChargerRemarks] = useState('Black');
+  const [mouseSerial, setMouseSerial] = useState('');
+  const [mouseRemarks, setMouseRemarks] = useState('Black');
+  const [assetRemark, setAssetRemark] = useState('');
+
   useEffect(() => {
     if (isOpen && asset) {
       setActiveTab('recipient');
@@ -79,14 +88,22 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       const cleanRemarks = asset.remarks ? asset.remarks.replace('[BAST]', '').trim() : '';
       if (cleanRemarks) {
         setNote(cleanRemarks);
+        setAssetRemark(cleanRemarks);
       } else {
         setNote(`New member ${asset.company || 'Dharma Alumas Sakti'} - ${asset.user || 'Kiki Meisara'}`);
+        setAssetRemark('');
       }
       
       setIncludeBag(true);
+      setBagSerial('');
+      setBagRemarks('Black');
       setIncludeCharger(true);
+      setChargerSerial('');
+      setChargerRemarks('Black');
       setIncludeMouse(true);
       setMouseModel('Mouse Wireless Logitech B170');
+      setMouseSerial('');
+      setMouseRemarks('Black');
       setCustomEquipments([]);
     }
   }, [isOpen, asset, currentUser]);
@@ -123,22 +140,22 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     if (includeBag) {
       supportingEquipment.push({
         name: 'Tas Laptop',
-        serialNo: '-',
-        remarks: 'Black'
+        serialNo: bagSerial.trim() || '-',
+        remarks: bagRemarks.trim() || 'Black'
       });
     }
     if (includeCharger) {
       supportingEquipment.push({
         name: 'Charger Laptop',
-        serialNo: '-',
-        remarks: 'Black'
+        serialNo: chargerSerial.trim() || '-',
+        remarks: chargerRemarks.trim() || 'Black'
       });
     }
     if (includeMouse) {
       supportingEquipment.push({
         name: mouseModel || 'Mouse Wireless Logitech B170',
-        serialNo: '-',
-        remarks: 'Black'
+        serialNo: mouseSerial.trim() || '-',
+        remarks: mouseRemarks.trim() || 'Black'
       });
     }
     customEquipments.forEach(eq => {
@@ -166,9 +183,9 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
 
     // Automatically update the asset custodian details in Supabase database!
     if (asset) {
-      let newRemarks = (note || '').trim();
-      if (!newRemarks.includes('[BAST]')) {
-        newRemarks = (newRemarks + ' [BAST]').trim();
+      let finalRemarks = (assetRemark || '').trim();
+      if (!finalRemarks.includes('[BAST]')) {
+        finalRemarks = (finalRemarks + ' [BAST]').trim();
       }
 
       const { error: updateError } = await supabase
@@ -178,7 +195,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
           company: recipientCompany,
           department: recipientDept,
           location: recipientLocation,
-          remarks: newRemarks
+          remarks: finalRemarks
         })
         .eq('id', asset.id);
 
@@ -202,11 +219,18 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
         originator_position: originatorPosition,
         originator_dept: originatorDept,
         include_bag: includeBag,
+        bag_serial: includeBag ? bagSerial : null,
+        bag_remarks: includeBag ? bagRemarks : null,
         include_charger: includeCharger,
+        charger_serial: includeCharger ? chargerSerial : null,
+        charger_remarks: includeCharger ? chargerRemarks : null,
         include_mouse: includeMouse,
         mouse_model: includeMouse ? mouseModel : null,
+        mouse_serial: includeMouse ? mouseSerial : null,
+        mouse_remarks: includeMouse ? mouseRemarks : null,
         custom_equipments: customEquipments.filter(e => e.name.trim()),
         note: note,
+        asset_remark: assetRemark,
         created_by: currentUser?.fullName || 'System'
       };
 
@@ -278,6 +302,23 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
             {/* Tab 1: Recipient (Penerima) */}
             {activeTab === 'recipient' && (
               <div className="space-y-4 animate-in fade-in duration-200">
+                {/* Device Info & Asset Remark */}
+                <div className="p-3.5 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-300">
+                    <Cpu size={14} className="text-blue-500" />
+                    <span>{asset.assetId} - {asset.item} ({asset.brand})</span>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block mb-1">Asset Remark (Catatan Aset - Bisa Diisi Manual)</label>
+                    <Input 
+                      value={assetRemark}
+                      onChange={e => setAssetRemark(e.target.value)}
+                      placeholder="e.g. Kondisi mulus, segel utuh, baterai normal"
+                      className="h-8 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 font-semibold text-xs"
+                    />
+                  </div>
+                </div>
+
                 <span className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">IDENTITAS PENERIMA (DATA RECIPIENT)</span>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -455,35 +496,86 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
               <div className="space-y-4 animate-in fade-in duration-200">
                 <span className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">ACCESSORIES & CUSTOM SUPPORTING EQUIPMENT</span>
                 
-                {/* Standard checkboxes */}
-                <div className="p-4 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-3">
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox"
-                      id="bag"
-                      checked={includeBag}
-                      onChange={e => setIncludeBag(e.target.checked)}
-                      className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <label htmlFor="bag" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none">
-                      Include Tas Laptop (S/N: -, Remarks: Black)
-                    </label>
+                {/* Standard checkboxes with S/N & Remarks */}
+                <div className="space-y-3">
+                  {/* Tas Laptop */}
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-2">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox"
+                        id="bag"
+                        checked={includeBag}
+                        onChange={e => setIncludeBag(e.target.checked)}
+                        className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      />
+                      <label htmlFor="bag" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
+                        Include Tas Laptop
+                      </label>
+                    </div>
+                    {includeBag && (
+                      <div className="grid grid-cols-2 gap-2 mt-1 pt-1 border-t border-slate-100 dark:border-zinc-800/60">
+                        <div>
+                          <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Serial Number (S/N)</label>
+                          <Input
+                            value={bagSerial}
+                            onChange={e => setBagSerial(e.target.value)}
+                            placeholder="-"
+                            className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Remarks (Catatan)</label>
+                          <Input
+                            value={bagRemarks}
+                            onChange={e => setBagRemarks(e.target.value)}
+                            placeholder="Black"
+                            className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox"
-                      id="charger"
-                      checked={includeCharger}
-                      onChange={e => setIncludeCharger(e.target.checked)}
-                      className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <label htmlFor="charger" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none">
-                      Include Charger Laptop (S/N: -, Remarks: Black)
-                    </label>
+                  {/* Charger Laptop */}
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-2">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox"
+                        id="charger"
+                        checked={includeCharger}
+                        onChange={e => setIncludeCharger(e.target.checked)}
+                        className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      />
+                      <label htmlFor="charger" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
+                        Include Charger Laptop
+                      </label>
+                    </div>
+                    {includeCharger && (
+                      <div className="grid grid-cols-2 gap-2 mt-1 pt-1 border-t border-slate-100 dark:border-zinc-800/60">
+                        <div>
+                          <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Serial Number (S/N)</label>
+                          <Input
+                            value={chargerSerial}
+                            onChange={e => setChargerSerial(e.target.value)}
+                            placeholder="-"
+                            className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Remarks (Catatan)</label>
+                          <Input
+                            value={chargerRemarks}
+                            onChange={e => setChargerRemarks(e.target.value)}
+                            placeholder="Black"
+                            className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-col gap-2.5 pt-1.5">
+                  {/* Mouse Wireless */}
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-2">
                     <div className="flex items-center gap-3">
                       <input 
                         type="checkbox"
@@ -497,12 +589,37 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                       </label>
                     </div>
                     {includeMouse && (
-                      <Input
-                        value={mouseModel}
-                        onChange={e => setMouseModel(e.target.value)}
-                        placeholder="e.g. Mouse Wireless Logitech B170"
-                        className="h-8 text-xs font-semibold bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
-                      />
+                      <div className="space-y-2 mt-1 pt-1 border-t border-slate-100 dark:border-zinc-800/60">
+                        <div>
+                          <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Mouse Model (Ketik Manual)</label>
+                          <Input
+                            value={mouseModel}
+                            onChange={e => setMouseModel(e.target.value)}
+                            placeholder="e.g. Mouse Wireless Logitech B170"
+                            className="h-8 text-xs font-semibold bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Serial Number (S/N)</label>
+                            <Input
+                              value={mouseSerial}
+                              onChange={e => setMouseSerial(e.target.value)}
+                              placeholder="-"
+                              className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] mb-0.5 text-slate-400 dark:text-zinc-500 block font-bold">Remarks (Catatan)</label>
+                            <Input
+                              value={mouseRemarks}
+                              onChange={e => setMouseRemarks(e.target.value)}
+                              placeholder="Black"
+                              className="h-7 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -17,11 +17,18 @@ CREATE TABLE IF NOT EXISTS public.it_asset_handovers (
     originator_position TEXT,
     originator_dept TEXT,
     include_bag BOOLEAN DEFAULT TRUE,
+    bag_serial TEXT,
+    bag_remarks TEXT DEFAULT 'Black',
     include_charger BOOLEAN DEFAULT TRUE,
+    charger_serial TEXT,
+    charger_remarks TEXT DEFAULT 'Black',
     include_mouse BOOLEAN DEFAULT TRUE,
     mouse_model TEXT DEFAULT 'Mouse Wireless Logitech B170',
+    mouse_serial TEXT,
+    mouse_remarks TEXT DEFAULT 'Black',
     custom_equipments JSONB DEFAULT '[]'::jsonb,
     note TEXT,
+    asset_remark TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     created_by TEXT
 );
