@@ -262,6 +262,25 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
 
     setIsGenerating(true);
     try {
+      // Check if handover already exists for this asset in it_asset_handovers
+      const { data: existingHandovers, error: checkError } = await supabase
+        .from('it_asset_handovers')
+        .select('id, doc_no')
+        .eq('asset_id', selectedAsset.id)
+        .limit(1);
+
+      if (checkError) {
+        console.warn('Error checking existing handovers:', checkError);
+      }
+
+      if (existingHandovers && existingHandovers.length > 0) {
+        const proceed = window.confirm(`Perhatian: Asset Handover (BAST) untuk aset ini sudah pernah dibuat sebelumnya dengan No. Dokumen: ${existingHandovers[0].doc_no}.\n\nApakah Anda yakin ingin tetap membuat dan mencetak BAST baru?`);
+        if (!proceed) {
+          setIsGenerating(false);
+          return;
+        }
+      }
+
       // Assemble supporting equipments
       const supportingEquipment: Array<{ name: string; serialNo: string; remarks: string }> = [];
       if (includeBag) {
