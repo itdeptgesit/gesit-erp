@@ -36,6 +36,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
   const [docNo, setDocNo] = useState('');
 
   // 4. Equipment States
+  const [includeBag, setIncludeBag] = useState(true);
   const [includeCharger, setIncludeCharger] = useState(true);
   const [includeMouse, setIncludeMouse] = useState(true);
   const [customEquipments, setCustomEquipments] = useState<Array<{ name: string; serialNo: string; remarks: string }>>([]);
@@ -75,6 +76,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       // Set Notes
       setNote(`New member ${asset.company || 'Dharma Alumas Sakti'} - ${asset.user || 'Kiki Meisara'}`);
       
+      setIncludeBag(true);
       setIncludeCharger(true);
       setIncludeMouse(true);
       setCustomEquipments([]);
@@ -110,9 +112,9 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
 
     // Assemble supporting equipments
     const supportingEquipment: Array<{ name: string; serialNo: string; remarks: string }> = [];
-    if (includeMouse) {
+    if (includeBag) {
       supportingEquipment.push({
-        name: 'Mouse Wireless Logitech B170',
+        name: 'Tas Laptop',
         serialNo: '-',
         remarks: 'Black'
       });
@@ -120,6 +122,13 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     if (includeCharger) {
       supportingEquipment.push({
         name: 'Charger Laptop',
+        serialNo: '-',
+        remarks: 'Black'
+      });
+    }
+    if (includeMouse) {
+      supportingEquipment.push({
+        name: 'Mouse Wireless Logitech B170',
         serialNo: '-',
         remarks: 'Black'
       });
@@ -385,6 +394,19 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                 
                 {/* Standard checkboxes */}
                 <div className="p-4 bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-3">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox"
+                      id="bag"
+                      checked={includeBag}
+                      onChange={e => setIncludeBag(e.target.checked)}
+                      className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                    />
+                    <label htmlFor="bag" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none">
+                      Include Tas Laptop (S/N: -, Remarks: Black)
+                    </label>
+                  </div>
+
                   <div className="flex items-center gap-3">
                     <input 
                       type="checkbox"

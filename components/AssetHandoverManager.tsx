@@ -54,6 +54,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
   const [isManualDocNo, setIsManualDocNo] = useState(false);
 
   // 5. Equipment States
+  const [includeBag, setIncludeBag] = useState(true);
   const [includeCharger, setIncludeCharger] = useState(true);
   const [includeMouse, setIncludeMouse] = useState(true);
   const [customEquipments, setCustomEquipments] = useState<Array<{ name: string; serialNo: string; remarks: string }>>([]);
@@ -211,9 +212,9 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     try {
       // Assemble supporting equipments
       const supportingEquipment: Array<{ name: string; serialNo: string; remarks: string }> = [];
-      if (includeMouse) {
+      if (includeBag) {
         supportingEquipment.push({
-          name: 'Mouse Wireless Logitech B170',
+          name: 'Tas Laptop',
           serialNo: '-',
           remarks: 'Black'
         });
@@ -221,6 +222,13 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
       if (includeCharger) {
         supportingEquipment.push({
           name: 'Charger Laptop',
+          serialNo: '-',
+          remarks: 'Black'
+        });
+      }
+      if (includeMouse) {
+        supportingEquipment.push({
+          name: 'Mouse Wireless Logitech B170',
           serialNo: '-',
           remarks: 'Black'
         });
@@ -412,6 +420,19 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
             </h3>
 
             <div className="space-y-2">
+              <label className="flex items-center gap-2.5 p-3 hover:bg-muted/20 border border-border/40 rounded-xl cursor-pointer transition-all select-none">
+                <input
+                  type="checkbox"
+                  checked={includeBag}
+                  onChange={(e) => setIncludeBag(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                />
+                <div className="text-xs">
+                  <p className="font-bold">Tas Laptop</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Standard laptop bag</p>
+                </div>
+              </label>
+
               <label className="flex items-center gap-2.5 p-3 hover:bg-muted/20 border border-border/40 rounded-xl cursor-pointer transition-all select-none">
                 <input
                   type="checkbox"
