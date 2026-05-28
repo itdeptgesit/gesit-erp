@@ -66,12 +66,36 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
         console.warn('it_asset_handovers table check:', error.message);
       } else if (data) {
         setHandovers(data);
+        calculateNextSequence(data);
       }
     } catch (err) {
       console.error('Error fetching handovers:', err);
     } finally {
       setIsLoadingHandovers(false);
     }
+  };
+
+  const calculateNextSequence = (handoversList: any[]) => {
+    const currentYear = new Date().getFullYear();
+    let maxSeq = 0;
+    
+    handoversList.forEach(h => {
+      if (h.doc_no) {
+        const parts = h.doc_no.split('/');
+        if (parts.length >= 4) {
+          const year = parseInt(parts[3], 10);
+          if (year === currentYear) {
+            const seqNum = parseInt(parts[1], 10);
+            if (!isNaN(seqNum) && seqNum > maxSeq) {
+              maxSeq = seqNum;
+            }
+          }
+        }
+      }
+    });
+
+    const nextSeq = maxSeq + 1;
+    setDocSequence(String(nextSeq).padStart(3, '0'));
   };
 
   // 1b. Master Data States
@@ -593,6 +617,8 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
       setDeleteHandover(null);
     }
   };
+
+  const isAdmin = currentUser?.role === 'Admin';
 
   return (
     <div className="space-y-6">
@@ -1286,16 +1312,18 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                           </Button>
 
                           {/* Hapus Button */}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteHandover(handover)}
-                            className="h-8 w-8 text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full"
-                            title="Hapus Riwayat BAST"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
+                          {isAdmin && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteHandover(handover)}
+                              className="h-8 w-8 text-rose-600 dark:text-rose-400 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full"
+                              title="Hapus Riwayat BAST"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
