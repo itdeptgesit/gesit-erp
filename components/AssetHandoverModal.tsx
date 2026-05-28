@@ -39,6 +39,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
   const [includeBag, setIncludeBag] = useState(true);
   const [includeCharger, setIncludeCharger] = useState(true);
   const [includeMouse, setIncludeMouse] = useState(true);
+  const [mouseModel, setMouseModel] = useState('Mouse Wireless Logitech B170');
   const [customEquipments, setCustomEquipments] = useState<Array<{ name: string; serialNo: string; remarks: string }>>([]);
   const [note, setNote] = useState('');
 
@@ -79,6 +80,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
       setIncludeBag(true);
       setIncludeCharger(true);
       setIncludeMouse(true);
+      setMouseModel('Mouse Wireless Logitech B170');
       setCustomEquipments([]);
     }
   }, [isOpen, asset, currentUser]);
@@ -128,7 +130,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
     }
     if (includeMouse) {
       supportingEquipment.push({
-        name: 'Mouse Wireless Logitech B170',
+        name: mouseModel || 'Mouse Wireless Logitech B170',
         serialNo: '-',
         remarks: 'Black'
       });
@@ -420,17 +422,27 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                     </label>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox"
-                      id="mouse"
-                      checked={includeMouse}
-                      onChange={e => setIncludeMouse(e.target.checked)}
-                      className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    />
-                    <label htmlFor="mouse" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none">
-                      Include Mouse Wireless Logitech B170 (S/N: -, Remarks: Black)
-                    </label>
+                  <div className="flex flex-col gap-2.5 pt-1.5">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox"
+                        id="mouse"
+                        checked={includeMouse}
+                        onChange={e => setIncludeMouse(e.target.checked)}
+                        className="rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      />
+                      <label htmlFor="mouse" className="text-xs font-bold text-slate-700 dark:text-zinc-300 select-none cursor-pointer">
+                        Include Mouse Wireless
+                      </label>
+                    </div>
+                    {includeMouse && (
+                      <Input
+                        value={mouseModel}
+                        onChange={e => setMouseModel(e.target.value)}
+                        placeholder="e.g. Mouse Wireless Logitech B170"
+                        className="h-8 text-xs font-semibold bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg"
+                      />
+                    )}
                   </div>
                 </div>
 
