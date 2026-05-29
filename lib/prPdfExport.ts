@@ -314,7 +314,9 @@ export async function exportPurchaseRequisitionPDF(req: PurchaseRequisition) {
     doc.text(lines, t2ColX[1] + 3, rowY + 6.2);
     doc.text(String(item.qty), t2ColX[2] + t2ColW[2] / 2, rowY + 6.2, { align: 'center' });
     doc.text(item.vendor || '-', t2ColX[3] + 3, rowY + 6.2);
-    doc.text(formatRp(item.price), t2ColX[4] + 3, rowY + 6.2);
+    if (item.price && item.price > 0) {
+      doc.text(formatRp(item.price), t2ColX[4] + 3, rowY + 6.2);
+    }
   }
 
   y += t2DataHeight + 10;

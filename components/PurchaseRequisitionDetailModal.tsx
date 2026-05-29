@@ -240,7 +240,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                             <td className="py-3 px-6 font-bold">{item.description}</td>
                                             <td className="py-3 px-6 text-center font-bold">{item.qty}</td>
                                             <td className="py-3 px-6 font-bold">{item.vendor}</td>
-                                            <td className="py-3 px-6 text-right font-mono font-bold">{formatIDR(item.price)}</td>
+                                            <td className="py-3 px-6 text-right font-mono font-bold">{item.price && item.price > 0 ? formatIDR(item.price) : '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
