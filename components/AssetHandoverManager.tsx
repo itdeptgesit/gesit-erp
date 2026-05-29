@@ -15,6 +15,7 @@ import { Label } from './ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { WarningConfirmModal } from './WarningConfirmModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
+import { Skeleton } from './ui/skeleton';
 
 interface AssetHandoverManagerProps {
   currentUser: UserAccount | null;
@@ -689,9 +690,13 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
                   </div>
                   <div className="overflow-y-auto flex-1 custom-scrollbar max-h-[260px]">
                     {isLoadingAssets ? (
-                      <div className="py-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                        <Loader2 size={13} className="animate-spin text-primary" />
-                        Loading assets...
+                      <div className="p-2 space-y-2">
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                          <div key={idx} className="flex flex-col space-y-1.5 p-2 border-b border-border/30 last:border-0">
+                            <Skeleton className="h-3.5 w-3/4 rounded-md" />
+                            <Skeleton className="h-2.5 w-1/2 rounded-md" />
+                          </div>
+                        ))}
                       </div>
                     ) : filteredAssets.length === 0 ? (
                       <div className="py-8 text-center text-xs text-muted-foreground">No matching assets found.</div>
@@ -1222,7 +1227,30 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredHandovers.length === 0 ? (
+              {isLoadingHandovers ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <TableRow key={idx} className="hover:bg-muted/10">
+                    <TableCell className="py-4"><Skeleton className="h-4 w-32 rounded-md" /></TableCell>
+                    <TableCell className="py-4"><Skeleton className="h-4 w-20 rounded-md" /></TableCell>
+                    <TableCell className="py-4"><Skeleton className="h-4 w-36 rounded-md" /></TableCell>
+                    <TableCell className="py-4"><Skeleton className="h-4 w-28 rounded-md" /></TableCell>
+                    <TableCell className="py-4">
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3.5 w-32 rounded-md" />
+                        <Skeleton className="h-2.5 w-16 rounded-md" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4"><Skeleton className="h-4 w-24 rounded-md" /></TableCell>
+                    <TableCell className="py-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : filteredHandovers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-wider">
                     {handoverSearchTerm
