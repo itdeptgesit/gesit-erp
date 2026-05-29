@@ -400,8 +400,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                                 className={inputClass}
                                                 placeholder="Harga Satuan"
                                                 value={item.price || ''}
-                                                onChange={e => handleRecItemChange(idx, 'price', parseInt(e.target.value, 10) || 0)}
-                                                required
+                                                onChange={e => handleRecItemChange(idx, 'price', e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0)}
                                             />
                                         </div>
                                         <div className="col-span-1 text-right text-xs font-mono font-bold text-slate-700 dark:text-zinc-300">
