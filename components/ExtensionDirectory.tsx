@@ -895,7 +895,7 @@ export const ExtensionDirectory = ({
                             <Button
                                 size="sm"
                                 onClick={() => openModal()}
-                                className="h-9 px-3 shrink-0 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm"
+                                className="h-9 px-3 shrink-0 font-bold rounded-xl shadow-sm"
                             >
                                 <Plus className="h-4 w-4 sm:mr-2" />
                                 <span className="hidden sm:inline">{t('addingExtension')}</span>

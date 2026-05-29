@@ -1162,7 +1162,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
               <Button
                 type="submit"
                 disabled={isGenerating || !selectedAsset || !recipientName}
-                className="rounded-2xl h-12 px-8 font-black uppercase tracking-wider text-xs shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 transition-all flex items-center gap-2"
+                className="rounded-xl h-12 px-8 font-black uppercase tracking-wider text-xs shadow-md bg-zinc-900 text-zinc-50 hover:bg-zinc-900/90 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 {isGenerating ? (
                   <>

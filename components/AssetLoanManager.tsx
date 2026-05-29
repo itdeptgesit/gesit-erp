@@ -1055,8 +1055,8 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                     <div className="p-2 bg-slate-50 dark:bg-zinc-800 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 transition-colors"><Download size={14} /></div>
                                     {t('printReceipt')}
                                 </button>
-                                <button onClick={() => exportHandoverBAST(selectedLoan)} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center gap-3 group transition-all font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-blue-500/20">
-                                    <div className="p-2 bg-blue-700 rounded-lg"><FileText size={14} className="text-white" /></div>
+                                <button onClick={() => exportHandoverBAST(selectedLoan)} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-zinc-900 hover:bg-zinc-900/90 dark:bg-zinc-50 dark:hover:bg-zinc-100 text-zinc-50 dark:text-zinc-900 rounded-xl flex items-center justify-center gap-3 group transition-all font-bold text-[11px] uppercase tracking-widest shadow-lg">
+                                    <div className="p-2 bg-zinc-800 dark:bg-zinc-200 text-zinc-50 dark:text-zinc-900 rounded-lg"><FileText size={14} /></div>
                                     Cetak BAST
                                 </button>
                                 <button onClick={() => setSelectedLoan(null)} className="flex-1 min-w-[140px] max-w-[200px] h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-950/20">

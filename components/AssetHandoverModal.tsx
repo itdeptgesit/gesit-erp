@@ -666,7 +666,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                       variant="outline"
                       size="sm"
                       onClick={handleAddEquipment}
-                      className="text-[9px] font-black uppercase tracking-wider h-8"
+                      className="text-[9px] font-black uppercase tracking-wider h-8 rounded-xl"
                     >
                       <Plus size={12} className="mr-1" /> Tambah Baris
                     </Button>
@@ -735,7 +735,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="font-bold uppercase text-[10px] tracking-widest h-11 px-5 border-zinc-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                className="font-bold uppercase text-[10px] tracking-widest h-11 px-5 border-zinc-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
               >
                 Batal
               </Button>
@@ -744,7 +744,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                 <Button
                   type="button"
                   onClick={() => setActiveTab('originator')}
-                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold uppercase text-[10px] tracking-widest h-11 px-6"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold uppercase text-[10px] tracking-widest h-11 px-6 rounded-xl"
                 >
                   Lanjut
                 </Button>
@@ -752,7 +752,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                 <Button
                   type="button"
                   onClick={() => setActiveTab('equipment')}
-                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold uppercase text-[10px] tracking-widest h-11 px-6"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold uppercase text-[10px] tracking-widest h-11 px-6 rounded-xl"
                 >
                   Lanjut
                 </Button>
@@ -760,7 +760,7 @@ export const AssetHandoverModal: React.FC<AssetHandoverModalProps> = ({ isOpen, 
                 <Button
                   type="submit"
                   disabled={!recipientName || !recipientCompany}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase text-[10px] tracking-widest h-11 px-6 shadow-lg shadow-blue-500/20"
+                  className="bg-slate-900 hover:bg-slate-900/90 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase text-[10px] tracking-widest h-11 px-6 shadow-md rounded-xl"
                 >
                   <FileText size={14} className="mr-2" />
                   Cetak BAST (PDF)

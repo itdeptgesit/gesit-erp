@@ -596,7 +596,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 variant="outline"
                                 size="icon"
                                 onClick={handleExportExcel}
-                                className="w-11 border-muted-foreground/10"
+                                className="w-11 border-muted-foreground/10 rounded-xl"
                                 title="Export Excel"
                             >
                                 <FileSpreadsheet size={18} />
@@ -605,7 +605,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 variant="outline"
                                 size="icon"
                                 onClick={fetchData}
-                                className="w-11 text-muted-foreground hover:text-primary border-muted-foreground/10"
+                                className="w-11 text-muted-foreground hover:text-primary border-muted-foreground/10 rounded-xl"
                             >
                                 <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
                             </Button>
@@ -614,7 +614,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             <div className="flex gap-2">
                                 <Button
                                     onClick={() => setIsReqFormOpen(true)}
-                                    className="font-bold uppercase text-[10px] tracking-widest gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="font-bold uppercase text-[10px] tracking-widest gap-2 rounded-xl"
                                 >
                                     New Request
                                 </Button>
