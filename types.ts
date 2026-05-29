@@ -100,6 +100,26 @@ export interface PurchaseRecord {
   }
 }
 
+export interface PurchaseBudget {
+  id?: number;
+  year: number;
+  category: string;
+  january: number;
+  february: number;
+  march: number;
+  april: number;
+  may: number;
+  june: number;
+  july: number;
+  august: number;
+  september: number;
+  october: number;
+  november: number;
+  december: number;
+  createdAt?: string;
+  createdBy?: string;
+}
+
 export interface SwitchPort {
   id: string;
   portNumber: number;
@@ -354,3 +374,58 @@ export interface Credential {
   updatedAt?: string;
   createdBy?: string;
 }
+
+export interface PurchaseRequisitionItem {
+  no: number;
+  description: string;
+  qty: number;
+}
+
+export interface ITRecommendationItem {
+  no: number;
+  description: string;
+  qty: number;
+  vendor: string;
+  price: number;
+}
+
+export interface PurchaseRequisition {
+  id: number;
+  requesterUsername: string;
+  requesterFullname: string;
+  department: string;
+  requestDate: string;
+  paidTo?: string;
+  bankAccount?: string;
+  requestedItems: PurchaseRequisitionItem[];
+  itRecommendations: ITRecommendationItem[];
+  notes?: string;
+  grandTotal: number;
+  status: 'Pending Supervisor' | 'Pending VP' | 'Pending Finance' | 'Pending Accounting' | 'Approved' | 'Rejected';
+  category?: string;
+  
+  // Signature tracking
+  supervisorId?: string;
+  supervisorName?: string;
+  supervisorApprovedAt?: string;
+  
+  vpId?: string;
+  vpName?: string;
+  vpApprovedAt?: string;
+  
+  financeId?: string;
+  financeName?: string;
+  financeApprovedAt?: string;
+  
+  accountingId?: string;
+  accountingName?: string;
+  accountingApprovedAt?: string;
+  
+  rejectReason?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  
+  createdAt?: string;
+  updatedAt?: string;
+}
+

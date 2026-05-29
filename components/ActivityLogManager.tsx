@@ -171,73 +171,73 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
                         className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[90vh]"
                     >
                         {/* Modal Header */}
-                        <div className="p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
+                        <div className="p-5 sm:p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
                             <div>
-                                <div className="flex items-center gap-2 mb-4">
+                                <div className="flex flex-wrap items-center gap-2 mb-3">
                                     <PriorityBadge type={activity.type} />
                                     <StatusBadge status={activity.status} />
                                 </div>
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
-                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 mt-2 uppercase tracking-[0.2em]">{activity.category} · {activity.location}</p>
+                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
+                                <p className="text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-zinc-400 mt-2 uppercase tracking-[0.2em]">{activity.category} · {activity.location}</p>
                             </div>
-                            <button onClick={onClose} className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
-                                <X size={20} />
+                            <button onClick={onClose} className="p-2 sm:p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                                <X size={18} />
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="flex-1 overflow-y-auto p-9 space-y-8 custom-scrollbar">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3">Fulfillment Status</p>
+                        <div className="flex-1 overflow-y-auto p-5 sm:p-9 space-y-6 sm:space-y-8 custom-scrollbar">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Fulfillment Status</p>
                                     <StatusBadge status={activity.status} />
                                 </div>
-                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3">Resolution Duration</p>
-                                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-lg">
+                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Resolution Duration</p>
+                                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base sm:text-lg">
                                         <Clock size={16} className="text-blue-500" />
                                         {activity.duration || '-'}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4">Request Initiator</p>
-                                    <div className="flex items-center gap-4">
-                                        <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="md" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
-                                        <div>
-                                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">{activity.requester}</p>
-                                            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1.5 uppercase tracking-wider">{activity.department}</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Request Initiator</p>
+                                    <div className="flex items-center gap-3">
+                                        <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.requester}</p>
+                                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">{activity.department}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4">Handling Personnel</p>
-                                    <div className="flex items-center gap-4">
-                                        <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="md" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
-                                        <div>
-                                            <p className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">{activity.itPersonnel}</p>
-                                            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1.5 uppercase tracking-wider">IT Solutions Group</p>
+                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Handling Personnel</p>
+                                    <div className="flex items-center gap-3">
+                                        <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.itPersonnel}</p>
+                                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">IT Solutions Group</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {activity.remarks && (
-                                <div className="p-9 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20">
-                                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.3em] mb-4">Fulfillment Remarks</p>
-                                    <p className="text-lg font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic pr-4">
+                                <div className="p-6 sm:p-9 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20">
+                                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.3em] mb-3">Fulfillment Remarks</p>
+                                    <p className="text-base sm:text-lg font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic pr-4">
                                         "{activity.remarks}"
                                     </p>
                                 </div>
                             )}
 
-                            <div className="flex justify-between pt-9 border-t border-slate-50 dark:border-zinc-800/40">
+                            <div className="flex justify-between pt-6 sm:pt-9 border-t border-slate-50 dark:border-zinc-800/40">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-2">Logged On</p>
-                                    <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                                        <Calendar size={14} />
+                                    <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">
+                                        <Calendar size={13} />
                                         {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : '-'}
                                     </div>
                                 </div>
@@ -245,10 +245,10 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="px-9 py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
+                        <div className="px-5 sm:px-9 py-4 sm:py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
                             <button
                                 onClick={onClose}
-                                className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
+                                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
                             >
                                 Close View
                             </button>
@@ -604,7 +604,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     // ─── Main Render ──────────────────────────────────────────────────────────
 
     return (
-        <div className="w-full min-h-screen bg-transparent p-6 space-y-6 animate-in fade-in duration-200">
+        <div className="w-full min-h-screen bg-transparent py-4 sm:py-6 px-0 sm:px-4 space-y-6 animate-in fade-in duration-200">
             {renderSlideshowOverlay()}
 
             {/* ─── Shadcn UI Header ─────────── */}
@@ -612,76 +612,78 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 <Button variant="outline" size="icon" aria-label="Start Live Presentation" onClick={() => { setIsPresenting(true); toggleFullScreen(); }}>
                     <Presentation className="w-4" />
                 </Button>
-                <Button variant="outline" onClick={handleExportExcel}>
-                    <FileSpreadsheet className="mr-2 w-4" /> Export Excel
+                <Button variant="outline" onClick={handleExportExcel} className="h-9 px-3 shrink-0">
+                    <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Export Excel</span>
                 </Button>
-                <Button variant="outline" size="icon" aria-label="Refresh Activities" onClick={fetchActivities} disabled={isLoading}>
+                <Button variant="outline" size="icon" aria-label="Refresh Activities" onClick={fetchActivities} disabled={isLoading} className="shrink-0">
                     <RefreshCcw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                 </Button>
                 {canManage && (
                     <Button
                         onClick={() => { setSelectedActivity(null); setIsFormOpen(true); }}
-                        className="/90 dark:/90"
+                        className="shrink-0"
                     >
-                        <Plus className="mr-2 h-4 w-4" /> New Activity
+                        <Plus className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">New Activity</span>
                     </Button>
                 )}
             </PageHeader>
 
             {/* ─── Shadcn Stat Cards ───────────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 mb-6">
                 <StatCard label="Total Activities" value={stats.total} icon={ClipboardList} percentageChange={5} subValue="vs last week" color="slate" />
                 <StatCard label="Completed" value={stats.complete} icon={CheckCircle2} percentageChange={12} subValue="vs last week" color="emerald" status="on-track" />
                 <StatCard label="In Progress" value={stats.active} icon={Activity} percentageChange={2} subValue="vs last week" color="blue" />
                 <StatCard label="High Alert" value={stats.highAlerts} icon={AlertCircle} percentageChange={-5} subValue="vs last week" color="rose" status="at-risk" />
             </div>
 
-            {/* ─── Activity List Table ──────────────────────────────────────── */}
+            {/* ─── Activity List Table / Mobile List ──────────────────────── */}
             <Card className="rounded-xl border-border/40 shadow-xl overflow-hidden bg-white/50 dark:bg-zinc-900/30 backdrop-blur-sm">
                 {/* Table Header / Search & Filters */}
-                <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b">
+                <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b p-4 sm:p-6">
                     <div>
                         <CardTitle>Recent Activities</CardTitle>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">Comprehensive audit trail of internal activities.</p>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">Comprehensive audit trail of internal activities.</p>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-1 max-w-2xl justify-end px-2">
-                        <div className="relative flex-1 max-w-xs">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto flex-1 max-w-3xl justify-end">
+                        <div className="relative w-full sm:max-w-[200px] md:max-w-xs">
                             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400" />
                             <Input
                                 type="text"
                                 placeholder="Search activities..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="pl-10 h-10 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40"
+                                className="pl-10 h-10 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40 w-full"
                             />
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                             {dateFilterType === 'Custom' && (
                                 <motion.div
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-1.5 flex-1 sm:flex-none"
                                 >
                                     <Input
                                         type="date"
                                         value={startDate}
                                         onChange={e => setStartDate(e.target.value)}
-                                        className="w-auto h-9"
+                                        className="h-9 w-full sm:w-auto text-xs bg-transparent border border-input rounded-md"
                                     />
-                                    <span className="text-muted-foreground text-sm">to</span>
+                                    <span className="text-muted-foreground text-xs shrink-0">to</span>
                                     <Input
                                         type="date"
                                         value={endDate}
                                         onChange={e => setEndDate(e.target.value)}
-                                        className="w-auto h-9"
+                                        className="h-9 w-full sm:w-auto text-xs bg-transparent border border-input rounded-md"
                                     />
                                 </motion.div>
                             )}
 
                             <select
-                                className="h-9 px-3 py-1 border border-input rounded-md text-sm font-medium bg-background text-foreground hover:bg-accent cursor-pointer outline-none"
+                                className="h-9 px-3 py-1 border border-input rounded-md text-xs font-medium bg-background text-foreground hover:bg-accent cursor-pointer outline-none flex-1 sm:flex-none"
                                 value={dateFilterType}
                                 aria-label="Filter by date range"
                                 onChange={e => handleDateFilterTypeChange(e.target.value)}
@@ -703,7 +705,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 setCurrentPage(1);
                             }}
                             title="Filter by status"
-                            className="border-border/50 bg-background/50 hover:bg-accent transition-all text-xs font-bold uppercase tracking-wider min-w-36 justify-between"
+                            className="border-border/50 bg-background/50 hover:bg-accent transition-all text-xs font-bold uppercase tracking-wider w-full sm:min-w-36 justify-between shrink-0"
                         >
                             <span className="flex items-center gap-2">
                                 <Filter size={14} className="text-muted-foreground" />
@@ -713,9 +715,10 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     </div>
                 </CardHeader>
 
-                {/* Table */}
+                {/* Table & Mobile Card List */}
                 <CardContent className="p-0">
-                    <div className="overflow-x-auto">
+                    {/* Desktop View (Table) */}
+                    <div className="hidden md:block overflow-x-auto">
                         <Table className="table-fixed">
                             <TableHeader className="bg-muted/30 border-b border-border/50">
                                 <TableRow className="hover:bg-transparent border-none">
@@ -729,7 +732,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedActivities.map((act, idx) => (
+                                {paginatedActivities.map((act) => (
                                     <TableRow
                                         key={act.id}
                                         className="group hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800/40 transition-all duration-300"
@@ -812,39 +815,137 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {paginatedActivities.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="h-64 text-center">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shadow-inner border border-border">
-                                                    <ClipboardList size={32} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <p className="font-medium text-lg leading-tight">No records found</p>
-                                                    <p className="text-sm text-muted-foreground">We couldn't find any activities matching your current search or filters.</p>
-                                                </div>
-                                                <Button
-                                                    variant="outline"
-                                                    className="mt-2"
-                                                    onClick={() => { setSearchTerm(''); setStatusFilter('All'); setDateFilterType('All'); }}
-                                                >
-                                                    Clear all filters
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
                             </TableBody>
                         </Table>
                     </div>
 
+                    {/* Mobile View (Card List) */}
+                    <div className="block md:hidden divide-y divide-slate-100 dark:divide-zinc-800/40">
+                        {paginatedActivities.map((act) => {
+                            const config = getCategoryConfig(act.category);
+                            return (
+                                <div
+                                    key={act.id}
+                                    onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
+                                    className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                >
+                                    {/* First Row: Category & Badges */}
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center border shrink-0", config.color)}>
+                                                {config.icon}
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                {act.category}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <PriorityBadge type={act.type} />
+                                            <StatusBadge status={act.status} />
+                                        </div>
+                                    </div>
+
+                                    {/* Second Row: Activity Title */}
+                                    <div>
+                                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
+                                            {act.activityName}
+                                        </h3>
+                                    </div>
+
+                                    {/* Third Row: Requester & IT Personnel & Date */}
+                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 dark:border-zinc-800/20 text-[11px]">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="xs" className="shrink-0" />
+                                            <div className="min-w-0 flex-1">
+                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">Req</span>
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{act.requester}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="xs" className="shrink-0" />
+                                            <div className="min-w-0 flex-1">
+                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">IT Personnel</span>
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{act.itPersonnel}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Fourth Row: Date & Actions */}
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-zinc-800/20">
+                                        <div className="flex items-center gap-1 text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+                                            <Calendar size={11} />
+                                            <span>{formatDate(act.createdAt)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label="View Activity Details"
+                                                onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
+                                                className="w-7 h-7 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                            >
+                                                <Eye size={14} />
+                                            </Button>
+
+                                            {(isAdmin || (isStaff && act.itPersonnel === (currentUser?.fullName || currentUser?.username))) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label="Edit Activity"
+                                                    onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }}
+                                                    className="w-7 h-7 rounded-lg text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
+                                                >
+                                                    <Edit size={14} />
+                                                </Button>
+                                            )}
+
+                                            {isAdmin && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label="Delete Activity"
+                                                    onClick={() => setDeleteActivity(act)}
+                                                    className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Empty State */}
+                    {paginatedActivities.length === 0 && (
+                        <div className="py-20 text-center">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shadow-inner border border-border">
+                                    <ClipboardList size={32} />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="font-medium text-lg leading-tight">No records found</p>
+                                    <p className="text-sm text-muted-foreground">We couldn't find any activities matching your current search or filters.</p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    className="mt-2"
+                                    onClick={() => { setSearchTerm(''); setStatusFilter('All'); setDateFilterType('All'); }}
+                                >
+                                    Clear all filters
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Pagination */}
-                    <div className="px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-border/40 bg-muted/20">
-                        <div className="flex items-center gap-6 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                    <div className="px-4 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border/40 bg-muted/20">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-full sm:w-auto">
                             <span>Showing {filteredActivities.length > 0 ? startItem : 0} to {endItem} of {filteredActivities.length}</span>
- 
-                            <div className="flex items-center gap-4 ml-2 pl-6 border-l border-border/40">
-                                <span>Rows per page</span>
+
+                            <div className="flex items-center gap-3 sm:ml-2 sm:pl-6 sm:border-l border-border/40">
+                                <span>Rows</span>
                                 <select
                                     value={rowsPerPage}
                                     aria-label="Rows per page"
@@ -855,28 +956,28 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                     <option value={20}>20</option>
                                     <option value={50}>50</option>
                                 </select>
-                                <Button variant="ghost" size="icon" aria-label="Refresh" className="w-7 hover:bg-background/80" onClick={fetchActivities} title="Refresh">
+                                <Button variant="ghost" size="icon" aria-label="Refresh" className="w-7 h-7 hover:bg-background/80" onClick={fetchActivities} title="Refresh">
                                     <RefreshCcw size={12} className="text-muted-foreground/60" />
                                 </Button>
                             </div>
                         </div>
- 
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-9 border-border/50">
+
+                        <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+                            <Button variant="outline" size="icon" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-9 h-9 border-border/50">
                                 <ChevronsLeft size={16} />
                             </Button>
-                            <Button variant="outline" size="icon" aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-9 border-border/50">
+                            <Button variant="outline" size="icon" aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-9 h-9 border-border/50">
                                 <ChevronLeft size={16} />
                             </Button>
- 
+
                             <div className="flex items-center justify-center min-w-[36px] h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-black">
                                 {currentPage}
                             </div>
- 
-                            <Button variant="outline" size="icon" aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-9 border-border/50">
+
+                            <Button variant="outline" size="icon" aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-9 h-9 border-border/50">
                                 <ChevronRight size={16} />
                             </Button>
-                            <Button variant="outline" size="icon" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-9 border-border/50">
+                            <Button variant="outline" size="icon" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-9 h-9 border-border/50">
                                 <ChevronsRight size={16} />
                             </Button>
                         </div>

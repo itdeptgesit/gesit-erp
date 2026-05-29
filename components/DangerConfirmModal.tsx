@@ -2,14 +2,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, LogOut } from 'lucide-react';
 import { useLanguage } from '../translations';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-    Dialog,
-    DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface DangerConfirmModalProps {
   isOpen: boolean;
@@ -18,12 +15,26 @@ interface DangerConfirmModalProps {
   title: string;
   message: string | React.ReactNode;
   isLoading?: boolean;
-  entityName?: string;
+  entityName?: string; // for confirmation typing
   confirmText?: string;
+  /**
+   * Variant determines visual theme.
+   * 'danger' (default) – red theme, Trash icon.
+   * 'logout' – blue theme, LogOut icon.
+   */
+  variant?: 'danger' | 'logout';
 }
 
 export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
-  isOpen, onClose, onConfirm, title, message, isLoading, entityName, confirmText
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  isLoading,
+  entityName,
+  confirmText,
+  variant = 'danger',
 }) => {
   const { t } = useLanguage();
   const [inputValue, setInputValue] = useState('');
@@ -43,9 +54,9 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
             <DialogContent showCloseButton={false} className="sm:max-w-[440px] p-0 overflow-hidden bg-white dark:bg-zinc-900 rounded-xl border-none shadow-2xl">
                 <div className="p-10">
                     <div className="flex flex-col">
-                        <div className="mb-6 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center">
-                                <Trash2 className="text-rose-500 h-6 w-6" strokeWidth={2.5} />
+                        <div className={`mb-6 flex items-center gap-4`}>
+                            <div className={`w-12 h-12 rounded-xl ${variant === 'logout' ? 'bg-blue-50' : 'bg-rose-50'} flex items-center justify-center`}>
+                                {variant === 'logout' ? <LogOut className="text-blue-500 h-6 w-6" strokeWidth={2.5} /> : <Trash2 className="text-rose-500 h-6 w-6" strokeWidth={2.5} />}
                             </div>
                             <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-none uppercase">
                                 {title}
@@ -78,7 +89,7 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
                                     onClose();
                                 }}
                                 disabled={isLoading}
-                                className="px-8 py-3 rounded-full border border-slate-200 dark:border-zinc-800 text-[12px] font-black uppercase tracking-widest text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all flex-1"
+                                className={`px-8 py-3 rounded-full border border-${variant === 'logout' ? 'blue-200' : 'slate-200'} dark:border-${variant === 'logout' ? 'blue-800' : 'zinc-800'} text-[12px] font-black uppercase tracking-widest text-${variant === 'logout' ? 'blue-900' : 'slate-900'} dark:text-${variant === 'logout' ? 'blue-100' : 'white'} hover:bg-${variant === 'logout' ? 'blue-50' : 'slate-50'} dark:hover:bg-${variant === 'logout' ? 'blue-800/50' : 'zinc-800/50'} transition-all flex-1`}
                             >
                                 Cancel
                             </button>
@@ -87,8 +98,8 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
                                 disabled={isConfirmDisabled}
                                 className={`px-8 py-3 rounded-full text-[12px] font-black uppercase tracking-widest transition-all flex-1 flex items-center justify-center gap-3 shadow-lg ${
                                     isConfirmDisabled 
-                                    ? 'bg-slate-400 text-white cursor-not-allowed shadow-none' 
-                                    : 'bg-rose-500 text-white hover:bg-rose-600 shadow-rose-500/20'
+                                    ? `bg-${variant === 'logout' ? 'blue-400' : 'slate-400'} text-white cursor-not-allowed shadow-none` 
+                                    : `bg-${variant === 'logout' ? 'blue-500' : 'rose-500'} text-white hover:bg-${variant === 'logout' ? 'blue-600' : 'rose-600'} shadow-${variant === 'logout' ? 'blue-500/20' : 'rose-500/20'}`
                                 }`}
                             >
                                 {isLoading && <Loader2 size={16} className="animate-spin" strokeWidth={3} />}

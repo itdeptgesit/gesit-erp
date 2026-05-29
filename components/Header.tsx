@@ -203,118 +203,134 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <div className="z-50 h-16 header-fixed peer/header w-full bg-transparent transition-all duration-300">
       <GlobalSearch open={searchOpen} setOpen={setSearchOpen} />
-      <div className="relative flex h-full items-center gap-3 p-4 sm:gap-4">
-        <div className="flex-1 w-full pl-2 md:pl-0">
+      <div className="relative flex h-full items-center gap-2 py-4 px-0">
+
+        {/* Search \u2014 takes remaining space */}
+        <div className="flex-1 min-w-0">
+          {/* Mobile Search Icon */}
           <Button
             variant="outline"
-            className="relative w-full max-w-sm justify-between bg-muted/50 text-sm font-normal text-muted-foreground"
+            size="icon"
+            className="flex sm:hidden h-9 w-9 bg-muted/50 text-muted-foreground border-none rounded-xl"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+
+          {/* Desktop Search Button \u2014 capped width so right-side icons fit */}
+          <Button
+            variant="outline"
+            className="hidden sm:flex w-full max-w-[240px] lg:max-w-sm justify-between bg-muted/50 text-sm font-normal text-muted-foreground"
             onClick={() => setSearchOpen(true)}
           >
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <Search className="mr-2 h-4 w-4 shrink-0" />
               <span className="hidden lg:inline-flex truncate">Search command or menus...</span>
               <span className="inline-flex lg:hidden truncate">Search...</span>
             </div>
-            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex shrink-0">
+            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex shrink-0 ml-2">
               <span className="text-xs">⌘</span>K
             </kbd>
           </Button>
         </div>
 
-        {/* Language Toggle */}
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="w-8 text-muted-foreground/60 hover:text-foreground" />}>
-            <Globe className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuItem onClick={() => setLanguage('en' as any)}>
-              English
-              {language === 'en' && <Check className="ml-auto size-4 text-primary" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setLanguage('id' as any)}>
-              Indonesia
-              {language === 'id' && <Check className="ml-auto size-4 text-primary" />}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right-side actions \u2014 always visible, never shrink */}
+        <div className="flex items-center gap-1 shrink-0">
 
-        {/* Notifications */}
-        <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
-          <Tooltip>
-            <TooltipTrigger render={
-              <DropdownMenuTrigger render={
-                <Button variant="ghost" size="icon" className="relative w-8 text-muted-foreground/60 hover:text-foreground" />
-              } />
-            }>
-              <Bell className="size-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 block h-1.5 w-1.5 rounded-full bg-rose-500" />
-              )}
-            </TooltipTrigger>
-            <TooltipContent>Notifications</TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-[320px] p-0">
-            <div className="px-4 py-3 flex justify-between items-center border-b border-border/10 bg-muted/20">
-              <h3 className="text-[13px] font-medium text-foreground">Notifications</h3>
-              <div className="flex gap-3">
+          {/* Language Toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="w-8 text-muted-foreground/60 hover:text-foreground" />}>
+              <Globe className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8}>
+              <DropdownMenuItem onClick={() => setLanguage('en' as any)}>
+                English
+                {language === 'en' && <Check className="ml-auto size-4 text-primary" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('id' as any)}>
+                Indonesia
+                {language === 'id' && <Check className="ml-auto size-4 text-primary" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Notifications */}
+          <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+            <Tooltip>
+              <TooltipTrigger render={
+                <DropdownMenuTrigger render={
+                  <Button variant="ghost" size="icon" className="relative w-8 text-muted-foreground/60 hover:text-foreground" />
+                } />
+              }>
+                <Bell className="size-4" />
                 {unreadCount > 0 && (
-                  <button onClick={markAllAsRead} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground">
-                    Mark all read
-                  </button>
+                  <span className="absolute top-1 right-1 block h-1.5 w-1.5 rounded-full bg-rose-500" />
                 )}
-                {notifications.length > 0 && (
-                  <button onClick={clearAllNotifications} className="text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 transition-colors">
-                    Clear All
-                  </button>
+              </TooltipTrigger>
+              <TooltipContent>Notifications</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" sideOffset={8} className="w-[320px] p-0">
+              <div className="px-4 py-3 flex justify-between items-center border-b border-border/10 bg-muted/20">
+                <h3 className="text-[13px] font-medium text-foreground">Notifications</h3>
+                <div className="flex gap-3">
+                  {unreadCount > 0 && (
+                    <button onClick={markAllAsRead} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground">
+                      Mark all read
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <button onClick={clearAllNotifications} className="text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 transition-colors">
+                      Clear All
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="py-10 text-center text-xs text-muted-foreground">Everything caught up!</div>
+                ) : (
+                  <div className="flex flex-col">
+                    {notifications.map(n => (
+                      <div
+                        key={n.id}
+                        onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
+                        className="px-4 py-3 flex items-start gap-3 hover:bg-accent/30 cursor-pointer transition-colors border-b border-border/5 last:border-0"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5 border border-border/10">
+                          <span className="text-[10px] font-bold text-foreground">
+                            {n.title.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-normal text-foreground truncate">{n.title}</p>
+                          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-normal">{n.message}</p>
+                        </div>
+                        {!n.isRead && <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5" />}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-            <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
-              {notifications.length === 0 ? (
-                <div className="py-10 text-center text-xs text-muted-foreground">Everything caught up!</div>
-              ) : (
-                <div className="flex flex-col">
-                  {notifications.map(n => (
-                    <div
-                      key={n.id}
-                      onClick={() => { markAsRead(n.id); if (n.link) onNavigate?.(n.link); setIsNotificationOpen(false); }}
-                      className="px-4 py-3 flex items-start gap-3 hover:bg-accent/30 cursor-pointer transition-colors border-b border-border/5 last:border-0"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5 border border-border/10">
-                        <span className="text-[10px] font-bold text-foreground">
-                          {n.title.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-normal text-foreground truncate">{n.title}</p>
-                        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-normal">{n.message}</p>
-                      </div>
-                      {!n.isRead && <div className="shrink-0 w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5" />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="w-8 text-muted-foreground/60 hover:text-foreground"
-          onClick={toggleTheme}
-        >
-          <Moon className="size-4 block dark:hidden" />
-          <Sun className="size-4 hidden dark:block" />
-        </Button>
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-8 text-muted-foreground/60 hover:text-foreground"
+            onClick={toggleTheme}
+          >
+            <Moon className="size-4 block dark:hidden" />
+            <Sun className="size-4 hidden dark:block" />
+          </Button>
 
-        {/* User Avatar & Menu */}
-        <div className="pl-1.5 ml-1">
+          {/* User Avatar & Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="ghost" className="hover:ring-2 hover:ring-muted">
+                <Button variant="ghost" className="h-9 w-9 p-0 hover:ring-2 hover:ring-muted rounded-full ml-1">
                   <div className="h-8 w-8 rounded-full overflow-hidden border border-border/20 shadow-sm flex items-center justify-center bg-muted text-muted-foreground text-[10px] font-bold">
                     {user?.avatarUrl ? (
                       <img src={user.avatarUrl} alt={userName} className="h-full w-full object-cover" />
@@ -365,7 +381,8 @@ export const Header: React.FC<HeaderProps> = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+
+        </div> {/* end right-side actions */}
       </div>
     </div>
   );

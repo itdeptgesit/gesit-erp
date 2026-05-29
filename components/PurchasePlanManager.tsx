@@ -5,17 +5,19 @@ import {
     ShoppingCart, RefreshCcw, Check, X,
     Trash2, Wallet,
     Clock, CheckCircle2, XCircle, Search, ChevronLeft, ChevronRight,
-    ListFilter, BarChart3, UserCheck, ShieldCheck, Zap, Fingerprint, Eye
+    ListFilter, BarChart3, UserCheck, ShieldCheck, Zap, Fingerprint, Eye, FileText
 } from 'lucide-react';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     Cell, PieChart, Pie
 } from 'recharts';
-import { PurchasePlan, UserAccount } from '../types';
+import { PurchasePlan, PurchaseRequisition, UserAccount } from '../types';
 import { PurchaseRequestModal } from './PurchaseRequestModal';
 import { PurchaseDetailModal } from './PurchaseDetailModal';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { RejectReasonModal } from './RejectReasonModal';
+import { PurchaseRequisitionFormModal } from './PurchaseRequisitionFormModal';
+import { PurchaseRequisitionDetailModal } from './PurchaseRequisitionDetailModal';
 import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
 import { exportToExcel } from '../lib/excelExport';
@@ -28,20 +30,36 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
 }
 
-type ProcurementTab = 'registry' | 'approvals' | 'analytics';
+type ProcurementTab = 'requisitions' | 'approvals' | 'analytics';
 
 export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ currentUser }) => {
     const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<ProcurementTab>('registry');
+    const [activeTab, setActiveTab] = useState<ProcurementTab>('requisitions');
+
+    // Legacy state
     const [plans, setPlans] = useState<PurchasePlan[]>([]);
-    const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<PurchasePlan | null>(null);
+    const [selectedRequesterProfile, setSelectedRequesterProfile] = useState<UserAccount | null>(null);
+    const [approverNames, setApproverNames] = useState({ spv: '', manager: '' });
+    const [rejectTarget, setRejectTarget] = useState<PurchasePlan | null>(null);
+    const [deletePlan, setDeletePlan] = useState<PurchasePlan | null>(null);
+
+    // New Purchase Requisitions state
+    const [requisitions, setRequisitions] = useState<PurchaseRequisition[]>([]);
+    const [isReqFormOpen, setIsReqFormOpen] = useState(false);
+    const [isReqDetailOpen, setIsReqDetailOpen] = useState(false);
+    const [selectedRequisition, setSelectedRequisition] = useState<PurchaseRequisition | null>(null);
+    const [rejectRequisitionTarget, setRejectRequisitionTarget] = useState<PurchaseRequisition | null>(null);
+    const [deleteRequisitionTarget, setDeleteRequisitionTarget] = useState<PurchaseRequisition | null>(null);
+
+    // Shared state
+    const [allUsers, setAllUsers] = useState<UserAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -49,12 +67,6 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-
-    const [selectedPlan, setSelectedPlan] = useState<PurchasePlan | null>(null);
-    const [selectedRequesterProfile, setSelectedRequesterProfile] = useState<UserAccount | null>(null);
-    const [approverNames, setApproverNames] = useState({ spv: '', manager: '' });
-    const [rejectTarget, setRejectTarget] = useState<PurchasePlan | null>(null);
-    const [deletePlan, setDeletePlan] = useState<PurchasePlan | null>(null);
 
     // RBAC Logic
     const isAdmin = currentUser?.role === 'Admin';
@@ -64,9 +76,43 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
+    const mapRequisition = (p: any): PurchaseRequisition => ({
+        id: p.id,
+        requesterUsername: p.requester_username,
+        requesterFullname: p.requester_fullname,
+        department: p.department,
+        requestDate: p.request_date,
+        paidTo: p.paid_to,
+        bankAccount: p.bank_account,
+        requestedItems: p.requested_items || [],
+        itRecommendations: p.it_recommendations || [],
+        notes: p.notes,
+        grandTotal: Number(p.grand_total) || 0,
+        status: p.status,
+        category: p.category,
+        supervisorId: p.supervisor_id,
+        supervisorName: p.supervisor_name,
+        supervisorApprovedAt: p.supervisor_approved_at,
+        vpId: p.vp_id,
+        vpName: p.vp_name,
+        vpApprovedAt: p.vp_approved_at,
+        financeId: p.finance_id,
+        financeName: p.finance_name,
+        financeApprovedAt: p.finance_approved_at,
+        accountingId: p.accounting_id,
+        accountingName: p.accounting_name,
+        accountingApprovedAt: p.accounting_approved_at,
+        rejectReason: p.reject_reason,
+        rejectedBy: p.rejected_by,
+        rejectedAt: p.rejected_at,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at
+    });
+
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Fetch users mapping
             const { data: userData } = await supabase.from('user_accounts').select('*');
             if (userData) {
                 setAllUsers(userData.map((u: any) => ({
@@ -75,6 +121,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     status: u.status, username: u.username, groups: u.groups || []
                 })));
             }
+
+            // Fetch legacy plans
             const { data: planData, error } = await supabase.from('purchase_plans').select('*').order('id', { ascending: false });
             if (error) throw error;
             if (planData) {
@@ -84,7 +132,29 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     requestDate: p.request_date, justification: p.justification
                 })));
             }
-        } catch (err: any) { console.error(err); } finally { setLoading(false); }
+
+            // Fetch PR Requisitions (with graceful fallback if table not created yet)
+            try {
+                const { data: reqData, error: reqError } = await supabase.from('purchase_requisitions').select('*').order('id', { ascending: false });
+                if (reqError) {
+                    if (reqError.code === '42P01') {
+                        console.warn("purchase_requisitions table not found. Please execute migration_pr_requisitions.sql.");
+                    } else {
+                        throw reqError;
+                    }
+                }
+                if (reqData) {
+                    setRequisitions(reqData.map(mapRequisition));
+                }
+            } catch (innerErr) {
+                console.error("Failed to load purchase requisitions:", innerErr);
+            }
+        } catch (err: any) {
+            console.error(err);
+            showToast("Failed to reload data: " + err.message, 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -98,6 +168,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         return profile || null;
     };
 
+    // Routing checkers
     const isMyTurnToApprove = (plan: PurchasePlan) => {
         if (!currentUser || !allUsers.length) return false;
         if (plan.status === 'Approved' || plan.status === 'Rejected') return false;
@@ -110,59 +181,84 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         return false;
     };
 
-    const stats = useMemo(() => {
-        const approved = plans.filter(p => p.status === 'Approved');
-        const totalSpend = approved.reduce((sum, p) => sum + p.totalPrice, 0);
-        const pendingCount = plans.filter(p => p.status.includes('Pending')).length;
-        const actionsCount = plans.filter(isMyTurnToApprove).length;
-        return { totalSpend, pendingCount, approvedCount: approved.length, actionsCount };
-    }, [plans, allUsers, currentUser]);
-
-    const filteredPlans = useMemo(() => {
-        const list = activeTab === 'approvals' ? plans.filter(isMyTurnToApprove) : plans;
-        return list.filter(p =>
-            p.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (p.vendor || '').toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [plans, allUsers, searchTerm, activeTab, currentUser]);
-
-    const handleExportExcel = () => {
-        if (filteredPlans.length === 0) return;
-
-        const dataToExport = filteredPlans.map(p => ({
-            "Item": p.item,
-            "Specs": p.specs,
-            "Quantity": p.quantity,
-            "Unit Price": p.unitPrice,
-            "Total Price": p.totalPrice,
-            "Vendor": p.vendor || "-",
-            "Requester": p.requester,
-            "Date": p.requestDate,
-            "Status": p.status,
-            "Justification": p.justification
-        }));
-
-        exportToExcel(dataToExport, `GESIT-PURCHASE-PLANS-${new Date().toISOString().split('T')[0]}`);
+    const isMyTurnToApproveRequisition = (req: PurchaseRequisition) => {
+        if (!currentUser) return false;
+        if (req.status === 'Approved' || req.status === 'Rejected') return false;
+        const currentUserIdStr = String(currentUser.id);
+        if (req.status === 'Pending Supervisor') return req.supervisorId === currentUserIdStr;
+        if (req.status === 'Pending VP') return req.vpId === currentUserIdStr;
+        if (req.status === 'Pending Finance') return req.financeId === currentUserIdStr;
+        if (req.status === 'Pending Accounting') return req.accountingId === currentUserIdStr;
+        return false;
     };
 
-    const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
-    const paginatedPlans = useMemo(() => {
+    const stats = useMemo(() => {
+        const approvedRequisitions = requisitions.filter(r => r.status === 'Approved');
+
+        const totalSpend = approvedRequisitions.reduce((sum, r) => sum + r.grandTotal, 0);
+
+        const pendingCount = requisitions.filter(r => r.status.includes('Pending')).length;
+
+        const actionsCount = requisitions.filter(isMyTurnToApproveRequisition).length;
+
+        const approvedCount = approvedRequisitions.length;
+
+        return { totalSpend, pendingCount, approvedCount, actionsCount };
+    }, [requisitions, allUsers, currentUser]);
+
+    const filteredRequisitions = useMemo(() => {
+        if (activeTab === 'approvals') {
+            return requisitions.filter(isMyTurnToApproveRequisition).filter(r =>
+                r.requesterFullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                r.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (r.paidTo || '').toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+        if (activeTab !== 'requisitions') return [];
+        return requisitions.filter(r =>
+            r.requesterFullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            r.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (r.paidTo || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [requisitions, searchTerm, activeTab, currentUser]);
+
+    // Pagination helpers
+    const totalPages = useMemo(() => {
+        return Math.ceil(filteredRequisitions.length / itemsPerPage);
+    }, [filteredRequisitions]);
+
+    const paginatedRequisitions = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
-        return filteredPlans.slice(start, start + itemsPerPage);
-    }, [filteredPlans, currentPage]);
+        return filteredRequisitions.slice(start, start + itemsPerPage);
+    }, [filteredRequisitions, currentPage]);
+
+    const handleExportExcel = () => {
+        if (filteredRequisitions.length === 0) return;
+        const dataToExport = filteredRequisitions.map(r => ({
+            "PR ID": `PR-${String(r.id).padStart(4, '0')}`,
+            "Requester": r.requesterFullname,
+            "Department": r.department,
+            "Date": r.requestDate,
+            "Paid To": r.paidTo || "-",
+            "Bank Account": r.bankAccount || "-",
+            "Grand Total": r.grandTotal,
+            "Status": r.status,
+            "Notes": r.notes || "-"
+        }));
+        exportToExcel(dataToExport, `GESIT-PR-REQUISITIONS-${new Date().toISOString().split('T')[0]}`);
+    };
 
     const analyticsData = useMemo(() => {
-        const statuses = plans.reduce((acc, p) => {
-            acc[p.status] = (acc[p.status] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
+        const statuses: Record<string, number> = {};
+        requisitions.forEach(r => { statuses[r.status] = (statuses[r.status] || 0) + 1; });
 
-        const vendors = plans.reduce((acc, p) => {
-            const v = p.vendor || 'Unknown';
-            acc[v] = (acc[v] || 0) + p.totalPrice;
-            return acc;
-        }, {} as Record<string, number>);
+        const vendors: Record<string, number> = {};
+        requisitions.forEach(r => {
+            (r.itRecommendations || []).forEach(item => {
+                const v = item.vendor || 'Unknown';
+                vendors[v] = (vendors[v] || 0) + (item.price * item.qty);
+            });
+        });
 
         const statusChart = Object.entries(statuses).map(([name, value]) => ({ name, value }));
         const vendorChart = Object.entries(vendors)
@@ -171,8 +267,9 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             .slice(0, 5);
 
         return { statusChart, vendorChart };
-    }, [plans]);
+    }, [requisitions]);
 
+    // Legacy Approvals
     const handleApprove = async (plan: PurchasePlan) => {
         setIsActionLoading(true);
         try {
@@ -182,6 +279,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             else if (plan.status === 'Pending Manager' || plan.status === 'Pending Approval') nextStatus = 'Approved';
             const { error } = await supabase.from('purchase_plans').update({ status: nextStatus }).eq('id', plan.id);
             if (error) throw error;
+            showToast("Legacy plan approved", "success");
             await fetchData();
         } catch (err: any) { showToast("Authorization failed: " + err.message, 'error'); } finally { setIsActionLoading(false); }
     };
@@ -193,8 +291,166 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             const { error } = await supabase.from('purchase_plans').update({ status: 'Rejected', justification: `${rejectTarget.justification}\n\n[DENIED]: ${reason}` }).eq('id', rejectTarget.id);
             if (error) throw error;
             setRejectTarget(null);
+            showToast("Legacy plan rejected", "success");
             await fetchData();
         } catch (err: any) { showToast("Denial failed: " + err.message, 'error'); } finally { setIsActionLoading(false); }
+    };
+
+    // Requisition Approvals
+    const handleApproveRequisition = async (req: PurchaseRequisition) => {
+        setIsActionLoading(true);
+        try {
+            let nextStatus: PurchaseRequisition['status'] = 'Approved';
+            const now = new Date().toISOString();
+            const updateData: any = {};
+            const currentUserIdStr = String(currentUser?.id);
+            const currentUserName = currentUser?.fullName || 'Approver';
+
+            if (req.status === 'Pending Supervisor') {
+                nextStatus = 'Pending VP';
+                updateData.supervisor_approved_at = now;
+                updateData.supervisor_name = currentUserName;
+            } else if (req.status === 'Pending VP') {
+                nextStatus = 'Pending Finance';
+                updateData.vp_approved_at = now;
+                updateData.vp_name = currentUserName;
+
+                // Auto-insert into purchase_records
+                try {
+                    const desc = req.itRecommendations && req.itRecommendations.length > 0
+                        ? req.itRecommendations.map(item => item.description).join(', ')
+                        : req.requestedItems.map(item => item.description).join(', ');
+
+                    const totalQty = req.itRecommendations && req.itRecommendations.length > 0
+                        ? req.itRecommendations.reduce((sum, item) => sum + (Number(item.qty) || 0), 0)
+                        : req.requestedItems.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+
+                    const recordItems = (req.itRecommendations && req.itRecommendations.length > 0)
+                        ? req.itRecommendations.map(item => ({
+                            description: item.description,
+                            qty: item.qty,
+                            price: item.price,
+                            vendor: item.vendor
+                        }))
+                        : req.requestedItems.map(item => ({
+                            description: item.description,
+                            qty: item.qty,
+                            price: req.grandTotal / (req.requestedItems.length || 1),
+                            vendor: ''
+                        }));
+
+                    const vendorName = req.itRecommendations && req.itRecommendations.length > 0
+                        ? req.itRecommendations[0].vendor
+                        : 'Various';
+
+                    const purchaseRecordPayload = {
+                        transaction_id: `PR-${String(req.id).padStart(4, '0')}`,
+                        description: desc || `Purchase Request #${req.id}`,
+                        qty: totalQty || 1,
+                        price: req.grandTotal / (totalQty || 1),
+                        vat: 0,
+                        delivery_fee: 0,
+                        insurance: 0,
+                        app_fee: 0,
+                        other_cost: 0,
+                        subtotal: req.grandTotal,
+                        total_va: req.grandTotal,
+                        project_name: '-',
+                        user_name: req.requesterFullname,
+                        department: req.department,
+                        company: 'THE GESIT COMPANIES',
+                        status: 'Pending',
+                        purchase_date: req.requestDate || now.split('T')[0],
+                        payment_date: null,
+                        vendor: vendorName || 'Various',
+                        platform: '-',
+                        payment_method: 'Transfer',
+                        category: req.category || 'Hardware',
+                        evidence_link: '',
+                        input_by: 'System (Auto-inserted via PR VP Approval)',
+                        remarks: req.notes || `Auto-generated from Approved Requisition #${req.id}`,
+                        docs: {
+                            prForm: true,
+                            cashAdvance: false,
+                            checkout: false,
+                            paymentSlip: false,
+                            invoice: false,
+                            expenseApproval: false,
+                            checkByRara: false
+                        },
+                        items: recordItems
+                    };
+
+                    const { error: insertErr } = await supabase.from('purchase_records').insert([purchaseRecordPayload]);
+                    if (insertErr) {
+                        console.error('Error auto-inserting purchase record:', insertErr);
+                    } else {
+                        // Log activity for auto-generation
+                        await supabase.from('activity_logs').insert([{
+                            activity_name: `Auto Purchase Record: PR-${String(req.id).padStart(4, '0')}`,
+                            category: 'Procurement',
+                            requester: req.requesterFullname,
+                            department: req.department,
+                            it_personnel: currentUserName,
+                            type: req.grandTotal > 10000000 ? 'Critical' : 'Minor',
+                            status: 'Completed',
+                            remarks: `Auto-generated purchase record from Requisition #${req.id} approved by VP.`,
+                            created_at: now
+                        }]);
+                    }
+                } catch (autoInsertErr) {
+                    console.error('Auto-insert exception:', autoInsertErr);
+                }
+            } else if (req.status === 'Pending Finance') {
+                nextStatus = 'Pending Accounting';
+                updateData.finance_approved_at = now;
+                updateData.finance_name = currentUserName;
+            } else if (req.status === 'Pending Accounting') {
+                nextStatus = 'Approved';
+                updateData.accounting_approved_at = now;
+                updateData.accounting_name = currentUserName;
+            }
+
+            updateData.status = nextStatus;
+
+            const { error } = await supabase.from('purchase_requisitions').update(updateData).eq('id', req.id);
+            if (error) throw error;
+
+            showToast("Requisition approved successfully", "success");
+            setIsReqDetailOpen(false);
+            setSelectedRequisition(null);
+            await fetchData();
+        } catch (err: any) {
+            showToast("Approval failed: " + err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const submitRejectRequisition = async (reason: string) => {
+        if (!rejectRequisitionTarget) return;
+        setIsActionLoading(true);
+        try {
+            const now = new Date().toISOString();
+            const { error } = await supabase.from('purchase_requisitions').update({
+                status: 'Rejected',
+                reject_reason: reason,
+                rejected_by: String(currentUser?.id),
+                rejected_at: now
+            }).eq('id', rejectRequisitionTarget.id);
+
+            if (error) throw error;
+
+            setRejectRequisitionTarget(null);
+            setIsReqDetailOpen(false);
+            setSelectedRequisition(null);
+            showToast("Requisition rejected successfully", "success");
+            await fetchData();
+        } catch (err: any) {
+            showToast("Rejection failed: " + err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
     const getStatusDisplay = (plan: PurchasePlan) => {
@@ -218,10 +474,81 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         return <div className="flex items-center gap-1.5 text-rose-600 font-bold text-[10px]"><XCircle size={11} /> Rejected</div>;
     };
 
+    const getRequisitionStatusDisplay = (req: PurchaseRequisition) => {
+        const isMyAction = isMyTurnToApproveRequisition(req);
+        if (isMyAction) {
+            return (
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-[10px] animate-pulse"><Zap size={10} className="fill-current" /> Action Required</div>
+                    <div className="text-[9px] text-slate-400 font-medium italic">Pending your signature</div>
+                </div>
+            );
+        }
+        if (req.status.startsWith('Pending')) {
+            let waitingFor = 'Approver';
+            if (req.status === 'Pending Supervisor') {
+                waitingFor = allUsers.find(u => String(u.id) === req.supervisorId)?.fullName || 'Supervisor';
+            } else if (req.status === 'Pending VP') {
+                waitingFor = allUsers.find(u => String(u.id) === req.vpId)?.fullName || 'VP HR/Logistic';
+            } else if (req.status === 'Pending Finance') {
+                waitingFor = allUsers.find(u => String(u.id) === req.financeId)?.fullName || 'Finance';
+            } else if (req.status === 'Pending Accounting') {
+                waitingFor = allUsers.find(u => String(u.id) === req.accountingId)?.fullName || 'Accounting';
+            }
+            return (<div className="flex flex-col gap-0.5"><div className="flex items-center gap-1.5 text-amber-600 font-bold text-[10px]"><Clock size={11} /> {req.status.replace('Pending ', '')}</div><div className="text-[9px] text-slate-400 font-medium">Waiting for {waitingFor.split(' ')[0]}</div></div>);
+        }
+        if (req.status === 'Approved') return <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px]"><CheckCircle2 size={11} /> Approved</div>;
+        return <div className="flex items-center gap-1.5 text-rose-600 font-bold text-[10px]"><XCircle size={11} /> Rejected</div>;
+    };
+
     const formatIDR = (num: number) => {
         if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
     };
+
+    const handleCreateRequisition = async (payload: Partial<PurchaseRequisition>) => {
+        try {
+            const { error } = await supabase.from('purchase_requisitions').insert([
+                {
+                    requester_username: payload.requesterUsername,
+                    requester_fullname: payload.requesterFullname,
+                    department: payload.department,
+                    request_date: payload.requestDate,
+                    paid_to: payload.paidTo,
+                    bank_account: payload.bankAccount,
+                    requested_items: payload.requestedItems,
+                    it_recommendations: payload.itRecommendations,
+                    notes: payload.notes,
+                    grand_total: payload.grandTotal,
+                    status: payload.status,
+                    category: payload.category,
+                    supervisor_id: payload.supervisorId,
+                    supervisor_name: payload.supervisorName,
+                    vp_id: payload.vpId,
+                    vp_name: payload.vpName,
+                    finance_id: payload.financeId,
+                    finance_name: payload.financeName,
+                    accounting_id: payload.accountingId,
+                    accounting_name: payload.accountingName
+                }
+            ]);
+            if (error) throw error;
+            setIsReqFormOpen(false);
+            showToast("Requisition submitted successfully", "success");
+            fetchData();
+        } catch (err: any) {
+            showToast("Submission failed: " + err.message, "error");
+        }
+    };
+
+    const selectedRequisitionWithNames = useMemo(() => {
+        if (!selectedRequisition || !allUsers.length) return selectedRequisition;
+        return {
+            ...selectedRequisition,
+            supervisorName: selectedRequisition.supervisorName || allUsers.find(u => String(u.id) === selectedRequisition.supervisorId)?.fullName || '',
+            vpName: selectedRequisition.vpName || allUsers.find(u => String(u.id) === selectedRequisition.vpId)?.fullName || '',
+        };
+    }, [selectedRequisition, allUsers]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -229,21 +556,21 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 title="Procurement Center"
                 description="Managed investment & equipment audit log"
             >
-            <div className="flex justify-center mb-2">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
-                    <TabsList>
-                        <TabsTrigger value="registry">
-                            <ListFilter size={14} className="mr-2" /> REGISTRY
-                        </TabsTrigger>
-                        <TabsTrigger value="approvals">
-                            <UserCheck size={14} className="mr-2" /> TASKS ({stats.actionsCount})
-                        </TabsTrigger>
-                        <TabsTrigger value="analytics">
-                            <BarChart3 size={14} className="mr-2" /> REPORTS
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </div>
+                <div className="flex justify-center mb-2">
+                    <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setCurrentPage(1); }} className="w-auto">
+                        <TabsList>
+                            <TabsTrigger value="requisitions">
+                                <FileText size={14} className="mr-2" /> PR REQUISITIONS
+                            </TabsTrigger>
+                            <TabsTrigger value="approvals">
+                                <UserCheck size={14} className="mr-2" /> MY TASKS ({stats.actionsCount})
+                            </TabsTrigger>
+                            <TabsTrigger value="analytics">
+                                <BarChart3 size={14} className="mr-2" /> REPORTS
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
             </PageHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -257,14 +584,14 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 <div className="px-6 py-4 border-b flex flex-col md:flex-row justify-between items-center gap-4 bg-card sticky top-0 z-20">
                     <div className="relative flex-1 w-full md:max-w-md">
                         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search by hardware or account..." 
-                            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11" 
-                            value={searchTerm} 
-                            onChange={e => setSearchTerm(e.target.value)} 
+                        <Input
+                            placeholder="Search by name or department..."
+                            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -275,32 +602,34 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             >
                                 <FileSpreadsheet size={18} />
                             </Button>
-                            <Button 
+                            <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={fetchData} 
+                                onClick={fetchData}
                                 className="w-11 text-muted-foreground hover:text-primary border-muted-foreground/10"
                             >
                                 <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
                             </Button>
                         </div>
                         {canManage && (
-                            <Button 
-                                onClick={() => setIsModalOpen(true)} 
-                                className="font-bold uppercase text-[10px] tracking-widest gap-2"
-                            >
-                                New request
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => setIsReqFormOpen(true)}
+                                    className="font-bold uppercase text-[10px] tracking-widest gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                    New Request
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>
+
                 <div className="flex-1 overflow-x-auto custom-scrollbar">
                     {activeTab === 'analytics' ? (
                         <div className="p-8 space-y-8">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Status Distribution */}
                                 <div className="bg-muted/20 p-6 rounded-lg border">
-
                                     <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <Clock size={14} /> Workflow Distribution
                                     </h3>
@@ -318,20 +647,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                         <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][index % 5]} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip 
+                                                <Tooltip
                                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '10px', fontWeight: 'bold' }}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{plans.length}</span>
+                                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">{plans.length + requisitions.length}</span>
                                             <span className="text-[8px] font-black text-slate-400 uppercase">Requests</span>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 mt-4">
                                         {analyticsData.statusChart.map((s, idx) => (
                                             <div key={idx} className="flex items-center gap-2 p-2 bg-background rounded-md border text-foreground">
-
                                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][idx % 5] }} />
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase truncate">{s.name}</span>
                                                 <span className="ml-auto text-xs font-bold">{s.value}</span>
@@ -342,7 +670,6 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
                                 {/* Top Vendors Spending */}
                                 <div className="bg-muted/20 p-6 rounded-lg border">
-
                                     <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                         <ShoppingCart size={14} /> Top Projected Spend by Vendor
                                     </h3>
@@ -352,7 +679,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
                                                 <YAxis hide />
-                                                <Tooltip 
+                                                <Tooltip
                                                     formatter={(value: number) => formatIDR(value)}
                                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '10px', fontWeight: 'bold' }}
                                                 />
@@ -367,96 +694,143 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                     <p className="text-[9px] text-center text-slate-400 font-bold uppercase mt-4 tracking-tighter italic">Aggregated cost from all request types</p>
                                 </div>
                             </div>
-
-                            {/* Recent Activity Mini Feed Placeholder or High Level Trend */}
                             <div className="p-12 text-center border-t border-slate-100 dark:border-zinc-800 border-dashed">
                                 <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-[0.3em]">Full Audit Trail Synced with Corporate Ledger</p>
                             </div>
                         </div>
                     ) : (
+                        /* REQUISITIONS TABLE VIEW */
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-zinc-800">
-                                    <th className="px-6 py-5">Item Identity</th>
-                                    <th className="px-6 py-5 text-center">Qty</th>
+                                    <th className="px-6 py-5">Requisition ID</th>
+                                    <th className="px-6 py-5">Originator</th>
+                                    <th className="px-6 py-5">Paid To</th>
                                     <th className="px-6 py-5 text-right">Commitment</th>
                                     <th className="px-6 py-5">Status</th>
-                                    <th className="px-6 py-5">Originator</th>
                                     <th className="px-6 py-5 text-center">Protocol</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                {loading && !paginatedPlans.length ? (
-                                    Array.from({ length: 10 }).map((_, idx) => (
+                                {loading && !paginatedRequisitions.length ? (
+                                    Array.from({ length: 5 }).map((_, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
-                                            <td className="px-6 py-5">
-                                                <div className="flex flex-col gap-2 max-w-xs">
-                                                    <Skeleton className="h-4 w-3/4 rounded-md" />
-                                                    <Skeleton className="h-3 w-1/2" />
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5 text-center flex justify-center">
-                                                <Skeleton className="h-4 w-8 rounded-md" />
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <Skeleton className="h-4 w-20 ml-auto rounded-md" />
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <Skeleton className="h-4 w-24 rounded-full" />
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <div className="flex flex-col gap-2">
-                                                    <Skeleton className="h-3 w-24" />
-                                                    <Skeleton className="h-3 w-16" />
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5 flex justify-center">
-                                                <Skeleton className="h-8 w-8 rounded-lg" />
-                                            </td>
+                                            <td className="px-6 py-5"><Skeleton className="h-4 w-16" /></td>
+                                            <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
+                                            <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
+                                            <td className="px-6 py-5"><Skeleton className="h-4 w-20 ml-auto" /></td>
+                                            <td className="px-6 py-5"><Skeleton className="h-4 w-20" /></td>
+                                            <td className="px-6 py-5"><Skeleton className="h-8 w-8 mx-auto" /></td>
                                         </tr>
                                     ))
-                                ) : paginatedPlans.length === 0 ? (
-                                    <tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">Registry empty.</td></tr>
-                                ) : paginatedPlans.map(plan => {
-                                    const isMyTurn = isMyTurnToApprove(plan);
-                                    const requesterProfile = getRequesterProfile(plan.requester);
-                                    return (<tr key={plan.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-top ${isMyTurn ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}><td className="px-6 py-5"><div className="flex flex-col max-w-xs"><span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight mb-1 leading-tight">{plan.item}</span><span className="text-[10px] text-slate-400 dark:text-slate-600 line-clamp-1 italic">{plan.specs}</span></div></td><td className="px-6 py-5 text-center font-mono text-[11px] text-slate-500 dark:text-zinc-400 font-bold">{plan.quantity}x</td><td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatIDR(plan.totalPrice)}</td><td className="px-6 py-5">{getStatusDisplay(plan)}</td><td className="px-6 py-5"><div className="flex flex-col"><div className="flex items-center gap-1.5"><p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{requesterProfile?.fullName || plan.requester}</p><Fingerprint size={10} className="text-blue-500 opacity-20" /></div><p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 font-mono">{plan.requestDate}</p></div></td><td className="px-6 py-5 text-center"><div className="flex items-center justify-center gap-1.5"><button onClick={() => { const profile = getRequesterProfile(plan.requester); setApproverNames({ spv: allUsers.find(u => u.id.toString() === profile?.supervisorId)?.fullName || '', manager: allUsers.find(u => u.id.toString() === profile?.managerId)?.fullName || '' }); setSelectedRequesterProfile(profile); setSelectedPlan(plan); setIsDetailOpen(true); }} className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg" title="View Registry Entry"><Eye size={16} /></button>
-                                        {isMyTurn ? (<><button onClick={() => handleApprove(plan)} disabled={isActionLoading} className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90" title="Authorize"><Check size={16} strokeWidth={3} /></button><button onClick={() => setRejectTarget(plan)} disabled={isActionLoading} className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90" title="Deny"><X size={16} strokeWidth={3} /></button></>) : (canDelete && <button onClick={() => setDeletePlan(plan)} className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100" title="Purge Node"><Trash2 size={16} /></button>)}</div></td></tr>);
-                                })}</tbody>
+                                ) : filteredRequisitions.length === 0 ? (
+                                    <tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">No PR requisitions found.</td></tr>
+                                ) : paginatedRequisitions.map(req => {
+                                    const isMyTurn = isMyTurnToApproveRequisition(req);
+                                    return (
+                                        <tr key={req.id} className={cn("hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-middle", isMyTurn && "bg-blue-50/10 dark:bg-blue-900/5")}>
+                                            <td className="px-6 py-5 font-mono font-bold text-xs text-slate-800 dark:text-slate-200">
+                                                PR-{String(req.id).padStart(4, '0')}
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-800 dark:text-slate-100 text-xs">{req.requesterFullname}</span>
+                                                    <span className="text-[9px] text-slate-400 font-mono mt-0.5">{req.department} • {req.requestDate}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5 text-xs text-slate-600 dark:text-zinc-400 font-medium">
+                                                {req.paidTo || '-'}
+                                            </td>
+                                            <td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                {formatIDR(req.grandTotal)}
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                {getRequisitionStatusDisplay(req)}
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => { setSelectedRequisition(req); setIsReqDetailOpen(true); }}
+                                                        className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg"
+                                                        title="View PR Details"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    {isMyTurn ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApproveRequisition(req)}
+                                                                disabled={isActionLoading}
+                                                                className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90"
+                                                                title="Approve Requisition"
+                                                            >
+                                                                <Check size={16} strokeWidth={3} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setRejectRequisitionTarget(req)}
+                                                                disabled={isActionLoading}
+                                                                className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90"
+                                                                title="Reject Requisition"
+                                                            >
+                                                                <X size={16} strokeWidth={3} />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        canDelete && (
+                                                            <button
+                                                                onClick={() => setDeleteRequisitionTarget(req)}
+                                                                className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+                                                                title="Purge Requisition"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
                         </table>
                     )}
                 </div>
+
                 <div className="px-6 py-4 bg-muted/20 border-t flex items-center justify-between shrink-0">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Page {currentPage} of {totalPages || 1} • {filteredPlans.length} records</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Page {currentPage} of {totalPages || 1} • {filteredRequisitions.length} records</p>
                     <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
-                            disabled={currentPage === 1} 
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             className="w-8 text-muted-foreground hover:text-primary transition-all"
                         >
                             <ChevronLeft size={16} />
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="icon" 
-                            disabled={currentPage === totalPages || totalPages === 0} 
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             className="w-8 text-muted-foreground hover:text-primary transition-all"
                         >
                             <ChevronRight size={16} />
                         </Button>
                     </div>
                 </div>
-
             </div>
 
-            <PurchaseRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={async (formData) => { try { const payload = { item: formData.item, specs: formData.specs, quantity: formData.quantity, unit_price: formData.unitPrice, total_price: formData.totalPrice, vendor: formData.vendor, status: formData.status || 'Pending Approval', requester: currentUser?.username || formData.requester, request_date: formData.requestDate, justification: formData.justification }; const { error } = await supabase.from('purchase_plans').insert([payload]); if (error) throw error; setIsModalOpen(false); showToast("Request submitted successfully", "success"); fetchData(); } catch (err: any) { showToast("Submission failed: " + err.message, "error"); } }} currentUserName={currentUser?.fullName} currentUser={currentUser} />
-            <PurchaseDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} plan={selectedPlan} spvName={approverNames.spv} managerName={approverNames.manager} requesterProfile={selectedRequesterProfile} />
-            <RejectReasonModal isOpen={!!rejectTarget} onClose={() => setRejectTarget(null)} onSubmit={submitReject} itemName={rejectTarget?.item} />
-            <DangerConfirmModal isOpen={!!deletePlan} onClose={() => setDeletePlan(null)} onConfirm={async () => { if (!deletePlan) return; await supabase.from('purchase_plans').delete().eq('id', deletePlan.id); setDeletePlan(null); fetchData(); }} title="Purge registry node" message={`Remove procurement request for "${deletePlan?.item}" permanently?`} />
+            {/* Form Modals */}
+            <PurchaseRequisitionFormModal isOpen={isReqFormOpen} onClose={() => setIsReqFormOpen(false)} onSubmit={handleCreateRequisition} currentUser={currentUser} allUsers={allUsers} />
+
+            {/* Detail Modals */}
+            <PurchaseRequisitionDetailModal isOpen={isReqDetailOpen} onClose={() => setIsReqDetailOpen(false)} requisition={selectedRequisitionWithNames} currentUser={currentUser} onApprove={handleApproveRequisition} onReject={(req) => setRejectRequisitionTarget(req)} />
+
+            {/* Reject Reason Modals */}
+            <RejectReasonModal isOpen={!!rejectRequisitionTarget} onClose={() => setRejectRequisitionTarget(null)} onSubmit={submitRejectRequisition} itemName={rejectRequisitionTarget ? `PR Requisition for ${rejectRequisitionTarget.requesterFullname}` : ''} />
+
+            <DangerConfirmModal isOpen={!!deleteRequisitionTarget} onClose={() => setDeleteRequisitionTarget(null)} onConfirm={async () => { if (!deleteRequisitionTarget) return; await supabase.from('purchase_requisitions').delete().eq('id', deleteRequisitionTarget.id); setDeleteRequisitionTarget(null); fetchData(); }} title="Purge PR Requisition" message={deleteRequisitionTarget ? `Remove PR Requisition PR-${String(deleteRequisitionTarget.id).padStart(4, '0')} permanently?` : ''} />
         </div>
     );
 };
-

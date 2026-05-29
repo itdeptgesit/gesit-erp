@@ -79,6 +79,10 @@ interface DashboardStats {
         paid: number;
         utilizationRate: number;
     };
+    ticketChartData?: { name: string; count: number }[];
+    assetCategoryPieData?: { name: string; value: number }[];
+    itUnitsCount?: number;
+    gaUnitsCount?: number;
 }
 
 interface MainDashboardProps {
@@ -142,7 +146,11 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
         personalTasks: [], upcomingLoans: [], activeAnnouncements: [],
         vendors: [],
         purchaseCategoryData: [],
-        budgetUtilization: { total: 0, paid: 0, utilizationRate: 0 }
+        budgetUtilization: { total: 0, paid: 0, utilizationRate: 0 },
+        ticketChartData: [],
+        assetCategoryPieData: [],
+        itUnitsCount: 0,
+        gaUnitsCount: 0
     });
 
     const fetchData = async () => {
@@ -216,6 +224,43 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 retired: assets?.filter((a: any) => ['Broken', 'Disposed', 'Sold', 'Lost'].includes(a.status)).length || 0,
             };
 
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyPaidSpend = (purchaseRecords || [])
+                .filter((r: any) => {
+                    if (r.status !== 'Paid' || !r.purchase_date) return false;
+                    const d = new Date(r.purchase_date);
+                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                })
+                .reduce((sum, r) => sum + (Number(r.total_va) || 0), 0);
+
+            const openTicketsCount = allTickets?.filter((t: any) => t.status === 'Open').length || 0;
+            const wipTicketsCount = allTickets?.filter((t: any) => t.status === 'In Progress').length || 0;
+            const resolvedTicketsCount = allTickets?.filter((t: any) => ['Resolved', 'Closed'].includes(t.status)).length || 0;
+            const ticketChartData = [
+                { name: 'Open', count: openTicketsCount },
+                { name: 'WIP', count: wipTicketsCount },
+                { name: 'Resolved', count: resolvedTicketsCount }
+            ];
+
+            const assetCategories = (assets || []).reduce((acc: any, curr: any) => {
+                const cat = curr.category || 'Other';
+                acc[cat] = (acc[cat] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            const assetCategoryPieData = Object.entries(assetCategories)
+                .map(([name, value]) => ({ name, value: value as number }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 4);
+
+            const itUnitsCount = assets?.filter((a: any) => 
+                ['laptop', 'desktop', 'server', 'network', 'switch', 'hardware', 'printer', 'ups', 'monitor', 'accessories'].some(cat => 
+                    (a.category || '').toLowerCase().includes(cat)
+                )
+            ).length || 0;
+            const gaUnitsCount = (assets?.length || 0) - itUnitsCount;
+
             setStats({
                 totalAssets: assets?.length || 0,
                 activeAssets: assetStatuses.operational,
@@ -234,11 +279,11 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 pendingBudget,
                 approvedBudget: purchases?.filter(p => p.status === 'Approved').reduce((sum, p) => sum + (p.total_price || 0), 0) || 0,
                 totalPaidSpend: purchaseRecords?.filter((r: any) => r.status === 'Paid').reduce((sum, r) => sum + (r.total_va || 0), 0) || 0,
-                monthlyPaidSpend: 0, // Simplified for brevity
+                monthlyPaidSpend,
                 activeLoans: activeLoans || 0,
                 overdueLoans,
                 recentActivities: (activities || []).map((a: any) => ({ ...a, activityName: a.activity_name, itPersonnel: a.it_personnel, createdAt: a.created_at })),
-                assetCategories: {},
+                assetCategories,
                 deptSpending,
                 assetStatuses,
                 personalTasks: pTasks || [],
@@ -258,7 +303,11 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         paid,
                         utilizationRate: total > 0 ? Math.round((paid / total) * 100) : 0
                     };
-                })()
+                })(),
+                ticketChartData,
+                assetCategoryPieData,
+                itUnitsCount,
+                gaUnitsCount
             });
 
 
@@ -321,130 +370,167 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 {/* --- DASHBOARD CONTENT SWITCHER --- */}
                 <TabsContent value="personal" className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
                     {/* PERSONAL VIEW (Referencing Screenshot 1) */}
-                    {/* Stat Cards - Row 1 */}
-                    {/* Stat Cards - Row 1 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <StatCard
-                            label="My Open Tickets" value={stats.openTickets} subValue="+2 Today"
-                            icon={Help} color="blue" onClick={() => onNavigate('helpdesk')}
-                        />
-                        <StatCard
-                            label="My Asset Loans" value={stats.activeLoans} subtext="On Loan"
-                            icon={Box} color="amber" onClick={() => onNavigate('asset-loan')}
-                        />
-                        <StatCard
-                            label="My Procurement" value={stats.pendingPurchases} subtext="Pending"
-                            icon={ShoppingCart} color="emerald" onClick={() => onNavigate('purchase')}
-                        />
-                        <StatCard
-                            label="My Tasks Today" value={stats.personalTasks.length} subtext="1 Overdue"
-                            icon={Checklist} color="indigo" onClick={() => onNavigate('weekly')}
-                        />
-                    </div>
+                    {(() => {
+                        const myActiveLoans = stats.upcomingLoans.filter((loan: any) => 
+                            (loan.borrower_email && currentUser?.email && loan.borrower_email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                            (loan.borrower_name && userName && loan.borrower_name.toLowerCase() === userName.toLowerCase())
+                        );
+                        const overdueTasksCount = stats.personalTasks.filter((t: any) => 
+                            t.status === 'Overdue' || (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'Done')
+                        ).length;
 
-                    {/* Main Grid - Row 2 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* My Tasks Today */}
-                        <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base font-semibold text-foreground">My Tasks Today</h2>
-                            </div>
-                            <div className="space-y-4">
-                                {stats.personalTasks.slice(0, 3).map((task) => (
-                                    <div key={task.id} className="flex items-center gap-3 group">
-                                        <div className="w-5 h-5 rounded border border-slate-300 dark:border-zinc-700 flex items-center justify-center group-hover:border-primary transition-colors cursor-pointer">
-                                            <div className="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-foreground truncate">{task.task}</p>
-                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">{task.due_date || 'Today'}</p>
-                                        </div>
-                                        {task.status === 'Overdue' && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 font-bold">OVERDUE</Badge>}
-                                    </div>
-                                ))}
-                                <Button variant="link" className="h-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-primary mt-2" onClick={() => onNavigate('weekly')}>
-                                    View All Tasks
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* My Tickets Overview Chart */}
-                        <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base font-semibold text-foreground">My Tickets</h2>
-                                <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
-                            </div>
-                            <div className="h-48 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ReBarChart data={[
-                                        { day: 'Mon', open: 2, wip: 1 }, { day: 'Tue', open: 4, wip: 2 },
-                                        { day: 'Wed', open: 3, wip: 3 }, { day: 'Thu', open: 1, wip: 1 }
-                                    ]}>
-                                        <ReTooltip cursor={{ fill: 'transparent' }} />
-                                        <Bar dataKey="open" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                        <Bar dataKey="wip" fill="#ffd700" radius={[4, 4, 0, 0]} />
-                                    </ReBarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="mt-4 text-center">
-                                <Button variant="link" size="sm" onClick={() => onNavigate('helpdesk')} className="text-xs font-semibold text-primary">
-                                    View My Tickets <span className="ml-1"><ChevronRight size="XS" /></span>
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* My Borrowed Assets */}
-                        <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-base font-semibold text-foreground">My Assets</h2>
-                                <span className="text-slate-500 dark:text-zinc-400"><Box size="S" /></span>
-                            </div>
-                            <div className="space-y-4">
-                                {stats.upcomingLoans.slice(0, 2).map((loan: any, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden shrink-0">
-                                            <img src={`https://i.pravatar.cc/150?u=${i}`} alt="Avatar" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-foreground">{loan.borrower_name || 'My Asset'}</p>
-                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{loan.it_assets?.item_name || 'Device'}</p>
-                                        </div>
-                                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-400">APR 25</div>
-                                    </div>
-                                ))}
-                                <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-semibold uppercase tracking-wider" onClick={() => onNavigate('asset-loan')}>
-                                    View All <span className="ml-1"><ChevronRight size="S" /></span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Row 3 - Recent Activity & History */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-base font-semibold text-foreground">Recent Activity</h2>
-                                    <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
+                        return (
+                            <>
+                                {/* Stat Cards - Row 1 */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <StatCard
+                                        label="My Open Tickets" value={stats.openTickets} subValue="+2 Today"
+                                        icon={Help} color="blue" onClick={() => onNavigate('helpdesk')}
+                                    />
+                                    <StatCard
+                                        label="My Asset Loans" value={myActiveLoans.length} subtext="On Loan"
+                                        icon={Box} color="amber" onClick={() => onNavigate('asset-loan')}
+                                    />
+                                    <StatCard
+                                        label="My Procurement" value={stats.pendingPurchases} subtext="Pending"
+                                        icon={ShoppingCart} color="emerald" onClick={() => onNavigate('purchase')}
+                                    />
+                                    <StatCard
+                                        label="My Tasks Today" value={stats.personalTasks.length} subtext={`${overdueTasksCount} Overdue`}
+                                        icon={Checklist} color="indigo" onClick={() => onNavigate('weekly')}
+                                    />
                                 </div>
-                            <div className="space-y-6">
-                                {stats.recentActivities.length > 0 ? stats.recentActivities.slice(0, 3).map((act, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 transition-colors">
-                                            <Activity size="S" />
+
+                                {/* Main Grid - Row 2 */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* My Tasks Today */}
+                                    <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-base font-semibold text-foreground">My Tasks Today</h2>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-foreground">{act.activityName}</p>
-                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleDateString()}</p>
+                                        <div className="space-y-4">
+                                            {stats.personalTasks.length > 0 ? (
+                                                stats.personalTasks.slice(0, 3).map((task) => (
+                                                    <div key={task.id} className="flex items-center gap-3 group">
+                                                        <div className="w-5 h-5 rounded border border-slate-300 dark:border-zinc-700 flex items-center justify-center group-hover:border-primary transition-colors cursor-pointer">
+                                                            <div className="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-foreground truncate">{task.task}</p>
+                                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">{task.due_date || 'Today'}</p>
+                                                        </div>
+                                                        {task.status === 'Overdue' && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 font-bold">OVERDUE</Badge>}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="text-center py-6 text-xs text-muted-foreground italic">
+                                                    No tasks assigned for today
+                                                </div>
+                                            )}
+                                            <Button variant="link" className="h-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-primary mt-2 p-0 animate-pulse-subtle" onClick={() => onNavigate('weekly')}>
+                                                View All Tasks
+                                            </Button>
                                         </div>
                                     </div>
-                                )) : (
-                                    <div className="text-center py-10">
-                                        <p className="text-xs text-muted-foreground">No recent activities found.</p>
+
+                                    {/* My Tickets Overview Chart */}
+                                    <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-base font-semibold text-foreground">My Tickets</h2>
+                                            <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
+                                        </div>
+                                        <div className="h-48 w-full">
+                                            {stats.ticketChartData && stats.ticketChartData.some(d => d.count > 0) ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <ReBarChart data={stats.ticketChartData}>
+                                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700 }} />
+                                                        <ReTooltip cursor={{ fill: 'transparent' }} />
+                                                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                                                            {stats.ticketChartData.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={['#3b82f6', '#f59e0b', '#10b981'][index % 3]} />
+                                                            ))}
+                                                        </Bar>
+                                                    </ReBarChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                                                    <span className="text-emerald-500 mb-2 opacity-55">
+                                                        <CheckmarkCircle size="M" />
+                                                    </span>
+                                                    <p className="text-xs text-muted-foreground font-semibold">No active tickets found</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="mt-4 text-center">
+                                            <Button variant="link" size="sm" onClick={() => onNavigate('helpdesk')} className="text-xs font-semibold text-primary p-0">
+                                                View My Tickets <span className="ml-1"><ChevronRight size="XS" /></span>
+                                            </Button>
+                                        </div>
                                     </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+
+                                    {/* My Borrowed Assets */}
+                                    <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-base font-semibold text-foreground">My Assets</h2>
+                                            <span className="text-slate-500 dark:text-zinc-400"><Box size="S" /></span>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {myActiveLoans.length > 0 ? (
+                                                myActiveLoans.slice(0, 3).map((loan: any, i) => (
+                                                    <div key={loan.id || i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors">
+                                                        <div className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-slate-100 dark:border-white/5 shrink-0">
+                                                            <Box size="S" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-foreground truncate">{loan.it_assets?.item_name || 'IT Asset'}</p>
+                                                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{loan.loan_id || 'Active Loan'}</p>
+                                                        </div>
+                                                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-400">
+                                                            {loan.expected_return_date ? new Date(loan.expected_return_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Active'}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="py-8 text-center text-xs text-muted-foreground italic">
+                                                    No borrowed assets
+                                                </div>
+                                            )}
+                                            <Button variant="outline" className="w-full mt-4 justify-between text-[10px] font-semibold uppercase tracking-wider" onClick={() => onNavigate('asset-loan')}>
+                                                View All <span className="ml-1"><ChevronRight size="S" /></span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Row 3 - Recent Activity & History */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-base font-semibold text-foreground">Recent Activity</h2>
+                                            <span className="text-slate-500 dark:text-zinc-400"><Activity size="S" /></span>
+                                        </div>
+                                        <div className="space-y-6">
+                                            {stats.recentActivities.length > 0 ? stats.recentActivities.slice(0, 3).map((act, i) => (
+                                                <div key={i} className="flex gap-4">
+                                                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 transition-colors">
+                                                        <Activity size="S" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-foreground">{act.activityName}</p>
+                                                        <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{act.itPersonnel} • {new Date(act.createdAt).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                            )) : (
+                                                <div className="text-center py-10">
+                                                    <p className="text-xs text-muted-foreground">No recent activities found.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </TabsContent>
 
                 <TabsContent value="organization" className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -663,8 +749,16 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             <div className="h-48 w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RePieChart>
-                                        <Pie data={[{ v: 148 }, { v: 84 }, { v: 52 }, { v: 65 }]} innerRadius={50} outerRadius={70} dataKey="v">
-                                            <Cell fill="#3b82f6" /><Cell fill="#f59e0b" /><Cell fill="#f43f5e" /><Cell fill="#10b981" />
+                                        <Pie 
+                                            data={stats.assetCategoryPieData && stats.assetCategoryPieData.length > 0 ? stats.assetCategoryPieData : [{ name: 'Assets', value: stats.totalAssets || 1 }]} 
+                                            innerRadius={50} 
+                                            outerRadius={70} 
+                                            dataKey="value"
+                                        >
+                                            <Cell fill="#3b82f6" />
+                                            <Cell fill="#f59e0b" />
+                                            <Cell fill="#f43f5e" />
+                                            <Cell fill="#10b981" />
                                         </Pie>
                                     </RePieChart>
                                 </ResponsiveContainer>
@@ -676,11 +770,11 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                             <div className="grid grid-cols-2 gap-4 mt-6">
                                 <div className="text-center">
                                     <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-tight">IT UNITS</p>
-                                    <p className="text-sm font-bold">251</p>
+                                    <p className="text-sm font-bold">{stats.itUnitsCount}</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-tight">GA UNITS</p>
-                                    <p className="text-sm font-bold">65</p>
+                                    <p className="text-sm font-bold">{stats.gaUnitsCount}</p>
                                 </div>
                             </div>
                         </div>
@@ -715,18 +809,26 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                         <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-1">
                             <h2 className="text-sm font-semibold text-foreground mb-4">Active Loans</h2>
                             <div className="space-y-4">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-muted overflow-hidden shrink-0">
-                                            <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="User" />
+                                {stats.upcomingLoans.length > 0 ? (
+                                    stats.upcomingLoans.slice(0, 4).map((loan: any, i) => (
+                                        <div key={loan.id || i} className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-slate-100 dark:border-white/5 shrink-0 font-bold text-[10px] uppercase">
+                                                {loan.borrower_name ? loan.borrower_name.substring(0, 2) : 'U'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-semibold truncate">{loan.borrower_name || 'User'}</p>
+                                                <p className="text-[9px] text-slate-500 dark:text-zinc-400 truncate">{loan.it_assets?.item_name || 'Device'}</p>
+                                            </div>
+                                            <span className="text-[9px] font-semibold text-slate-500 dark:text-zinc-400 text-right">
+                                                {loan.expected_return_date ? new Date(loan.expected_return_date).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }) : 'N/A'}
+                                            </span>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold truncate">User Name</p>
-                                            <p className="text-[9px] text-slate-500 dark:text-zinc-400 truncate">Laptop Device</p>
-                                        </div>
-                                        <span className="text-[9px] font-semibold text-slate-500 dark:text-zinc-400 text-right">04/24</span>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6 text-xs text-muted-foreground italic">
+                                        No active asset loans
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>

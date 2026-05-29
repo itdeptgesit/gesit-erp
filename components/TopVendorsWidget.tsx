@@ -48,35 +48,38 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                             transition={{ delay: idx * 0.1 }}
                             className="relative group/item"
                         >
-                            <div className="flex justify-between items-center z-10 relative p-2 -mx-1 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                            <div className="flex justify-between items-center z-10 relative p-2 -mx-1 rounded-xl hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-all duration-300 hover:translate-x-1.5 cursor-pointer border border-transparent hover:border-slate-100/50 dark:hover:border-zinc-800/50 group/row">
                                 <div className="flex items-center gap-4">
                                     <div className={`
-                                        w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shadow-sm border
-                                        ${idx === 0 ? 'bg-amber-100 text-amber-600 border-amber-200' :
-                                            idx === 1 ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                idx === 2 ? 'bg-orange-100 text-orange-600 border-orange-200' :
-                                                    'bg-slate-50 text-slate-400 border-slate-100'}
+                                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-sm border transition-transform duration-300 group-hover/row:scale-110
+                                        ${idx === 0 ? 'bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-yellow-950/20 dark:to-amber-900/10 text-amber-600 dark:text-amber-400 border-amber-200/60 dark:border-amber-500/20' :
+                                            idx === 1 ? 'bg-gradient-to-br from-slate-50 to-slate-150 dark:from-zinc-900 dark:to-zinc-800 text-slate-600 dark:text-slate-350 border-slate-200/60 dark:border-zinc-700/50' :
+                                                idx === 2 ? 'bg-gradient-to-br from-orange-55 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 text-orange-700 dark:text-orange-400 border-orange-200/60 dark:border-orange-500/20' :
+                                                    'bg-slate-50 dark:bg-zinc-800/40 text-slate-450 dark:text-zinc-500 border-slate-100/80 dark:border-zinc-800/80'}
                                     `}>
                                         {idx + 1}
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[140px]">
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[140px] group-hover/row:text-primary transition-colors duration-200">
                                             {vendor.name === 'Unknown' || !vendor.name ? 'General Supplier' : vendor.name}
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[11px] font-bold px-1 py-0.5 rounded bg-slate-100/50 dark:bg-zinc-800 text-slate-500 uppercase tracking-wider">
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100/50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                                                 {vendor.transactionCount} Txns
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right flex flex-col items-end justify-center">
                                     <p className="text-xs font-black text-slate-900 dark:text-white font-mono leading-none">
                                         {formatIDR(vendor.total).replace('Rp', '')}
                                     </p>
-                                    <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-tight mt-0.5">
-                                        Active
-                                    </p>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider">
+                                            Active
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

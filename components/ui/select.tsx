@@ -108,7 +108,7 @@ function SelectTrigger({ className, children, ...props }: any) {
     <RACButton 
       {...props}
       className={composeRenderProps(className, (className, renderProps) => cn(
-        "flex h-9 items-center justify-between gap-2.5 rounded-xl border border-input bg-input/30 px-3 py-2 text-sm transition-all outline-none",
+        "flex h-9 items-center justify-between gap-2.5 rounded-xl border border-input bg-input/30 px-3 py-2 text-sm transition-all outline-none [&>span]:line-clamp-1",
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "dark:hover:bg-input/50",

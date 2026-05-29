@@ -298,32 +298,39 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
     };
 
     return (
-        <div className="pb-12 space-y-8 animate-in fade-in duration-500">
-            <div className="no-print space-y-8">
+        <div className="w-full min-h-screen bg-transparent py-4 sm:py-6 px-0 sm:px-4 space-y-6 animate-in fade-in duration-500 pb-12">
+            <div className="no-print space-y-6">
                 <PageHeader
                     title={t('assetLoan')}
                     description={canManage ? t('assetLoanDescriptionAdmin') : t('assetLoanDescriptionUser')}
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {canManage && (
                             <Button
                                 variant="outline"
+                                size="sm"
                                 onClick={handleExportExcel}
-                                className="text-xs font-bold"
+                                className="h-9 px-3 shrink-0 text-[10px] font-bold uppercase tracking-widest"
+                                title="Export Excel"
                             >
-                                <FileSpreadsheet className="mr-2 h-3.5 w-3.5" /> Export Excel
+                                <FileSpreadsheet className="w-3.5 h-3.5 sm:mr-2" />
+                                <span className="hidden sm:inline">Export Excel</span>
                             </Button>
                         )}
                         {canManage && (
-                            <Button onClick={() => { setEditingLoan(null); setIsModalOpen(true); }} className="flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]">
-                                <Plus size={16} /> New Record
+                            <Button 
+                                size="sm"
+                                onClick={() => { setEditingLoan(null); setIsModalOpen(true); }} 
+                                className="h-9 px-3 shrink-0 flex items-center gap-1.5 font-bold uppercase tracking-widest text-[10px]"
+                            >
+                                <Plus size={14} /> New Record
                             </Button>
                         )}
                     </div>
                 </PageHeader>
 
                 {canManage && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <StatCard
                             label={t('pendingRequests')}
                             value={loans.filter(l => l.status === 'Pending').length}
@@ -337,36 +344,47 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                     </div>
                 )}
 
-                {/* Filters Section - Only show for canManage or if we want users to filter history */}
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-80">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <Input
-                                type="text"
-                                placeholder={t('searchAssetsPlaceholder')}
-                                className="h-10 pl-10 pr-4 bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                {/* Filters Section */}
+                <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col md:flex-row items-stretch md:items-center gap-3 transition-all">
+                    <div className="relative flex-1 w-full">
+                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder={t('searchAssetsPlaceholder')}
+                            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-10 text-xs rounded-xl"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
                     </div>
 
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <select className="h-9 px-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-[10px] font-bold uppercase text-slate-600 dark:text-zinc-400 focus:outline-none" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                    <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                        <select 
+                            className="flex-1 md:w-[150px] h-10 px-3 bg-background border border-muted-foreground/10 focus-visible:ring-1 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 focus:outline-none" 
+                            value={statusFilter} 
+                            onChange={e => setStatusFilter(e.target.value)}
+                        >
                             <option value="All">{t('allStatus')}</option>
                             <option value="Pending">{t('statusPending')}</option>
                             <option value="Active">{t('statusActive')}</option>
                             <option value="Returned">{t('statusReturned')}</option>
                             <option value="Overdue">{t('statusOverdue')}</option>
                         </select>
-                        <button onClick={fetchLoans} className="h-9 px-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-500 transition-colors">
+                        <Button 
+                            variant="outline"
+                            size="icon"
+                            onClick={fetchLoans} 
+                            className="h-10 w-10 text-muted-foreground hover:text-primary border-muted-foreground/10 shrink-0 rounded-xl"
+                            title="Refresh"
+                        >
                             <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
-                <div className={`${canManage ? 'bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col' : ''}`} style={canManage ? { maxHeight: 'calc(100vh - 340px)', minHeight: '400px' } : undefined}>
+                <div className={cn(
+                    canManage ? "bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col" : "",
+                    canManage && "md:max-h-[calc(100vh-340px)] md:min-h-[400px]"
+                )}>
                     {canManage ? (
                         <>
                             {/* Desktop Table View */}
@@ -488,98 +506,153 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                             </div>
 
                             {/* Mobile Card View */}
-                            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                            <div className="md:hidden divide-y divide-slate-100 dark:divide-zinc-800/40">
                                 {isLoading ? (
-                                    <div className="py-20 text-center"><RefreshCcw className="animate-spin text-blue-500 mx-auto" size={24} /></div>
+                                    <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
+                                        <RefreshCcw className="animate-spin text-blue-500" size={24} />
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('loading')}...</p>
+                                    </div>
                                 ) : paginatedLoans.length === 0 ? (
-                                    <div className="py-20 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">{t('noRecordsFound')}</div>
+                                    <div className="p-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">{t('noRecordsFound')}</div>
                                 ) : paginatedLoans.map((loan) => (
-                                    <div key={loan.id} className="p-4 space-y-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{loan.assetName}</span>
-                                                <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tight">{loan.loanId} • {loan.assetTag}</span>
-                                            </div>
-                                            {getStatusDisplay(loan.status)}
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-slate-100 dark:border-zinc-800">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('borrower')}</span>
-                                                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300 text-[11px]">
-                                                    <User size={10} className="text-slate-400" /> {loan.borrowerName}
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('department')}</span>
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-zinc-400">
-                                                    <Building2 size={10} /> {loan.borrowerDept}
-                                                </div>
+                                    <div 
+                                        key={loan.id} 
+                                        onClick={() => setSelectedLoan(loan)}
+                                        className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                {loan.assetCategory} {loan.assetBrand && loan.assetBrand !== '-' ? `· ${loan.assetBrand}` : ''}
+                                            </span>
+                                            <div>
+                                                {getStatusDisplay(loan.status)}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between text-[11px] font-bold">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <Calendar size={12} className="text-slate-400" /> {new Date(loan.loanDate).toLocaleDateString()}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border flex items-center justify-center overflow-hidden shrink-0 border-dashed">
+                                                <Package size={18} className="text-slate-400 opacity-50" />
                                             </div>
-                                            <div className="flex items-center gap-2 text-rose-500">
-                                                <Clock size={12} className="text-rose-400" /> {new Date(loan.expectedReturnDate).toLocaleDateString()}
+                                            <div className="min-w-0 flex-1">
+                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200 block truncate">{loan.assetName}</span>
+                                                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1 block tracking-wider uppercase">{loan.loanId} · {loan.assetTag}</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-50 dark:border-zinc-800">
-                                            {loan.status === 'Pending' && (
-                                                <>
-                                                    <button onClick={() => handleApproveRequest(loan)} className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl transition-all">
-                                                        <CheckCircle2 size={18} />
-                                                    </button>
-                                                    <button onClick={() => handleRejectRequest(loan)} className="p-2.5 text-rose-600 bg-rose-50 dark:bg-rose-900/20 rounded-xl transition-all">
-                                                        <XCircle size={18} />
-                                                    </button>
-                                                </>
-                                            )}
+                                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 dark:border-zinc-800/20 text-[11px]">
+                                            <div>
+                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">{t('borrower')}</span>
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{loan.borrowerName}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">{t('department')}</span>
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{loan.borrowerDept}</span>
+                                            </div>
+                                        </div>
 
-                                            {loan.status === 'Active' && (
-                                                <button onClick={() => handleReturnAsset(loan)} className="p-2.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl transition-all">
-                                                    <CheckCircle2 size={18} />
-                                                </button>
-                                            )}
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-zinc-800/20">
+                                            <div className="flex flex-col text-[10px] text-slate-400 dark:text-zinc-500 leading-tight">
+                                                <span>Loan: {new Date(loan.loanDate).toLocaleDateString()}</span>
+                                                <span className="text-rose-500/80 dark:text-rose-400/80 mt-0.5">Due: {new Date(loan.expectedReturnDate).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                {loan.status === 'Pending' && (
+                                                    <>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setConfirmAction({ loan, type: 'approve' })}
+                                                            title="Approve"
+                                                            className="w-8 h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/20"
+                                                        >
+                                                            <CheckCircle2 size={16} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setConfirmAction({ loan, type: 'reject' })}
+                                                            title="Reject"
+                                                            className="w-8 h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-900/20"
+                                                        >
+                                                            <XCircle size={16} />
+                                                        </Button>
+                                                    </>
+                                                )}
 
-                                            <button onClick={() => setSelectedLoan(loan)} className="p-2.5 text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl transition-all" title="View Receipt">
-                                                <FileText size={18} />
-                                            </button>
+                                                {loan.status === 'Active' && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleReturnAsset(loan)}
+                                                        title="Mark Returned"
+                                                        className="w-8 h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/20"
+                                                    >
+                                                        <RotateCcw size={16} />
+                                                    </Button>
+                                                )}
 
-                                            <button onClick={() => exportHandoverBAST(loan)} className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl transition-all" title="Cetak BAST (PDF)">
-                                                <FileText size={18} className="text-blue-600" />
-                                            </button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setSelectedLoan(loan)}
+                                                    className="w-8 h-8 text-slate-500 hover:text-indigo-600"
+                                                    title="View Receipt"
+                                                >
+                                                    <FileText size={16} />
+                                                </Button>
 
-                                            <button onClick={() => { setEditingLoan(loan); setIsModalOpen(true); }} className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl transition-all">
-                                                <Pencil size={18} />
-                                            </button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => exportHandoverBAST(loan)}
+                                                    className="w-8 h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                                                    title="Cetak BAST (PDF)"
+                                                >
+                                                    <FileText size={16} className="text-blue-600" />
+                                                </Button>
 
-                                            {isAdmin && (
-                                                <button onClick={() => setDeleteLoan(loan)} className="p-2.5 text-rose-600 bg-rose-50 dark:bg-rose-900/20 rounded-xl transition-all">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => { setEditingLoan(loan); setIsModalOpen(true); }}
+                                                    className="w-8 h-8 text-slate-500 hover:text-amber-600"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil size={16} />
+                                                </Button>
+
+                                                {isAdmin && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDeleteLoan(loan)}
+                                                        className="w-8 h-8 text-slate-500 hover:text-rose-600"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{ height: 'calc(100vh - 220px)', overflow: 'hidden' }}>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-220px)] lg:overflow-hidden">
                             {/* LEFT COLUMN: THE FORM */}
-                            <div className="lg:col-span-8 overflow-y-auto custom-scrollbar pr-2">
-                                <LoanRequestFormInline
-                                    currentUser={currentUser}
-                                    availableAssets={assets}
-                                    onSuccess={fetchLoans}
-                                />
+                            <div className="lg:col-span-8 lg:overflow-y-auto custom-scrollbar lg:pr-2">
+                                <Card className="border-0 shadow-none bg-transparent">
+                                    <LoanRequestFormInline
+                                        currentUser={currentUser}
+                                        availableAssets={assets}
+                                        onSuccess={fetchLoans}
+                                    />
+                                </Card>
                             </div>
 
                             {/* RIGHT COLUMN: COMPACT HISTORY */}
-                            <div className="lg:col-span-4 flex flex-col overflow-hidden border-l border-slate-100 dark:border-zinc-800 pl-5">
+                            <div className="lg:col-span-4 flex flex-col overflow-hidden border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-zinc-800 pt-6 lg:pt-0 lg:pl-5">
                                 {/* Header */}
                                 <div className="flex items-center justify-between mb-3 shrink-0">
                                     <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-zinc-500">
@@ -690,7 +763,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                                                                 disabled={safePage === 1}
                                                                 className="w-7 h-7 flex items-center justify-center rounded-md border border-slate-200 dark:border-zinc-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30 transition-all"
                                                             >
-                                                                <ChevronLeft size={12} />
+                                                                 <ChevronLeft size={12} />
                                                             </button>
                                                             <button
                                                                 onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
@@ -710,11 +783,27 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                         </div>
                     )}
 
-                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
-                        <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1}</p>
+                    <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase text-center sm:text-left">Page {currentPage} of {totalPages || 1} ({filteredLoans.length} loans)</p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronLeft size={16} /></button>
-                            <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg text-slate-400 hover:text-blue-600 disabled:opacity-30 transition-all"><ChevronRight size={16} /></button>
+                            <Button 
+                                variant="outline"
+                                size="icon"
+                                disabled={currentPage === 1} 
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                                className="w-8 h-8 text-muted-foreground hover:text-primary transition-all rounded-lg"
+                            >
+                                <ChevronLeft size={16} />
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                size="icon"
+                                disabled={currentPage === totalPages || totalPages === 0} 
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                                className="w-8 h-8 text-muted-foreground hover:text-primary transition-all rounded-lg"
+                            >
+                                <ChevronRight size={16} />
+                            </Button>
                         </div>
                     </div>
                 </div>

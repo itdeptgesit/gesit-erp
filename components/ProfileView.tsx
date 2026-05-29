@@ -316,199 +316,133 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
-            {/* 1. Header Card - Direct from Image */}
-            <Card className="rounded-xl border-slate-200 dark:border-white/10 shadow-sm bg-white dark:bg-zinc-900 overflow-hidden mb-6">
-                <div className="p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
-                    {/* Avatar with Camera Icon Overlay */}
-                    <div className="relative group flex-shrink-0">
-                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 dark:border-zinc-800 shadow-lg relative bg-slate-100 dark:bg-zinc-800">
-                            <Avatar className="w-full h-full rounded-none">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 font-sans">
+
+            {/* ── COMPACT HEADER CARD ── */}
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden mb-8 relative">
+                {/* Edit button top-right */}
+                <div className="absolute top-4 right-4 z-10">
+                    <Button
+                        size="sm"
+                        variant={isEditing ? 'secondary' : 'outline'}
+                        onClick={() => setIsEditing(!isEditing)}
+                        className="font-bold text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 h-9 px-4 rounded-xl"
+                    >
+                        <Edit3 size={14} className="mr-2" />
+                        {isEditing ? 'Cancel' : 'Edit Profile'}
+                    </Button>
+                </div>
+
+                <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
+                    {/* Avatar Container */}
+                    <div className="relative group shrink-0">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-slate-100 dark:border-zinc-800 shadow-md bg-slate-50 dark:bg-zinc-800">
+                            <Avatar className="w-full h-full rounded-full">
                                 <AvatarImage src={avatarUrl} className="object-cover" />
-                                <AvatarFallback className="text-4xl font-black bg-slate-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-100 capitalize">
+                                <AvatarFallback className="text-3xl font-black bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-full">
                                     {userInitial}
                                 </AvatarFallback>
                             </Avatar>
                             {isUploading && (
-                                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                                    <Loader2 className="w-7 h-7 text-white animate-spin" />
                                 </div>
                             )}
                         </div>
-                        <label className="absolute bottom-1 right-1 w-9 h-9 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center cursor-pointer shadow-md border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all z-10">
+                        <label className="absolute bottom-0 right-0 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all border-2 border-white dark:border-zinc-900">
                             <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
-                            <Camera size={16} className="text-slate-600 dark:text-white" />
+                            <Camera size={14} className="text-white" />
                         </label>
                     </div>
 
-                    {/* Identity Information */}
-                    <div className="flex-1 text-center md:text-left space-y-4">
-                        <div className="flex flex-col md:flex-row items-center gap-3">
-                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none capitalize">
-                                {formData.fullName || 'User Profile'}
-                            </h1>
-                            {userRole && (
-                                <Badge variant="secondary" className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-3 py-1 font-bold text-[10px] rounded-lg">
-                                    {userRole} Member
+                    {/* Info Container */}
+                    <div className="flex-1 text-center sm:text-left flex flex-col justify-center min-h-[7rem]">
+                        <div className="mb-3">
+                            <div className="flex flex-col sm:flex-row items-center sm:items-baseline gap-2 sm:gap-3 mb-1">
+                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight capitalize">
+                                    {formData.fullName || 'User Profile'}
+                                </h1>
+                                <Badge className="bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border-none text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg">
+                                    {userRole}
                                 </Badge>
-                            )}
+                            </div>
+                            <p className="text-[15px] text-slate-500 dark:text-zinc-400 font-medium">
+                                {[formData.jobTitle, formData.department, formData.company].filter(Boolean).join(' · ')}
+                            </p>
                         </div>
 
-                        <p className="text-slate-500 dark:text-zinc-400 font-medium">
-                            {[formData.jobTitle, formData.department, formData.company].filter(Boolean).join(' • ')}
-                        </p>
-
-                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-slate-500 dark:text-zinc-400 text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                                <Mail size={16} className="text-slate-400" />
-                                <span>{userEmail}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar size={16} className="text-slate-400" />
-                                <span>Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</span>
-                            </div>
+                        {/* Quick meta chips */}
+                        <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-auto">
+                            <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-full border border-slate-100 dark:border-white/10 text-[12px] font-semibold text-slate-600 dark:text-zinc-300">
+                                <Mail size={13} className="text-indigo-400" /> {userEmail}
+                            </span>
                         </div>
-                    </div>
-
-                    {/* Edit Profile Button */}
-                    <div className="flex-shrink-0">
-                        <Button
-                            variant={isEditing ? 'outline' : 'default'}
-                            onClick={() => setIsEditing(!isEditing)}
-                            className="font-bold rounded-xl px-6 transition-all"
-                        >
-                            <Edit3 size={15} className="mr-2" />
-                            {isEditing ? 'Cancel' : 'Edit Profile'}
-                        </Button>
                     </div>
                 </div>
-            </Card>
+            </div>
 
-            {/* 2. Custom Standardized Tabs */}
-            <Tabs defaultValue="account" className="w-full">
-                <div className="flex justify-start sm:justify-center mb-6 sm:mb-8 overflow-x-auto no-scrollbar">
-                    <TabsList className="min-w-max shadow-sm">
-                        <TabsTrigger value="personal">Personal</TabsTrigger>
-                        <TabsTrigger value="account">Account</TabsTrigger>
-                        <TabsTrigger value="security">Security</TabsTrigger>
-                        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            {/* â”€â”€ SAVE MESSAGE â”€â”€ */}
+            {saveMessage && (
+                <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 ${saveMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20'}`}>
+                    <CheckCircle2 size={15} /> {saveMessage.text}
+                </div>
+            )}
+
+            {/* â”€â”€ TABS â”€â”€ */}
+            <Tabs defaultValue="personal" className="w-full">
+                <div className="flex justify-start overflow-x-auto no-scrollbar mb-6">
+                    <TabsList className="min-w-max shadow-sm bg-slate-100/80 dark:bg-white/5 p-1 rounded-xl">
+                        <TabsTrigger value="personal" className="rounded-lg px-5 text-[13px] font-bold">Personal</TabsTrigger>
+                        <TabsTrigger value="account" className="rounded-lg px-5 text-[13px] font-bold">Account</TabsTrigger>
+                        <TabsTrigger value="security" className="rounded-lg px-5 text-[13px] font-bold">Security</TabsTrigger>
+                        <TabsTrigger value="notifications" className="rounded-lg px-5 text-[13px] font-bold">Notifications</TabsTrigger>
                     </TabsList>
                 </div>
 
-                {/* Account Tab Content - Primary Focus from Image */}
-                <TabsContent value="account">
-                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-12">
-                            {/* Section: Header */}
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Account Settings</h3>
-                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Manage your account preferences and security.</p>
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            {/* Section: Account Status */}
-                            <div className="flex items-center justify-between group">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Status</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Your account is currently active</p>
-                                </div>
-                                <Badge className="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-none px-4 py-1.5 font-bold rounded-lg shadow-none">
-                                    Active
-                                </Badge>
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            {/* Section: Account Visibility */}
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Account Visibility</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Make your profile visible to other users</p>
-                                </div>
-                                <Switch defaultChecked className="data-[state=checked]:bg-zinc-800 dark:data-[state=checked]:bg-zinc-100" />
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            {/* Section: Data Export */}
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Data Export</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Download a copy of your data</p>
-                                </div>
-                                <Button variant="outline" className="w-full sm:w-auto font-bold border-border dark:border-zinc-700 rounded-xl">
-                                    Export Data
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
-
-                    {/* Danger Zone Card */}
-                    <Card className="mt-8 rounded-xl border-rose-100 dark:border-rose-900/30 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm border">
-                        <div className="p-8 sm:p-12 space-y-8">
-                            <div>
-                                <h3 className="text-xl font-bold text-rose-600 mb-1">Danger Zone</h3>
-                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Irreversible and destructive actions</p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
-                                <div className="space-y-1 text-left">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Delete Account</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Permanently delete your account and all data</p>
-                                </div>
-                                <Button variant="destructive" className="w-full sm:w-auto font-bold rounded-xl flex items-center justify-center gap-2">
-                                    <Trash2 size={16} /> Delete Account
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
-                </TabsContent>
-
-                {/* Personal Tab - Adapting previous fields into new UI style */}
+                {/* â”€â”€ PERSONAL TAB â”€â”€ */}
                 <TabsContent value="personal">
-                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Personal Details</h3>
-                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Update your identity and contact information.</p>
+                    <Card className="rounded-2xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                        <div className="p-6 sm:p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white">Personal Details</h3>
+                                    <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">Update your identity and contact information.</p>
+                                </div>
+                                {!isEditing && (
+                                    <Button size="sm" variant="outline" onClick={() => setIsEditing(true)} className="rounded-xl font-bold h-9 gap-2">
+                                        <Edit3 size={13} /> Edit
+                                    </Button>
+                                )}
                             </div>
 
                             <Separator className="bg-slate-100 dark:bg-white/5" />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Full Name</Label>
-                                    <Input
-                                        value={formData.fullName}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Job Title</Label>
-                                    <Input
-                                        value={formData.jobTitle}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Phone Terminal</Label>
-                                    <Input
-                                        value={formData.phone}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Department</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {[
+                                    { label: 'Full Name', key: 'fullName', icon: <User size={14} /> },
+                                    { label: 'Job Title', key: 'jobTitle', icon: <Briefcase size={14} /> },
+                                    { label: 'Phone', key: 'phone', icon: <Phone size={14} /> },
+                                ].map(({ label, key, icon }) => (
+                                    <div key={key} className="space-y-1.5">
+                                        <Label className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                                            {icon} {label}
+                                        </Label>
+                                        <Input
+                                            value={(formData as any)[key]}
+                                            disabled={!isEditing}
+                                            onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                                            className="h-11 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 px-4 font-semibold text-sm disabled:opacity-60 disabled:cursor-default focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500"
+                                        />
+                                    </div>
+                                ))}
+
+                                <div className="space-y-1.5">
+                                    <Label className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                                        <Building2 size={14} /> Department
+                                    </Label>
                                     <Select disabled={!isEditing} value={formData.department} onValueChange={(val) => setFormData({ ...formData, department: val })}>
-                                        <SelectTrigger className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
-                                            <SelectValue placeholder="Select division" />
+                                        <SelectTrigger className="h-11 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 px-4 font-semibold text-sm disabled:opacity-60">
+                                            <SelectValue placeholder="Select department" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="IT">Information Technology</SelectItem>
@@ -521,10 +455,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-slate-500 text-xs font-bold uppercase tracking-wider">Company</Label>
+
+                                <div className="space-y-1.5 sm:col-span-2">
+                                    <Label className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                                        <Globe size={14} /> Company
+                                    </Label>
                                     <Select disabled={!isEditing} value={formData.company} onValueChange={(val) => setFormData({ ...formData, company: val })}>
-                                        <SelectTrigger className="h-12 rounded-md border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-4 font-semibold">
+                                        <SelectTrigger className="h-11 rounded-xl border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 px-4 font-semibold text-sm disabled:opacity-60">
                                             <SelectValue placeholder="Select company" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -537,9 +474,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                             </div>
 
                             {isEditing && (
-                                <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto font-bold rounded-xl flex justify-center items-center gap-2">
-                                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-xl font-bold">Cancel</Button>
+                                    <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 gap-2">
+                                        {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                                         Save Changes
                                     </Button>
                                 </div>
@@ -548,104 +486,177 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                     </Card>
                 </TabsContent>
 
-                {/* Security Tab */}
-                <TabsContent value="security">
-                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                        <div className="p-6 sm:p-12 space-y-8 sm:space-y-10">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Security Protocols</h3>
-                                <p className="text-slate-500 dark:text-zinc-400 text-sm">Manage your passcode and accessibility keys.</p>
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Change Passcode</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Update your security key for system access</p>
-                                </div>
-                                <Button
-                                    onClick={() => setIsPasswordModalOpen(true)}
-                                    variant="outline"
-                                    className="w-full sm:w-auto font-bold border-slate-200 dark:border-white/10 hover:border-amber-500 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Lock size={18} /> Update Key
-                                </Button>
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white">Session Control</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs">Sign out from all active terminals</p>
-                                </div>
-                                <Button
-                                    onClick={onLogout}
-                                    variant="ghost"
-                                    className="w-full sm:w-auto font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    <LogOut size={18} /> Terminate All Sessions
-                                </Button>
-                            </div>
-
-                            <Separator className="bg-slate-100 dark:bg-white/5" />
-
-                            {/* Section: Active Sessions / Login Devices - Updated to Match Provided Image Style */}
-                            <div className="space-y-6">
+                {/* â”€â”€ ACCOUNT TAB â”€â”€ */}
+                <TabsContent value="account">
+                    <div className="space-y-4">
+                        <Card className="rounded-2xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                            <div className="p-6 sm:p-8 space-y-6">
                                 <div>
-                                    <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">Active Sessions</h4>
-                                    <p className="text-slate-500 dark:text-zinc-400 text-xs text-opacity-70 font-medium">Manage and secure your active login sessions across devices.</p>
+                                    <h3 className="text-base font-black text-slate-900 dark:text-white">Account Settings</h3>
+                                    <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">Manage your account preferences and visibility.</p>
+                                </div>
+                                <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                                {/* Account Status */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Account Status</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Your account is currently active</p>
+                                    </div>
+                                    <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" /> Active
+                                    </span>
                                 </div>
 
-                                <div className="border border-slate-100 dark:border-white/5 rounded-xl overflow-x-auto bg-white dark:bg-zinc-900/50">
-                                    <Table className="min-w-[600px]">
-                                        <TableHeader className="bg-slate-50/50 dark:bg-white/5 border-b-0">
-                                            <TableRow className="hover:bg-transparent border-b">
-                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Device</TableHead>
-                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">IP Address</TableHead>
-                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Last Updated</TableHead>
-                                                <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Location</TableHead>
-                                                <TableHead className="py-4 px-6 text-right"></TableHead>
+                                <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                                {/* Visibility */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Profile Visibility</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Make your profile visible to other users</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+
+                                <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                                {/* Data Export */}
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Data Export</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Download a copy of your personal data</p>
+                                    </div>
+                                    <Button variant="outline" className="w-full sm:w-auto font-bold rounded-xl">Export Data</Button>
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Danger Zone */}
+                        <Card className="rounded-2xl border-rose-100 dark:border-rose-900/30 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                            <div className="p-6 sm:p-8">
+                                <div className="flex items-center gap-2 mb-5">
+                                    <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center">
+                                        <Shield size={14} className="text-rose-500" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-rose-600">Danger Zone</h3>
+                                        <p className="text-xs text-slate-400">Irreversible and destructive actions</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/10">
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Delete Account</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Permanently delete your account and all data</p>
+                                    </div>
+                                    <Button variant="destructive" className="w-full sm:w-auto font-bold rounded-xl gap-2">
+                                        <Trash2 size={14} /> Delete Account
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* â”€â”€ SECURITY TAB â”€â”€ */}
+                <TabsContent value="security">
+                    <Card className="rounded-2xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                        <div className="p-6 sm:p-8 space-y-6">
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">Security Protocols</h3>
+                                <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">Manage your passcode and active sessions.</p>
+                            </div>
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Change Password */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center shrink-0">
+                                        <Key size={15} className="text-amber-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Change Password</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Update your security key for system access</p>
+                                    </div>
+                                </div>
+                                <Button onClick={() => setIsPasswordModalOpen(true)} variant="outline" className="w-full sm:w-auto font-bold rounded-xl gap-2">
+                                    <Lock size={14} /> Update Key
+                                </Button>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Terminate sessions */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
+                                        <LogOut size={15} className="text-rose-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Session Control</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Sign out from all active terminals</p>
+                                    </div>
+                                </div>
+                                <Button onClick={onLogout} variant="outline" className="w-full sm:w-auto font-bold rounded-xl gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/10">
+                                    <LogOut size={14} /> Terminate All
+                                </Button>
+                            </div>
+
+                            <Separator className="bg-slate-100 dark:bg-white/5" />
+
+                            {/* Active Sessions */}
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-sm font-black text-slate-900 dark:text-white">Active Sessions</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">Manage your active login sessions across devices.</p>
+                                </div>
+                                <div className="border border-slate-100 dark:border-white/5 rounded-xl overflow-x-auto">
+                                    <Table className="min-w-[560px]">
+                                        <TableHeader className="bg-slate-50/80 dark:bg-white/5">
+                                            <TableRow className="hover:bg-transparent border-b border-slate-100 dark:border-white/5">
+                                                <TableHead className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Device</TableHead>
+                                                <TableHead className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">IP Address</TableHead>
+                                                <TableHead className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</TableHead>
+                                                <TableHead className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Seen</TableHead>
+                                                <TableHead className="py-3 px-4" />
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {activeSessions.map((session, index) => (
-                                                <TableRow key={session.sessionToken || index} className={`border-b border-slate-100/50 dark:border-white/5 ${session.isCurrent ? 'bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100/50 dark:hover:bg-zinc-800' : 'hover:bg-slate-50/50 dark:hover:bg-white/5'} transition-colors`}>
-                                                    <TableCell className="py-6 px-6">
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-slate-900 dark:text-white text-sm">{session.device}</span>
-                                                                {session.isCurrent && (
-                                                                    <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm">Current</Badge>
-                                                                )}
+                                                <TableRow key={session.sessionToken || index} className={`border-b border-slate-50 dark:border-white/5 last:border-0 ${session.isCurrent ? 'bg-indigo-50/50 dark:bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-white/5'} transition-colors`}>
+                                                    <TableCell className="py-4 px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${session.isCurrent ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-white/10'}`}>
+                                                                <Shield size={12} className={session.isCurrent ? 'text-indigo-500' : 'text-slate-400'} />
                                                             </div>
-                                                            <span className="text-xs text-slate-400 font-medium">{session.browser}</span>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-900 dark:text-white leading-none">{session.device}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5">{session.browser}</p>
+                                                            </div>
+                                                            {session.isCurrent && (
+                                                                <span className="ml-1 text-[9px] font-black bg-indigo-500 text-white px-1.5 py-0.5 rounded uppercase">Now</span>
+                                                            )}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-zinc-400 text-sm">{session.ip}</TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-600 dark:text-zinc-400 text-sm">{session.lastUpdated}</TableCell>
-                                                    <TableCell className="py-6 px-6 font-medium text-slate-900 dark:text-slate-200 text-sm flex items-center gap-2">
-                                                        {session.location === 'Identifying...' ? <Loader2 size={14} className="animate-spin text-slate-400" /> : <Globe size={14} className="text-slate-400" />}
-                                                        {session.location}
+                                                    <TableCell className="py-4 px-4 text-xs font-mono text-slate-500 dark:text-zinc-400">{session.ip}</TableCell>
+                                                    <TableCell className="py-4 px-4">
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
+                                                            {session.location === 'Identifying...' ? <Loader2 size={11} className="animate-spin text-slate-300" /> : <Globe size={11} className="text-slate-300" />}
+                                                            {session.location}
+                                                        </div>
                                                     </TableCell>
-                                                    <TableCell className="py-6 px-6 text-right">
+                                                    <TableCell className="py-4 px-4 text-xs text-slate-400">{session.lastUpdated}</TableCell>
+                                                    <TableCell className="py-4 px-4 text-right">
                                                         {session.isCurrent ? (
-                                                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
-                                                                Active Now
-                                                            </span>
+                                                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active</span>
                                                         ) : (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 h-auto px-3"
+                                                            <Button variant="ghost" size="sm" className="h-7 px-3 text-[10px] font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                                                                 onClick={async () => {
                                                                     if (session.sessionToken) {
                                                                         await supabase.from('user_sessions').delete().eq('session_token', session.sessionToken);
                                                                         setActiveSessions(prev => prev.filter(s => s.sessionToken !== session.sessionToken));
                                                                     }
-                                                                }}
-                                                            >
+                                                                }}>
                                                                 Revoke
                                                             </Button>
                                                         )}
@@ -660,14 +671,22 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                     </Card>
                 </TabsContent>
 
+                {/* â”€â”€ NOTIFICATIONS TAB â”€â”€ */}
                 <TabsContent value="notifications">
-                    <Card className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-                        <div className="p-6 sm:p-12 space-y-10 text-center py-20">
-                            <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Bell size={32} className="text-slate-300" />
+                    <Card className="rounded-2xl border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                        <div className="p-12 flex flex-col items-center justify-center text-center gap-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/10 dark:to-violet-500/10 rounded-2xl flex items-center justify-center border border-indigo-100 dark:border-indigo-500/20">
+                                <Bell size={28} className="text-indigo-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Notification Configurer</h3>
-                            <p className="text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">This module is currently initializing. Alert synchronization preferences will be available shortly.</p>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">Notification Preferences</h3>
+                                <p className="text-slate-400 dark:text-zinc-500 text-sm max-w-xs mx-auto mt-1">
+                                    Alert synchronization preferences will be available shortly.
+                                </p>
+                            </div>
+                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-500/20">
+                                Coming Soon
+                            </span>
                         </div>
                     </Card>
                 </TabsContent>
@@ -677,4 +696,3 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         </div>
     );
 };
-

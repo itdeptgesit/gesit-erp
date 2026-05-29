@@ -848,7 +848,7 @@ export const ExtensionDirectory = ({
     };
 
     return (
-        <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700">
+        <div className="flex flex-col pb-10 font-sans animate-in fade-in duration-700 px-0 sm:px-0 w-full overflow-x-hidden">
             
 
             
@@ -887,21 +887,24 @@ export const ExtensionDirectory = ({
             {variant === 'standalone' && (
                 <div className="mb-6 pt-4">
                     <PageHeader title="Phone Directory" description="The City Tower & Infrastructure Registry">
-                        <Button variant="outline" onClick={handleExportPDF} className="rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200">
-                            <FileText className="mr-2 h-4 w-4 text-red-500" /> {t('exportPdf')}
+                        <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-3 shrink-0 rounded-xl font-bold bg-white dark:bg-slate-900 border-border text-slate-800 dark:text-slate-200" title="Export PDF">
+                            <FileText className="h-4 w-4 text-red-500 sm:mr-2" />
+                            <span className="hidden sm:inline">{t('exportPdf')}</span>
                         </Button>
                         {canEdit && (
                             <Button
+                                size="sm"
                                 onClick={() => openModal()}
-                                className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm"
+                                className="h-9 px-3 shrink-0 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm"
                             >
-                                <Plus className="mr-2 h-4 w-4" /> {t('addingExtension')}
+                                <Plus className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">{t('addingExtension')}</span>
                             </Button>
                         )}
                     </PageHeader>
 
                     {/* Metrics Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <StatCard
                             label="Total Extensions"
                             value={stats.total}
@@ -935,25 +938,24 @@ export const ExtensionDirectory = ({
             <InstructionPanel />
 
             {/* List Header */}
-            <div className="flex flex-col gap-6 mb-8 px-2">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 rounded-full bg-primary" />
-                        <h2 className="text-xs font-black text-slate-700 dark:text-slate-200 tracking-widest uppercase">
-                            Directory Registry
-                        </h2>
-                    </div>
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 rounded-full bg-primary" />
+                    <h2 className="text-xs font-black text-slate-700 dark:text-slate-200 tracking-widest uppercase">
+                        Directory Registry
+                    </h2>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-                    {/* Search Bar Container */}
+                {/* Search + Filters row — stacks on mobile */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {/* Search Bar */}
                     <div className="relative flex-1 flex items-center bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                         <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${searchTerm ? 'text-primary' : 'text-muted-foreground/50'}`} />
                         <Input
                             placeholder={t('searchDirectoryPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-10 py-6 bg-transparent border-none rounded-2xl font-bold focus-visible:ring-0 outline-none shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50"
+                            className="w-full pl-11 pr-10 h-11 bg-transparent border-none rounded-2xl font-bold focus-visible:ring-0 outline-none shadow-none dark:text-slate-100 placeholder:text-muted-foreground/50"
                         />
                         {searchTerm && (
                             <button
@@ -965,13 +967,13 @@ export const ExtensionDirectory = ({
                         )}
                     </div>
 
-                    {/* Filters and View Toggles */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        {/* Quick Floor Switches */}
+                    {/* Filters + View Toggles — wraps as a row on all sizes */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Floor Switches */}
                         <div className="flex items-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                             <button
                                 onClick={() => { setFloorFilter('All'); onFloorFilterChange?.('All'); }}
-                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 'All'
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${floorFilter === 'All'
                                     ? 'bg-primary text-white shadow-md'
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
@@ -980,26 +982,26 @@ export const ExtensionDirectory = ({
                             </button>
                             <button
                                 onClick={() => { setFloorFilter(26); onFloorFilterChange?.(26); }}
-                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 26
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${floorFilter === 26
                                     ? 'bg-emerald-500 text-white shadow-md'
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >
-                                {t('floorLabel')} 26
+                                26
                             </button>
                             <button
                                 onClick={() => { setFloorFilter(27); onFloorFilterChange?.(27); }}
-                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${floorFilter === 27
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${floorFilter === 27
                                     ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                     }`}
                             >
-                                {t('floorLabel')} 27
+                                27
                             </button>
                         </div>
 
                         {/* View Mode Toggles */}
-                        <div className="flex items-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50 ml-auto lg:ml-0">
+                        <div className="flex items-center gap-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={`p-2 rounded-lg transition-all ${viewMode === 'grid'
@@ -1008,7 +1010,7 @@ export const ExtensionDirectory = ({
                                     }`}
                                 title={t('gridMode')}
                             >
-                                <LayoutGrid size={18} />
+                                <LayoutGrid size={16} />
                             </button>
                             <button
                                 onClick={() => setViewMode('table')}
@@ -1018,7 +1020,7 @@ export const ExtensionDirectory = ({
                                     }`}
                                 title={t('tableMode')}
                             >
-                                <LayoutList size={18} />
+                                <LayoutList size={16} />
                             </button>
                         </div>
                     </div>

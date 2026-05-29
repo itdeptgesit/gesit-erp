@@ -99,8 +99,8 @@ export const StatCard: React.FC<StatCardProps> = ({
             </div>
 
             <div className="mt-auto">
-                <div className="flex items-center justify-between">
-                    <div className="text-3xl font-bold tracking-tight text-foreground">
+                <div className="flex items-center justify-between min-w-0 gap-1">
+                    <div className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-foreground truncate" title={String(value)}>
                         {value}
                     </div>
                     {calculatedChange !== undefined && (

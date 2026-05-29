@@ -627,13 +627,14 @@ const InternalApp: React.FC = () => {
                 } />
               </Routes>
 
-              <DangerConfirmModal
-                isOpen={isLogoutModalOpen}
-                onClose={() => setIsLogoutModalOpen(false)}
-                onConfirm={executeLogout}
-                title={t('signOutTitle')}
-                message={t('signOutMsg')}
-              />
+                              <DangerConfirmModal
+                  isOpen={isLogoutModalOpen}
+                  onClose={() => setIsLogoutModalOpen(false)}
+                  onConfirm={executeLogout}
+                  title={t('signOutTitle')}
+                  message={t('signOutMsg')}
+                  variant="logout"
+                />
 
               <AnimatePresence>
                 {toast && (

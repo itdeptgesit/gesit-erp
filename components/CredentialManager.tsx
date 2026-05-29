@@ -240,53 +240,49 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 p-4 md:p-8 animate-in fade-in duration-700">
-      {/* HEADER & STATS OVERVIEW */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="w-full max-w-[1600px] mx-auto space-y-6 py-4 sm:py-6 px-0 sm:px-4 animate-in fade-in duration-700 pb-12">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Secret Vault</h1>
-          <p className="text-muted-foreground text-sm font-medium mt-1">Manage and secure your infrastructure credentials</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground uppercase">Secret Vault</h1>
+          <p className="text-muted-foreground text-sm font-medium mt-0.5">Manage and secure your infrastructure credentials</p>
         </div>
         
-        <div className="grid grid-cols-2 md:flex items-center gap-3">
-          <div className="px-4 py-2 bg-card border rounded-lg shadow-sm">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Total Secrets</p>
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 bg-card border rounded-lg shadow-sm shrink-0">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Total</p>
             <p className="text-lg font-bold">{credentials.length}</p>
           </div>
-          <div className="px-4 py-2 bg-card border rounded-lg shadow-sm">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Categories</p>
-            <p className="text-lg font-bold text-primary">{categories.length}</p>
-          </div>
           <Button 
-            size="lg"
+            size="sm"
             onClick={handleAdd}
-            className="col-span-2 md:h-[52px] font-bold uppercase tracking-widest text-[11px] gap-2 /20"
+            className="h-9 px-4 font-bold uppercase tracking-widest text-[11px] gap-1.5 shrink-0"
           >
-            <Plus size={18} /> Add New Secret
+            <Plus size={14} /> <span className="hidden sm:inline">Add New Secret</span><span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
 
       {/* SEARCH OR FILTERS */}
-      <div className="bg-card p-2 rounded-lg border shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="bg-card p-3 rounded-lg border shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input 
               placeholder="Search by title, username, or notes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 h-12 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary font-medium"
+              className="w-full pl-11 h-10 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary font-medium text-sm"
             />
           </div>
           
-          <Tabs value={viewLayout} onValueChange={(val) => setViewLayout(val as 'grid' | 'table')} className="w-auto">
+          <Tabs value={viewLayout} onValueChange={(val) => setViewLayout(val as 'grid' | 'table')} className="w-auto shrink-0">
             <TabsList>
               <TabsTrigger value="grid">
-                <LayoutGrid size={14} className="mr-2" /> GRID
+                <LayoutGrid size={14} className="sm:mr-2" /> <span className="hidden sm:inline">GRID</span>
               </TabsTrigger>
               <TabsTrigger value="table">
-                <List size={14} className="mr-2" /> TABLE
+                <List size={14} className="sm:mr-2" /> <span className="hidden sm:inline">TABLE</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -313,9 +309,9 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1,2,3,4,5,6,7,8].map(i => (
-            <div key={i} className="h-[280px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-[260px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : filteredCredentials.length === 0 ? (
@@ -329,7 +325,7 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
       ) : (
         <>
           {viewLayout === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCredentials.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((cred) => (
                 <div key={cred.id} className="group bg-card p-6 rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                   <div>
@@ -464,14 +460,16 @@ const CredentialManager: React.FC<CredentialManagerProps> = ({ currentUser }) =>
               </Table>
             </div>
           )}
-          <div className="flex items-center justify-between pt-6 border-t mt-6">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCredentials.length)} of {filteredCredentials.length} results</p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t mt-5">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center sm:text-left">
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredCredentials.length)}–{Math.min(currentPage * itemsPerPage, filteredCredentials.length)} of {filteredCredentials.length}
+            </p>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="text-[10px] font-bold uppercase tracking-widest">Prev</Button>
+              <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest">Prev</Button>
               {Array.from({ length: Math.ceil(filteredCredentials.length / itemsPerPage) }).map((_, i) => (
                 <Button key={i} variant={currentPage === i + 1 ? 'default' : 'outline'} size="sm" onClick={() => setCurrentPage(i + 1)} className={cn("h-8 w-8 p-0 text-[10px] font-bold", currentPage === i + 1 ? "bg-primary" : "")}>{i + 1}</Button>
               ))}
-              <Button variant="outline" size="sm" disabled={currentPage === Math.ceil(filteredCredentials.length / itemsPerPage)} onClick={() => setCurrentPage(prev => prev + 1)} className="text-[10px] font-bold uppercase tracking-widest">Next</Button>
+              <Button variant="outline" size="sm" disabled={currentPage === Math.ceil(filteredCredentials.length / itemsPerPage)} onClick={() => setCurrentPage(prev => prev + 1)} className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest">Next</Button>
             </div>
           </div>
         </>

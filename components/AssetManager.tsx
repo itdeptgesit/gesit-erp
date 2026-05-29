@@ -317,7 +317,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="w-full min-h-screen bg-transparent py-4 sm:py-6 px-0 sm:px-4 space-y-6 animate-in fade-in duration-500">
       <PageHeader title="Asset Manager" description="Managed corporate inventory">
         <input
           type="file"
@@ -332,28 +332,31 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
               variant="outline"
               size="sm"
               onClick={handleDownloadTemplate}
-              className="text-[10px] font-bold uppercase tracking-widest"
+              className="h-9 px-3 shrink-0 text-[10px] font-bold uppercase tracking-widest"
               title="Download Blank Template"
             >
-              <Download className="mr-2 h-3.5 w-3.5" /> Template
+              <Download className="w-3.5 h-3.5 sm:mr-2" />
+              <span className="hidden sm:inline">Template</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
-              className="border-dashed dark: text-[10px] font-bold uppercase tracking-widest dark:"
+              className="h-9 px-3 shrink-0 text-[10px] font-bold uppercase tracking-widest border-dashed"
             >
-              <FileSpreadsheet className={`mr-2 h-3.5 w-3.5 ${isImporting ? 'animate-bounce' : ''}`} /> {isImporting ? 'Processing...' : 'Bulk Import'}
+              <FileSpreadsheet className={`w-3.5 h-3.5 sm:mr-2 ${isImporting ? 'animate-bounce' : ''}`} />
+              <span className="hidden sm:inline">{isImporting ? 'Processing...' : 'Bulk Import'}</span>
             </Button>
           </div>
         )}
         <Button 
           size="sm"
           onClick={handleExportExcel} 
-          className="text-[10px] font-bold uppercase tracking-widest"
+          className="h-9 px-3 shrink-0 text-[10px] font-bold uppercase tracking-widest"
         >
-          <Download className="mr-2 h-3.5 w-3.5" /> Export Excel
+          <Download className="w-3.5 h-3.5 sm:mr-2" />
+          <span className="hidden sm:inline">Export Excel</span>
         </Button>
       </PageHeader>
 
@@ -364,25 +367,25 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total assets" value={assets.length} subValue="Total entries" icon={Package} color="blue" />
         <StatCard label="In production" value={assets.filter(a => a.status === 'Used' || a.status === 'Active').length} icon={CheckCircle2} color="emerald" />
         <StatCard label="Standby stock" value={assets.filter(a => a.status === 'Idle').length} icon={History} color="indigo" />
       </div>
 
-      <div className="bg-card p-4 rounded-lg border shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
+      <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col md:flex-row items-stretch md:items-center gap-3 transition-all">
         <div className="relative flex-1 w-full">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input 
             placeholder="Filter item name or custodian..." 
-            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11" 
+            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-10 text-xs rounded-xl" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto shrink-0">
+        <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-[150px] h-11 bg-background border-muted font-semibold text-[10px] uppercase tracking-wider">
+            <SelectTrigger className="flex-1 md:w-[150px] h-10 bg-background border-muted font-semibold text-[10px] uppercase tracking-wider rounded-xl">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -400,7 +403,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             variant="outline"
             size="icon"
             onClick={resetFilters}
-            className="w-11 text-muted-foreground hover:text-destructive border-muted-foreground/10"
+            className="h-10 w-10 text-muted-foreground hover:text-destructive border-muted-foreground/10 shrink-0 rounded-xl"
             title="Reset Filters"
           >
             <RotateCcw size={16} />
@@ -409,7 +412,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           {canManage && (
             <Button 
               onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} 
-              className="font-bold uppercase text-[10px] tracking-widest gap-2"
+              className="h-10 font-bold uppercase text-[10px] tracking-widest gap-2 flex-1 md:flex-none rounded-xl"
             >
               <Plus size={14} /> Add Asset
             </Button>
@@ -418,7 +421,8 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+        {/* Desktop View (Table) */}
+        <div className="hidden md:block overflow-x-auto">
           <Table className="w-full">
             <TableHeader>
               <TableRow className="bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800 hover:bg-white dark:hover:bg-slate-900">
@@ -489,29 +493,16 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-40 md:group-hover:opacity-100 transition-all">
-                      <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="w-8 dark: dark:" title="Label"><QrCode size={14} /></Button>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setHandoverAsset(asset);
-                          setIsHandoverOpen(true);
-                        }}
-                        className="w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
-                        title="Cetak BAST (PDF)"
-                      >
-                        <FileText size={14} />
-                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => { setQrAsset(asset); setIsQROpen(true); }} className="w-8" title="Label"><QrCode size={14} /></Button>
 
                       {canManage && (
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="w-8 dark: dark:" title="Edit">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="w-8" title="Edit">
                           <Pencil size={14} />
                         </Button>
                       )}
 
                       {canDelete && (
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteAsset(asset)} className="w-8 dark: dark:" title="Delete">
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteAsset(asset)} className="w-8" title="Delete">
                           <Trash2 size={14} />
                         </Button>
                       )}
@@ -523,9 +514,107 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
           </Table>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+        {/* Mobile View (Card List) */}
+        <div className="block md:hidden divide-y divide-slate-100 dark:divide-zinc-800/40">
+          {isLoading ? (
+            Array.from({ length: itemsPerPage }).map((_, idx) => (
+              <div key={idx} className="p-4 space-y-3">
+                <div className="flex justify-between"><Skeleton className="h-3 w-16" /><Skeleton className="h-3 w-12" /></div>
+                <div className="flex gap-3"><Skeleton className="w-12 h-12 rounded-lg shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-1/3" /></div></div>
+                <div className="grid grid-cols-2 gap-2"><Skeleton className="h-7 w-full" /><Skeleton className="h-7 w-full" /></div>
+              </div>
+            ))
+          ) : paginatedAssets.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 dark:text-slate-600 text-[10px] font-bold tracking-widest uppercase">No entries detected.</div>
+          ) : paginatedAssets.map((asset) => (
+            <div
+              key={asset.id}
+              onClick={() => { setDetailAsset(asset); setIsDetailOpen(true); }}
+              className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                  {asset.category}
+                </span>
+                <div>
+                  {getStatusIcon(asset.status)}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border flex items-center justify-center overflow-hidden shrink-0 border-dashed">
+                  {asset.image_url ? (
+                    <img src={asset.image_url} alt={asset.item} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={18} className="text-slate-400 opacity-50" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="font-bold text-sm text-slate-800 dark:text-slate-200 block truncate">{asset.item}</span>
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1 block tracking-wider uppercase">{asset.assetId}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 dark:border-zinc-800/20 text-[11px]">
+                <div>
+                  <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">Custodian</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{asset.user || 'Unassigned'}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">Location</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{asset.location || '-'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-zinc-800/20">
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                  {asset.brand ? `${asset.brand}` : ''} {asset.serialNumber ? `· S/N: ${asset.serialNumber}` : ''}
+                </span>
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="View QR Code Label"
+                    onClick={() => { setQrAsset(asset); setIsQROpen(true); }}
+                    className="w-7 h-7 text-slate-500 hover:text-indigo-600"
+                    title="Label"
+                  >
+                    <QrCode size={14} />
+                  </Button>
+
+                  {canManage && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Edit Asset"
+                      onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }}
+                      className="w-7 h-7 text-slate-500 hover:text-amber-600"
+                      title="Edit"
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                  )}
+
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete Asset"
+                      onClick={() => setDeleteAsset(asset)}
+                      className="w-7 h-7 text-slate-500 hover:text-rose-600"
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="px-6 py-4 bg-slate-50/30 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Page {currentPage} of {totalPages || 1} ({filteredAssets.length} assets)</p>
-          <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
@@ -545,7 +634,6 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
             >
               <ChevronRight size={16} />
             </Button>
-          </div>
           </div>
         </div>
       </div>
