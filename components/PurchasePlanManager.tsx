@@ -502,7 +502,6 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     };
 
     const formatIDR = (num: number) => {
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
     };
 
