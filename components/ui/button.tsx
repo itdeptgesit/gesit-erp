@@ -73,7 +73,7 @@ function Button({
       isDisabled={finalIsDisabled}
       className={composeRenderProps(className, (className, renderProps) => 
         cn(buttonVariants({ variant, size, className }),
-        renderProps.isFocused && "ring-2 ring-ring ring-offset-2",
+        renderProps.isFocusVisible && "ring-2 ring-ring ring-offset-2",
         renderProps.isPressed && "scale-[0.98]"
       ))}
     />
