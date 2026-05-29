@@ -48,52 +48,102 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [financeId, setFinanceId] = useState('');
     const [accountingId, setAccountingId] = useState('');
 
+    // Reset form to baseline default values
+    const resetToDefaults = () => {
+        if (!currentUser) return;
+        setDepartment(currentUser.department || 'IT');
+        setPaidTo('');
+        setBankAccount('');
+        setNotes('');
+        setCategory('');
+        setReqItems([{ no: 1, description: '', qty: 1 }]);
+        setRecItems([{ no: 1, description: '', qty: 1, vendor: '', price: 0 }]);
+
+        // Pre-select Supervisor
+        if (currentUser.supervisorId) {
+            setSupervisorId(currentUser.supervisorId);
+        } else if (currentUser.managerId) {
+            setSupervisorId(currentUser.managerId);
+        } else {
+            const defaultSpv = allUsers.find(u => u.groups.includes('MANAGEMENT') || u.role === 'Admin');
+            setSupervisorId(defaultSpv ? String(defaultSpv.id) : '');
+        }
+
+        // Pre-select VP based on Department
+        const deptLower = (currentUser.department || '').toLowerCase().trim();
+        const isOperations = deptLower.includes('it') || deptLower.includes('gnr') || deptLower.includes('trading') || deptLower.includes('prop') || deptLower.includes('rheem') || deptLower.includes('aams') || deptLower.includes('foundation');
+        
+        if (isOperations) {
+            const vpLogisticUser = allUsers.find(u => (u.department || '').toLowerCase().includes('it') && (u.groups.includes('MANAGEMENT') || u.role === 'Admin'));
+            setVpId(vpLogisticUser ? String(vpLogisticUser.id) : '');
+        } else {
+            const vpHrUser = allUsers.find(u => (u.department || '').toLowerCase().includes('hrl') && (u.groups.includes('MANAGEMENT') || u.role === 'Admin' || u.jobTitle === 'Manager'));
+            setVpId(vpHrUser ? String(vpHrUser.id) : '');
+        }
+
+        // Pre-select Finance
+        const financeUser = allUsers.find(u => (u.department || '').toLowerCase().includes('finance') || (u.jobTitle || '').toLowerCase().includes('finance'));
+        setFinanceId(financeUser ? String(financeUser.id) : '');
+
+        // Pre-select Accounting
+        const accountingUser = allUsers.find(u => (u.department || '').toLowerCase().includes('accounting') || (u.jobTitle || '').toLowerCase().includes('accounting'));
+        setAccountingId(accountingUser ? String(accountingUser.id) : (financeUser ? String(financeUser.id) : ''));
+    };
+
+    // Load draft from localStorage on open
     useEffect(() => {
         if (isOpen && currentUser) {
-            setDepartment(currentUser.department || 'IT');
-            setPaidTo('');
-            setBankAccount('');
-            setNotes('');
-            setCategory('');
-            setReqItems([{ no: 1, description: '', qty: 1 }]);
-            setRecItems([{ no: 1, description: '', qty: 1, vendor: '', price: 0 }]);
-
-            // Pre-select Supervisor
-            if (currentUser.supervisorId) {
-                setSupervisorId(currentUser.supervisorId);
-            } else if (currentUser.managerId) {
-                setSupervisorId(currentUser.managerId);
-            } else {
-                // Default supervisor to first management/admin user
-                const defaultSpv = allUsers.find(u => u.groups.includes('MANAGEMENT') || u.role === 'Admin');
-                setSupervisorId(defaultSpv ? String(defaultSpv.id) : '');
+            try {
+                const savedDraft = localStorage.getItem('gesit_pr_requisition_draft');
+                if (savedDraft) {
+                    const draft = JSON.parse(savedDraft);
+                    if (draft.department !== undefined) setDepartment(draft.department);
+                    if (draft.paidTo !== undefined) setPaidTo(draft.paidTo);
+                    if (draft.bankAccount !== undefined) setBankAccount(draft.bankAccount);
+                    if (draft.notes !== undefined) setNotes(draft.notes);
+                    if (draft.category !== undefined) setCategory(draft.category);
+                    if (draft.reqItems !== undefined) setReqItems(draft.reqItems);
+                    if (draft.recItems !== undefined) setRecItems(draft.recItems);
+                    if (draft.supervisorId !== undefined) setSupervisorId(draft.supervisorId);
+                    if (draft.vpId !== undefined) setVpId(draft.vpId);
+                    if (draft.financeId !== undefined) setFinanceId(draft.financeId);
+                    if (draft.accountingId !== undefined) setAccountingId(draft.accountingId);
+                } else {
+                    resetToDefaults();
+                }
+            } catch (e) {
+                console.error("Failed to load PR requisition draft:", e);
+                resetToDefaults();
             }
-
-            // Pre-select VP based on Department
-            const deptLower = (currentUser.department || '').toLowerCase().trim();
-            const isOperations = deptLower.includes('it') || deptLower.includes('gnr') || deptLower.includes('trading') || deptLower.includes('prop') || deptLower.includes('rheem') || deptLower.includes('aams') || deptLower.includes('foundation');
-            
-            if (isOperations) {
-                // Target VP Logistic
-                // Look for admin or management user in IT
-                const vpLogisticUser = allUsers.find(u => (u.department || '').toLowerCase().includes('it') && (u.groups.includes('MANAGEMENT') || u.role === 'Admin'));
-                setVpId(vpLogisticUser ? String(vpLogisticUser.id) : '');
-            } else {
-                // Target VP HR
-                // Look for user in HRL
-                const vpHrUser = allUsers.find(u => (u.department || '').toLowerCase().includes('hrl') && (u.groups.includes('MANAGEMENT') || u.role === 'Admin' || u.jobTitle === 'Manager'));
-                setVpId(vpHrUser ? String(vpHrUser.id) : '');
-            }
-
-            // Pre-select Finance (users in Finance Accounting department)
-            const financeUser = allUsers.find(u => (u.department || '').toLowerCase().includes('finance') || (u.jobTitle || '').toLowerCase().includes('finance'));
-            setFinanceId(financeUser ? String(financeUser.id) : '');
-
-            // Pre-select Accounting (users in Finance Accounting department)
-            const accountingUser = allUsers.find(u => (u.department || '').toLowerCase().includes('accounting') || (u.jobTitle || '').toLowerCase().includes('accounting'));
-            setAccountingId(accountingUser ? String(accountingUser.id) : (financeUser ? String(financeUser.id) : ''));
         }
     }, [isOpen, currentUser, allUsers]);
+
+    // Save draft to localStorage on state changes
+    useEffect(() => {
+        if (isOpen) {
+            try {
+                const draft = {
+                    department,
+                    paidTo,
+                    bankAccount,
+                    notes,
+                    category,
+                    reqItems,
+                    recItems,
+                    supervisorId,
+                    vpId,
+                    financeId,
+                    accountingId
+                };
+                localStorage.setItem('gesit_pr_requisition_draft', JSON.stringify(draft));
+            } catch (e) {
+                console.error("Failed to save PR draft:", e);
+            }
+        }
+    }, [
+        isOpen, department, paidTo, bankAccount, notes, category, 
+        reqItems, recItems, supervisorId, vpId, financeId, accountingId
+    ]);
 
     if (!isOpen) return null;
 
@@ -173,6 +223,12 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             accountingId: accountingId || null,
             accountingName: allUsers.find(u => String(u.id) === accountingId)?.fullName || null
         };
+
+        try {
+            localStorage.removeItem('gesit_pr_requisition_draft');
+        } catch (e) {
+            console.error(e);
+        }
 
         onSubmit(payload);
     };
@@ -482,13 +538,30 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-8 py-5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-end gap-3 shrink-0">
-                    <Button type="button" variant="outline" onClick={onClose}>
-                        Cancel
+                <div className="px-8 py-5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-between items-center shrink-0">
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-[10px] font-black uppercase tracking-widest" 
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to clear this draft and reset the form?")) {
+                                try {
+                                    localStorage.removeItem('gesit_pr_requisition_draft');
+                                } catch(e){}
+                                resetToDefaults();
+                            }
+                        }}
+                    >
+                        Reset Form
                     </Button>
-                    <Button type="submit" form="prFormSubmit" className="min-w-[150px]">
-                        Submit Request
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button type="button" variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" form="prFormSubmit" className="min-w-[150px]">
+                            Submit Request
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>,
