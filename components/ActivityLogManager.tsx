@@ -458,7 +458,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
     const renderSlideshowOverlay = () => {
         if (!isPresenting) return null;
-        const currentActivity = filteredActivities[currentSlideIndex];
+        const presentationActivities = [...filteredActivities].reverse();
+        const currentActivity = presentationActivities[currentSlideIndex];
         return (
             <div className={`fixed inset-0 z-[5000] ${isDarkTheme ? 'bg-[#0f0f17]' : 'bg-[#f8fafc]'} flex flex-col items-center justify-center overflow-hidden`}>
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -558,14 +559,14 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 )}
 
                 <div className="absolute bottom-16 flex items-center gap-10">
-                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + filteredActivities.length) % filteredActivities.length)} aria-label="Previous Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + presentationActivities.length) % presentationActivities.length)} aria-label="Previous Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
                     <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-zinc-800/50">
-                        {filteredActivities.slice(0, 8).map((_, idx) => (
+                        {presentationActivities.slice(0, 8).map((_, idx) => (
                             <div key={idx} onClick={() => setCurrentSlideIndex(idx)} role="button" aria-label={`Go to slide ${idx + 1}`} className={`rounded-full transition-all duration-500 cursor-pointer ${idx === currentSlideIndex ? 'w-10 h-3 bg-blue-600 shadow-lg shadow-blue-500/40' : 'w-3 h-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300'}`} />
                         ))}
-                        {filteredActivities.length > 8 && <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 ml-2 uppercase tracking-widest leading-none">+{filteredActivities.length - 8} MORE</span>}
+                        {presentationActivities.length > 8 && <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 ml-2 uppercase tracking-widest leading-none">+{presentationActivities.length - 8} MORE</span>}
                     </div>
-                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % filteredActivities.length)} aria-label="Next Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % presentationActivities.length)} aria-label="Next Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
                 </div>
             </div>
         );
