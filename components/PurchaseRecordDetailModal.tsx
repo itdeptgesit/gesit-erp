@@ -114,7 +114,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <p className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mt-2">IT Asset Management</p>
                                 </div>
                             </div>
-                            <div className="text-left md:text-right space-y-1">
+                            <div className="text-left md:text-right space-y-1 md:pr-12">
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Transaction ID</p>
                                 <p className="text-2xl font-mono font-bold text-primary leading-none tracking-tighter">{record.transactionId}</p>
                                 <div className="flex md:justify-end gap-2 pt-1">
