@@ -50,6 +50,7 @@ import { FileSpreadsheet } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/input";
+import { ModalWrapper } from "@/components/ui/ModalWrapper";
 
 
 const capitalizeWords = (str: string) => {
@@ -1132,24 +1133,23 @@ export const ExtensionDirectory = ({
             )}
 
             {/* Admin Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-500">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-lg overflow-hidden border border-slate-200 dark:border-slate-800 relative">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
-                                    {editingExt ? <Pencil size={18} /> : <Plus size={18} />}
-                                </div>
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                    {editingExt ? t('editingExtension') : t('addingExtension')}
-                                </h3>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} aria-label="Close modal" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                                <X size={20} />
-                            </button>
+            <ModalWrapper isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="sm:max-w-xl">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary text-primary-foreground rounded-lg shadow-sm">
+                            {editingExt ? <Pencil size={18} /> : <Plus size={18} />}
                         </div>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                            {editingExt ? t('editingExtension') : t('addingExtension')}
+                        </h3>
+                    </div>
+                    <button type="button" onClick={() => setIsModalOpen(false)} aria-label="Close modal" className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                        <X size={20} />
+                    </button>
+                </div>
 
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
+                <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+                    <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
                             <div>
                                 <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">{t('nameLabel')}</label>
                                 <Input
@@ -1283,26 +1283,25 @@ export const ExtensionDirectory = ({
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-4 justify-end">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                >
-                                    {t('cancel')}
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : <Check size={16} className="mr-2" />}
-                                    {editingExt ? t('save') : t('addingExtension')}
-                                </Button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                    <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            {t('cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : <Check size={16} className="mr-2" />}
+                            {editingExt ? t('save') : t('addingExtension')}
+                        </Button>
+                    </div>
+                </form>
+            </ModalWrapper>
 
         </div >
     );
