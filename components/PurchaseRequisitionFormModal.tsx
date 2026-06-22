@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from "@/lib/utils";
 import { X, Calendar, FileText, Plus, Trash2, Shield, Info, DollarSign } from 'lucide-react';
+import { ModalWrapper } from '@/components/ui/ModalWrapper';
 import { PurchaseRequisition, PurchaseRequisitionItem, ITRecommendationItem, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,7 +167,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         reqItems, recItems, supervisorId, vpId, financeId, accountingId, discount, deliveryFee
     ]);
 
-    if (!isOpen) return null;
+
 
     // Requested Items Helpers
     const handleAddReqItem = () => {
@@ -260,9 +261,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const labelClass = "block text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5";
     const inputClass = "w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs";
 
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg w-full max-w-4xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[95vh] border border-slate-200 dark:border-zinc-800">
+    return (
+      <ModalWrapper isOpen={isOpen} onClose={onClose} className="border border-slate-200 dark:border-zinc-800">
                 
                 {/* Header */}
                 <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800 shrink-0">
@@ -664,8 +664,6 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                         </Button>
                     </div>
                 </div>
-            </div>
-        </div>,
-        document.body
-    );
+            </ModalWrapper>
+);
 };

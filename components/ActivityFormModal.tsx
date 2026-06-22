@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ActivityLog, UserAccount } from '../types';
 import { UserAvatar } from './UserAvatar';
 import { useLanguage } from '../translations';
+import { ModalWrapper } from './ui/ModalWrapper';
 
 interface ActivityFormModalProps {
     isOpen: boolean;
@@ -133,303 +134,292 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
     const inputLockedClass = "w-full px-4 py-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/50 rounded-xl text-sm font-medium text-slate-400 dark:text-zinc-600 cursor-not-allowed";
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/20 dark:bg-black/60 backdrop-blur-sm overflow-y-auto">
-                    <motion.div
-                        initial={{ scale: 0.95, y: 20, opacity: 0 }}
-                        animate={{ scale: 1, y: 0, opacity: 1 }}
-                        exit={{ scale: 0.95, y: 20, opacity: 0 }}
-                        className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200/60 dark:border-zinc-800 flex flex-col max-h-[92vh]"
-                    >
-                        {/* Header */}
-                        <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
-                            <div>
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
-                                    {initialData ? 'Edit Activity' : 'New Activity Entry'}
-                                </h2>
-                                <p className="text-[11px] font-medium text-slate-400 mt-1 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 animate-pulse" />
-                                    Activity documentation & records
-                                </p>
-                            </div>
-                            <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                            <form id="activityForm" onSubmit={handleSubmit} className="space-y-6">
-                                {/* Activity Name */}
-                                <div className="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-800">
-                                    <label className={labelClass}>Activity Summary</label>
-                                    <input
-                                        type="text"
-                                        className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-base focus:ring-primary/10`}
-                                        value={formData.activityName || ''}
-                                        onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
-                                        required
-                                        placeholder="What was done?"
-                                        autoFocus
-                                    />
-                                </div>
-
-                                {/* Requester & Department */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div ref={userDropdownRef}>
-                                        <label className={labelClass}>Requester</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className={inputClass}
-                                                value={userSearch}
-                                                onChange={(e) => {
-                                                    setUserSearch(e.target.value);
-                                                    setShowUserDropdown(true);
-                                                }}
-                                                onFocus={() => setShowUserDropdown(true)}
-                                                placeholder="Search user..."
-                                            />
-                                            <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-
-                                            <AnimatePresence>
-                                                {showUserDropdown && (userSearch.trim().length > 0 || filteredUsers.length > 0) && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, y: 10 }}
-                                                        className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-slate-100 dark:border-zinc-700/50 max-h-60 overflow-y-auto z-50 custom-scrollbar p-2"
-                                                    >
-                                                        {filteredUsers.map((user, idx) => (
-                                                            <button
-                                                                key={idx}
-                                                                type="button"
-                                                                onClick={() => handleUserSelect(user)}
-                                                                className="w-full text-left p-3.5 hover:bg-slate-50 dark:hover:bg-zinc-700 flex items-center gap-4 transition-all rounded-xl group"
-                                                            >
-                                                                <UserAvatar name={user.fullName || user.name} url={user.avatarUrl} size="md" className="border-2 border-white dark:border-zinc-600 shadow-sm" />
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors tracking-tight">{user.fullName || user.name}</p>
-                                                                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">{user.department}</p>
-                                                                </div>
-                                                            </button>
-                                                        ))}
-
-                                                        {userSearch.trim() && !filteredUsers.some(u => (u.fullName || u.name || '').toLowerCase() === userSearch.toLowerCase()) && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleManualEntry}
-                                                                className="w-full text-left p-4 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 flex items-center gap-4 transition-all rounded-xl mt-1"
-                                                            >
-                                                                <div className="w-9 h-9 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center shadow shadow-zinc-900/10">
-                                                                    <Plus size={16} strokeWidth={3} />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-none">Add "{userSearch}"</p>
-                                                                    <p className="text-[10px] font-medium text-slate-400 mt-1">Manual entry</p>
-                                                                </div>
-                                                            </button>
-                                                        )}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className={labelClass}>Department</label>
-                                        <div className="relative">
-                                            <select
-                                                className={selectClass}
-                                                value={formData.department || ''}
-                                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                                required
-                                            >
-                                                <option value="" disabled>Select Sector</option>
-                                                {departments.map((dept, idx) => (
-                                                    <option key={idx} value={dept}>{dept}</option>
-                                                ))}
-                                                {formData.department && !departments.includes(formData.department) && (
-                                                    <option value={formData.department}>{formData.department}</option>
-                                                )}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Dates */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div>
-                                        <label className={labelClass}>Start Date</label>
-                                        <div className="relative">
-                                            <input
-                                                type="date"
-                                                className={`${inputClass} cursor-pointer`}
-                                                onClick={(e) => e.currentTarget.showPicker()}
-                                                value={createdAt}
-                                                onChange={(e) => setCreatedAt(e.target.value)}
-                                                required
-                                            />
-                                            <Calendar size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className={labelClass}>{formData.status === 'Completed' ? 'Completed Date' : 'Updated Date'}</label>
-                                        <div className="relative">
-                                            <input
-                                                type="date"
-                                                className={`${inputClass} cursor-pointer`}
-                                                onClick={(e) => e.currentTarget.showPicker()}
-                                                value={formData.status === 'Completed' ? completedAt : updatedAt}
-                                                onChange={(e) => formData.status === 'Completed' ? setCompletedAt(e.target.value) : setUpdatedAt(e.target.value)}
-                                                required
-                                            />
-                                            <Clock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400/50 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Duration & Location */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div>
-                                        <label className={labelClass}>Duration</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className={inputClass}
-                                                value={formData.duration || ''}
-                                                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                                placeholder="e.g. 15m, 2h"
-                                            />
-                                            <Zap size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Location</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className={inputClass}
-                                                value={formData.location || ''}
-                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                                placeholder="Site or Office"
-                                            />
-                                            <MapPin size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Category & Priority */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div>
-                                        <label className={labelClass}>Classification</label>
-                                        <div className="relative">
-                                            <select
-                                                className={selectClass}
-                                                value={formData.category || 'Troubleshooting'}
-                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                                required
-                                            >
-                                                <option value="Troubleshooting">Troubleshooting</option>
-                                                <option value="Maintenance">Maintenance</option>
-                                                <option value="Creative & Design">Creative & Design</option>
-                                                <option value="Infrastructure & Network">Infrastructure & Network</option>
-                                                <option value="Procurement & Assets">Procurement & Assets</option>
-                                                <option value="Technical Support">Technical Support</option>
-                                                <option value="Web Development">Web Development</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Priority Level</label>
-                                        <div className="relative">
-                                            <select
-                                                className={selectClass}
-                                                value={formData.type || 'Minor'}
-                                                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                                                required
-                                            >
-                                                <option value="Minor">Minor</option>
-                                                <option value="Major">Major</option>
-                                                <option value="Critical">Critical</option>
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* IT Personnel & Status */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div>
-                                        <label className={labelClass}>Handled By</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className={inputLockedClass}
-                                                value={formData.itPersonnel || ''}
-                                                readOnly
-                                            />
-                                            <ShieldCheck size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400/50 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Operational Status</label>
-                                        <div className="relative">
-                                            <select
-                                                className={selectClass}
-                                                value={formData.status || 'Completed'}
-                                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                                                required
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="In Progress">In Progress</option>
-                                                <option value="Completed">Completed</option>
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Remarks */}
-                                <div>
-                                    <label className={labelClass}>Documentation Details</label>
-                                    <textarea
-                                        rows={3}
-                                        className={`${inputClass} resize-none min-h-[100px]`}
-                                        value={formData.remarks || ''}
-                                        onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                                        placeholder="Additional notes or findings..."
-                                    />
-                                </div>
-                            </form>
-                        </div>
-
-                        {/* Footer Actions */}
-                        <div className="px-8 py-6 border-t border-slate-100 dark:border-zinc-800/80 flex justify-end items-center gap-4 bg-white dark:bg-zinc-900 shrink-0">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                form="activityForm"
-                                disabled={isSubmitting}
-                                className="px-8 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all flex items-center gap-2 shadow active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                            >
-                                {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} strokeWidth={2.5} />}
-                                {initialData ? 'Update Record' : 'Save Activity'}
-                            </button>
-                        </div>
-                    </motion.div>
+        <ModalWrapper isOpen={isOpen} onClose={onClose}>
+            {/* Header */}
+            <div className="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shrink-0">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                        {initialData ? 'Edit Activity' : 'New Activity Entry'}
+                    </h2>
+                    <p className="text-[11px] font-medium text-slate-400 mt-1 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 animate-pulse" />
+                        Activity documentation & records
+                    </p>
                 </div>
-            )}
-        </AnimatePresence>
+                <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                    <X size={20} />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <form id="activityForm" onSubmit={handleSubmit} className="space-y-6">
+                    {/* Activity Name */}
+                    <div className="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-800">
+                        <label className={labelClass}>Activity Summary</label>
+                        <input
+                            type="text"
+                            className={`${inputClass} !bg-white dark:!bg-zinc-900 !text-base focus:ring-primary/10`}
+                            value={formData.activityName || ''}
+                            onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
+                            required
+                            placeholder="What was done?"
+                            autoFocus
+                        />
+                    </div>
+
+                    {/* Requester & Department */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div ref={userDropdownRef}>
+                            <label className={labelClass}>Requester</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={userSearch}
+                                    onChange={(e) => {
+                                        setUserSearch(e.target.value);
+                                        setShowUserDropdown(true);
+                                    }}
+                                    onFocus={() => setShowUserDropdown(true)}
+                                    placeholder="Search user..."
+                                />
+                                <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+
+                                <AnimatePresence>
+                                    {showUserDropdown && (userSearch.trim().length > 0 || filteredUsers.length > 0) && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-slate-100 dark:border-zinc-700/50 max-h-60 overflow-y-auto z-50 custom-scrollbar p-2"
+                                        >
+                                            {filteredUsers.map((user, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => handleUserSelect(user)}
+                                                    className="w-full text-left p-3.5 hover:bg-slate-50 dark:hover:bg-zinc-700 flex items-center gap-4 transition-all rounded-xl group"
+                                                >
+                                                    <UserAvatar name={user.fullName || user.name} url={user.avatarUrl} size="md" className="border-2 border-white dark:border-zinc-600 shadow-sm" />
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors tracking-tight">{user.fullName || user.name}</p>
+                                                        <p className="text-[10px] font-medium text-slate-400 mt-0.5">{user.department}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+
+                                            {userSearch.trim() && !filteredUsers.some(u => (u.fullName || u.name || '').toLowerCase() === userSearch.toLowerCase()) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleManualEntry}
+                                                    className="w-full text-left p-4 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 flex items-center gap-4 transition-all rounded-xl mt-1"
+                                                >
+                                                    <div className="w-9 h-9 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center shadow shadow-zinc-900/10">
+                                                        <Plus size={16} strokeWidth={3} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-none">Add "{userSearch}"</p>
+                                                        <p className="text-[10px] font-medium text-slate-400 mt-1">Manual entry</p>
+                                                    </div>
+                                                </button>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Department</label>
+                            <div className="relative">
+                                <select
+                                    className={selectClass}
+                                    value={formData.department || ''}
+                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                    required
+                                >
+                                    <option value="" disabled>Select Sector</option>
+                                    {departments.map((dept, idx) => (
+                                        <option key={idx} value={dept}>{dept}</option>
+                                    ))}
+                                    {formData.department && !departments.includes(formData.department) && (
+                                        <option value={formData.department}>{formData.department}</option>
+                                    )}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dates */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Start Date</label>
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    className={`${inputClass} cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full`}
+                                    onClick={(e) => e.currentTarget.showPicker()}
+                                    value={createdAt}
+                                    onChange={(e) => setCreatedAt(e.target.value)}
+                                    required
+                                />
+                                <Calendar size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>{formData.status === 'Completed' ? 'Completed Date' : 'Updated Date'}</label>
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    className={`${inputClass} cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full`}
+                                    onClick={(e) => e.currentTarget.showPicker()}
+                                    value={formData.status === 'Completed' ? completedAt : updatedAt}
+                                    onChange={(e) => formData.status === 'Completed' ? setCompletedAt(e.target.value) : setUpdatedAt(e.target.value)}
+                                    required
+                                />
+                                <Clock size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400/50 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Duration & Location */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Duration</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={formData.duration || ''}
+                                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                    placeholder="e.g. 15m, 2h"
+                                />
+                                <Zap size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Location</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className={inputClass}
+                                    value={formData.location || ''}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    placeholder="Site or Office"
+                                />
+                                <MapPin size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Category & Priority */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Classification</label>
+                            <div className="relative">
+                                <select
+                                    className={selectClass}
+                                    value={formData.category || 'Troubleshooting'}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    required
+                                >
+                                    <option value="Troubleshooting">Troubleshooting</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Creative & Design">Creative & Design</option>
+                                    <option value="Infrastructure & Network">Infrastructure & Network</option>
+                                    <option value="Procurement & Assets">Procurement & Assets</option>
+                                    <option value="Technical Support">Technical Support</option>
+                                    <option value="Web Development">Web Development</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Priority Level</label>
+                            <div className="relative">
+                                <select
+                                    className={selectClass}
+                                    value={formData.type || 'Minor'}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                                    required
+                                >
+                                    <option value="Minor">Minor</option>
+                                    <option value="Major">Major</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* IT Personnel & Status */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClass}>Handled By</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className={inputLockedClass}
+                                    value={formData.itPersonnel || ''}
+                                    readOnly
+                                />
+                                <ShieldCheck size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400/50 pointer-events-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Operational Status</label>
+                            <div className="relative">
+                                <select
+                                    className={selectClass}
+                                    value={formData.status || 'Completed'}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                                    required
+                                >
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Remarks */}
+                    <div>
+                        <label className={labelClass}>Documentation Details</label>
+                        <textarea
+                            rows={3}
+                            className={`${inputClass} resize-none min-h-[100px]`}
+                            value={formData.remarks || ''}
+                            onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                            placeholder="Additional notes or findings..."
+                        />
+                    </div>
+                </form>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="px-8 py-6 border-t border-slate-100 dark:border-zinc-800/80 flex justify-end items-center gap-4 bg-white dark:bg-zinc-900 shrink-0">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-all"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    form="activityForm"
+                    disabled={isSubmitting}
+                    className="px-8 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-zinc-900/90 dark:hover:bg-zinc-50/90 transition-all flex items-center gap-2 shadow active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                    {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} strokeWidth={2.5} />}
+                    {initialData ? 'Update Record' : 'Save Activity'}
+                </button>
+            </div>
+        </ModalWrapper>
     );
 };

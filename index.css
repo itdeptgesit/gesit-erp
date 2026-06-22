@@ -277,4 +277,27 @@
 @keyframes circle-reveal {
     from { clip-path: circle(0% at var(--click-x) var(--click-y)); }
     to { clip-path: circle(150% at var(--click-x) var(--click-y)); }
+} 
+@theme {
+  --animate-modal-in: modal-spring-in 450ms ease-out forwards;
+  --animate-modal-out: modal-spring-out 350ms ease-out forwards;
+  --animate-backdrop-in: backdrop-fade-in 400ms ease-out forwards;
+  --animate-backdrop-out: backdrop-fade-out 350ms ease-in forwards;
+
+  @keyframes modal-spring-in {
+    0% { opacity: 0; clip-path: inset(50% 0 50% 0 round 0.5rem); scale: 0.96; translate: -50% -50%; }
+    100% { opacity: 1; clip-path: inset(0% 0% 0% 0% round 0.5rem); scale: 1; translate: -50% -50%; }
+  }
+  @keyframes modal-spring-out {
+    0% { opacity: 1; clip-path: inset(0% 0% 0% 0% round 0.5rem); scale: 1; translate: -50% -50%; }
+    100% { opacity: 0; clip-path: inset(50% 0 50% 0 round 0.5rem); scale: 0.98; translate: -50% -50%; }
+  }
+  @keyframes backdrop-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes backdrop-fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
 }

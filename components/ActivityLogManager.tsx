@@ -21,6 +21,7 @@ import { UserAvatar } from './UserAvatar';
 import { exportToExcel } from '../lib/excelExport';
 import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
+import { ModalWrapper } from './ui/ModalWrapper';
 
 // ─── Stat Card Component (lndev/ui Taskplus Style) ─────────────────────────────
 
@@ -154,109 +155,95 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
     const { language, t } = useLanguage();
 
     return (
-        <AnimatePresence>
-            {isOpen && activity && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
-                    onClick={onClose}
-                >
-                    <motion.div
-                        initial={{ scale: 0.95, y: 10, opacity: 0 }}
-                        animate={{ scale: 1, y: 0, opacity: 1 }}
-                        exit={{ scale: 0.95, y: 10, opacity: 0 }}
-                        onClick={e => e.stopPropagation()}
-                        className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 flex flex-col max-h-[90vh]"
-                    >
-                        {/* Modal Header */}
-                        <div className="p-5 sm:p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
+        <ModalWrapper isOpen={isOpen} onClose={onClose}>
+            {activity && (
+                <>
+                    {/* Modal Header */}
+                    <div className="p-5 sm:p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <PriorityBadge type={activity.type} />
+                                <StatusBadge status={activity.status} />
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
+                            <p className="text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-zinc-400 mt-2 uppercase tracking-[0.2em]">{activity.category} · {activity.location}</p>
+                        </div>
+                        <button onClick={onClose} className="p-2 sm:p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="flex-1 overflow-y-auto p-5 sm:p-9 space-y-6 sm:space-y-8 custom-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Fulfillment Status</p>
+                                <StatusBadge status={activity.status} />
+                            </div>
+                            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Resolution Duration</p>
+                                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base sm:text-lg">
+                                    <Clock size={16} className="text-blue-500" />
+                                    {activity.duration || '-'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Request Initiator</p>
+                                <div className="flex items-center gap-3">
+                                    <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.requester}</p>
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">{activity.department}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Handling Personnel</p>
+                                <div className="flex items-center gap-3">
+                                    <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.itPersonnel}</p>
+                                        <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">IT Solutions Group</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {activity.remarks && (
+                            <div className="p-6 sm:p-9 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20">
+                                <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.3em] mb-3">Fulfillment Remarks</p>
+                                <p className="text-base sm:text-lg font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic pr-4">
+                                    "{activity.remarks}"
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex justify-between pt-6 sm:pt-9 border-t border-slate-50 dark:border-zinc-800/40">
                             <div>
-                                <div className="flex flex-wrap items-center gap-2 mb-3">
-                                    <PriorityBadge type={activity.type} />
-                                    <StatusBadge status={activity.status} />
-                                </div>
-                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
-                                <p className="text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-zinc-400 mt-2 uppercase tracking-[0.2em]">{activity.category} · {activity.location}</p>
-                            </div>
-                            <button onClick={onClose} className="p-2 sm:p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all">
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="flex-1 overflow-y-auto p-5 sm:p-9 space-y-6 sm:space-y-8 custom-scrollbar">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Fulfillment Status</p>
-                                    <StatusBadge status={activity.status} />
-                                </div>
-                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-2.5">Resolution Duration</p>
-                                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base sm:text-lg">
-                                        <Clock size={16} className="text-blue-500" />
-                                        {activity.duration || '-'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Request Initiator</p>
-                                    <div className="flex items-center gap-3">
-                                        <UserAvatar name={activity.requester} url={userAvatars[activity.requester] || activity.avatarUrl} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.requester}</p>
-                                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">{activity.department}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-3.5">Handling Personnel</p>
-                                    <div className="flex items-center gap-3">
-                                        <UserAvatar name={activity.itPersonnel} url={userAvatars[activity.itPersonnel]} size="sm" className="border-2 border-white dark:border-zinc-700 shadow-sm" />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight truncate">{activity.itPersonnel}</p>
-                                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-zinc-400 mt-1 uppercase tracking-wider truncate">IT Solutions Group</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {activity.remarks && (
-                                <div className="p-6 sm:p-9 rounded-xl bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/20">
-                                    <p className="text-[10px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-[0.3em] mb-3">Fulfillment Remarks</p>
-                                    <p className="text-base sm:text-lg font-bold text-slate-700 dark:text-slate-300 leading-relaxed italic pr-4">
-                                        "{activity.remarks}"
-                                    </p>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between pt-6 sm:pt-9 border-t border-slate-50 dark:border-zinc-800/40">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-2">Logged On</p>
-                                    <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">
-                                        <Calendar size={13} />
-                                        {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : '-'}
-                                    </div>
+                                <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-2">Logged On</p>
+                                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">
+                                    <Calendar size={13} />
+                                    {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : '-'}
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Modal Footer */}
-                        <div className="px-5 sm:px-9 py-4 sm:py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
-                            <button
-                                onClick={onClose}
-                                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
-                            >
-                                Close View
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
+                    {/* Modal Footer */}
+                    <div className="px-5 sm:px-9 py-4 sm:py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
+                        <button
+                            onClick={onClose}
+                            className="px-6 sm:px-8 py-2.5 sm:py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
+                        >
+                            Close View
+                        </button>
+                    </div>
+                </>
             )}
-        </AnimatePresence>
+        </ModalWrapper>
     );
 };
 
