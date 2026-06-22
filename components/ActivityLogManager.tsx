@@ -430,6 +430,17 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         }
     };
 
+    useEffect(() => {
+        if (isPresenting) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isPresenting]);
+
     const totalPages = Math.max(Math.ceil(filteredActivities.length / rowsPerPage), 1);
     const paginatedActivities = filteredActivities.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
     const startItem = (currentPage - 1) * rowsPerPage + 1;
@@ -461,7 +472,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         const presentationActivities = [...filteredActivities].reverse();
         const currentActivity = presentationActivities[currentSlideIndex];
         return (
-            <div className={`fixed inset-0 z-[5000] ${isDarkTheme ? 'bg-[#0f0f17]' : 'bg-[#f8fafc]'} flex flex-col items-center justify-center overflow-hidden`}>
+            <div className={`fixed inset-0 w-full h-full z-[5000] ${isDarkTheme ? 'bg-[#0f0f17]' : 'bg-[#f8fafc]'} flex flex-col items-center justify-center overflow-hidden m-0 p-0`}>
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-blue-600/10 rounded-full blur-[160px]" />
                     <div className="absolute bottom-[-20%] right-[-10%] w-[70vw] h-[70vw] bg-emerald-600/5 rounded-full blur-[160px]" />
