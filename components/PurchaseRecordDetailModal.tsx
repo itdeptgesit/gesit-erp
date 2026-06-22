@@ -101,25 +101,6 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                     `}
                 </style>
 
-                <DialogHeader className="px-8 py-6 border-b shrink-0 flex flex-row items-center justify-between space-y-0">
-                    <div className="flex items-center gap-4">
-                        <div className={cn(
-                            "w-10 h-10 rounded-lg flex items-center justify-center border",
-                            statusCfg.bg, statusCfg.color, statusCfg.border
-                        )}>
-                            {statusCfg.icon && React.isValidElement(statusCfg.icon)
-                                ? React.cloneElement(statusCfg.icon as React.ReactElement<any>, { size: 20 })
-                                : statusCfg.icon}
-                        </div>
-                        <div className="text-left">
-                            <DialogTitle className="text-xl font-bold uppercase tracking-tight">
-                                Purchase Record Detail
-                            </DialogTitle>
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-0.5 opacity-60">View purchase details and documentation</p>
-                        </div>
-                    </div>
-                </DialogHeader>
-
                 <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                     <div id="printable-invoice" className="p-8 space-y-10 bg-background">
                         {/* Branding Header */}
@@ -129,7 +110,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <ShieldCheck className="text-primary-foreground" size={28} />
                                 </div>
                                 <div className="text-left">
-                                    <h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Purchase Details</h1>
+                                    <DialogTitle render={<h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Purchase Details</h1>} />
                                     <p className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mt-2">IT Asset Management</p>
                                 </div>
                             </div>
