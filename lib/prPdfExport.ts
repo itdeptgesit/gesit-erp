@@ -338,8 +338,22 @@ export async function exportPurchaseRequisitionPDF(req: PurchaseRequisition) {
   // ─────────────────────────────────────────────────────
   // GRAND TOTAL - Calibri 11 bold
   // ─────────────────────────────────────────────────────
-  doc.setFont('calibri', 'bold');
   doc.setFontSize(11);
+  if ((req.discount && req.discount > 0) || (req.deliveryFee && req.deliveryFee > 0)) {
+    const subTotal = (req.itRecommendations || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+    doc.setFont('calibri', 'normal');
+    doc.text(`Subtotal : ${formatRp(subTotal)}`, marginL, y);
+    y += 5;
+    if (req.discount && req.discount > 0) {
+      doc.text(`Diskon : -${formatRp(req.discount)}`, marginL, y);
+      y += 5;
+    }
+    if (req.deliveryFee && req.deliveryFee > 0) {
+      doc.text(`Ongkos Kirim : +${formatRp(req.deliveryFee)}`, marginL, y);
+      y += 5;
+    }
+  }
+  doc.setFont('calibri', 'bold');
   doc.text(`Grand Total : ${formatRp(req.grandTotal)}`, marginL, y);
 
   y += 12;

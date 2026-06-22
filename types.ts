@@ -401,6 +401,8 @@ export interface PurchaseRequisition {
   itRecommendations: ITRecommendationItem[];
   notes?: string;
   grandTotal: number;
+  discount?: number;
+  deliveryFee?: number;
   status: 'Pending Supervisor' | 'Pending VP' | 'Pending Finance' | 'Pending Accounting' | 'Approved' | 'Rejected';
   category?: string;
   

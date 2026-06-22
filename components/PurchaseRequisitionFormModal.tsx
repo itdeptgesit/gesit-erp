@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { cn } from "@/lib/utils";
 import { X, Calendar, FileText, Plus, Trash2, Shield, Info, DollarSign } from 'lucide-react';
 import { PurchaseRequisition, PurchaseRequisitionItem, ITRecommendationItem, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,18 @@ interface PurchaseRequisitionFormModalProps {
     allUsers: UserAccount[];
 }
 
+const formatNumberString = (value: string | number): string => {
+    if (value === undefined || value === null || value === '') return '';
+    const clean = String(value).replace(/\D/g, '');
+    if (!clean) return '';
+    return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(parseInt(clean, 10));
+};
+
+const parseNumberString = (value: string): number => {
+    const clean = value.replace(/\D/g, '');
+    return clean ? parseInt(clean, 10) : 0;
+};
+
 export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModalProps> = ({
     isOpen,
     onClose,
@@ -31,6 +44,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [bankAccount, setBankAccount] = useState('');
     const [notes, setNotes] = useState('');
     const [category, setCategory] = useState('');
+    const [discount, setDiscount] = useState<number>(0);
+    const [deliveryFee, setDeliveryFee] = useState<number>(0);
     
     // Requested items list
     const [reqItems, setReqItems] = useState<PurchaseRequisitionItem[]>([
@@ -56,6 +71,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         setBankAccount('');
         setNotes('');
         setCategory('');
+        setDiscount(0);
+        setDeliveryFee(0);
         setReqItems([{ no: 1, description: '', qty: 1 }]);
         setRecItems([{ no: 1, description: '', qty: 1, vendor: '', price: 0 }]);
 
@@ -108,6 +125,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     if (draft.vpId !== undefined) setVpId(draft.vpId);
                     if (draft.financeId !== undefined) setFinanceId(draft.financeId);
                     if (draft.accountingId !== undefined) setAccountingId(draft.accountingId);
+                    if (draft.discount !== undefined) setDiscount(draft.discount);
+                    if (draft.deliveryFee !== undefined) setDeliveryFee(draft.deliveryFee);
                 } else {
                     resetToDefaults();
                 }
@@ -133,7 +152,9 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     supervisorId,
                     vpId,
                     financeId,
-                    accountingId
+                    accountingId,
+                    discount,
+                    deliveryFee
                 };
                 localStorage.setItem('gesit_pr_requisition_draft', JSON.stringify(draft));
             } catch (e) {
@@ -142,7 +163,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         }
     }, [
         isOpen, department, paidTo, bankAccount, notes, category, 
-        reqItems, recItems, supervisorId, vpId, financeId, accountingId
+        reqItems, recItems, supervisorId, vpId, financeId, accountingId, discount, deliveryFee
     ]);
 
     if (!isOpen) return null;
@@ -182,7 +203,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     };
 
     // Calculate Grand Total
-    const grandTotal = recItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+    const subTotal = recItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+    const grandTotal = Math.max(0, subTotal - (Number(discount) || 0) + (Number(deliveryFee) || 0));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -212,6 +234,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             itRecommendations: filteredRecItems,
             notes: notes,
             grandTotal: grandTotal,
+            discount: Number(discount) || 0,
+            deliveryFee: Number(deliveryFee) || 0,
             status: 'Pending Supervisor',
             category: category,
             supervisorId: supervisorId || null,
@@ -395,12 +419,11 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         </div>
                                         <div className="col-span-2">
                                             <Input
-                                                type="number"
-                                                min="0"
-                                                className={inputClass}
+                                                type="text"
+                                                className={cn(inputClass, "font-mono")}
                                                 placeholder="Harga Satuan"
-                                                value={item.price || ''}
-                                                onChange={e => handleRecItemChange(idx, 'price', e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0)}
+                                                value={formatNumberString(item.price)}
+                                                onChange={e => handleRecItemChange(idx, 'price', parseNumberString(e.target.value))}
                                             />
                                         </div>
                                         <div className="col-span-1 text-right text-xs font-mono font-bold text-slate-700 dark:text-zinc-300">
@@ -435,16 +458,95 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                             />
                         </div>
 
-                        {/* Grand Total Commit */}
-                        <div className="bg-slate-900 dark:bg-zinc-950 p-6 rounded-xl border border-white/5 flex justify-between items-center shadow-lg">
-                            <div>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block mb-1">Grand Total Commitment</span>
-                                <span className="text-2xl font-black text-blue-500 tracking-tighter italic font-mono">
-                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
-                                </span>
+                        {/* Summary, Discount, and Delivery Area */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch bg-slate-50/50 dark:bg-zinc-900/10 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800/80">
+                            {/* Input section on the left: col-span-7 */}
+                            <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Penyesuaian Biaya (Opsional)</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">Diskon Pembelian</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                                                <Input 
+                                                    type="text" 
+                                                    className={cn(inputClass, "pl-9 font-mono text-xs")} 
+                                                    placeholder="Masukkan jumlah diskon" 
+                                                    value={formatNumberString(discount)} 
+                                                    onChange={e => setDiscount(parseNumberString(e.target.value))} 
+                                                />
+                                            </div>
+                                            <span className="text-[9px] text-slate-400 mt-1 block">Akan dikurangi langsung dari total rekomendasi IT.</span>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Ongkos Kirim</label>
+                                                {(!deliveryFee || deliveryFee === 0) && (
+                                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                                        Gratis Ongkir!
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                                                <Input 
+                                                    type="text" 
+                                                    className={cn(inputClass, "pl-9 font-mono text-xs")} 
+                                                    placeholder="Masukkan ongkos kirim" 
+                                                    value={formatNumberString(deliveryFee)} 
+                                                    onChange={e => setDeliveryFee(parseNumberString(e.target.value))} 
+                                                />
+                                            </div>
+                                            <span className="text-[9px] text-slate-400 mt-1 block">Beri nilai 0 atau kosong jika Gratis Ongkir.</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/5">
-                                <DollarSign size={20} className="text-blue-500" />
+
+                            {/* Grand Total Summary on the right: col-span-5 */}
+                            <div className="lg:col-span-5 bg-white dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between min-h-[140px]">
+                                <div className="space-y-2">
+                                    <h4 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest pb-1 border-b border-slate-100 dark:border-zinc-800/50">Ringkasan Pembayaran</h4>
+                                    
+                                    <div className="space-y-1.5 pt-1">
+                                        <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 flex justify-between">
+                                            <span>Subtotal Item IT</span>
+                                            <span className="font-mono font-semibold text-slate-800 dark:text-zinc-200">
+                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(subTotal)}
+                                            </span>
+                                        </div>
+                                        {discount > 0 && (
+                                            <div className="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
+                                                <span>Diskon Pembelian</span>
+                                                <span className="font-mono font-semibold">
+                                                    -{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(discount)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {deliveryFee > 0 && (
+                                            <div className="text-[11px] font-medium text-blue-500 dark:text-blue-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
+                                                <span>Ongkos Kirim</span>
+                                                <span className="font-mono font-semibold">
+                                                    +{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(deliveryFee)}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800/50 flex items-center justify-between">
+                                    <div>
+                                        <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
+                                        <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
+                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
+                                        </span>
+                                    </div>
+                                    <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
+                                        <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

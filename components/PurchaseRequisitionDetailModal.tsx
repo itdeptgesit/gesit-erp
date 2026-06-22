@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Download, ShieldCheck, Clock, FileText, CheckCircle2, AlertTriangle, User, HelpCircle } from 'lucide-react';
+import { X, Calendar, Download, ShieldCheck, Clock, FileText, CheckCircle2, AlertTriangle, User, HelpCircle, DollarSign } from 'lucide-react';
 import { PurchaseRequisition, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -257,12 +257,45 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                     </div>
 
                     {/* Grand Total display */}
-                    <div className="flex justify-between items-center bg-slate-900 dark:bg-zinc-950 p-6 rounded-xl border border-white/5 shadow-lg">
-                        <div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] block mb-1">Grand Total Commitment</span>
-                            <span className="text-2xl font-black text-blue-500 tracking-tighter italic font-mono">
-                                {formatIDR(requisition.grandTotal)}
-                            </span>
+                    <div className="bg-slate-50/50 dark:bg-zinc-900/10 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800/80 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div className="md:col-span-7 space-y-3">
+                            <h4 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest pb-1 border-b border-slate-100 dark:border-zinc-800/50">Rincian Komitmen Biaya</h4>
+                            <div className="space-y-1.5">
+                                <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 flex justify-between max-w-md">
+                                    <span>Subtotal Item IT</span>
+                                    <span className="font-mono font-semibold text-slate-800 dark:text-zinc-200">
+                                        {formatIDR((requisition.itRecommendations || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0))}
+                                    </span>
+                                </div>
+                                {requisition.discount && requisition.discount > 0 ? (
+                                    <div className="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex justify-between max-w-md">
+                                        <span>Diskon Pembelian</span>
+                                        <span className="font-mono font-semibold">
+                                            -{formatIDR(requisition.discount)}
+                                        </span>
+                                    </div>
+                                ) : null}
+                                {requisition.deliveryFee && requisition.deliveryFee > 0 ? (
+                                    <div className="text-[11px] font-medium text-blue-500 dark:text-blue-400 flex justify-between max-w-md">
+                                        <span>Ongkos Kirim</span>
+                                        <span className="font-mono font-semibold">
+                                            +{formatIDR(requisition.deliveryFee)}
+                                        </span>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+
+                        <div className="md:col-span-5 bg-white dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm flex items-center justify-between min-h-[90px]">
+                            <div>
+                                <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
+                                <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
+                                    {formatIDR(requisition.grandTotal)}
+                                </span>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
+                                <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
+                            </div>
                         </div>
                     </div>
 
