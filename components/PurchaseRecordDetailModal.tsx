@@ -5,7 +5,7 @@ import {
     X, Calendar, ShieldCheck, FileText,
     Receipt, Fingerprint, Download,
     Building2, User, CheckCircle2, XCircle, Clock, ShieldAlert, Award, Briefcase,
-    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag, RefreshCcw, FileSpreadsheet, HelpCircle, Eye, Printer
+    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag, RefreshCcw, FileSpreadsheet, HelpCircle, Eye, Printer, DollarSign
 } from 'lucide-react';
 import { PurchaseRecord } from '../types';
 import { sendToGoogleSheet } from '../lib/googleSheets';
@@ -255,68 +255,71 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                             </div>
 
                             {/* --- RIGHT COLUMN: AUDIT & SUMMARY (5/12) --- */}
-                            <div className="lg:col-span-5 space-y-10">
-                                {/* Payment & Ledger Detail */}
-                                <div className="bg-slate-950 p-6 rounded-xl text-white shadow-xl relative overflow-hidden group border border-slate-800">
-                                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
-                                        <CreditCard size={60} />
-                                    </div>
-                                    <div className="relative space-y-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-primary/20 text-primary rounded-lg flex items-center justify-center border border-primary/20">
-                                                <CreditCard size={16} />
+                            <div className="lg:col-span-5 space-y-8">
+                                {/* Payment & Ledger Detail Card */}
+                                <div className="bg-slate-50/50 dark:bg-zinc-900/10 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-zinc-800/50">
+                                            <div className="flex items-center gap-2">
+                                                <CreditCard size={14} className="text-slate-400 dark:text-zinc-500" />
+                                                <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Financial Summary</h3>
                                             </div>
-                                            <h3 className="text-[9px] font-bold uppercase tracking-widest text-white/70">Financial Summary</h3>
                                         </div>
 
                                         <div className="space-y-3">
-                                            <div className="flex justify-between items-center text-xs">
-                                                <span className="opacity-40 font-bold uppercase tracking-wider text-[9px]">Method</span>
-                                                <span className="font-medium">{record.paymentMethod || '-'}</span>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Method</span>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{record.paymentMethod || '-'}</span>
                                             </div>
-                                            <div className="flex justify-between items-center text-xs">
-                                                <span className="opacity-40 font-bold uppercase tracking-wider text-[9px]">Ledger Date</span>
-                                                <span className="font-medium">{record.paymentDate || record.purchaseDate}</span>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Ledger Date</span>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{record.paymentDate || record.purchaseDate}</span>
                                             </div>
-                                            <div className="flex justify-between items-center text-xs">
-                                                <span className="opacity-40 font-bold uppercase tracking-wider text-[9px]">Status</span>
-                                                <div className={cn("flex items-center gap-2 font-bold uppercase text-[10px]", statusCfg.color)}>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Status</span>
+                                                <div className={cn(
+                                                    "flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase border",
+                                                    statusCfg.bg, statusCfg.color, statusCfg.border
+                                                )}>
                                                     {statusCfg.icon && React.isValidElement(statusCfg.icon)
-                                                        ? React.cloneElement(statusCfg.icon as React.ReactElement<any>, { size: 12 })
+                                                        ? React.cloneElement(statusCfg.icon as React.ReactElement<any>, { size: 10 })
                                                         : statusCfg.icon}
                                                     {record.status}
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="pt-5 border-t border-white/5 flex items-center justify-between">
-                                            <div className="space-y-1">
-                                                <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">Total Amount</p>
-                                                <p className="text-2xl font-mono font-bold text-primary tracking-tighter">{formatFullIDR(record.subtotal || 0)}</p>
-                                            </div>
+                                    <div className="pt-4 mt-4 border-t border-slate-200/60 dark:border-zinc-800/50 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Total Amount</p>
+                                            <p className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">{formatFullIDR(record.subtotal || 0)}</p>
+                                        </div>
+                                        <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
+                                            <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Remarks */}
                                 {record.remarks && (
-                                    <div className="p-6 bg-amber-50/50 rounded-xl border border-amber-200">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-2 bg-amber-100 rounded-lg text-amber-600 shrink-0">
-                                                <ShieldAlert size={16} />
+                                    <div className="p-4 bg-amber-50/40 dark:bg-amber-950/10 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-1.5 bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
+                                                <ShieldAlert size={14} />
                                             </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest opacity-70">Remarks / Notes</p>
-                                                <p className="text-sm font-medium text-muted-foreground leading-relaxed italic">"{record.remarks}"</p>
+                                            <div className="space-y-0.5">
+                                                <p className="text-[9px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Remarks / Notes</p>
+                                                <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed italic">"{record.remarks}"</p>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Compliance Matrix */}
-                                <div className="bg-emerald-600/5 p-8 rounded-xl border border-emerald-600/10 space-y-6">
-                                    <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <ShieldCheck size={16} /> Checklist / Documents
+                                <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm space-y-4">
+                                    <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest pb-1 border-b border-slate-100 dark:border-zinc-800/50 flex items-center gap-1.5">
+                                        <ShieldCheck size={14} className="text-emerald-500" /> Checklist / Documents
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
                                         {Object.entries({
@@ -325,31 +328,35 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                             paymentSlip: 'Slip',
                                             invoice: 'Invoice',
                                             checkByRara: 'Audited'
-                                        }).map(([key, label]) => (
-                                            <div
-                                                key={key}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[9px] font-bold uppercase tracking-wider transition-all",
-                                                    record.docs?.[key as keyof typeof record.docs]
-                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl'
-                                                        : 'bg-background text-muted-foreground border-muted-foreground/10 opacity-30 shadow-none'
-                                                )}
-                                            >
-                                                <CheckCircle2 size={12} className={record.docs?.[key as keyof typeof record.docs] ? 'text-white' : 'text-muted-foreground'} />
-                                                {label}
-                                            </div>
-                                        ))}
+                                        }).map(([key, label]) => {
+                                            const isChecked = !!record.docs?.[key as keyof typeof record.docs];
+                                            return (
+                                                <div
+                                                    key={key}
+                                                    className={cn(
+                                                        "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[9px] font-extrabold uppercase tracking-wider transition-all",
+                                                        isChecked
+                                                            ? 'bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/40 shadow-sm'
+                                                            : 'bg-slate-50/30 dark:bg-zinc-900/10 text-slate-400 dark:text-zinc-600 border-slate-200/40 dark:border-zinc-800/40 opacity-40 shadow-none'
+                                                    )}
+                                                >
+                                                    <CheckCircle2 size={12} className={isChecked ? 'text-emerald-500' : 'text-slate-300 dark:text-zinc-700'} />
+                                                    {label}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
                                 {/* Certification Meta */}
-                                <div className="pt-6 space-y-4 text-center">
-                                    <div className="inline-block p-5 bg-muted/10 rounded-xl border-2 border-dashed border-muted relative group">
-                                        <Award className="absolute -top-4 -right-4 text-primary bg-background rounded-full p-1 border-2 border-background" size={32} />
-                                        <p className="text-[8px] font-bold text-primary uppercase tracking-[0.4em] mb-1">Digital Certification ID</p>
-                                        <p className="text-[10px] font-mono font-bold text-foreground uppercase tracking-[0.2em]">GESIT_PR_{(record.transactionId || '').replace(/-/g, '_')}_AUDIT</p>
+                                <div className="pt-4 space-y-3 text-center border-t border-slate-100 dark:border-zinc-800/50">
+                                    <div className="inline-block px-4 py-3 bg-slate-50/50 dark:bg-zinc-900/10 rounded-xl border border-slate-200/40 dark:border-zinc-800/40 text-[9px] font-semibold text-slate-500 dark:text-zinc-400">
+                                        <div className="text-[8px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em] mb-1">Digital Verification ID</div>
+                                        <div className="font-mono text-[9px] font-bold text-slate-600 dark:text-zinc-300 uppercase tracking-widest select-all">
+                                            GESIT_PR_{(record.transactionId || '').replace(/-/g, '_')}_AUDIT
+                                        </div>
                                     </div>
-                                    <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-40">
+                                    <p className="text-[8px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-widest opacity-80">
                                         Record ID: {record.id.toString().padStart(6, '0')} • System Generation: {new Date().toLocaleString()}
                                     </p>
                                 </div>
@@ -378,7 +385,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                     </Button>
                     <Button
                         onClick={handlePrint}
-                        className="text-[10px] font-bold uppercase tracking-wider /20 transition-all active:scale-95"
+                        className="text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95"
                     >
                         <Printer className="mr-2" size={14} /> Print Record
                     </Button>
