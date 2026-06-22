@@ -51,6 +51,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
+const DOC_KEYS = [
+    { key: 'prForm', label: 'PR Form' },
+    { key: 'cashAdvance', label: 'Cash Advance' },
+    { key: 'checkout', label: 'Checkout' },
+    { key: 'paymentSlip', label: 'Payment Slip' },
+    { key: 'invoice', label: 'Invoice' },
+    { key: 'expenseApproval', label: 'Expense Approval' },
+    { key: 'checkByRara', label: 'Audited' }
+];
+
 export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccount | null }) => {
     const { t } = useLanguage();
     const { showToast } = useToast();
@@ -1025,13 +1035,13 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         <Table className="table-fixed">
                             <TableHeader>
                                 <TableRow className="bg-muted/50 border-b">
-                                    <TableHead className="font-bold py-5 px-6 w-[15%]">Audit Identity</TableHead>
-                                    <TableHead className="font-bold py-5 px-6 w-[27%]">Item & Procurement Details</TableHead>
-                                    <TableHead className="text-right font-bold py-5 px-6 w-[14%]">Fiscal Value</TableHead>
-                                    <TableHead className="font-bold py-5 px-6 w-[14%]">Corporate entity</TableHead>
-                                    <TableHead className="font-bold py-5 px-6 w-[10%]">Ledger Status</TableHead>
-                                    <TableHead className="text-center font-bold py-5 px-6 w-[8%]">Audit Docs</TableHead>
-                                    <TableHead className="text-right font-bold pr-10 py-5 px-6 w-[12%]">Control</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[16%]">Audit Identity</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[28%]">Item & Procurement Details</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[14%]">Fiscal Value</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[14%]">Corporate entity</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[11%]">Ledger Status</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[9%]">Audit Docs</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 pr-10 py-4 px-6 w-[8%]">Control</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1081,74 +1091,88 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 ) : filteredRecords.length === 0 ? (
                                     <TableRow><TableCell colSpan={7} className="py-32 text-center text-muted-foreground font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</TableCell></TableRow>
                                 ) : paginatedRecords.map(record => (
-                                    <TableRow key={record.id} className="group transition-colors hover:bg-muted/30">
-                                        <TableCell className="py-7 px-6">
-                                            <div className="flex flex-col gap-2 align-middle">
-                                                <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md w-fit tracking-tighter border border-primary/20 shadow-sm">{record.transactionId}</span>
-                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-semibold">
+                                    <TableRow key={record.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
+                                        <TableCell className="py-4 px-6">
+                                            <div className="flex flex-col gap-1.5 align-middle">
+                                                <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/50 px-2 py-0.5 rounded w-fit tracking-tight shadow-sm select-all">
+                                                    {record.transactionId}
+                                                </span>
+                                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
                                                     <Calendar size={11} className="opacity-80" />
                                                     {record.purchaseDate}
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-7 px-6">
+                                        <TableCell className="py-4 px-6">
                                             <div className="flex flex-col gap-1.5 max-w-[320px]">
-                                                <p className="font-bold text-foreground text-[13px] tracking-tight leading-snug truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
-                                                <div className="flex items-center gap-2.5 mt-0.5">
-                                                    <Badge variant="outline" className="text-[9px] font-bold px-2 py-0 h-4 bg-muted/50 border-muted-foreground/10">{record.vendor}</Badge>
-                                                    <span className="text-[10px] font-bold text-blue-500/80 uppercase tracking-tighter">{record.paymentMethod || 'N/A'}</span>
+                                                <p className="font-bold text-slate-900 dark:text-zinc-150 text-[13px] tracking-tight leading-snug truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
+                                                        {record.vendor}
+                                                    </span>
+                                                    {record.paymentMethod && (
+                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 uppercase tracking-wide">
+                                                            {record.paymentMethod}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-7 px-6 text-right">
-                                            <p className="font-mono font-bold text-[13px] text-foreground tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
-                                            <span className="text-[9px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Gross total</span>
+                                        <TableCell className="py-4 px-6 text-right">
+                                            <p className="font-mono font-black text-[13px] text-slate-900 dark:text-zinc-100 tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
+                                            <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Gross total</span>
                                         </TableCell>
-                                        <TableCell className="py-7 px-6">
+                                        <TableCell className="py-4 px-6">
                                             <div className="flex flex-col gap-1">
-                                                <p className="text-[10px] font-black text-foreground/80 uppercase tracking-widest">{record.company}</p>
-                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-bold">
-                                                    <Building2 size={11} className="text-primary" />
+                                                <p className="text-[10px] font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest leading-none">{record.company}</p>
+                                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider mt-1">
+                                                    <Building2 size={11} className="text-primary/70" />
                                                     {record.department}
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-7 px-6">
-                                            <Badge
-                                                variant="outline"
+                                        <TableCell className="py-4 px-6">
+                                            <span
                                                 className={cn(
-                                                    "text-[9px] font-bold uppercase tracking-widest gap-1.5 border-transparent px-3 py-1 shadow-sm",
-                                                    record.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                                        record.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                                                            'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                                    "text-[9px] font-extrabold uppercase tracking-widest gap-1.5 px-2.5 py-1 rounded-full border shadow-sm w-fit flex items-center",
+                                                    record.status === 'Paid' 
+                                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30' 
+                                                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/30'
                                                 )}
                                             >
-                                                <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500')}></div>
+                                                <span className={cn("w-1.5 h-1.5 rounded-full", record.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500')}></span>
                                                 {record.status}
-                                            </Badge>
+                                            </span>
                                         </TableCell>
-                                        <TableCell className="py-7 px-6 text-center">
-                                            <div className="flex justify-center">
-                                                {Object.values(record.docs || {}).filter(v => v).length > 0 ? (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-md text-[10px] font-bold border border-primary/20">
-                                                            {Object.values(record.docs || {}).filter(v => v).length}/7
-                                                        </span>
-                                                        <span className="text-[8px] font-black text-primary uppercase tracking-tighter">Verified</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-1 text-slate-400 dark:text-zinc-500">
-                                                        <span className="px-2.5 py-0.5 bg-muted text-muted-foreground rounded-md text-[10px] font-bold">0/7</span>
-                                                        <span className="text-[8px] font-black uppercase tracking-tighter">Missing</span>
-                                                    </div>
-                                                )}
+                                        <TableCell className="py-4 px-6">
+                                            <div className="flex flex-col items-center gap-1.5">
+                                                <div className="flex items-center gap-0.5">
+                                                    {DOC_KEYS.map((doc) => {
+                                                        const isPresent = !!(record.docs && record.docs[doc.key as keyof typeof record.docs]);
+                                                        return (
+                                                            <div
+                                                                key={doc.key}
+                                                                title={`${doc.label}: ${isPresent ? 'Uploaded' : 'Missing'}`}
+                                                                className={cn(
+                                                                    "w-1.5 h-3 rounded-[1px] transition-all",
+                                                                    isPresent 
+                                                                        ? "bg-emerald-500 dark:bg-emerald-400" 
+                                                                        : "bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700/50"
+                                                                )}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                                <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-500 leading-none">
+                                                    {Object.values(record.docs || {}).filter(Boolean).length}/7 docs
+                                                </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="py-7 text-right pr-10 px-6">
-                                            <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-9 text-muted-foreground hover:text-primary hover:bg-primary/5" aria-label="View Details"><Eye size={15} /></Button>
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-9 text-muted-foreground" aria-label="Edit Entry"><Pencil size={15} /></Button>
-                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/5" aria-label="Delete Entry"><Trash2 size={15} /></Button>
+                                        <TableCell className="py-4 text-right pr-10 px-6">
+                                            <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-zinc-800" aria-label="View Details"><Eye size={14} /></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-foreground hover:bg-slate-50 dark:hover:bg-zinc-800" aria-label="Edit Entry"><Pencil size={14} /></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 text-slate-400 hover:text-destructive hover:bg-destructive/5" aria-label="Delete Entry"><Trash2 size={14} /></Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -1180,45 +1204,46 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             </div>
                         ) : (
                             paginatedRecords.map(record => (
-                                <div key={record.id} className="p-5 space-y-4 hover:bg-muted/10 transition-colors">
+                                <div key={record.id} className="p-5 space-y-4 hover:bg-slate-50/50 dark:hover:bg-zinc-900/40 transition-colors">
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md tracking-tighter border border-primary/20 shadow-sm w-fit">
+                                            <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/50 px-2 py-0.5 rounded w-fit tracking-tight shadow-sm select-all">
                                                 {record.transactionId}
                                             </span>
-                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-semibold">
+                                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
                                                 <Calendar size={11} className="opacity-80" />
                                                 {record.purchaseDate}
                                             </div>
                                         </div>
-                                        <Badge
-                                            variant="outline"
+                                        <span
                                             className={cn(
-                                                "text-[9px] font-bold uppercase tracking-widest gap-1 border-transparent px-2.5 py-0.5 shadow-sm shrink-0",
-                                                record.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                                    record.status === 'Pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                                                        'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                                "text-[9px] font-extrabold uppercase tracking-widest gap-1.5 px-2.5 py-0.5 rounded-full border shadow-sm w-fit flex items-center shrink-0",
+                                                record.status === 'Paid' 
+                                                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' 
+                                                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
                                             )}
                                         >
-                                            <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", record.status === 'Paid' ? 'bg-emerald-500' : record.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500')}></div>
+                                            <span className={cn("w-1.5 h-1.5 rounded-full", record.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500')}></span>
                                             {record.status}
-                                        </Badge>
+                                        </span>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="font-bold text-foreground text-xs leading-snug">
+                                        <p className="font-bold text-slate-900 dark:text-zinc-150 text-xs leading-snug">
                                             {record.description}
                                         </p>
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <Badge variant="outline" className="text-[9px] font-bold px-2 py-0.5 bg-muted/50 border-muted-foreground/10">
+                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
                                                 {record.vendor}
-                                            </Badge>
-                                            <span className="text-[10px] font-bold text-blue-500/80 uppercase tracking-tighter">
-                                                {record.paymentMethod || 'N/A'}
                                             </span>
+                                            {record.paymentMethod && (
+                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 uppercase tracking-wide">
+                                                    {record.paymentMethod}
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 font-bold">
-                                            <Building2 size={11} className="text-primary" />
+                                        <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                                            <Building2 size={11} className="text-primary/70" />
                                             <span>{record.company}</span>
                                             <span className="text-slate-300 dark:text-zinc-700/60">•</span>
                                             <span>{record.department}</span>
@@ -1227,33 +1252,44 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                                     <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-zinc-800/40">
                                         <div className="flex flex-col">
-                                            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Fiscal Value</span>
+                                            <span className="text-[8px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Fiscal Value</span>
                                             <span className="font-mono font-black text-xs text-foreground">
                                                 Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}
                                             </span>
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center">
-                                                {Object.values(record.docs || {}).filter(v => v).length > 0 ? (
-                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[9px] font-bold border border-primary/20">
-                                                        {Object.values(record.docs || {}).filter(v => v).length}/7 Verified
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-md text-[9px] font-bold">
-                                                        0/7 Missing
-                                                    </span>
-                                                )}
+                                            <div className="flex flex-col items-center gap-1">
+                                                <div className="flex items-center gap-0.5">
+                                                    {DOC_KEYS.map((doc) => {
+                                                        const isPresent = !!(record.docs && record.docs[doc.key as keyof typeof record.docs]);
+                                                        return (
+                                                            <div
+                                                                key={doc.key}
+                                                                title={`${doc.label}: ${isPresent ? 'Uploaded' : 'Missing'}`}
+                                                                className={cn(
+                                                                    "w-1 h-2 rounded-[0.5px] transition-all",
+                                                                    isPresent 
+                                                                        ? "bg-emerald-500 dark:bg-emerald-400" 
+                                                                        : "bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700/50"
+                                                                )}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                                <span className="text-[8px] font-mono font-bold text-slate-400 dark:text-zinc-500 leading-none">
+                                                    {Object.values(record.docs || {}).filter(Boolean).length}/7 docs
+                                                </span>
                                             </div>
 
                                             <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg" aria-label="View Details">
+                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg" aria-label="View Details">
                                                     <Eye size={14} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 text-muted-foreground hover:bg-muted rounded-lg" aria-label="Edit Entry">
+                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg" aria-label="Edit Entry">
                                                     <Pencil size={14} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg" aria-label="Delete Entry">
+                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-lg" aria-label="Delete Entry">
                                                     <Trash2 size={14} />
                                                 </Button>
                                             </div>

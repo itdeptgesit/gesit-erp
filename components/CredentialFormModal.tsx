@@ -34,7 +34,6 @@ export const CredentialFormModal: React.FC<CredentialFormModalProps> = ({ isOpen
                     { key: 'serviceUrl', label: 'Link', placeholder: 'https://...' },
                 ];
             case 'Provider Inet':
-            case 'Subscription':
                 return [
                     { key: 'entity', label: 'Company / Entity', placeholder: 'e.g. Gesit 26, Sircon 71' },
                     { key: 'speed', label: 'Plan / Speed', placeholder: 'e.g. 100 Mbps Dedicated' },

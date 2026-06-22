@@ -302,12 +302,14 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                     <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest pb-1 border-b border-slate-100 dark:border-zinc-800/50 flex items-center gap-1.5">
                                         <ShieldCheck size={14} className="text-emerald-500" /> Checklist / Documents
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-2 gap-2.5">
                                         {Object.entries({
                                             prForm: 'PR Form',
+                                            cashAdvance: 'Cash Advance',
                                             checkout: 'Checkout',
-                                            paymentSlip: 'Slip',
+                                            paymentSlip: 'Payment Slip',
                                             invoice: 'Invoice',
+                                            expenseApproval: 'Expense Approval',
                                             checkByRara: 'Audited'
                                         }).map(([key, label]) => {
                                             const isChecked = !!record.docs?.[key as keyof typeof record.docs];
@@ -315,7 +317,7 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
                                                 <div
                                                     key={key}
                                                     className={cn(
-                                                        "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[9px] font-extrabold uppercase tracking-wider transition-all",
+                                                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-[9px] font-extrabold uppercase tracking-wider transition-all",
                                                         isChecked
                                                             ? 'bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/40 shadow-sm'
                                                             : 'bg-slate-50/30 dark:bg-zinc-900/10 text-slate-400 dark:text-zinc-600 border-slate-200/40 dark:border-zinc-800/40 opacity-40 shadow-none'
