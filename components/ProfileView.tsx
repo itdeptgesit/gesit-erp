@@ -72,138 +72,58 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
-    // Real Session Info State
-    const [sessionInfo, setSessionInfo] = useState({
-        device: 'Desktop',
-        browser: 'Chrome',
-        ip: '0.0.0.0',
-        lastUpdated: '',
-        sessionToken: ''
-    });
     const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
-    // Detect Current Session Metadata
+    // Fetch and poll active sessions
     useEffect(() => {
-        const detectAndRegisterSession = async () => {
-            let currentIp = '127.0.0.1';
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                currentIp = data.ip;
-            } catch (err) {
-                // Keep default
-            }
+        if (!user?.id) return;
 
-            const ua = navigator.userAgent;
-            let device = "Windows PC";
-            if (ua.includes("Mac OS X")) device = "Macintosh (macOS)";
-            else if (ua.includes("iPhone")) device = "iPhone (iOS)";
-            else if (ua.includes("Android")) device = "Smartphone (Android)";
-            else if (ua.includes("Linux")) device = "Linux PC";
+        const token = localStorage.getItem('device_session_token');
 
-            let browser = "Chrome";
-            if (ua.includes("Firefox")) browser = "Firefox";
-            else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-            else if (ua.includes("Edg")) browser = "Edge";
+        const fetchSessions = async () => {
+            const { data: sessions, error: fetchError } = await supabase
+                .from('user_sessions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('last_updated', { ascending: false });
 
-            const lastUpdatedDate = new Date();
-            const lastUpdated = lastUpdatedDate.toLocaleString('en-GB', {
-                day: 'numeric', month: 'short', year: 'numeric',
-                hour: 'numeric', minute: 'numeric', hour12: true
-            });
+            if (!fetchError && sessions) {
+                const formattedSessions = sessions.map(s => ({
+                    device: s.device,
+                    browser: s.browser,
+                    ip: s.ip,
+                    lastUpdated: new Date(s.last_updated).toLocaleString('en-GB', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                        hour: 'numeric', minute: 'numeric', hour12: true
+                    }),
+                    sessionToken: s.session_token,
+                    isCurrent: s.session_token === token,
+                    location: 'Identifying...'
+                }));
+                setActiveSessions(formattedSessions);
 
-            // Get or create device session token
-            let token = localStorage.getItem('device_session_token');
-            if (!token) {
-                try {
-                    token = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Math.random().toString(36).substring(2)}${Date.now()}`;
-                } catch (e) {
-                    token = `${Math.random().toString(36).substring(2)}${Date.now()}`;
-                }
-                localStorage.setItem('device_session_token', token);
-            }
-
-            const currentSession = { device, browser, ip: currentIp, lastUpdated, sessionToken: token };
-            setSessionInfo(currentSession);
-
-            if (user?.id) {
-                try {
-                    // Try to update session in DB
-                    const { error: upsertError } = await supabase
-                        .from('user_sessions')
-                        .upsert({
-                            user_id: user.id,
-                            device,
-                            browser,
-                            ip: currentIp,
-                            last_updated: lastUpdatedDate.toISOString(),
-                            session_token: token
-                        }, { onConflict: 'session_token' });
-
-                    if (upsertError) throw upsertError;
-
-                    const fetchSessions = async () => {
-                        const { data: sessions, error: fetchError } = await supabase
-                            .from('user_sessions')
-                            .select('*')
-                            .eq('user_id', user.id)
-                            .order('last_updated', { ascending: false });
-
-                        if (!fetchError && sessions) {
-                            const formattedSessions = sessions.map(s => ({
-                                device: s.device,
-                                browser: s.browser,
-                                ip: s.ip,
-                                lastUpdated: new Date(s.last_updated).toLocaleString('en-GB', {
-                                    day: 'numeric', month: 'short', year: 'numeric',
-                                    hour: 'numeric', minute: 'numeric', hour12: true
-                                }),
-                                sessionToken: s.session_token,
-                                isCurrent: s.session_token === token,
-                                location: 'Identifying...'
-                            }));
-                            setActiveSessions(formattedSessions);
-
-                            // Fetch locations dynamically
-                            const sessionsWithLocations = await Promise.all(formattedSessions.map(async (sess) => {
-                                if (!sess.ip || sess.ip === '127.0.0.1' || sess.ip === 'localhost') return { ...sess, location: 'Local Network' };
-                                try {
-                                    const res = await fetch(`https://get.geojs.io/v1/ip/geo/${sess.ip}.json`);
-                                    if (res.ok) {
-                                        const locData = await res.json();
-                                        const locString = [locData.city, locData.country].filter(Boolean).join(', ');
-                                        return { ...sess, location: locString || 'Unknown Region' };
-                                    }
-                                } catch (e) {
-                                    console.log('Location fetch failed:', e);
-                                }
-                                return { ...sess, location: 'Unknown Location' };
-                            }));
-                            setActiveSessions(sessionsWithLocations);
+                // Fetch locations dynamically
+                const sessionsWithLocations = await Promise.all(formattedSessions.map(async (sess) => {
+                    if (!sess.ip || sess.ip === '127.0.0.1' || sess.ip === 'localhost') return { ...sess, location: 'Local Network' };
+                    try {
+                        const res = await fetch(`https://get.geojs.io/v1/ip/geo/${sess.ip}.json`);
+                        if (res.ok) {
+                            const locData = await res.json();
+                            const locString = [locData.city, locData.country].filter(Boolean).join(', ');
+                            return { ...sess, location: locString || 'Unknown Region' };
                         }
-                    };
-
-                    await fetchSessions();
-
-                    // Optional: setup a quick interval to poll for changes
-                    const interval = setInterval(fetchSessions, 5000); // 5 seconds poll
-                    return () => clearInterval(interval);
-
-                } catch (err: any) {
-                    console.log("Session DB failed or table missing. Using local session fallback.", err?.message);
-                    setActiveSessions([{ ...currentSession, isCurrent: true, location: 'Local Network' }]);
-                }
-            } else {
-                setActiveSessions([{ ...currentSession, isCurrent: true, location: 'Local Network' }]);
+                    } catch (e) {
+                        console.log('Location fetch failed:', e);
+                    }
+                    return { ...sess, location: 'Unknown Location' };
+                }));
+                setActiveSessions(sessionsWithLocations);
             }
         };
 
-        const cleanup = detectAndRegisterSession();
-        return () => {
-            cleanup.then(clean => {
-                if (clean && typeof clean === 'function') clean();
-            });
-        }
+        fetchSessions();
+        const interval = setInterval(fetchSessions, 5000);
+        return () => clearInterval(interval);
     }, [user?.id]);
 
     // Sinkronisasi data saat user prop berubah atau mode edit aktif
@@ -272,6 +192,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleTerminateAllSessions = async () => {
+        if (user?.id) {
+            try {
+                await supabase.from('user_sessions').delete().eq('user_id', user.id);
+            } catch (err) {
+                console.error("Failed to delete sessions:", err);
+            }
+        }
+        onLogout();
     };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -597,7 +528,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onLogout, user, onUpda
                                         <p className="text-xs text-slate-400 mt-0.5">Sign out from all active terminals</p>
                                     </div>
                                 </div>
-                                <Button onClick={onLogout} variant="outline" className="w-full sm:w-auto font-bold rounded-xl gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/10">
+                                <Button onClick={handleTerminateAllSessions} variant="outline" className="w-full sm:w-auto font-bold rounded-xl gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/10">
                                     <LogOut size={14} /> Terminate All
                                 </Button>
                             </div>

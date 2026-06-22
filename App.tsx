@@ -516,6 +516,89 @@ const InternalApp: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Active Session Registration & Revocation Enforcement
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let checkInterval: NodeJS.Timeout;
+
+    const manageSession = async () => {
+      let currentIp = '127.0.0.1';
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        currentIp = data.ip;
+      } catch (err) {
+        // Keep default
+      }
+
+      const ua = navigator.userAgent;
+      let device = "Windows PC";
+      if (ua.includes("Mac OS X")) device = "Macintosh (macOS)";
+      else if (ua.includes("iPhone")) device = "iPhone (iOS)";
+      else if (ua.includes("Android")) device = "Smartphone (Android)";
+      else if (ua.includes("Linux")) device = "Linux PC";
+
+      let browser = "Chrome";
+      if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+      else if (ua.includes("Edg")) browser = "Edge";
+
+      // Get or create device session token
+      let token = localStorage.getItem('device_session_token');
+      if (!token) {
+        try {
+          token = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Math.random().toString(36).substring(2)}${Date.now()}`;
+        } catch (e) {
+          token = `${Math.random().toString(36).substring(2)}${Date.now()}`;
+        }
+        localStorage.setItem('device_session_token', token);
+      }
+
+      try {
+        // Register/update current session
+        const { error: upsertError } = await supabase
+          .from('user_sessions')
+          .upsert({
+            user_id: currentUser.id,
+            device,
+            browser,
+            ip: currentIp,
+            last_updated: new Date().toISOString(),
+            session_token: token
+          }, { onConflict: 'session_token' });
+
+        if (upsertError) throw upsertError;
+
+        // Periodic check to verify if the session still exists
+        checkInterval = setInterval(async () => {
+          const { data: sessionRows, error: checkError } = await supabase
+            .from('user_sessions')
+            .select('session_token')
+            .eq('session_token', token);
+
+          if (!checkError && sessionRows) {
+            if (sessionRows.length === 0) {
+              // The session has been revoked! Log out immediately.
+              clearInterval(checkInterval);
+              executeLogout();
+              showToast("Session revoked from another device. Logging out...", "error");
+            }
+          }
+        }, 10000); // Check every 10 seconds
+
+      } catch (err: any) {
+        console.log("Global session DB registration failed or table missing:", err?.message);
+      }
+    };
+
+    manageSession();
+
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+    };
+  }, [currentUser]);
+
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
       <AnimatePresence mode="wait">
