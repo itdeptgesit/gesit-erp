@@ -59,6 +59,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                 jobTitle: '',
                 supervisorId: '',
                 managerId: '',
+                vpId: '',
                 isHelpdeskSupport: false
             });
         }
@@ -269,18 +270,25 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                                 <UserCheck size={20} className="text-zinc-900 dark:text-zinc-100" />
                                 <h3 className="font-black text-slate-800 dark:text-zinc-200 uppercase text-[11px] tracking-[0.2em]">Approval Hierarchy</h3>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="flex flex-col justify-end">
                                     <label className={labelClass}>Direct Supervisor (SPV)</label>
                                     <select className={`${inputClass} !bg-white dark:!bg-zinc-900`} value={formData.supervisorId || ''} onChange={e => setFormData({ ...formData, supervisorId: e.target.value })}>
                                         <option value="">- No SPV -</option>
                                         {userOptions.filter(u => u.id !== initialData?.id?.toString()).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     </select>
                                 </div>
-                                <div>
+                                <div className="flex flex-col justify-end">
                                     <label className={labelClass}>Department Manager</label>
                                     <select className={`${inputClass} !bg-white dark:!bg-zinc-900`} value={formData.managerId || ''} onChange={e => setFormData({ ...formData, managerId: e.target.value })}>
                                         <option value="">- No Manager -</option>
+                                        {userOptions.filter(u => u.id !== initialData?.id?.toString()).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col justify-end">
+                                    <label className={labelClass}>VP HR & Logistic</label>
+                                    <select className={`${inputClass} !bg-white dark:!bg-zinc-900`} value={formData.vpId || ''} onChange={e => setFormData({ ...formData, vpId: e.target.value })}>
+                                        <option value="">- No VP -</option>
                                         {userOptions.filter(u => u.id !== initialData?.id?.toString()).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     </select>
                                 </div>

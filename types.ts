@@ -188,6 +188,7 @@ export interface UserAccount {
   jobTitle?: string;
   supervisorId?: string;
   managerId?: string;
+  vpId?: string;
   lastLogin?: string;
   avatarUrl?: string;
   company?: string;

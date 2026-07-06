@@ -119,7 +119,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             if (userData) {
                 setAllUsers(userData.map((u: any) => ({
                     id: u.id, email: u.email, fullName: u.full_name, role: u.role, company: u.company, jobTitle: u.job_title,
-                    supervisorId: u.supervisor_id?.toString(), managerId: u.manager_id?.toString(), department: u.department,
+                    supervisorId: u.supervisor_id?.toString(), managerId: u.manager_id?.toString(), vpId: u.vp_id?.toString(), department: u.department,
                     status: u.status, username: u.username, groups: u.groups || []
                 })));
             }
@@ -313,15 +313,15 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 updateData.supervisor_approved_at = now;
                 updateData.supervisor_name = currentUserName;
             } else if (req.status === 'Pending VP') {
-                nextStatus = 'Pending Finance';
+                nextStatus = 'Approved';
                 updateData.vp_approved_at = now;
                 updateData.vp_name = currentUserName;
 
                 // Auto-insert into purchase_records
                 try {
-                    const desc = req.itRecommendations && req.itRecommendations.length > 0
-                        ? req.itRecommendations.map(item => item.description).join(', ')
-                        : req.requestedItems.map(item => item.description).join(', ');
+                    const desc = req.requestedItems && req.requestedItems.length > 0
+                        ? req.requestedItems.map(item => item.description).join(', ')
+                        : `Purchase Request #${req.id}`;
 
                     const totalQty = req.itRecommendations && req.itRecommendations.length > 0
                         ? req.itRecommendations.reduce((sum, item) => sum + (Number(item.qty) || 0), 0)
@@ -345,8 +345,32 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         ? req.itRecommendations[0].vendor
                         : 'Various';
 
+                    const pDateObj = new Date(req.requestDate || now.split('T')[0]);
+                    const yy = pDateObj.getFullYear().toString().slice(-2);
+                    const mm = (pDateObj.getMonth() + 1).toString().padStart(2, '0');
+                    const dd = pDateObj.getDate().toString().padStart(2, '0');
+                    const prefix = `TR-${yy}${mm}${dd}-`;
+
+                    const { data: trxData } = await supabase
+                        .from('purchase_records')
+                        .select('transaction_id')
+                        .like('transaction_id', `${prefix}%`)
+                        .order('transaction_id', { ascending: false })
+                        .limit(1);
+
+                    let nextNumber = 1;
+                    if (trxData && trxData.length > 0 && trxData[0].transaction_id) {
+                        const lastId = trxData[0].transaction_id;
+                        const lastNumber = parseInt(lastId.split('-').pop() || '0', 10);
+                        if (!isNaN(lastNumber)) {
+                            nextNumber = lastNumber + 1;
+                        }
+                    }
+
+                    const newTrxId = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
+
                     const purchaseRecordPayload = {
-                        transaction_id: `PR-${String(req.id).padStart(4, '0')}`,
+                        transaction_id: newTrxId,
                         description: desc || `Purchase Request #${req.id}`,
                         qty: totalQty || 1,
                         price: req.grandTotal / (totalQty || 1),
@@ -361,7 +385,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         user_name: req.requesterFullname,
                         department: req.department,
                         company: 'THE GESIT COMPANIES',
-                        status: 'Pending',
+                        status: 'Paid',
                         purchase_date: req.requestDate || now.split('T')[0],
                         payment_date: null,
                         vendor: vendorName || 'Various',

@@ -87,11 +87,13 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             setSupervisorId(defaultSpv ? String(defaultSpv.id) : '');
         }
 
-        // Pre-select VP based on Department
+        // Pre-select VP based on hierarchy or Department
         const deptLower = (currentUser.department || '').toLowerCase().trim();
         const isOperations = deptLower.includes('it') || deptLower.includes('gnr') || deptLower.includes('trading') || deptLower.includes('prop') || deptLower.includes('rheem') || deptLower.includes('aams') || deptLower.includes('foundation');
         
-        if (isOperations) {
+        if (currentUser.vpId) {
+            setVpId(currentUser.vpId);
+        } else if (isOperations) {
             const vpLogisticUser = allUsers.find(u => (u.department || '').toLowerCase().includes('it') && (u.groups.includes('MANAGEMENT') || u.role === 'Admin'));
             setVpId(vpLogisticUser ? String(vpLogisticUser.id) : '');
         } else {
@@ -555,7 +557,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                             <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <Shield size={14} className="text-blue-600" /> Approval Routing Tree
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-slate-50/30 dark:bg-zinc-900/30 p-5 rounded-xl border border-slate-100 dark:border-zinc-800/50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/30 dark:bg-zinc-900/30 p-5 rounded-xl border border-slate-100 dark:border-zinc-800/50">
                                 
                                 {/* 1. Atasan Langsung */}
                                 <div>
@@ -565,7 +567,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                             <SelectValue placeholder="Select Supervisor" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {allUsers.filter(u => u.role !== 'User' || u.groups.includes('MANAGEMENT')).map(u => (
+                                            {allUsers.filter(u => u.role !== 'User' || u.groups.includes('MANAGEMENT') || String(u.id) === supervisorId).map(u => (
                                                 <SelectItem key={u.id} value={String(u.id)} className="text-[11px] font-medium">
                                                     {u.fullName} ({u.jobTitle || 'SPV'})
                                                 </SelectItem>
@@ -582,7 +584,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                             <SelectValue placeholder="Select VP" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {allUsers.filter(u => u.groups.includes('MANAGEMENT') || u.role === 'Admin').map(u => (
+                                            {allUsers.filter(u => u.groups.includes('MANAGEMENT') || u.role === 'Admin' || String(u.id) === vpId).map(u => (
                                                 <SelectItem key={u.id} value={String(u.id)} className="text-[11px] font-medium">
                                                     {u.fullName} (VP / {u.department || 'MGMT'})
                                                 </SelectItem>
@@ -591,8 +593,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                     </Select>
                                 </div>
 
-                                {/* 3. Finance */}
-                                <div>
+                                {/* 3. Finance (Hidden from UI but included in payload) */}
+                                <div className="hidden">
                                     <label className={labelClass}>Finance</label>
                                     <Select value={financeId} onValueChange={setFinanceId}>
                                         <SelectTrigger className="w-full h-8 text-[11px] font-medium border-none bg-slate-100 dark:bg-zinc-800">
@@ -608,8 +610,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                     </Select>
                                 </div>
 
-                                {/* 4. Accounting */}
-                                <div>
+                                {/* 4. Accounting (Hidden from UI but included in payload) */}
+                                <div className="hidden">
                                     <label className={labelClass}>Accounting</label>
                                     <Select value={accountingId} onValueChange={setAccountingId}>
                                         <SelectTrigger className="w-full h-8 text-[11px] font-medium border-none bg-slate-100 dark:bg-zinc-800">

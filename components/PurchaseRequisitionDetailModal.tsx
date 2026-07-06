@@ -68,20 +68,6 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                 date: requisition.vpApprovedAt ? new Date(requisition.vpApprovedAt).toLocaleDateString('id-ID') : null,
                 status: requisition.vpApprovedAt ? 'Approved' : (requisition.status === 'Pending VP' ? 'Active' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.vpId ? 'Rejected' : 'Pending')),
                 color: requisition.vpApprovedAt ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : (requisition.status === 'Pending VP' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.vpId ? 'text-rose-500 bg-rose-500/10 border-rose-500/20' : 'text-slate-400 bg-slate-100 dark:bg-zinc-800 border-transparent'))
-            },
-            {
-                role: 'Finance',
-                name: requisition.financeName || 'Finance',
-                date: requisition.financeApprovedAt ? new Date(requisition.financeApprovedAt).toLocaleDateString('id-ID') : null,
-                status: requisition.financeApprovedAt ? 'Approved' : (requisition.status === 'Pending Finance' ? 'Active' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.financeId ? 'Rejected' : 'Pending')),
-                color: requisition.financeApprovedAt ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : (requisition.status === 'Pending Finance' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.financeId ? 'text-rose-500 bg-rose-500/10 border-rose-500/20' : 'text-slate-400 bg-slate-100 dark:bg-zinc-800 border-transparent'))
-            },
-            {
-                role: 'Accounting',
-                name: requisition.accountingName || 'Accounting',
-                date: requisition.accountingApprovedAt ? new Date(requisition.accountingApprovedAt).toLocaleDateString('id-ID') : null,
-                status: requisition.accountingApprovedAt ? 'Approved' : (requisition.status === 'Pending Accounting' ? 'Active' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.accountingId ? 'Rejected' : 'Pending')),
-                color: requisition.accountingApprovedAt ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : (requisition.status === 'Pending Accounting' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : (requisition.status === 'Rejected' && requisition.rejectedBy === requisition.accountingId ? 'text-rose-500 bg-rose-500/10 border-rose-500/20' : 'text-slate-400 bg-slate-100 dark:bg-zinc-800 border-transparent'))
             }
         ];
     };
@@ -121,7 +107,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                     {/* Visual Stage Workflow Bar */}
                     <div className="bg-slate-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800/80">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Approval Chain Timeline</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {getApprovalTimeline().map((step, idx) => (
                                 <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between h-24 transition-all duration-300 ${step.color}`}>
                                     <div>

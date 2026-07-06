@@ -420,6 +420,7 @@ const InternalApp: React.FC = () => {
           jobTitle: data.job_title,
           supervisorId: data.supervisor_id?.toString(),
           managerId: data.manager_id?.toString(),
+          vpId: data.vp_id?.toString(),
           avatarUrl: data.avatar_url,
           company: data.company,
           lastLogin: data.last_login,

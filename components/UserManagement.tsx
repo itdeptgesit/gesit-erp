@@ -79,6 +79,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           jobTitle: u.job_title,
           supervisorId: u.supervisor_id?.toString(),
           managerId: u.manager_id?.toString(),
+          vpId: u.vp_id?.toString(),
           lastLogin: u.last_login ? u.last_login : 'Never',
           avatarUrl: u.avatar_url,
           isHelpdeskSupport: u.is_helpdesk_support
@@ -306,6 +307,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
             job_title: userData.jobTitle,
             supervisor_id: userData.supervisorId || null,
             manager_id: userData.managerId || null,
+            vp_id: userData.vpId || null,
             avatar_url: userData.avatarUrl,
             is_helpdesk_support: userData.isHelpdeskSupport
           };
