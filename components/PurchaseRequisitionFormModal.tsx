@@ -358,6 +358,14 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <SelectItem value="USD" className="font-bold">USD</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {currency === 'USD' && (
+                                    <div className="mt-1.5 flex items-center gap-1 text-[9px] font-bold text-blue-600 dark:text-blue-400">
+                                        <span>$1</span>
+                                        <span className="text-slate-400">=</span>
+                                        <span>Rp {new Intl.NumberFormat('id-ID').format(usdRate)}</span>
+                                        <span className="text-[8px] text-slate-400 font-medium">today</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -596,6 +604,11 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                                 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(grandTotal)
                                                 : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
                                         </span>
+                                        {currency === 'USD' && grandTotal > 0 && (
+                                            <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono block mt-0.5">
+                                                ≈ {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal * usdRate)}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
                                         <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />

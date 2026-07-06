@@ -295,6 +295,11 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                 <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
                                     {formatCurrency(requisition.grandTotal, requisition.currency)}
                                 </span>
+                                {String(requisition.currency || '').toUpperCase().includes('USD') && requisition.grandTotal > 0 && (
+                                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono block mt-0.5">
+                                        ≈ {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(requisition.grandTotal * usdRate)}
+                                    </span>
+                                )}
                             </div>
                             <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
                                 <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
