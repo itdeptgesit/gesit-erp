@@ -931,10 +931,11 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 currentUser={currentUser}
                 allUsers={allUsers}
                 initialData={editingRequisition}
+                usdRate={usdRate}
             />
 
             {/* Detail Modals */}
-            <PurchaseRequisitionDetailModal isOpen={isReqDetailOpen} onClose={() => setIsReqDetailOpen(false)} requisition={selectedRequisitionWithNames} currentUser={currentUser} onApprove={handleApproveRequisition} onReject={(req) => setRejectRequisitionTarget(req)} />
+            <PurchaseRequisitionDetailModal isOpen={isReqDetailOpen} onClose={() => setIsReqDetailOpen(false)} requisition={selectedRequisitionWithNames} currentUser={currentUser} onApprove={handleApproveRequisition} onReject={(req) => setRejectRequisitionTarget(req)} usdRate={usdRate} />
 
             {/* Reject Reason Modals */}
             <RejectReasonModal isOpen={!!rejectRequisitionTarget} onClose={() => setRejectRequisitionTarget(null)} onSubmit={submitRejectRequisition} itemName={rejectRequisitionTarget ? `PR Requisition for ${rejectRequisitionTarget.requesterFullname}` : ''} />

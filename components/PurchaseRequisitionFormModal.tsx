@@ -19,6 +19,7 @@ interface PurchaseRequisitionFormModalProps {
     currentUser: UserAccount | null;
     allUsers: UserAccount[];
     initialData?: PurchaseRequisition | null;
+    usdRate?: number;
 }
 
 const formatNumberString = (value: string | number): string => {
@@ -39,7 +40,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     onSubmit,
     currentUser,
     allUsers,
-    initialData
+    initialData,
+    usdRate = 16300
 }) => {
     // Local form states
     const [department, setDepartment] = useState('');
@@ -581,7 +583,14 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
 
                                 <div className="pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800/50 flex items-center justify-between">
                                     <div>
-                                        <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Grand Total Commitment</span>
+                                            {currency === 'USD' && (
+                                                <span className="text-[8px] bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                    Rate: Rp {new Intl.NumberFormat('id-ID').format(usdRate)}
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
                                             {currency === 'USD'
                                                 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(grandTotal)

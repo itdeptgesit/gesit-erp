@@ -15,6 +15,7 @@ interface PurchaseRequisitionDetailModalProps {
     currentUser: UserAccount | null;
     onApprove?: (req: PurchaseRequisition) => void;
     onReject?: (req: PurchaseRequisition) => void;
+    usdRate?: number;
 }
 
 export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailModalProps> = ({
@@ -23,7 +24,8 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
     requisition,
     currentUser,
     onApprove,
-    onReject
+    onReject,
+    usdRate = 16300
 }) => {
     if (!isOpen || !requisition) return null;
 
@@ -282,7 +284,14 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
 
                         <div className="md:col-span-5 bg-white dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm flex items-center justify-between min-h-[90px]">
                             <div>
-                                <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Grand Total Commitment</span>
+                                    {String(requisition.currency || '').toUpperCase().includes('USD') && (
+                                        <span className="text-[8px] bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                            Rate: Rp {new Intl.NumberFormat('id-ID').format(usdRate)}
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
                                     {formatCurrency(requisition.grandTotal, requisition.currency)}
                                 </span>
