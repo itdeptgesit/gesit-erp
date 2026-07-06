@@ -282,27 +282,32 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                             </div>
                         </div>
 
-                        <div className="md:col-span-5 bg-white dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm flex items-center justify-between min-h-[90px]">
-                            <div>
-                                <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block">Grand Total Commitment</span>
+                        <div className="md:col-span-5 bg-white dark:bg-zinc-950 p-5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm min-h-[90px]">
+                            <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-2">Grand Total Commitment</span>
+                            <div className="flex items-end justify-between gap-2">
+                                <div>
+                                    <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
+                                        {formatCurrency(requisition.grandTotal, requisition.currency)}
+                                    </span>
+                                    {String(requisition.currency || '').toUpperCase().includes('USD') && requisition.grandTotal > 0 && (
+                                        <div className="mt-1.5 flex items-center gap-1.5">
+                                            <span className="text-[9px] text-slate-400 font-medium">≈</span>
+                                            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(requisition.grandTotal * usdRate)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                    <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10">
+                                        <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
+                                    </div>
                                     {String(requisition.currency || '').toUpperCase().includes('USD') && (
-                                        <span className="text-[8px] bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                            Rate: Rp {new Intl.NumberFormat('id-ID').format(usdRate)}
+                                        <span className="text-[8px] bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 px-1.5 py-0.5 rounded font-mono whitespace-nowrap">
+                                            $1 = Rp {new Intl.NumberFormat('id-ID').format(usdRate)}
                                         </span>
                                     )}
                                 </div>
-                                <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
-                                    {formatCurrency(requisition.grandTotal, requisition.currency)}
-                                </span>
-                                {String(requisition.currency || '').toUpperCase().includes('USD') && requisition.grandTotal > 0 && (
-                                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono block mt-0.5">
-                                        ≈ {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(requisition.grandTotal * usdRate)}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
-                                <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
                             </div>
                         </div>
                     </div>
