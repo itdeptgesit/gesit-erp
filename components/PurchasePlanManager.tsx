@@ -64,6 +64,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const [loading, setLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [usdRate, setUsdRate] = useState<number>(16300);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -151,6 +152,17 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             } catch (innerErr) {
                 console.error("Failed to load purchase requisitions:", innerErr);
             }
+            try {
+                const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                if (rateRes.ok) {
+                    const rateData = await rateRes.json();
+                    if (rateData && rateData.rates && rateData.rates.IDR) {
+                        setUsdRate(rateData.rates.IDR);
+                    }
+                }
+            } catch (err) {
+                console.warn('Failed to fetch realtime USD rate, using fallback.', err);
+            }
         } catch (err: any) {
             console.error(err);
             showToast("Failed to reload data: " + err.message, 'error');
@@ -198,7 +210,11 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const stats = useMemo(() => {
         const approvedRequisitions = requisitions.filter(r => r.status === 'Approved');
 
-        const totalSpend = approvedRequisitions.reduce((sum, r) => sum + r.grandTotal, 0);
+        const totalSpend = approvedRequisitions.reduce((sum, r) => {
+            const isUSD = String(r.currency || 'IDR').toUpperCase().includes('USD') || String(r.currency || '').toUpperCase() === 'DOLLAR';
+            const rate = isUSD ? usdRate : 1; 
+            return sum + (r.grandTotal * rate);
+        }, 0);
 
         const pendingCount = requisitions.filter(r => r.status.includes('Pending')).length;
 
@@ -207,7 +223,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         const approvedCount = approvedRequisitions.length;
 
         return { totalSpend, pendingCount, approvedCount, actionsCount };
-    }, [requisitions, allUsers, currentUser]);
+    }, [requisitions, allUsers, currentUser, usdRate]);
 
     const filteredRequisitions = useMemo(() => {
         if (activeTab === 'approvals') {
