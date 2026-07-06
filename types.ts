@@ -404,6 +404,7 @@ export interface PurchaseRequisition {
   grandTotal: number;
   discount?: number;
   deliveryFee?: number;
+  currency?: 'IDR' | 'USD';
   status: 'Pending Supervisor' | 'Pending VP' | 'Pending Finance' | 'Pending Accounting' | 'Approved' | 'Rejected';
   category?: string;
   

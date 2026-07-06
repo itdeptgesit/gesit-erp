@@ -21,9 +21,14 @@ const formatIndonesianDate = (dateStr: string) => {
 };
 
 /**
- * Format number to IDR: "Rp X.XXX.XXX" (no dot after Rp, matching original template)
+ * Format number to IDR or USD
  */
-const formatRp = (num: number) => {
+const formatCurrency = (num: number, currency: string = 'IDR') => {
+  const c = String(currency || 'IDR').toUpperCase();
+  if (c.includes('USD') || c === 'DOLLAR') {
+    const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+    return `$ ${formatted}`;
+  }
   const formatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(num);
   return `Rp ${formatted}`;
 };
@@ -315,7 +320,7 @@ export async function exportPurchaseRequisitionPDF(req: PurchaseRequisition) {
     doc.text(String(item.qty), t2ColX[2] + t2ColW[2] / 2, rowY + 6.2, { align: 'center' });
     doc.text(item.vendor || '-', t2ColX[3] + 3, rowY + 6.2);
     if (item.price && item.price > 0) {
-      doc.text(formatRp(item.price), t2ColX[4] + 3, rowY + 6.2);
+      doc.text(formatCurrency(item.price, req.currency), t2ColX[4] + 3, rowY + 6.2);
     }
   }
 
@@ -342,19 +347,19 @@ export async function exportPurchaseRequisitionPDF(req: PurchaseRequisition) {
   if ((req.discount && req.discount > 0) || (req.deliveryFee && req.deliveryFee > 0)) {
     const subTotal = (req.itRecommendations || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
     doc.setFont('calibri', 'normal');
-    doc.text(`Subtotal : ${formatRp(subTotal)}`, marginL, y);
+    doc.text(`Subtotal : ${formatCurrency(subTotal, req.currency)}`, marginL, y);
     y += 5;
     if (req.discount && req.discount > 0) {
-      doc.text(`Diskon : -${formatRp(req.discount)}`, marginL, y);
+      doc.text(`Diskon : -${formatCurrency(req.discount, req.currency)}`, marginL, y);
       y += 5;
     }
     if (req.deliveryFee && req.deliveryFee > 0) {
-      doc.text(`Ongkos Kirim : +${formatRp(req.deliveryFee)}`, marginL, y);
+      doc.text(`Ongkos Kirim : +${formatCurrency(req.deliveryFee, req.currency)}`, marginL, y);
       y += 5;
     }
   }
   doc.setFont('calibri', 'bold');
-  doc.text(`Grand Total : ${formatRp(req.grandTotal)}`, marginL, y);
+  doc.text(`Grand Total : ${formatCurrency(req.grandTotal, req.currency)}`, marginL, y);
 
   y += 12;
 

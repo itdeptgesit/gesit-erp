@@ -18,6 +18,7 @@ interface PurchaseRequisitionFormModalProps {
     onSubmit: (data: Partial<PurchaseRequisition>) => void;
     currentUser: UserAccount | null;
     allUsers: UserAccount[];
+    initialData?: PurchaseRequisition | null;
 }
 
 const formatNumberString = (value: string | number): string => {
@@ -37,7 +38,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     onClose,
     onSubmit,
     currentUser,
-    allUsers
+    allUsers,
+    initialData
 }) => {
     // Local form states
     const [department, setDepartment] = useState('');
@@ -45,6 +47,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [bankAccount, setBankAccount] = useState('');
     const [notes, setNotes] = useState('');
     const [category, setCategory] = useState('');
+    const [currency, setCurrency] = useState<'IDR' | 'USD'>('IDR');
     const [discount, setDiscount] = useState<number>(0);
     const [deliveryFee, setDeliveryFee] = useState<number>(0);
     
@@ -110,39 +113,59 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         setAccountingId(accountingUser ? String(accountingUser.id) : (financeUser ? String(financeUser.id) : ''));
     };
 
-    // Load draft from localStorage on open
+    // Load draft or initialData (edit mode) from localStorage on open
     useEffect(() => {
         if (isOpen && currentUser) {
-            try {
-                const savedDraft = localStorage.getItem('gesit_pr_requisition_draft');
-                if (savedDraft) {
-                    const draft = JSON.parse(savedDraft);
-                    if (draft.department !== undefined) setDepartment(draft.department);
-                    if (draft.paidTo !== undefined) setPaidTo(draft.paidTo);
-                    if (draft.bankAccount !== undefined) setBankAccount(draft.bankAccount);
-                    if (draft.notes !== undefined) setNotes(draft.notes);
-                    if (draft.category !== undefined) setCategory(draft.category);
-                    if (draft.reqItems !== undefined) setReqItems(draft.reqItems);
-                    if (draft.recItems !== undefined) setRecItems(draft.recItems);
-                    if (draft.supervisorId !== undefined) setSupervisorId(draft.supervisorId);
-                    if (draft.vpId !== undefined) setVpId(draft.vpId);
-                    if (draft.financeId !== undefined) setFinanceId(draft.financeId);
-                    if (draft.accountingId !== undefined) setAccountingId(draft.accountingId);
-                    if (draft.discount !== undefined) setDiscount(draft.discount);
-                    if (draft.deliveryFee !== undefined) setDeliveryFee(draft.deliveryFee);
-                } else {
+            if (initialData) {
+                // EDIT MODE: prefill all fields from existing record
+                setDepartment(initialData.department || '');
+                setPaidTo(initialData.paidTo || '');
+                setBankAccount(initialData.bankAccount || '');
+                setNotes(initialData.notes || '');
+                setCategory(initialData.category || '');
+                setCurrency((initialData.currency as 'IDR' | 'USD') || 'IDR');
+                setDiscount(initialData.discount || 0);
+                setDeliveryFee(initialData.deliveryFee || 0);
+                setReqItems(initialData.requestedItems?.length ? initialData.requestedItems : [{ no: 1, description: '', qty: 1 }]);
+                setRecItems(initialData.itRecommendations?.length ? initialData.itRecommendations : [{ no: 1, description: '', qty: 1, vendor: '', price: 0 }]);
+                setSupervisorId(initialData.supervisorId || '');
+                setVpId(initialData.vpId || '');
+                setFinanceId(initialData.financeId || '');
+                setAccountingId(initialData.accountingId || '');
+            } else {
+                // NEW MODE: load draft or reset
+                try {
+                    const savedDraft = localStorage.getItem('gesit_pr_requisition_draft');
+                    if (savedDraft) {
+                        const draft = JSON.parse(savedDraft);
+                        if (draft.department !== undefined) setDepartment(draft.department);
+                        if (draft.paidTo !== undefined) setPaidTo(draft.paidTo);
+                        if (draft.bankAccount !== undefined) setBankAccount(draft.bankAccount);
+                        if (draft.notes !== undefined) setNotes(draft.notes);
+                        if (draft.category !== undefined) setCategory(draft.category);
+                        if (draft.currency !== undefined) setCurrency(draft.currency);
+                        if (draft.reqItems !== undefined) setReqItems(draft.reqItems);
+                        if (draft.recItems !== undefined) setRecItems(draft.recItems);
+                        if (draft.supervisorId !== undefined) setSupervisorId(draft.supervisorId);
+                        if (draft.vpId !== undefined) setVpId(draft.vpId);
+                        if (draft.financeId !== undefined) setFinanceId(draft.financeId);
+                        if (draft.accountingId !== undefined) setAccountingId(draft.accountingId);
+                        if (draft.discount !== undefined) setDiscount(draft.discount);
+                        if (draft.deliveryFee !== undefined) setDeliveryFee(draft.deliveryFee);
+                    } else {
+                        resetToDefaults();
+                    }
+                } catch (e) {
+                    console.error("Failed to load PR requisition draft:", e);
                     resetToDefaults();
                 }
-            } catch (e) {
-                console.error("Failed to load PR requisition draft:", e);
-                resetToDefaults();
             }
         }
-    }, [isOpen, currentUser, allUsers]);
+    }, [isOpen, currentUser, allUsers, initialData]);
 
     // Save draft to localStorage on state changes
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !initialData) {
             try {
                 const draft = {
                     department,
@@ -150,6 +173,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     bankAccount,
                     notes,
                     category,
+                    currency,
                     reqItems,
                     recItems,
                     supervisorId,
@@ -165,7 +189,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             }
         }
     }, [
-        isOpen, department, paidTo, bankAccount, notes, category, 
+        isOpen, initialData, department, paidTo, bankAccount, notes, category, currency,
         reqItems, recItems, supervisorId, vpId, financeId, accountingId, discount, deliveryFee
     ]);
 
@@ -230,7 +254,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             requesterUsername: currentUser?.username || 'Staff',
             requesterFullname: currentUser?.fullName || 'IT Staff',
             department: department,
-            requestDate: new Date().toISOString().split('T')[0],
+            requestDate: initialData?.requestDate || new Date().toISOString().split('T')[0],
             paidTo: paidTo,
             bankAccount: bankAccount,
             requestedItems: filteredReqItems,
@@ -239,7 +263,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             grandTotal: grandTotal,
             discount: Number(discount) || 0,
             deliveryFee: Number(deliveryFee) || 0,
-            status: 'Pending Supervisor',
+            currency: currency,
+            status: initialData?.status || 'Pending Supervisor',
             category: category,
             supervisorId: supervisorId || null,
             supervisorName: allUsers.find(u => String(u.id) === supervisorId)?.fullName || null,
@@ -273,8 +298,12 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                             <FileText size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Formulir PR Material Support IT</h2>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Create Purchase Requisition Document</p>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                                {initialData ? 'Edit Purchase Requisition' : 'Formulir PR Material Support IT'}
+                            </h2>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                {initialData ? `Editing PR-${String(initialData.id).padStart(4, '0')}` : 'Create Purchase Requisition Document'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
@@ -287,7 +316,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     <form id="prFormSubmit" onSubmit={handleSubmit} className="space-y-8">
                         
                         {/* Requester Metadata Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                             <div>
                                 <label className={labelClass}>Nama Pemohon</label>
                                 <Input className={inputClass} value={currentUser?.fullName || ''} disabled />
@@ -313,6 +342,18 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <SelectItem value="Subscription">Subscription</SelectItem>
                                         <SelectItem value="Maintenance & Support">Maintenance & Support</SelectItem>
                                         <SelectItem value="IT Services">IT Services</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Currency</label>
+                                <Select value={currency} onValueChange={(v) => setCurrency(v as 'IDR' | 'USD')}>
+                                    <SelectTrigger className="w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 h-9 text-xs font-bold">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="IDR" className="font-bold">IDR</SelectItem>
+                                        <SelectItem value="USD" className="font-bold">USD</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -470,7 +511,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider block mb-1.5">Diskon Pembelian</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{currency === 'USD' ? '$' : 'Rp'}</span>
                                                 <Input 
                                                     type="text" 
                                                     className={cn(inputClass, "pl-9 font-mono text-xs")} 
@@ -492,7 +533,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                                 )}
                                             </div>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">{currency === 'USD' ? '$' : 'Rp'}</span>
                                                 <Input 
                                                     type="text" 
                                                     className={cn(inputClass, "pl-9 font-mono text-xs")} 
@@ -542,7 +583,9 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                     <div>
                                         <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
                                         <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
-                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
+                                            {currency === 'USD'
+                                                ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(grandTotal)
+                                                : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
                                         </span>
                                     </div>
                                     <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">

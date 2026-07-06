@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     ShoppingCart, RefreshCcw, Check, X,
-    Trash2, Wallet,
+    Trash2, Wallet, Pencil,
     Clock, CheckCircle2, XCircle, Search, ChevronLeft, ChevronRight,
     ListFilter, BarChart3, UserCheck, ShieldCheck, Zap, Fingerprint, Eye, FileText
 } from 'lucide-react';
@@ -55,6 +55,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const [isReqFormOpen, setIsReqFormOpen] = useState(false);
     const [isReqDetailOpen, setIsReqDetailOpen] = useState(false);
     const [selectedRequisition, setSelectedRequisition] = useState<PurchaseRequisition | null>(null);
+    const [editingRequisition, setEditingRequisition] = useState<PurchaseRequisition | null>(null);
     const [rejectRequisitionTarget, setRejectRequisitionTarget] = useState<PurchaseRequisition | null>(null);
     const [deleteRequisitionTarget, setDeleteRequisitionTarget] = useState<PurchaseRequisition | null>(null);
 
@@ -74,8 +75,6 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const canManage = isAdmin || isStaff;
     const canDelete = isAdmin;
 
-    const normalize = (val: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-
     const mapRequisition = (p: any): PurchaseRequisition => ({
         id: p.id,
         requesterUsername: p.requester_username,
@@ -90,6 +89,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         grandTotal: Number(p.grand_total) || 0,
         discount: Number(p.discount) || 0,
         deliveryFee: Number(p.delivery_fee) || 0,
+        currency: (p.currency as 'IDR' | 'USD') || 'IDR',
         status: p.status,
         category: p.category,
         supervisorId: p.supervisor_id,
@@ -163,6 +163,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     const getRequesterProfile = (requesterString: string) => {
         if (!allUsers.length) return null;
+        const normalize = (s?: string) => (s || '').toLowerCase().trim();
         const normalizedReq = normalize(requesterString);
         let profile = allUsers.find(u => normalize(u.username) === normalizedReq);
         if (profile) return profile;
@@ -296,6 +297,42 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             showToast("Legacy plan rejected", "success");
             await fetchData();
         } catch (err: any) { showToast("Denial failed: " + err.message, 'error'); } finally { setIsActionLoading(false); }
+    };
+
+    const handleEditRequisition = async (payload: Partial<PurchaseRequisition>) => {
+        if (!editingRequisition) return;
+        setIsActionLoading(true);
+        try {
+            const { error } = await supabase
+                .from('purchase_requisitions')
+                .update({
+                    department: payload.department,
+                    paid_to: payload.paidTo,
+                    bank_account: payload.bankAccount,
+                    requested_items: payload.requestedItems,
+                    it_recommendations: payload.itRecommendations,
+                    notes: payload.notes,
+                    grand_total: payload.grandTotal,
+                    discount: payload.discount,
+                    delivery_fee: payload.deliveryFee,
+                    currency: payload.currency,
+                    category: payload.category,
+                    supervisor_id: payload.supervisorId,
+                    supervisor_name: payload.supervisorName,
+                    vp_id: payload.vpId,
+                    vp_name: payload.vpName,
+                })
+                .eq('id', editingRequisition.id);
+            if (error) throw error;
+            setEditingRequisition(null);
+            setIsReqFormOpen(false);
+            showToast('Requisition updated successfully', 'success');
+            fetchData();
+        } catch (err: any) {
+            showToast('Update failed: ' + err.message, 'error');
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
     // Requisition Approvals
@@ -730,12 +767,12 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-zinc-800">
-                                    <th className="px-6 py-5">Requisition ID</th>
-                                    <th className="px-6 py-5">Originator</th>
+                                    <th className="px-6 py-5">PR Number</th>
+                                    <th className="px-6 py-5">Requester</th>
                                     <th className="px-6 py-5">Paid To</th>
-                                    <th className="px-6 py-5 text-right">Commitment</th>
+                                    <th className="px-6 py-5 text-right">Total</th>
                                     <th className="px-6 py-5">Status</th>
-                                    <th className="px-6 py-5 text-center">Protocol</th>
+                                    <th className="px-6 py-5 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -769,7 +806,9 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                 {req.paidTo || '-'}
                                             </td>
                                             <td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                {formatIDR(req.grandTotal)}
+                                                {String(req.currency || 'IDR').toUpperCase().includes('USD') || String(req.currency || '').toUpperCase() === 'DOLLAR'
+                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(req.grandTotal)
+                                                    : formatIDR(req.grandTotal)}
                                             </td>
                                             <td className="px-6 py-5">
                                                 {getRequisitionStatusDisplay(req)}
@@ -803,15 +842,26 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                             </button>
                                                         </>
                                                     ) : (
-                                                        canDelete && (
-                                                            <button
-                                                                onClick={() => setDeleteRequisitionTarget(req)}
-                                                                className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
-                                                                title="Purge Requisition"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        )
+                                                        <>
+                                                            {isAdmin && req.status !== 'Approved' && req.status !== 'Rejected' && (
+                                                                <button
+                                                                    onClick={() => { setEditingRequisition(req); setIsReqFormOpen(true); }}
+                                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                                                    title="Edit Requisition (Admin)"
+                                                                >
+                                                                    <Pencil size={15} />
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button
+                                                                    onClick={() => setDeleteRequisitionTarget(req)}
+                                                                    className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+                                                                    title="Purge Requisition"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </td>
@@ -848,8 +898,15 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 </div>
             </div>
 
-            {/* Form Modals */}
-            <PurchaseRequisitionFormModal isOpen={isReqFormOpen} onClose={() => setIsReqFormOpen(false)} onSubmit={handleCreateRequisition} currentUser={currentUser} allUsers={allUsers} />
+            {/* Form Modals - handles both Create and Edit */}
+            <PurchaseRequisitionFormModal
+                isOpen={isReqFormOpen}
+                onClose={() => { setIsReqFormOpen(false); setEditingRequisition(null); }}
+                onSubmit={editingRequisition ? handleEditRequisition : handleCreateRequisition}
+                currentUser={currentUser}
+                allUsers={allUsers}
+                initialData={editingRequisition}
+            />
 
             {/* Detail Modals */}
             <PurchaseRequisitionDetailModal isOpen={isReqDetailOpen} onClose={() => setIsReqDetailOpen(false)} requisition={selectedRequisitionWithNames} currentUser={currentUser} onApprove={handleApproveRequisition} onReject={(req) => setRejectRequisitionTarget(req)} />

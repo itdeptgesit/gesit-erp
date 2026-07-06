@@ -27,7 +27,15 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
 }) => {
     if (!isOpen || !requisition) return null;
 
-    const formatIDR = (num: number) => {
+    const formatCurrency = (num: number, currency: string = 'IDR') => {
+        const c = String(currency || 'IDR').toUpperCase();
+        if (c.includes('USD') || c === 'DOLLAR') {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 2
+            }).format(num);
+        }
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -226,7 +234,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                             <td className="py-3 px-6 font-bold">{item.description}</td>
                                             <td className="py-3 px-6 text-center font-bold">{item.qty}</td>
                                             <td className="py-3 px-6 font-bold">{item.vendor}</td>
-                                            <td className="py-3 px-6 text-right font-mono font-bold">{item.price && item.price > 0 ? formatIDR(item.price) : '-'}</td>
+                                            <td className="py-3 px-6 text-right font-mono font-bold">{item.price && item.price > 0 ? formatCurrency(item.price, requisition.currency) : '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -250,14 +258,14 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                 <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 flex justify-between max-w-md">
                                     <span>Subtotal Item IT</span>
                                     <span className="font-mono font-semibold text-slate-800 dark:text-zinc-200">
-                                        {formatIDR((requisition.itRecommendations || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0))}
+                                        {formatCurrency((requisition.itRecommendations || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0), requisition.currency)}
                                     </span>
                                 </div>
                                 {requisition.discount && requisition.discount > 0 ? (
                                     <div className="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex justify-between max-w-md">
                                         <span>Diskon Pembelian</span>
                                         <span className="font-mono font-semibold">
-                                            -{formatIDR(requisition.discount)}
+                                            -{formatCurrency(requisition.discount, requisition.currency)}
                                         </span>
                                     </div>
                                 ) : null}
@@ -265,7 +273,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                     <div className="text-[11px] font-medium text-blue-500 dark:text-blue-400 flex justify-between max-w-md">
                                         <span>Ongkos Kirim</span>
                                         <span className="font-mono font-semibold">
-                                            +{formatIDR(requisition.deliveryFee)}
+                                            +{formatCurrency(requisition.deliveryFee, requisition.currency)}
                                         </span>
                                     </div>
                                 ) : null}
@@ -276,7 +284,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                             <div>
                                 <span className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Grand Total Commitment</span>
                                 <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
-                                    {formatIDR(requisition.grandTotal)}
+                                    {formatCurrency(requisition.grandTotal, requisition.currency)}
                                 </span>
                             </div>
                             <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
