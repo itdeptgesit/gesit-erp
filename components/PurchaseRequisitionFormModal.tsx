@@ -595,7 +595,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div>
                                             <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
                                                 {currency === 'USD'
-                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(grandTotal)
+                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(grandTotal)
                                                     : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
                                             </span>
                                             {currency === 'USD' && grandTotal > 0 && (

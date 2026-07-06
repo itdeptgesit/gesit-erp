@@ -35,7 +35,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD',
-                maximumFractionDigits: 2
+                maximumFractionDigits: 0
             }).format(num);
         }
         return new Intl.NumberFormat('id-ID', {
