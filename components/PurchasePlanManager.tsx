@@ -210,19 +210,27 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const stats = useMemo(() => {
         const approvedRequisitions = requisitions.filter(r => r.status === 'Approved');
 
+        const pendingRequisitions = requisitions.filter(r => r.status.includes('Pending'));
+
         const totalSpend = approvedRequisitions.reduce((sum, r) => {
             const isUSD = String(r.currency || 'IDR').toUpperCase().includes('USD') || String(r.currency || '').toUpperCase() === 'DOLLAR';
             const rate = isUSD ? usdRate : 1; 
             return sum + (r.grandTotal * rate);
         }, 0);
 
-        const pendingCount = requisitions.filter(r => r.status.includes('Pending')).length;
+        const unapprovedSpend = pendingRequisitions.reduce((sum, r) => {
+            const isUSD = String(r.currency || 'IDR').toUpperCase().includes('USD') || String(r.currency || '').toUpperCase() === 'DOLLAR';
+            const rate = isUSD ? usdRate : 1; 
+            return sum + (r.grandTotal * rate);
+        }, 0);
+
+        const pendingCount = pendingRequisitions.length;
 
         const actionsCount = requisitions.filter(isMyTurnToApproveRequisition).length;
 
         const approvedCount = approvedRequisitions.length;
 
-        return { totalSpend, pendingCount, approvedCount, actionsCount };
+        return { totalSpend, unapprovedSpend, pendingCount, approvedCount, actionsCount };
     }, [requisitions, allUsers, currentUser, usdRate]);
 
     const filteredRequisitions = useMemo(() => {
@@ -653,8 +661,9 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 </div>
             </PageHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
                 <StatCard label="Approved budget" value={formatIDR(stats.totalSpend)} icon={Wallet} color="emerald" subValue="Total verified" />
+                <StatCard label="Pending budget" value={formatIDR(stats.unapprovedSpend)} icon={Wallet} color="amber" subValue="Total unapproved" />
                 <StatCard label="Tasks" value={stats.actionsCount} icon={ShieldCheck} color={stats.actionsCount > 0 ? "rose" : "blue"} subValue="Awaiting your ID" />
                 <StatCard label="Global queue" value={stats.pendingCount} icon={Clock} color="amber" subValue="Requests in cycle" />
                 <StatCard label="Fulfilled" value={stats.approvedCount} icon={CheckCircle2} color="blue" subValue="Completed nodes" />
