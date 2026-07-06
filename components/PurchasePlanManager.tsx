@@ -153,7 +153,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 console.error("Failed to load purchase requisitions:", innerErr);
             }
             try {
-                const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                // Frankfurter is CORS-enabled for browser and uses ECB rates
+                const rateRes = await fetch('https://api.frankfurter.app/latest?from=USD&to=IDR');
                 if (rateRes.ok) {
                     const rateData = await rateRes.json();
                     if (rateData && rateData.rates && rateData.rates.IDR) {
