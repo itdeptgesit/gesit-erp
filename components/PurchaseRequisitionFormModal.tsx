@@ -567,14 +567,18 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 flex justify-between">
                                             <span>Subtotal Item IT</span>
                                             <span className="font-mono font-semibold text-slate-800 dark:text-zinc-200">
-                                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(subTotal)}
+                                                {currency === 'USD'
+                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(subTotal)
+                                                    : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(subTotal)}
                                             </span>
                                         </div>
                                         {discount > 0 && (
                                             <div className="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
                                                 <span>Diskon Pembelian</span>
                                                 <span className="font-mono font-semibold">
-                                                    -{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(discount)}
+                                                    -{currency === 'USD'
+                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(discount)
+                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(discount)}
                                                 </span>
                                             </div>
                                         )}
@@ -582,7 +586,9 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                             <div className="text-[11px] font-medium text-blue-500 dark:text-blue-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
                                                 <span>Ongkos Kirim</span>
                                                 <span className="font-mono font-semibold">
-                                                    +{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(deliveryFee)}
+                                                    +{currency === 'USD'
+                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(deliveryFee)
+                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(deliveryFee)}
                                                 </span>
                                             </div>
                                         )}
