@@ -389,20 +389,22 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
     const handleExportExcel = () => {
         if (filteredActivities.length === 0) return;
-        const dataToExport = filteredActivities.map(act => ({
-            "Activity Name": act.activityName,
-            "Category": act.category,
-            "Requester": act.requester,
-            "Department": act.department,
-            "IT Personnel": act.itPersonnel,
-            "Priority": act.type,
-            "Status": act.status,
-            "Duration": act.duration || "-",
-            "Location": act.location,
-            "Remarks": act.remarks || "-",
-            "Created At": act.createdAt ? new Date(act.createdAt).toLocaleString() : "-",
-            "Completed At": act.completedAt ? new Date(act.completedAt).toLocaleString() : "-"
-        }));
+        const dataToExport = filteredActivities
+            .filter(act => !act.remarks?.includes("Auto-generated purchase record from Requisition") && !act.activityName?.includes("Auto-generated purchase record from Requisition"))
+            .map(act => ({
+                "Activity Name": act.activityName,
+                "Created At": act.createdAt ? new Date(act.createdAt).toLocaleString() : "-",
+                "Completed At": act.completedAt ? new Date(act.completedAt).toLocaleString() : "-",
+                "Category": act.category,
+                "Requester": act.requester,
+                "Department": act.department,
+                "IT Personnel": act.itPersonnel,
+                "Priority": act.type,
+                "Status": act.status,
+                "Duration": act.duration || "-",
+                "Location": act.location,
+                "Remarks": act.remarks || "-"
+            }));
         exportToExcel(dataToExport, `GESIT-ACTIVITY-${new Date().toISOString().split('T')[0]}`);
     };
 
