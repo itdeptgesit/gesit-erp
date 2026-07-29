@@ -24,14 +24,45 @@ interface PurchaseRequisitionFormModalProps {
 
 const formatNumberString = (value: string | number): string => {
     if (value === undefined || value === null || value === '') return '';
-    const clean = String(value).replace(/\D/g, '');
+    let strValue = String(value);
+    
+    // If it's a plain JS number with a dot, convert dot to comma
+    if (typeof value === 'number') {
+        strValue = strValue.replace('.', ',');
+    }
+    
+    // Keep only digits and commas
+    const clean = strValue.replace(/[^0-9,]/g, '');
     if (!clean) return '';
-    return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(parseInt(clean, 10));
+    
+    // Split into integer and decimal parts
+    const parts = clean.split(',');
+    let intPart = parts[0];
+    let decPart = parts.length > 1 ? ',' + parts[1] : '';
+    
+    if (intPart) {
+        intPart = new Intl.NumberFormat('id-ID').format(parseInt(intPart, 10));
+    }
+    
+    return intPart + decPart;
 };
 
-const parseNumberString = (value: string): number => {
-    const clean = value.replace(/\D/g, '');
-    return clean ? parseInt(clean, 10) : 0;
+const parseNumberString = (value: string): any => {
+    let clean = value.replace(/[^0-9,]/g, '');
+    const parts = clean.split(',');
+    if (parts.length > 2) {
+        clean = parts[0] + ',' + parts.slice(1).join('');
+    }
+    return clean;
+};
+
+const parseToFloat = (value: string | number): number => {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    let clean = String(value).replace(/\./g, '');
+    clean = clean.replace(/,/g, '.');
+    clean = clean.replace(/[^0-9.-]/g, '');
+    return parseFloat(clean) || 0;
 };
 
 export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModalProps> = ({
@@ -50,8 +81,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [notes, setNotes] = useState('');
     const [category, setCategory] = useState('');
     const [currency, setCurrency] = useState<'IDR' | 'USD'>('IDR');
-    const [discount, setDiscount] = useState<number>(0);
-    const [deliveryFee, setDeliveryFee] = useState<number>(0);
+    const [discount, setDiscount] = useState<number | string>(0);
+    const [deliveryFee, setDeliveryFee] = useState<number | string>(0);
     
     // Requested items list
     const [reqItems, setReqItems] = useState<PurchaseRequisitionItem[]>([
@@ -232,8 +263,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     };
 
     // Calculate Grand Total
-    const subTotal = recItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
-    const grandTotal = Math.max(0, subTotal - (Number(discount) || 0) + (Number(deliveryFee) || 0));
+    const subTotal = recItems.reduce((sum, item) => sum + (parseToFloat(item.price) || 0) * (Number(item.qty) || 0), 0);
+    const grandTotal = Math.max(0, subTotal - (parseToFloat(discount) || 0) + (parseToFloat(deliveryFee) || 0));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -260,11 +291,14 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             paidTo: paidTo,
             bankAccount: bankAccount,
             requestedItems: filteredReqItems,
-            itRecommendations: filteredRecItems,
+            itRecommendations: filteredRecItems.map(item => ({
+                ...item,
+                price: parseToFloat(item.price)
+            })),
             notes: notes,
             grandTotal: grandTotal,
-            discount: Number(discount) || 0,
-            deliveryFee: Number(deliveryFee) || 0,
+            discount: parseToFloat(discount) || 0,
+            deliveryFee: parseToFloat(deliveryFee) || 0,
             currency: currency,
             status: initialData?.status || 'Pending Supervisor',
             category: category,
@@ -480,7 +514,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                             />
                                         </div>
                                         <div className="col-span-1 text-right text-xs font-mono font-bold text-slate-700 dark:text-zinc-300">
-                                            {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format((item.price || 0) * (item.qty || 1))}
+                                            {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format((parseToFloat(item.price) || 0) * (item.qty || 1))}
                                         </div>
                                         <div className="col-span-1 text-center">
                                             <Button
@@ -536,7 +570,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div>
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <label className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider">Ongkos Kirim</label>
-                                                {(!deliveryFee || deliveryFee === 0) && (
+                                                {(!parseToFloat(deliveryFee) || parseToFloat(deliveryFee) === 0) && (
                                                     <span className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded tracking-wide uppercase">
                                                         Gratis Ongkir!
                                                     </span>
@@ -568,27 +602,27 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                             <span>Subtotal Item IT</span>
                                             <span className="font-mono font-semibold text-slate-800 dark:text-zinc-200">
                                                 {currency === 'USD'
-                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(subTotal)
-                                                    : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(subTotal)}
+                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(subTotal)
+                                                    : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 }).format(subTotal)}
                                             </span>
                                         </div>
-                                        {discount > 0 && (
+                                        {parseToFloat(discount) > 0 && (
                                             <div className="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
                                                 <span>Diskon Pembelian</span>
                                                 <span className="font-mono font-semibold">
                                                     -{currency === 'USD'
-                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(discount)
-                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(discount)}
+                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(parseToFloat(discount))
+                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 }).format(parseToFloat(discount))}
                                                 </span>
                                             </div>
                                         )}
-                                        {deliveryFee > 0 && (
+                                        {parseToFloat(deliveryFee) > 0 && (
                                             <div className="text-[11px] font-medium text-blue-500 dark:text-blue-400 flex justify-between animate-in fade-in slide-in-from-top-1 duration-150">
                                                 <span>Ongkos Kirim</span>
                                                 <span className="font-mono font-semibold">
                                                     +{currency === 'USD'
-                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(deliveryFee)
-                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(deliveryFee)}
+                                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(parseToFloat(deliveryFee))
+                                                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 }).format(parseToFloat(deliveryFee))}
                                                 </span>
                                             </div>
                                         )}
@@ -601,14 +635,14 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div>
                                             <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">
                                                 {currency === 'USD'
-                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(grandTotal)
-                                                    : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal)}
+                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(grandTotal)
+                                                    : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 }).format(grandTotal)}
                                             </span>
                                             {currency === 'USD' && grandTotal > 0 && (
                                                 <div className="mt-1.5 flex items-center gap-1.5">
                                                     <span className="text-[9px] text-slate-400 font-medium">≈</span>
                                                     <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(grandTotal * usdRate)}
+                                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 2 }).format(grandTotal * usdRate)}
                                                     </span>
                                                 </div>
                                             )}

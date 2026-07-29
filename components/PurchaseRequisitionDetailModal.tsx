@@ -35,13 +35,13 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD',
-                maximumFractionDigits: 0
+                maximumFractionDigits: 2
             }).format(num);
         }
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
-            maximumFractionDigits: 0
+            maximumFractionDigits: 2
         }).format(num);
     };
 

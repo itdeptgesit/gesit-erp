@@ -29,7 +29,7 @@ const formatCurrency = (num: number, currency: string = 'IDR') => {
     const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
     return `$ ${formatted}`;
   }
-  const formatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(num);
+  const formatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
   return `Rp ${formatted}`;
 };
 
