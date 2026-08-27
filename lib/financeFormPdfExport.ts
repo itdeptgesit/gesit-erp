@@ -271,8 +271,10 @@ export async function exportFinanceFormPDF(
   doc.rect(col1ValX, boxY, 4, 4);
   doc.text('Cash', col1ValX + 6, y);
   if (formData.paymentMethod === 'Cash') {
-    doc.line(col1ValX, boxY, col1ValX + 4, boxY + 4);
-    doc.line(col1ValX + 4, boxY, col1ValX, boxY + 4);
+    doc.setLineWidth(0.25);
+    doc.line(col1ValX + 0.5, boxY + 2.0, col1ValX + 1.5, boxY + 3.0);
+    doc.line(col1ValX + 1.5, boxY + 3.0, col1ValX + 3.5, boxY + 1.0);
+    doc.setLineWidth(0.4);
   }
 
   // Checkbox Transfer
@@ -280,8 +282,10 @@ export async function exportFinanceFormPDF(
   doc.rect(transferX, boxY, 4, 4);
   doc.text('Transfer to :', transferX + 6, y);
   if (formData.paymentMethod === 'Transfer') {
-    doc.line(transferX, boxY, transferX + 4, boxY + 4);
-    doc.line(transferX + 4, boxY, transferX, boxY + 4);
+    doc.setLineWidth(0.25);
+    doc.line(transferX + 0.5, boxY + 2.0, transferX + 1.5, boxY + 3.0);
+    doc.line(transferX + 1.5, boxY + 3.0, transferX + 3.5, boxY + 1.0);
+    doc.setLineWidth(0.4);
   }
 
   // Transfer destination line
