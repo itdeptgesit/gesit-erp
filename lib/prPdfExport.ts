@@ -318,7 +318,10 @@ export async function exportPurchaseRequisitionPDF(req: PurchaseRequisition) {
     const lines = doc.splitTextToSize(item.description, t2ColW[1] - 6);
     doc.text(lines, t2ColX[1] + 3, rowY + 6.2);
     doc.text(String(item.qty), t2ColX[2] + t2ColW[2] / 2, rowY + 6.2, { align: 'center' });
-    doc.text(item.vendor || '-', t2ColX[3] + 3, rowY + 6.2);
+    
+    const vendorLines = doc.splitTextToSize(item.vendor || '-', t2ColW[3] - 6);
+    doc.text(vendorLines, t2ColX[3] + 3, rowY + 6.2);
+    
     if (item.price && item.price > 0) {
       doc.text(formatCurrency(item.price, req.currency), t2ColX[4] + 3, rowY + 6.2);
     }

@@ -46,6 +46,11 @@ import {
   FileCheck,
   Fingerprint,
   History,
+  Scale,
+  BriefcaseBusiness,
+  CheckSquare,
+  FileText,
+  BarChart2,
 } from "lucide-react"
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -73,6 +78,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   FileCheck: FileCheck,
   Fingerprint: Fingerprint,
   History: History,
+  Scale: Scale,
+  BriefcaseBusiness: BriefcaseBusiness,
+  CheckSquare: CheckSquare,
+  FileText: FileText,
+  BarChart2: BarChart2,
 }
 
 interface AppSidebarProps {

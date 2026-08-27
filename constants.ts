@@ -35,3 +35,4 @@ export const APP_MENU_STRUCTURE = [
     { id: 'master-group', label: 'Groups & Access', parentId: 'admin', iconName: 'Fingerprint' },
     { id: 'maintenance', label: 'System Wipe', parentId: 'admin', iconName: 'Zap' },
 ];
+

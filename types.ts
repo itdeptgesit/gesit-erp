@@ -433,3 +433,142 @@ export interface PurchaseRequisition {
   updatedAt?: string;
 }
 
+// ==========================================
+// LEGAL & CORPORATE SECRETARY MODULE TYPES
+// ==========================================
+
+export type LegalWorkStatus = 
+  | 'Open'
+  | 'Assigned'
+  | 'In Progress'
+  | 'Document Ready'
+  | 'Waiting Review'
+  | 'Revision Required'
+  | 'Waiting Approval'
+  | 'Approved'
+  | 'Completed'
+  | 'Cancelled';
+
+export type LegalPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+
+export type LegalWorkCategory = 
+  | 'Corporate Action'
+  | 'Legal Document'
+  | 'Agreement / Contract'
+  | 'Corporate Governance'
+  | 'Compliance'
+  | 'Regulatory'
+  | 'Notarial'
+  | 'Board / Shareholder Meeting'
+  | 'License / Permit'
+  | 'Legal Review'
+  | 'Other';
+
+export interface LegalWorkItem {
+  id: number;
+  workNumber: string; // e.g. CS-2026-00001, LEG-2026-00002
+  title: string;
+  description?: string;
+  workType: LegalWorkCategory | string;
+  company: string;
+  requester: string;
+  pic?: string;
+  picId?: string;
+  reviewer?: string;
+  reviewerId?: string;
+  approver?: string;
+  approverId?: string;
+  priority: LegalPriority;
+  status: LegalWorkStatus;
+  startDate?: string;
+  dueDate?: string;
+  completedDate?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+
+  // Joined/linked data
+  documents?: LegalDocument[];
+  reviews?: LegalReview[];
+  approvals?: LegalApproval[];
+  activities?: LegalActivity[];
+}
+
+export interface LegalWorkType {
+  id: number;
+  name: string;
+  codePrefix: string;
+  description?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface LegalDocument {
+  id: number;
+  workItemId: number;
+  workNumber?: string;
+  name: string;
+  driveFileId?: string;
+  driveFolderId?: string;
+  driveUrl: string;
+  mimeType?: string;
+  fileSize?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface LegalReview {
+  id: number;
+  workItemId: number;
+  workNumber: string;
+  reviewer: string;
+  reviewerId?: string;
+  status: 'Pending' | 'Revision Required' | 'Approved' | 'Rejected';
+  submittedBy: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  notes?: string;
+  comments?: LegalReviewComment[];
+}
+
+export interface LegalReviewComment {
+  id: number;
+  workItemId: number;
+  reviewId?: number;
+  reviewer: string;
+  comment: string;
+  actionTaken?: 'Request Revision' | 'Approve' | 'Reject';
+  createdAt: string;
+}
+
+export interface LegalApproval {
+  id: number;
+  workItemId: number;
+  workNumber: string;
+  approver: string;
+  approverId?: string;
+  decision: 'Approved' | 'Rejected';
+  comment?: string;
+  approvedAt: string;
+}
+
+export interface LegalActivity {
+  id: number;
+  workItemId: number;
+  workNumber: string;
+  actorName: string;
+  actorId?: string;
+  action: string;
+  details?: string;
+  createdAt: string;
+}
+
+export interface LegalCompany {
+  id: number;
+  code: string;
+  name: string;
+  createdAt?: string;
+}
+
+

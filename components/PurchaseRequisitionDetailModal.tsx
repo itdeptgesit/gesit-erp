@@ -7,6 +7,8 @@ import { PurchaseRequisition, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { exportPurchaseRequisitionPDF } from '../lib/prPdfExport';
+import { FinanceFormExportModal } from './FinanceFormExportModal';
+import { useState } from 'react';
 
 interface PurchaseRequisitionDetailModalProps {
     isOpen: boolean;
@@ -27,6 +29,8 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
     onReject,
     usdRate = 16300
 }) => {
+    const [financeModalType, setFinanceModalType] = useState<'cash_advance' | 'payment_requisition' | null>(null);
+
     if (!isOpen || !requisition) return null;
 
     const formatCurrency = (num: number, currency: string = 'IDR') => {
@@ -101,11 +105,38 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Formal Procurement Requisition Terminal</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" onClick={handleDownload} className="text-xs h-9 font-bold uppercase tracking-wider flex items-center gap-2 border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
-                            <Download size={14} /> Export PDF
-                        </Button>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="relative group">
+                            <Button variant="outline" size="sm" className="text-xs h-9 font-bold uppercase tracking-wider flex items-center gap-2 border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                                <Download size={14} /> Export Forms
+                            </Button>
+                            
+                            <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                                <button 
+                                    onClick={handleDownload} 
+                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                >
+                                    <FileText size={14} className="text-blue-500" />
+                                    Purchase Requisition
+                                </button>
+                                <button 
+                                    onClick={() => setFinanceModalType('cash_advance')} 
+                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                >
+                                    <DollarSign size={14} className="text-amber-500" />
+                                    Cash Advance
+                                </button>
+                                <button 
+                                    onClick={() => setFinanceModalType('payment_requisition')} 
+                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                >
+                                    <FileText size={14} className="text-emerald-500" />
+                                    Payment Requisition
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onClick={onClose} className="p-2 ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
                             <X size={20} />
                         </button>
                     </div>
@@ -233,10 +264,10 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                     {(requisition.itRecommendations || []).map((item, idx) => (
                                         <tr key={idx}>
                                             <td className="py-3 px-6 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
-                                            <td className="py-3 px-6 font-bold">{item.description}</td>
+                                            <td className="py-3 px-6 font-bold break-words whitespace-normal max-w-[200px]">{item.description}</td>
                                             <td className="py-3 px-6 text-center font-bold">{item.qty}</td>
-                                            <td className="py-3 px-6 font-bold">{item.vendor}</td>
-                                            <td className="py-3 px-6 text-right font-mono font-bold">{item.price && item.price > 0 ? formatCurrency(item.price, requisition.currency) : '-'}</td>
+                                            <td className="py-3 px-6 font-bold break-words whitespace-normal max-w-[160px]">{item.vendor}</td>
+                                            <td className="py-3 px-6 text-right font-mono font-bold whitespace-nowrap">{item.price && item.price > 0 ? formatCurrency(item.price, requisition.currency) : '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -346,6 +377,15 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                 </div>
 
             </div>
+
+            {financeModalType && (
+                <FinanceFormExportModal
+                    isOpen={true}
+                    onClose={() => setFinanceModalType(null)}
+                    requisition={requisition}
+                    type={financeModalType}
+                />
+            )}
         </div>,
         document.body
     );
