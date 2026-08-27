@@ -426,6 +426,34 @@ export async function exportFinanceFormPDF(
   doc.setTextColor(150);
   doc.text('(Name)', recX + (sigBoxW / 2), y + sigBoxH - 2, { align: 'center' });
   
+  // --- CUTTING GUIDE LINE ---
+  // Draw a dashed vertical line at the center of A4 landscape (x = 148.5mm)
+  // This marks the A5 boundary for cutting.
+  const cutX = 148.5;
+  doc.setDrawColor(180, 180, 180); // light gray
+  doc.setLineWidth(0.3);
+  doc.setLineDashPattern([2, 2], 0); // dashed: 2mm on, 2mm off
+
+  // Draw dashes manually for full page height
+  const dashLen = 2;
+  const gapLen = 2;
+  let dy = 0;
+  while (dy < 210) {
+    doc.line(cutX, dy, cutX, Math.min(dy + dashLen, 210));
+    dy += dashLen + gapLen;
+  }
+
+  // Small scissors label at top
+  doc.setLineDashPattern([], 0); // reset dash
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(160, 160, 160);
+  doc.text('✂', cutX, 4, { align: 'center' });
+
+  // Reset drawing color
+  doc.setDrawColor(0);
+  doc.setTextColor(0);
+
   // Save PDF
   const cleanId = String(req.id || '000').padStart(4, '0');
   const typeStr = type === 'cash_advance' ? 'CA' : 'PRQ';
