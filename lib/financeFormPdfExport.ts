@@ -127,6 +127,7 @@ function convertNumberToWords(amount: number): string {
 
 export interface FinanceFormData {
     companyName: string;
+    costCenter: string;   // abbreviation e.g. "GA" for "GESIT ALUMAS"
     projectName: string;
     cekBgNo: string;
     bankName: string;
@@ -150,16 +151,16 @@ export async function exportFinanceFormPDF(
   // We want to draw on the left half, which is effectively A5 Portrait (148.5 x 210).
   const pageW = 148.5;
   const pageH = 210;
-  const marginL = 10;
-  const marginR = 10;
-  const contentW = pageW - marginL - marginR; // 128.5mm
+  const marginL = 8;
+  const marginR = 8;
+  const contentW = pageW - marginL - marginR; // 132.5mm
 
   const logoImg = await loadLogoImage();
   const logoBase64 = await loadLogoBase64();
 
   await loadCalibriFont(doc);
 
-  let y = 12;
+  let y = 8;
 
   // 1. LOGO & COMPANY NAME
   if (logoImg && logoBase64) {
@@ -323,31 +324,37 @@ export async function exportFinanceFormPDF(
 
   y += tableHeaderH;
 
-  const minTableH = 60;
-  const tableDataH = minTableH; // Keep it fixed for this form to look like a standard voucher
+  // Resolve items first — needed for dynamic table height calculation
+  const items = req.itRecommendations || req.requestedItems || [];
+
+  // Pre-calculate the actual rendered height of each row so the table rect fits perfectly
+  const itemRowH = 5;       // base height per row (mm)
+  const lineH    = 3.5;     // extra height per wrapped line
+  let totalRowsH = 0;
+  for (const item of items) {
+    const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
+    totalRowsH += descLines.length * lineH + (itemRowH - lineH);
+  }
+  const tableDataH = Math.max(totalRowsH + 6, 20); // +6 top/bottom padding, min 20mm
 
   doc.rect(marginL, y, contentW, tableDataH);
   for (let i = 1; i < colX.length; i++) {
     doc.line(colX[i], y, colX[i], y + tableDataH);
   }
 
-  // Table Data
+  // Table Data — render ALL items (no cap)
   doc.setFont('calibri', 'normal');
   doc.setFontSize(8);
   let rowY = y + 4;
-  const items = req.itRecommendations || req.requestedItems || [];
   
   if (items.length > 0) {
-      // For Cash Advance or Payment Req, often there's just one summarized line or list.
-      // We will list the items if they fit, or just a summary.
-      // Assuming a few items.
-      for (let i = 0; i < Math.min(items.length, 5); i++) {
+      for (let i = 0; i < items.length; i++) {
           const item = items[i];
           doc.text(String(i + 1), colX[0] + colW[0] / 2, rowY, { align: 'center' });
           
           if (i === 0) {
-              // Print dept on first row only
-              doc.text(req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
+              // Print cost center (abbreviation) on first row only
+              doc.text(formData.costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
           }
           
           const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
@@ -360,7 +367,7 @@ export async function exportFinanceFormPDF(
             doc.text(new Intl.NumberFormat('id-ID').format(totalItemAmount), colX[4] + colW[4] - 2, rowY, { align: 'right' });
           }
           
-          rowY += descLines.length * 3.5 + 1.5;
+          rowY += descLines.length * lineH + (itemRowH - lineH);
       }
   }
 
@@ -394,41 +401,44 @@ export async function exportFinanceFormPDF(
   y += 12;
 
   // 6. SIGNATURE BOXES
-  const sigBoxW = 21;
-  const sigBoxH = 18;
-  const sigHeaderH = 6;
-  
-  const headers = ['Requested by', 'Approved by', 'Finance', 'Accounting'];
-  
+  const boxedHeaders = ['Requested by', 'Approved by', 'Finance', 'Accounting'];
+  const sigBoxW = contentW / 5;  // divide into 5 equal slots (26.5mm each)
+  const sigBoxH = 24;
+  const sigHeaderH = 8;
+
+  // First 4: bordered boxes
   let sigX = marginL;
-  for (let i = 0; i < headers.length; i++) {
+  for (let i = 0; i < boxedHeaders.length; i++) {
     doc.rect(sigX, y, sigBoxW, sigBoxH);
     doc.line(sigX, y + sigHeaderH, sigX + sigBoxW, y + sigHeaderH);
-    
+
     doc.setFont('calibri', 'bold');
-    doc.setFontSize(8);
-    doc.text(headers[i], sigX + sigBoxW / 2, y + 4, { align: 'center' });
-    
+    doc.setFontSize(9);
+    doc.text(boxedHeaders[i], sigX + sigBoxW / 2, y + 5.5, { align: 'center' });
+
     doc.setFont('calibri', 'italic');
-    doc.setFontSize(7);
-    doc.setTextColor(150);
-    doc.text('(Name)', sigX + sigBoxW / 2, y + sigBoxH - 2, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setTextColor(140);
+    doc.text('(Name)', sigX + sigBoxW / 2, y + sigBoxH - 3, { align: 'center' });
     doc.setTextColor(0);
-    
+
     sigX += sigBoxW;
   }
 
-  // Received by
-  const recX = sigX + 12;
+  // Received by: no border — just label + underline
+  const recCenterX = sigX + sigBoxW / 2;
   doc.setFont('calibri', 'bold');
-  doc.setFontSize(8);
-  doc.text('Received by', recX + (sigBoxW / 2), y + 4, { align: 'center' });
-  
-  doc.line(recX, y + sigBoxH - 5, recX + sigBoxW, y + sigBoxH - 5);
+  doc.setFontSize(9);
+  doc.text('Received by', recCenterX, y + 5.5, { align: 'center' });
+
+  const lineInset = 4;
+  doc.line(sigX + lineInset, y + sigBoxH - 6, sigX + sigBoxW - lineInset, y + sigBoxH - 6);
+
   doc.setFont('calibri', 'italic');
-  doc.setFontSize(7);
-  doc.setTextColor(150);
-  doc.text('(Name)', recX + (sigBoxW / 2), y + sigBoxH - 2, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(140);
+  doc.text('(Name)', recCenterX, y + sigBoxH - 3, { align: 'center' });
+  doc.setTextColor(0);
   
   // --- CUTTING GUIDE LINE ---
   // Draw a dashed vertical line at the center of A4 landscape (x = 148.5mm)

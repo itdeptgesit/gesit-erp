@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, FileText, Download } from 'lucide-react';
 import { PurchaseRequisition } from '../types';
 import { Button } from "@/components/ui/button";
 import { exportFinanceFormPDF, FinanceFormData } from '../lib/financeFormPdfExport';
+import { supabase } from '../lib/supabaseClient';
 
 interface FinanceFormExportModalProps {
     isOpen: boolean;
@@ -12,14 +13,21 @@ interface FinanceFormExportModalProps {
     type: 'cash_advance' | 'payment_requisition';
 }
 
+const getAbbreviation = (name: string): string => {
+    return name.split(/\s+/).map(w => w[0]).join('').toUpperCase();
+};
+
 export const FinanceFormExportModal: React.FC<FinanceFormExportModalProps> = ({
     isOpen,
     onClose,
     requisition,
     type
 }) => {
+    const DEFAULT_COMPANY = 'GESIT ALUMAS';
+    const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
     const [formData, setFormData] = useState<FinanceFormData>({
-        companyName: 'GESIT ALUMAS',
+        companyName: DEFAULT_COMPANY,
+        costCenter: getAbbreviation(DEFAULT_COMPANY),
         projectName: requisition?.requestedItems?.[0]?.description || requisition?.itRecommendations?.[0]?.description || '',
         cekBgNo: '',
         bankName: '',
@@ -27,6 +35,12 @@ export const FinanceFormExportModal: React.FC<FinanceFormExportModalProps> = ({
         transferTo: requisition?.bankAccount || '',
         amount: requisition?.grandTotal || 0,
     });
+
+    useEffect(() => {
+        supabase.from('companies').select('id, name').order('name').then(({ data }) => {
+            if (data) setCompanies(data);
+        });
+    }, []);
 
     if (!isOpen || !requisition) return null;
 
@@ -66,12 +80,18 @@ export const FinanceFormExportModal: React.FC<FinanceFormExportModalProps> = ({
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase">Company</label>
-                            <input 
-                                type="text"
-                                className="w-full text-sm p-2 border border-slate-200 dark:border-zinc-700 rounded-lg bg-slate-50 dark:bg-zinc-800/50"
+                            <select
+                                className="w-full text-sm p-2 border border-slate-200 dark:border-zinc-700 rounded-lg bg-slate-50 dark:bg-zinc-800/50 font-medium"
                                 value={formData.companyName}
-                                onChange={e => setFormData({...formData, companyName: e.target.value})}
-                            />
+                                onChange={e => setFormData({...formData, companyName: e.target.value, costCenter: getAbbreviation(e.target.value)})}
+                            >
+                                {companies.length === 0 && (
+                                    <option value="GESIT ALUMAS">GESIT ALUMAS</option>
+                                )}
+                                {companies.map(c => (
+                                    <option key={c.id} value={c.name}>{c.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase">Project Name</label>
