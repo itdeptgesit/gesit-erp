@@ -9,7 +9,7 @@ const formatIndonesianDate = (dateStr: string) => {
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    
+
     // We want the format dd/mm/yy as requested in the image (dd/mm/yy)
     const d = String(date.getDate()).padStart(2, '0');
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -79,22 +79,22 @@ async function loadCalibriFont(doc: jsPDF) {
   if (doc.getFontList()['calibri']) {
     return;
   }
-  
+
   try {
     const resReg = await fetch('/fonts/carlito-regular.ttf');
     if (resReg.ok) {
-        const bufReg = await resReg.arrayBuffer();
-        const b64Reg = arrayBufferToBase64(bufReg);
-        doc.addFileToVFS('calibri-normal.ttf', b64Reg);
-        doc.addFont('calibri-normal.ttf', 'calibri', 'normal');
+      const bufReg = await resReg.arrayBuffer();
+      const b64Reg = arrayBufferToBase64(bufReg);
+      doc.addFileToVFS('calibri-normal.ttf', b64Reg);
+      doc.addFont('calibri-normal.ttf', 'calibri', 'normal');
     }
 
     const resBold = await fetch('/fonts/carlito-bold.ttf');
     if (resBold.ok) {
-        const bufBold = await resBold.arrayBuffer();
-        const b64Bold = arrayBufferToBase64(bufBold);
-        doc.addFileToVFS('calibri-bold.ttf', b64Bold);
-        doc.addFont('calibri-bold.ttf', 'calibri', 'bold');
+      const bufBold = await resBold.arrayBuffer();
+      const b64Bold = arrayBufferToBase64(bufBold);
+      doc.addFileToVFS('calibri-bold.ttf', b64Bold);
+      doc.addFont('calibri-bold.ttf', 'calibri', 'bold');
     }
   } catch (e) {
     console.error('Error loading Calibri font:', e);
@@ -105,9 +105,9 @@ async function loadCalibriFont(doc: jsPDF) {
 
 function convertNumberToWords(amount: number): string {
   if (amount === 0) return "Nol Rupiah";
-  
+
   const units = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
-  
+
   function toWords(num: number): string {
     if (num < 12) return units[num];
     if (num < 20) return toWords(num - 10) + " Belas";
@@ -121,25 +121,25 @@ function convertNumberToWords(amount: number): string {
     if (num < 1000000000000000) return toWords(Math.floor(num / 1000000000000)) + " Triliun" + (num % 1000000000000 > 0 ? " " + toWords(num % 1000000000000) : "");
     return "";
   }
-  
+
   return toWords(amount) + " Rupiah";
 }
 
 export interface FinanceFormData {
-    companyName: string;
-    costCenter: string;   // abbreviation e.g. "GA" for "GESIT ALUMAS"
-    projectName: string;
-    cekBgNo: string;
-    bankName: string;
-    paymentMethod: 'Cash' | 'Transfer';
-    transferTo: string;
-    amount?: number; // Optional override
+  companyName: string;
+  costCenter: string;   // abbreviation e.g. "GA" for "GESIT ALUMAS"
+  projectName: string;
+  cekBgNo: string;
+  bankName: string;
+  paymentMethod: 'Cash' | 'Transfer';
+  transferTo: string;
+  amount?: number; // Optional override
 }
 
 export async function exportFinanceFormPDF(
-    req: PurchaseRequisition, 
-    type: 'cash_advance' | 'payment_requisition', 
-    formData: FinanceFormData
+  req: PurchaseRequisition,
+  type: 'cash_advance' | 'payment_requisition',
+  formData: FinanceFormData
 ) {
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -169,16 +169,16 @@ export async function exportFinanceFormPDF(
     const aspect = originalW / originalH;
     const logoH = 10;
     const logoW = logoH * aspect;
-    
+
     const companyText = 'THE GESIT COMPANIES';
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(0, 0, 0); // Image has black text for this
-    
+
     const textW = doc.getTextWidth(companyText);
-    const emblemX = marginL; 
+    const emblemX = marginL;
     const textX = marginL + logoW + 3;
-    
+
     doc.addImage(logoBase64, 'PNG', emblemX, y - 4, logoW, logoH, undefined, 'FAST');
     doc.text(companyText, textX, y + 2.5);
   }
@@ -190,7 +190,7 @@ export async function exportFinanceFormPDF(
   doc.setFontSize(14);
   const titleText = type === 'cash_advance' ? 'CASH ADVANCE' : 'PAYMENT REQUISITION';
   doc.text(titleText, pageW / 2, y, { align: 'center' });
-  
+
   // Title Underline
   const titleW = doc.getTextWidth(titleText);
   doc.setLineWidth(0.4);
@@ -201,16 +201,16 @@ export async function exportFinanceFormPDF(
   // 3. METADATA HEADER
   doc.setFont('calibri', 'normal');
   doc.setFontSize(8.5); // Slightly smaller to fit long names
-  
+
   const col1X = marginL;
   const col1LabelW = 25;
   const col1ValX = col1X + col1LabelW + 2;
-  
+
   const col2LabelW = 18;
   const col2LineW = 25; // Reduced from 30 to give col1 more space
   const col2X = marginL + contentW - col2LabelW - col2LineW - 2; // Right aligned block
   const col2ValX = col2X + col2LabelW + 2;
-  
+
   const col1LineW = col2X - col1ValX - 3; // Fill available space until col2
 
   const rowHeight = 8.5; // Increased from 7 to give vertical breathing room
@@ -329,7 +329,7 @@ export async function exportFinanceFormPDF(
 
   // Pre-calculate the actual rendered height of each row so the table rect fits perfectly
   const itemRowH = 5;       // base height per row (mm)
-  const lineH    = 3.5;     // extra height per wrapped line
+  const lineH = 3.5;     // extra height per wrapped line
   let totalRowsH = 0;
   for (const item of items) {
     const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
@@ -346,29 +346,29 @@ export async function exportFinanceFormPDF(
   doc.setFont('calibri', 'normal');
   doc.setFontSize(8);
   let rowY = y + 4;
-  
+
   if (items.length > 0) {
-      for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          doc.text(String(i + 1), colX[0] + colW[0] / 2, rowY, { align: 'center' });
-          
-          if (i === 0) {
-              // Print cost center (abbreviation) on first row only
-              doc.text(formData.costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
-          }
-          
-          const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
-          doc.text(descLines, colX[2] + 2, rowY);
-          
-          if ('price' in item && (item as any).price) {
-            doc.text(req.currency || 'IDR', colX[3] + colW[3] / 2, rowY, { align: 'center' });
-            
-            const totalItemAmount = ((item as any).price || 0) * (item.qty || 1);
-            doc.text(new Intl.NumberFormat('id-ID').format(totalItemAmount), colX[4] + colW[4] - 2, rowY, { align: 'right' });
-          }
-          
-          rowY += descLines.length * lineH + (itemRowH - lineH);
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      doc.text(String(i + 1), colX[0] + colW[0] / 2, rowY, { align: 'center' });
+
+      if (i === 0) {
+        // Print cost center (abbreviation) on first row only
+        doc.text(formData.costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
       }
+
+      const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
+      doc.text(descLines, colX[2] + 2, rowY);
+
+      if ('price' in item && (item as any).price) {
+        doc.text(req.currency || 'IDR', colX[3] + colW[3] / 2, rowY, { align: 'center' });
+
+        const totalItemAmount = ((item as any).price || 0) * (item.qty || 1);
+        doc.text(new Intl.NumberFormat('id-ID').format(totalItemAmount), colX[4] + colW[4] - 2, rowY, { align: 'right' });
+      }
+
+      rowY += descLines.length * lineH + (itemRowH - lineH);
+    }
   }
 
   y += tableDataH;
@@ -378,10 +378,10 @@ export async function exportFinanceFormPDF(
   doc.rect(marginL, y, contentW, footerH);
   doc.line(colX[3], y, colX[3], y + footerH);
   doc.line(colX[4], y, colX[4], y + footerH);
-  
+
   doc.setFont('calibri', 'bold');
   doc.text('Total', colX[3] + colW[3] / 2, y + 4, { align: 'center' });
-  
+
   const finalAmount = formData.amount !== undefined ? formData.amount : (req.grandTotal || 0);
   if (finalAmount > 0) {
     doc.text(new Intl.NumberFormat('id-ID').format(finalAmount), colX[4] + colW[4] - 2, y + 4, { align: 'right' });
@@ -393,7 +393,7 @@ export async function exportFinanceFormPDF(
   doc.setFont('calibri', 'normal');
   doc.setFontSize(9);
   doc.text('In Words :', marginL, y);
-  
+
   const wordsText = finalAmount > 0 ? convertNumberToWords(finalAmount) : '';
   doc.text(wordsText, marginL + 16, y);
   doc.line(marginL + 14, y + 1, marginL + contentW, y + 1);
@@ -419,7 +419,7 @@ export async function exportFinanceFormPDF(
     doc.setFont('calibri', 'italic');
     doc.setFontSize(8);
     doc.setTextColor(140);
-    doc.text('(Name)', sigX + sigBoxW / 2, y + sigBoxH - 3, { align: 'center' });
+    // doc.text('(Name)', sigX + sigBoxW / 2, y + sigBoxH - 3, { align: 'center' });
     doc.setTextColor(0);
 
     sigX += sigBoxW;
@@ -432,14 +432,14 @@ export async function exportFinanceFormPDF(
   doc.text('Received by', recCenterX, y + 5.5, { align: 'center' });
 
   const lineInset = 4;
-  doc.line(sigX + lineInset, y + sigBoxH - 6, sigX + sigBoxW - lineInset, y + sigBoxH - 6);
+  doc.line(sigX + lineInset, y + sigBoxH - 3, sigX + sigBoxW - lineInset, y + sigBoxH - 3);
 
   doc.setFont('calibri', 'italic');
   doc.setFontSize(8);
   doc.setTextColor(140);
-  doc.text('(Name)', recCenterX, y + sigBoxH - 3, { align: 'center' });
+  // doc.text('(Name)', recCenterX, y + sigBoxH - 3, { align: 'center' });
   doc.setTextColor(0);
-  
+
   // --- CUTTING GUIDE LINE ---
   // Draw a dashed vertical line at the center of A4 landscape (x = 148.5mm)
   // This marks the A5 boundary for cutting.
