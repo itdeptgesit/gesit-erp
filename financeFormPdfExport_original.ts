@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import { PurchaseRequisition } from '../types';
 import { supabase } from './supabaseClient';
 
@@ -479,9 +479,9 @@ export async function exportFinanceFormPDF(
     doc.setFontSize(5);
     doc.setTextColor(150, 150, 150);
 
-    doc.text('✂', cardW, 3, { align: 'center' });
-    doc.text('✂', cardW, cardH + 3, { align: 'center' });
-    doc.text('✂', cardW, cardH * 2 + 3, { align: 'center' });
+    doc.text('Ô£é', cardW, 3, { align: 'center' });
+    doc.text('Ô£é', cardW, cardH + 3, { align: 'center' });
+    doc.text('Ô£é', cardW, cardH * 2 + 3, { align: 'center' });
 
     doc.setDrawColor(0, 0, 0);
     doc.setTextColor(0, 0, 0);
@@ -504,7 +504,7 @@ export async function exportFinanceFormPDF(
 }
 
 // ==========================================
-// EXPENSE APPROVAL — Cash Advance Settlement
+// EXPENSE APPROVAL ÔÇö Cash Advance Settlement
 // ==========================================
 
 export interface ExpenseApprovalFormData {
@@ -549,7 +549,7 @@ export interface ExpenseApprovalData {
   status?: string;
 }
 
-// Map: user email → local e-sign image path (in /public/image/e-sign/)
+// Map: user email ÔåÆ local e-sign image path (in /public/image/e-sign/)
 const E_SIGN_MAP: Record<string, string> = {
   'sylvia@gesit.co.id': '/image/e-sign/sylvia.png',
   'rudi.siarudin@gesit.co.id': '/image/e-sign/siarudin.png',
@@ -723,9 +723,9 @@ export const generateExpenseApprovalPdf = async (dataList: ExpenseApprovalData[]
     targetDoc.setFontSize(5);
     targetDoc.setTextColor(150, 150, 150);
 
-    targetDoc.text('✂', cellW, 3, { align: 'center' });
-    targetDoc.text('✂', cellW, cellH + 3, { align: 'center' });
-    targetDoc.text('✂', cellW, cellH * 2 + 3, { align: 'center' });
+    targetDoc.text('Ô£é', cellW, 3, { align: 'center' });
+    targetDoc.text('Ô£é', cellW, cellH + 3, { align: 'center' });
+    targetDoc.text('Ô£é', cellW, cellH * 2 + 3, { align: 'center' });
 
     targetDoc.setDrawColor(0, 0, 0);
     targetDoc.setTextColor(0, 0, 0);
@@ -805,7 +805,7 @@ export const generateExpenseApprovalPdf = async (dataList: ExpenseApprovalData[]
     drawFieldLine('Date', formatCardDate(data.request_date), col1X, col1ColonX, col1ValX, col1EndX, offsetY + 36);
     drawFieldLine('Note', 'Penyelesaian Cash Advance', col2X, col2ColonX, col2ValX, col2EndX, offsetY + 36);
 
-    // Full-width description row (6mm gap after date row)
+    // ÔöÇÔöÇ Full-width description row (6mm gap after date row) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     const rawDesc = (data.items_description || data.project_name || '')
       .replace(/:\s*$/, '').trim();
     if (rawDesc) {
@@ -850,14 +850,14 @@ export const generateExpenseApprovalPdf = async (dataList: ExpenseApprovalData[]
     const ca     = data.cash_advance_amount !== undefined ? data.cash_advance_amount : (data.total_amount || actual);
     const refund = data.refund_amount !== undefined ? data.refund_amount : (ca - actual);
 
-    // CA amount (large)
+    // ÔöÇÔöÇ CA amount (large) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(formatRupiahWithDot(ca), rEX, rY + 9, { align: 'right' });
     doc.setLineWidth(0.3);
     doc.line(rX, rY + 11, rEX, rY + 11);
 
-    // CA formula
+    // ÔöÇÔöÇ CA formula ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     const formula = `CA  :  ${formatRupiahWithDot(ca)}  -  ${formatRupiahWithDot(actual)}`;
@@ -865,7 +865,7 @@ export const generateExpenseApprovalPdf = async (dataList: ExpenseApprovalData[]
     doc.setLineWidth(0.2);
     doc.line(rX, rY + 19.5, rEX, rY + 19.5);
 
-    // Kembali / Kurang Bayar
+    // ÔöÇÔöÇ Kembali / Kurang Bayar ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     const refundLabel = refund >= 0 ? 'Kembali' : 'Kurang Bayar';
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);

@@ -5,24 +5,39 @@ export const APP_NAME = 'GESIT PORTAL';
 export const CURRENT_USER_GROUPS = ['admin'];
 
 export const MOCK_GROUPS = [
-    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'purchase', 'purchase-record', 'assets', 'asset-loan', 'asset-handover', 'network', 'files', 'extension-directory', 'admin', 'users', 'system-settings', 'tracking-log', 'announcements', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance', 'credential'] },
-    { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'helpdesk', 'activity', 'weekly', 'assets', 'asset-loan', 'asset-handover', 'network', 'files', 'extension-directory', 'purchase-record'] },
-    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'extension-directory', 'asset-loan', 'helpdesk'] }
+    { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'activity', 'weekly', 'network', 'procurement', 'purchase', 'purchase-record', 'asset-management', 'assets', 'asset-loan', 'asset-handover', 'office-directory', 'office-layout', 'extension-directory', 'admin', 'users', 'system-settings', 'tracking-log', 'announcements', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance', 'credential'] },
+    { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'activity', 'weekly', 'network', 'procurement', 'purchase', 'purchase-record', 'asset-management', 'assets', 'asset-loan', 'asset-handover', 'office-directory', 'office-layout', 'extension-directory'] },
+    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'asset-management', 'asset-loan', 'office-directory', 'office-layout', 'extension-directory'] }
 ];
 
 export const APP_MENU_STRUCTURE = [
-    { id: 'dashboard', label: 'Overview', iconName: 'LayoutDashboard' },
-    { id: 'helpdesk', label: 'Helpdesk', iconName: 'LifeBuoy' },
-    { id: 'activity', label: 'Activity Log', iconName: 'Activity' },
-    { id: 'weekly', label: 'Weekly Plan', iconName: 'Calendar' },
-    { id: 'purchase', label: 'Purchase Plan', iconName: 'ShoppingCart' },
-    { id: 'purchase-record', label: 'Purchase Record', iconName: 'Receipt' },
-    { id: 'assets', label: 'Asset Management', iconName: 'Cpu' },
-    { id: 'asset-loan', label: 'Asset Loan', iconName: 'ArrowLeftRight' },
-    { id: 'asset-handover', label: 'Asset Handover (BAST)', iconName: 'FileCheck' },
-    { id: 'network', label: 'Infrastructure', iconName: 'Network' },
-    { id: 'files', label: 'Documents', iconName: 'FolderOpen' },
-    { id: 'extension-directory', label: 'Ext. Directory', iconName: 'Phone' },
+    // 1. Home (Standalone)
+    { id: 'dashboard', label: 'Home', iconName: 'LayoutDashboard' },
+
+    // 2. Operations (Ticketing, Activities, Planner, Infrastructure)
+    { id: 'operations', label: 'Operations', iconName: 'Activity' },
+    { id: 'helpdesk', label: 'Ticketing', parentId: 'operations', iconName: 'LifeBuoy' },
+    { id: 'activity', label: 'Activities', parentId: 'operations', iconName: 'Activity' },
+    { id: 'weekly', label: 'Planner', parentId: 'operations', iconName: 'Calendar' },
+    { id: 'network', label: 'Infrastructure', parentId: 'operations', iconName: 'Network' },
+
+    // 3. Procurement (Procurement, Purchase Record)
+    { id: 'procurement', label: 'Procurement', iconName: 'ShoppingCart' },
+    { id: 'purchase', label: 'Procurement', parentId: 'procurement', iconName: 'ShoppingCart' },
+    { id: 'purchase-record', label: 'Purchase Record', parentId: 'procurement', iconName: 'Receipt' },
+
+    // 4. Asset Management (Assets, Asset Loan, Asset Handover)
+    { id: 'asset-management', label: 'Asset Management', iconName: 'Cpu' },
+    { id: 'assets', label: 'Assets', parentId: 'asset-management', iconName: 'Cpu' },
+    { id: 'asset-loan', label: 'Asset Loan', parentId: 'asset-management', iconName: 'ArrowLeftRight' },
+    { id: 'asset-handover', label: 'Asset Handover', parentId: 'asset-management', iconName: 'FileCheck' },
+
+    // 5. Office & Directory (Office Layout, Phone Directory)
+    { id: 'office-directory', label: 'Office & Directory', iconName: 'Building2' },
+    { id: 'office-layout', label: 'Office Layout', parentId: 'office-directory', iconName: 'MapPin' },
+    { id: 'extension-directory', label: 'Phone Directory', parentId: 'office-directory', iconName: 'Phone' },
+
+    // 6. Administration (Settings & Setup)
     { id: 'admin', label: 'Administration', iconName: 'Shield' },
     { id: 'users', label: 'User Accounts', parentId: 'admin', iconName: 'Users' },
     { id: 'credential', label: 'Credentials', parentId: 'admin', iconName: 'Key' },

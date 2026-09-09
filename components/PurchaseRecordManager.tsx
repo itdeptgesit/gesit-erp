@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
-    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, ChevronLeft, BarChart3, Eye, Tag, PieChart, Calendar, Building2,
-    Save, AlertTriangle, Database, LayoutGrid, TableProperties
+    ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Check, BarChart3, Eye, Tag, PieChart, Calendar, Building2,
+    Save, AlertTriangle, Database, LayoutGrid, TableProperties, SlidersHorizontal, RotateCcw
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Area
@@ -74,9 +74,53 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
     const [quarterFilter, setQuarterFilter] = useState('All');
     const [monthFilter, setMonthFilter] = useState('All');
+    const [companyFilter, setCompanyFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showMoreFilters, setShowMoreFilters] = useState(false);
+    const [isPeriodOpen, setIsPeriodOpen] = useState(false);
+    const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const periodRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (periodRef.current && !periodRef.current.contains(event.target as Node)) {
+                setIsPeriodOpen(false);
+            }
+        };
+        if (isPeriodOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isPeriodOpen]);
+
+    const periodLabel = useMemo(() => {
+        if (startDate && endDate) {
+            return `${startDate} - ${endDate}`;
+        }
+        if (monthFilter !== 'All') {
+            return `${monthFilter.slice(0, 3)} ${yearFilter !== 'All' ? yearFilter : ''}`.trim();
+        }
+        if (quarterFilter !== 'All') {
+            return `${quarterFilter} ${yearFilter !== 'All' ? `FY ${yearFilter}` : ''}`.trim();
+        }
+        if (yearFilter !== 'All') {
+            return `FY ${yearFilter}`;
+        }
+        return 'All Period';
+    }, [yearFilter, monthFilter, quarterFilter, startDate, endDate]);
+
+    const activeMoreFiltersCount = useMemo(() => {
+        let count = 0;
+        if (categoryFilter !== 'All') count++;
+        if (projectFilter !== 'All') count++;
+        if (statusFilter !== 'All') count++;
+        return count;
+    }, [categoryFilter, projectFilter, statusFilter]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState<PurchaseRecord | null>(null);
@@ -378,9 +422,13 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const filteredRecords = useMemo(() => {
         return records.filter(r => {
             const matchesSearch = (r.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (r.transactionId || '').toLowerCase().includes(searchTerm.toLowerCase());
+                (r.transactionId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (r.vendor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (r.user || '').toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'All' ? true : r.status === statusFilter;
             const matchesProject = projectFilter === 'All' ? true : r.projectName === projectFilter;
+            const matchesCompany = companyFilter === 'All' ? true : r.company === companyFilter;
+            const matchesCategory = categoryFilter === 'All' ? true : r.category === categoryFilter;
 
             let matchesDate = true;
             if (r.purchaseDate) {
@@ -405,9 +453,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 if (endDate && d > new Date(endDate)) matchesDate = false;
             }
 
-            return matchesSearch && matchesStatus && matchesProject && matchesDate;
+            return matchesSearch && matchesStatus && matchesProject && matchesCompany && matchesCategory && matchesDate;
         });
-    }, [records, searchTerm, statusFilter, projectFilter, yearFilter, quarterFilter, startDate, endDate]);
+    }, [records, searchTerm, statusFilter, projectFilter, companyFilter, categoryFilter, yearFilter, quarterFilter, monthFilter, startDate, endDate]);
 
     const totals = useMemo(() => {
         const rowTotals: Record<string, { budget: number; actual: number; variance: number }> = {};
@@ -565,6 +613,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         return distinctYears.sort((a, b) => (b as number) - (a as number));
     }, [records]);
 
+    const availableCompanies = useMemo(() => {
+        const distinct = Array.from(new Set(records.map(r => r.company).filter(Boolean)));
+        return distinct.sort();
+    }, [records]);
+
+    const availableCategories = useMemo(() => {
+        const distinct = Array.from(new Set(records.map(r => r.category).filter(Boolean)));
+        return distinct.sort();
+    }, [records]);
+
     const financialHealth = useMemo(() => {
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
@@ -625,32 +683,29 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     }, [records]);
 
     const chartData = useMemo(() => {
-        // Dynamic chart range based on filters would be better, but for now specific requirement is "Line chart + bar"
-        // Let's show filtered data trend
-
-        const grouped: Record<string, number> = {};
-        // If year filter is active, show months of that year
-        // If "All" years, show last 12 months? Or grouping by Year?
-        // Let's stick to "Current View" visualization based on filtered records
+        const grouped: Record<string, { name: string; total: number; sortKey: number }> = {};
 
         filteredRecords.forEach(r => {
             if (!r.purchaseDate) return;
             const d = new Date(r.purchaseDate);
-            const key = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }); // Jan 24
-            grouped[key] = (grouped[key] || 0) + (r.subtotal || 0);
+            if (isNaN(d.getTime())) return;
+            const y = d.getFullYear();
+            const m = d.getMonth();
+            const key = `${y}-${m}`;
+            const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    name: label,
+                    total: 0,
+                    sortKey: y * 12 + m
+                };
+            }
+            grouped[key].total += (r.subtotal || 0);
         });
 
-        // We need to sort these keys chronologically
-        return Object.entries(grouped)
-            .map(([name, total]) => {
-                // Parse "Jan 24" back to date for sorting
-                const [m, y] = name.split(' ');
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const monthIdx = months.indexOf(m);
-                const yearFull = 2000 + parseInt(y);
-                return { name, total, dateObj: new Date(yearFull, monthIdx, 1) };
-            })
-            .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())
+        return Object.values(grouped)
+            .sort((a, b) => a.sortKey - b.sortKey)
             .map(item => ({ name: item.name, total: item.total }));
     }, [filteredRecords]);
 
@@ -728,54 +783,46 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* Main Tabs switcher (Ledger vs Budget Tracker) and Row Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-4 px-2 py-3 border-t border-b border-slate-100 dark:border-zinc-800/50 my-4 bg-slate-50/10 dark:bg-zinc-900/10">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md shadow-xs">
                 <div className="flex items-center gap-3">
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full sm:w-auto">
-                        <TabsList className="bg-slate-50 dark:bg-zinc-800 border-none w-full sm:w-auto flex">
-                            <TabsTrigger value="ledger" className="text-xs font-bold px-4">
-                                <Briefcase size={14} className="mr-2" /> LEDGER
+                        <TabsList className="bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl border border-slate-200/60 dark:border-zinc-700/60 flex">
+                            <TabsTrigger value="ledger" className="text-xs font-bold px-4 py-1.5 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-sm">
+                                <Briefcase size={14} className="mr-2 text-blue-600 dark:text-blue-400" /> LEDGER
                             </TabsTrigger>
-                            <TabsTrigger value="budgeting" className="text-xs font-bold px-4">
-                                <FileSpreadsheet size={14} className="mr-2" /> BUDGET TRACKER
+                            <TabsTrigger value="budgeting" className="text-xs font-bold px-4 py-1.5 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-sm">
+                                <FileSpreadsheet size={14} className="mr-2 text-indigo-600 dark:text-indigo-400" /> BUDGET TRACKER
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
-
-                    {viewMode === 'ledger' && (
-                        <Tabs value={yearFilter} onValueChange={setYearFilter} className="hidden lg:block">
-                            <TabsList className="bg-slate-50 dark:bg-zinc-800 border-none">
-                                <TabsTrigger value="2026" className="text-xs font-bold px-4">
-                                    FY 2026
-                                </TabsTrigger>
-                                <TabsTrigger value="2025" className="text-xs font-bold px-4">
-                                    FY 2025
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    )}
                 </div>
 
                 {viewMode === 'ledger' && (
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" onClick={handleExportExcel} className="text-[10px] sm:text-xs font-bold flex-1 sm:flex-none justify-center h-9">
-                            <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> Export
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleExportExcel} 
+                            className="text-xs font-bold h-9 px-3.5 rounded-xl bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-xs text-slate-700 dark:text-zinc-200"
+                        >
+                            <FileSpreadsheet className="mr-1.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Export Excel
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={handleSyncAllToSheet}
                             disabled={isSyncingAll || filteredRecords.length === 0}
-                            className="text-[10px] sm:text-xs font-bold flex-1 sm:flex-none justify-center h-9"
+                            className="text-xs font-bold h-9 px-3.5 rounded-xl bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-xs text-slate-700 dark:text-zinc-200"
                         >
-                            {isSyncingAll ? <RefreshCcw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />}
-                            Sync
+                            {isSyncingAll ? <RefreshCcw className="mr-1.5 h-4 w-4 animate-spin text-blue-500" /> : <RefreshCcw className="mr-1.5 h-4 w-4 text-blue-500" />}
+                            Sync Sheets
                         </Button>
                         <Button
                             size="sm"
                             onClick={() => { setEditingRecord(null); setIsModalOpen(true); }}
-                            className="text-[10px] sm:text-xs font-bold flex-1 sm:flex-none justify-center h-9 transition-all active:scale-95"
+                            className="text-xs font-bold h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95"
                         >
-                            <Plus className="mr-1.5 h-3.5 w-3.5" /> New Entry
+                            <Plus className="mr-1.5 h-4 w-4" /> Entri Baru
                         </Button>
                     </div>
                 )}
@@ -784,97 +831,474 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             {viewMode === 'ledger' ? (
                 <>
 
-            {/* Advanced Filters Bar */}
-            <Card className="rounded-xl border-none shadow-sm bg-white dark:bg-zinc-900 overflow-hidden">
-                <CardContent className="p-2.5 flex flex-col md:flex-row items-center gap-3">
-                    <div className="relative flex-1 w-full">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Search descriptions, vendors, or IDs..."
-                            className="pl-9 h-9 bg-slate-50 border-none dark:bg-zinc-800 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full md:w-auto shrink-0">
-                        <Select value={yearFilter} onValueChange={setYearFilter}>
-                            <SelectTrigger className="w-full sm:w-[110px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
-                                <SelectValue placeholder="Year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Years</SelectItem>
-                                {availableYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+            {/* Sleek Executive Filter Toolbar */}
+            <div className="space-y-3">
+                <Card className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-xs bg-white dark:bg-zinc-900 overflow-visible">
+                    <CardContent className="p-3 sm:p-3.5 space-y-3">
+                        {/* Main Single-Line Filter Row */}
+                        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+                            {/* Left Controls: Period, Company, Search */}
+                            <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+                                {/* Period Popover Trigger & Dropdown */}
+                                <div className="relative shrink-0" ref={periodRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPeriodOpen(!isPeriodOpen)}
+                                        className={cn(
+                                            "h-9 px-3 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer",
+                                            isPeriodOpen || (quarterFilter !== 'All' || monthFilter !== 'All' || startDate || endDate)
+                                                ? "bg-blue-50/90 dark:bg-blue-950/70 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold"
+                                                : "bg-white dark:bg-zinc-800/90 border-slate-200/90 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-750"
+                                        )}
+                                    >
+                                        <Calendar size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                        <span className="font-bold text-slate-800 dark:text-zinc-100">Period:</span>
+                                        <span className="font-semibold text-slate-700 dark:text-zinc-200">{periodLabel}</span>
+                                        {isPeriodOpen ? <ChevronUp size={13} className="text-slate-400 shrink-0" /> : <ChevronDown size={13} className="text-slate-400 shrink-0" />}
+                                    </button>
 
-                        <Select value={quarterFilter} onValueChange={setQuarterFilter}>
-                            <SelectTrigger className="w-full sm:w-[125px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
-                                <SelectValue placeholder="Quarter" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Quarters</SelectItem>
-                                <SelectItem value="Q1">Q1 (Jan-Mar)</SelectItem>
-                                <SelectItem value="Q2">Q2 (Apr-Jun)</SelectItem>
-                                <SelectItem value="Q3">Q3 (Jul-Sep)</SelectItem>
-                                <SelectItem value="Q4">Q4 (Oct-Dec)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                                    {/* Popover Menu matching screenshot */}
+                                    {isPeriodOpen && (
+                                        <div className="absolute left-0 top-full mt-2 w-[340px] sm:w-[380px] bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-2xl p-4 sm:p-5 z-[200] space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                                            {/* FISCAL YEAR */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                    <span>Fiscal Year</span>
+                                                    <span className="font-bold">Jan – Dec</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        {availableYears.map(y => (
+                                                            <button
+                                                                key={y}
+                                                                type="button"
+                                                                onClick={() => setYearFilter(y.toString())}
+                                                                className={cn(
+                                                                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                                                                    yearFilter === y.toString()
+                                                                        ? "bg-indigo-600 text-white shadow-xs"
+                                                                        : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-750"
+                                                                )}
+                                                            >
+                                                                FY {y}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setQuarterFilter('All');
+                                                            setMonthFilter('All');
+                                                            setStartDate('');
+                                                            setEndDate('');
+                                                        }}
+                                                        className={cn(
+                                                            "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                                                            quarterFilter === 'All' && monthFilter === 'All' && !startDate && !endDate
+                                                                ? "bg-emerald-600 text-white shadow-xs"
+                                                                : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-750"
+                                                        )}
+                                                    >
+                                                        <Check size={13} className="stroke-[3]" /> Full Year
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                        <Select value={monthFilter} onValueChange={setMonthFilter}>
-                            <SelectTrigger className="w-full sm:w-[125px] h-9 bg-slate-50 border-none dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider">
-                                <SelectValue placeholder="Month" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Months</SelectItem>
-                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                            {/* QUARTER */}
+                                            <div className="space-y-2">
+                                                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                    Quarter ({yearFilter !== 'All' ? `FY ${yearFilter}` : 'FY 2026'})
+                                                </div>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {[
+                                                        { key: 'Q1', range: 'Jan – Mar' },
+                                                        { key: 'Q2', range: 'Apr – Jun' },
+                                                        { key: 'Q3', range: 'Jul – Sep' },
+                                                        { key: 'Q4', range: 'Oct – Dec' },
+                                                    ].map(q => {
+                                                        const isSelected = quarterFilter === q.key;
+                                                        return (
+                                                            <button
+                                                                key={q.key}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (isSelected) {
+                                                                        setQuarterFilter('All');
+                                                                    } else {
+                                                                        setQuarterFilter(q.key);
+                                                                        setMonthFilter('All');
+                                                                        setStartDate('');
+                                                                        setEndDate('');
+                                                                    }
+                                                                }}
+                                                                className={cn(
+                                                                    "p-2 rounded-xl text-center flex flex-col items-center justify-center transition-all border cursor-pointer",
+                                                                    isSelected
+                                                                        ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/60 dark:border-indigo-500 text-indigo-700 dark:text-indigo-300 font-bold shadow-xs"
+                                                                        : "border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-200 hover:border-slate-300 dark:hover:border-zinc-700"
+                                                                )}
+                                                            >
+                                                                <span className="text-xs font-bold leading-tight">{q.key}</span>
+                                                                <span className="text-[8px] text-slate-400 dark:text-zinc-500 leading-tight mt-0.5">{q.range}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
 
-                        <Button
-                            variant={showDatePicker ? "default" : "secondary"}
-                            onClick={() => setShowDatePicker(!showDatePicker)}
-                            className={cn("w-full sm:w-auto h-9 px-4 text-[10px] font-bold uppercase tracking-wider gap-2", !showDatePicker && "bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 border-none")}
-                        >
-                            <Calendar size={13} />
-                            {showDatePicker ? 'Hide Date' : 'Date Range'}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+                                            {/* MONTH */}
+                                            <div className="space-y-2">
+                                                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                    Month ({yearFilter !== 'All' ? `FY ${yearFilter}` : 'FY 2026'})
+                                                </div>
+                                                <div className="grid grid-cols-6 gap-1.5">
+                                                    {[
+                                                        { short: 'Jan', full: 'January' },
+                                                        { short: 'Feb', full: 'February' },
+                                                        { short: 'Mar', full: 'March' },
+                                                        { short: 'Apr', full: 'April' },
+                                                        { short: 'May', full: 'May' },
+                                                        { short: 'Jun', full: 'June' },
+                                                        { short: 'Jul', full: 'July' },
+                                                        { short: 'Aug', full: 'August' },
+                                                        { short: 'Sep', full: 'September' },
+                                                        { short: 'Oct', full: 'October' },
+                                                        { short: 'Nov', full: 'November' },
+                                                        { short: 'Dec', full: 'December' },
+                                                    ].map(m => {
+                                                        const isSelected = monthFilter === m.full;
+                                                        return (
+                                                            <button
+                                                                key={m.short}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (isSelected) {
+                                                                        setMonthFilter('All');
+                                                                    } else {
+                                                                        setMonthFilter(m.full);
+                                                                        setQuarterFilter('All');
+                                                                        setStartDate('');
+                                                                        setEndDate('');
+                                                                    }
+                                                                }}
+                                                                className={cn(
+                                                                    "h-8 rounded-xl text-xs font-bold transition-all border cursor-pointer",
+                                                                    isSelected
+                                                                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                                        : "bg-slate-50 dark:bg-zinc-800 border-slate-200/80 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700"
+                                                                )}
+                                                            >
+                                                                {m.short}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* Custom Date Range Collapsible */}
+                                            <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-2.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsCustomDateOpen(!isCustomDateOpen)}
+                                                    className="w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Calendar size={13} className="text-blue-500" />
+                                                        <span>Custom Date Range</span>
+                                                    </div>
+                                                    {isCustomDateOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                                </button>
+
+                                                {isCustomDateOpen && (
+                                                    <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase tracking-wider text-slate-400">Start Date</label>
+                                                                <Input
+                                                                    type="date"
+                                                                    value={startDate}
+                                                                    onChange={e => {
+                                                                        setStartDate(e.target.value);
+                                                                        setMonthFilter('All');
+                                                                        setQuarterFilter('All');
+                                                                    }}
+                                                                    className="h-8 text-xs font-bold bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 rounded-xl"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase tracking-wider text-slate-400">End Date</label>
+                                                                <Input
+                                                                    type="date"
+                                                                    value={endDate}
+                                                                    onChange={e => {
+                                                                        setEndDate(e.target.value);
+                                                                        setMonthFilter('All');
+                                                                        setQuarterFilter('All');
+                                                                    }}
+                                                                    className="h-8 text-xs font-bold bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 rounded-xl"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {(startDate || endDate) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                                                className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                                                            >
+                                                                Clear Custom Dates
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Company / Entity Selector */}
+                                <div className="shrink-0 min-w-[150px]">
+                                    <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                                        <SelectTrigger className="w-full h-9 bg-white dark:bg-zinc-800/90 border-slate-200/90 dark:border-zinc-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-750">
+                                            <div className="flex items-center gap-1.5">
+                                                <Building2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                                <span className="font-bold text-slate-800 dark:text-zinc-100">Company:</span>
+                                                <span className="font-semibold text-slate-700 dark:text-zinc-200 max-w-[120px] truncate">{companyFilter === 'All' ? 'All' : companyFilter}</span>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 shadow-xl min-w-[200px] max-h-[300px]">
+                                            <SelectItem value="All">All Companies</SelectItem>
+                                            {availableCompanies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Search Bar */}
+                                <div className="relative flex-1 min-w-[220px]">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                                    <Input
+                                        placeholder="Search descriptions, companies, projects..."
+                                        className="pl-9 pr-8 h-9 bg-slate-50/80 dark:bg-zinc-800/80 border-slate-200/90 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-blue-500/30"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-300 hover:bg-slate-300 dark:hover:bg-zinc-600 flex items-center justify-center text-[10px] font-bold"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right Controls: More Filters & Reset */}
+                            <div className="flex items-center gap-2 shrink-0 justify-end">
+                                <Button
+                                    variant={showMoreFilters || activeMoreFiltersCount > 0 ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setShowMoreFilters(!showMoreFilters)}
+                                    className={cn(
+                                        "h-9 px-3.5 text-xs font-semibold gap-2 rounded-xl transition-all border",
+                                        showMoreFilters || activeMoreFiltersCount > 0
+                                            ? "bg-blue-50 dark:bg-blue-950/70 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60"
+                                            : "bg-white dark:bg-zinc-800/90 border-slate-200/90 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-750 shadow-2xs"
+                                    )}
+                                >
+                                    <SlidersHorizontal size={13} className={activeMoreFiltersCount > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-zinc-400"} />
+                                    <span>More Filters</span>
+                                    {activeMoreFiltersCount > 0 && (
+                                        <span className="px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[10px] font-bold">
+                                            {activeMoreFiltersCount}
+                                        </span>
+                                    )}
+                                </Button>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setYearFilter(new Date().getFullYear().toString());
+                                        setQuarterFilter('All');
+                                        setMonthFilter('All');
+                                        setCompanyFilter('All');
+                                        setCategoryFilter('All');
+                                        setProjectFilter('All');
+                                        setStatusFilter('All');
+                                        setStartDate('');
+                                        setEndDate('');
+                                    }}
+                                    className="h-9 px-3 text-xs font-semibold gap-1.5 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                >
+                                    <RotateCcw size={13} />
+                                    <span>Reset</span>
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Expandable Subrow: More Filters */}
+                        {showMoreFilters && (
+                            <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center gap-2.5 animate-in slide-in-from-top-2 duration-200">
+                                {/* Status Filter */}
+                                <div className="flex-1 min-w-[130px]">
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className={cn(
+                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                            statusFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                        )}>
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Status:</span>
+                                                <span className="font-semibold">{statusFilter === 'All' ? 'All Status' : statusFilter}</span>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                            <SelectItem value="All">All Status</SelectItem>
+                                            <SelectItem value="Paid">Paid</SelectItem>
+                                            <SelectItem value="Pending">Pending</SelectItem>
+                                            <SelectItem value="Rejected">Rejected</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Month Filter */}
+                                <div className="flex-1 min-w-[135px]">
+                                    <Select value={monthFilter} onValueChange={setMonthFilter}>
+                                        <SelectTrigger className={cn(
+                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                            monthFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                        )}>
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <Clock size={12} className="text-slate-400 dark:text-zinc-500" />
+                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Month:</span>
+                                                <span className="font-semibold">{monthFilter === 'All' ? 'All Months' : monthFilter}</span>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                            <SelectItem value="All">All Months</SelectItem>
+                                            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Quarter Filter */}
+                                <div className="flex-1 min-w-[130px]">
+                                    <Select value={quarterFilter} onValueChange={setQuarterFilter}>
+                                        <SelectTrigger className={cn(
+                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                            quarterFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                        )}>
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <PieChart size={12} className="text-slate-400 dark:text-zinc-500" />
+                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Quarter:</span>
+                                                <span className="font-semibold">{quarterFilter === 'All' ? 'All Quarters' : quarterFilter}</span>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                            <SelectItem value="All">All Quarters</SelectItem>
+                                            <SelectItem value="Q1">Q1 (Jan - Mar)</SelectItem>
+                                            <SelectItem value="Q2">Q2 (Apr - Jun)</SelectItem>
+                                            <SelectItem value="Q3">Q3 (Jul - Sep)</SelectItem>
+                                            <SelectItem value="Q4">Q4 (Oct - Dec)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Category Filter */}
+                                <div className="flex-1 min-w-[140px]">
+                                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                        <SelectTrigger className={cn(
+                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                            categoryFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                        )}>
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <Tag size={12} className="text-slate-400 dark:text-zinc-500" />
+                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Category:</span>
+                                                <span className="font-semibold">{categoryFilter === 'All' ? 'All Categories' : categoryFilter}</span>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                            <SelectItem value="All">All Categories</SelectItem>
+                                            {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Project Filter */}
+                                {projects.length > 0 && (
+                                    <div className="flex-1 min-w-[135px]">
+                                        <Select value={projectFilter} onValueChange={setProjectFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                projectFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <Briefcase size={12} className="text-slate-400 dark:text-zinc-500" />
+                                                    <span className="text-slate-400 dark:text-zinc-500 font-normal">Project:</span>
+                                                    <span className="font-semibold">{projectFilter === 'All' ? 'All Projects' : projectFilter}</span>
+                                                </div>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                                <SelectItem value="All">All Projects</SelectItem>
+                                                {projects.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
+                                {/* Date Range Button */}
+                                <Button
+                                    variant={showDatePicker ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setShowDatePicker(!showDatePicker)}
+                                    className={cn(
+                                        "h-8.5 px-3 text-xs font-semibold gap-1.5 rounded-xl border",
+                                        (startDate || endDate) 
+                                            ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 font-bold" 
+                                            : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200"
+                                    )}
+                                >
+                                    <Calendar size={12} className={(startDate || endDate) ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-zinc-500"} />
+                                    <span>{startDate || endDate ? `${startDate} s/d ${endDate}` : 'Custom Dates'}</span>
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
 
             {showDatePicker && (
-                <Card className="border-dashed border-2 dark: animate-in slide-in-from-top-2 duration-300">
-                    <CardContent className="p-4 flex flex-wrap gap-6">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period Start</label>
+                <Card className="border border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/30 rounded-2xl animate-in slide-in-from-top-2 duration-300">
+                    <CardContent className="p-4 flex flex-wrap gap-5 items-end">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300">Rentang Tanggal Awal</label>
                             <Input
                                 type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-zinc-950 font-bold border-muted-foreground/20"
+                                className="w-[180px] h-9 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-zinc-100"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Period End</label>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300">Rentang Tanggal Akhir</label>
                             <Input
                                 type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-zinc-950 font-bold border-muted-foreground/20"
+                                className="w-[180px] h-9 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-zinc-100"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
                             />
                         </div>
-                        <div className="flex items-end pb-0.5">
-                            <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-[10px] font-black uppercase tracking-widest dark:">
-                                Reset Range
-                            </Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-xs font-bold text-slate-500 dark:text-zinc-400 h-9 hover:bg-white/50 dark:hover:bg-zinc-800/50">
+                            Reset Tanggal
+                        </Button>
                     </CardContent>
                 </Card>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+            {/* Stat Cards Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 <StatCard label="Disbursed Funds" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Settled" icon={CheckCircle2} color="emerald" />
                 <StatCard
                     label="Liability Exposure"
@@ -896,16 +1320,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}
             <div className="grid grid-cols-1 gap-6">
                 {/* Main Chart Card */}
-                <Card className="rounded-xl border-none shadow-sm overflow-hidden bg-white dark:bg-zinc-900">
+                <Card className="rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-900">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
+                                <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-900/50">
                                     <BarChart3 size={18} />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-sm uppercase">Fiscal Trend</h2>
-                                    <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Monthly transaction volume</p>
+                                    <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-sm uppercase">Fiscal Trend</h2>
+                                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Volume Transaksi Bulanan</p>
                                 </div>
                             </div>
                         </div>
@@ -914,7 +1338,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
                                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.01} />
                                         </linearGradient>
                                         <linearGradient id="strokeTotal" x1="0" y1="0" x2="1" y2="0">
@@ -931,7 +1355,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                         content={<CustomTooltip />}
                                     />
                                     <Area type="monotone" dataKey="total" stroke="url(#strokeTotal)" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3.5} />
-                                    <Bar dataKey="total" barSize={32} radius={[6, 6, 0, 0]} fill="url(#strokeTotal)" opacity={0.08} />
+                                    <Bar dataKey="total" barSize={32} radius={[6, 6, 0, 0]} fill="url(#strokeTotal)" opacity={0.1} />
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
@@ -943,34 +1367,34 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     <TopVendorsWidget vendors={vendorData} />
 
                     {/* Department Allocation */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                            <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
                                 <Briefcase size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Departmental</h2>
-                                <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Utilization track</p>
+                                <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Departmental</h2>
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Alokasi per Departemen</p>
                             </div>
                         </div>
-                        <div className="space-y-2 flex-1">
+                        <div className="space-y-2.5 flex-1">
                             {deptData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 dark:text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Tidak ada data</p>
                             ) : deptData.slice(0, 5).map((dept, idx) => (
-                                <div key={dept.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-300 hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 hover:translate-x-1 hover:scale-[1.01] cursor-pointer group">
+                                <div key={dept.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 group">
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-1.5 h-1.5 rounded-full transition-transform duration-300 group-hover:scale-125", idx === 0 ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700')}></div>
-                                            <span className="text-slate-500 dark:text-zinc-400 truncate max-w-[120px]">{dept.name}</span>
+                                            <div className={cn("w-1.5 h-1.5 rounded-full", idx === 0 ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-600')}></div>
+                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px]">{dept.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
-                                            <span className="text-slate-900 dark:text-slate-200 font-mono">{formatIDR(dept.total)}</span>
-                                            <span className="text-emerald-500 text-[9px] w-6">{dept.percentage}%</span>
+                                            <span className="text-slate-900 dark:text-zinc-100 font-mono font-bold">{formatIDR(dept.total)}</span>
+                                            <span className="text-emerald-600 dark:text-emerald-400 text-[9px] w-6">{dept.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-2 w-full bg-slate-50 dark:bg-zinc-800/50 rounded-full overflow-hidden shadow-inner border border-slate-100/50 dark:border-zinc-850/50">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-1000"
+                                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
                                             style={{ width: `${dept.percentage}%` }}
                                         ></div>
                                     </div>
@@ -980,34 +1404,34 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     </div>
 
                     {/* Category Distribution */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
                                 <Tag size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h2 className="font-bold text-slate-900 dark:text-white tracking-tight text-xs uppercase">Classified</h2>
-                                <p className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Cost breakdown</p>
+                                <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Classified</h2>
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Distribusi Kategori</p>
                             </div>
                         </div>
-                        <div className="space-y-2 flex-1">
+                        <div className="space-y-2.5 flex-1">
                             {categoryData.length === 0 ? (
-                                <p className="text-center py-5 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No data</p>
+                                <p className="text-center py-5 text-slate-300 dark:text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Tidak ada data</p>
                             ) : categoryData.slice(0, 5).map((cat, idx) => (
-                                <div key={cat.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-300 hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 hover:translate-x-1 hover:scale-[1.01] cursor-pointer group">
+                                <div key={cat.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 group">
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
-                                            <div className={cn("w-1.5 h-1.5 rounded-full transition-transform duration-300 group-hover:scale-125", idx === 0 ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-zinc-700')}></div>
-                                            <span className="text-slate-500 dark:text-zinc-400 truncate max-w-[120px]">{cat.name}</span>
+                                            <div className={cn("w-1.5 h-1.5 rounded-full", idx === 0 ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-zinc-600')}></div>
+                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px]">{cat.name}</span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
-                                            <span className="text-slate-900 dark:text-slate-200 font-mono">{formatIDR(cat.total)}</span>
-                                            <span className="text-indigo-500 text-[9px] w-6">{cat.percentage}%</span>
+                                            <span className="text-slate-900 dark:text-zinc-100 font-mono font-bold">{formatIDR(cat.total)}</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400 text-[9px] w-6">{cat.percentage}%</span>
                                         </div>
                                     </div>
-                                    <div className="h-2 w-full bg-slate-50 dark:bg-zinc-800/50 rounded-full overflow-hidden shadow-inner border border-slate-100/50 dark:border-zinc-850/50">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-1000"
+                                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
                                             style={{ width: `${cat.percentage}%` }}
                                         ></div>
                                     </div>
@@ -1018,43 +1442,55 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 </div>
             </div>
 
-            <Card className="shadow-sm rounded-xl overflow-hidden border-none bg-background/50 backdrop-blur-sm">
-                <CardHeader className="px-8 py-5 border-b flex flex-row items-center justify-between bg-muted/20">
+            {/* General Transaction Ledger Container */}
+            <Card className="shadow-lg rounded-2xl overflow-hidden border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <CardHeader className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex flex-row items-center justify-between bg-slate-50/60 dark:bg-zinc-900/90">
                     <div className="space-y-1">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-foreground/80">General Transaction Ledger</h2>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                            <span className="text-[11px] font-bold text-muted-foreground">{filteredRecords.length} Records Found</span>
+                        <div className="flex items-center gap-2.5">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-zinc-100">General Transaction Ledger</h2>
+                            <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 rounded-full border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60">
+                                Audited
+                            </Badge>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span className="text-[11px] font-bold text-slate-600 dark:text-zinc-400">{filteredRecords.length} Transaksi Ditemukan</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest hidden sm:inline-block">
+                            Halaman {currentPage} dari {totalPages || 1}
+                        </span>
                     </div>
                 </CardHeader>
 
                 <CardContent className="p-0">
                     {/* Desktop View Table */}
-                    <div className="hidden lg:block overflow-x-auto">
-                        <Table className="table-fixed">
+                    <div className="hidden lg:block w-full">
+                        <Table className="w-full table-fixed">
                             <TableHeader>
-                                <TableRow className="bg-muted/50 border-b">
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[16%]">Audit Identity</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[28%]">Item & Procurement Details</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[14%]">Fiscal Value</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[14%]">Corporate entity</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[11%]">Ledger Status</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6 w-[9%]">Audit Docs</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500 pr-10 py-4 px-6 w-[8%]">Control</TableHead>
+                                <TableRow className="bg-slate-100/80 dark:bg-zinc-800/90 border-b border-slate-200 dark:border-zinc-700">
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-4 w-[13%] whitespace-nowrap">Audit Identity</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-4 w-[32%] whitespace-nowrap">Item & Procurement Details</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-4 w-[15%] whitespace-nowrap">Fiscal Value</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-4 w-[17%] whitespace-nowrap">Corporate Entity</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-3 w-[9%] whitespace-nowrap">Ledger Status</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 py-3.5 px-2 w-[7%] whitespace-nowrap">Audit Docs</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-zinc-300 pr-5 py-3.5 px-2 w-[7%] whitespace-nowrap">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <TableBody className="divide-y divide-slate-100 dark:divide-zinc-800">
                                 {isLoading ? (
-                                    Array.from({ length: 10 }).map((_, idx) => (
+                                    Array.from({ length: 8 }).map((_, idx) => (
                                         <TableRow key={idx}>
-                                            <TableCell className="py-7 px-6">
+                                            <TableCell className="py-4 px-4">
                                                 <div className="flex flex-col gap-2">
                                                     <Skeleton className="h-5 w-24 rounded-md" />
                                                     <Skeleton className="h-3 w-16" />
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="py-7 px-6">
+                                            <TableCell className="py-4 px-4">
                                                 <div className="flex flex-col gap-2 max-w-[280px]">
                                                     <Skeleton className="h-4 w-full" />
                                                     <div className="flex gap-2">
@@ -1063,120 +1499,224 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="py-7 px-6 text-right flex flex-col items-end gap-2">
+                                            <TableCell className="py-4 px-4 text-right flex flex-col items-end gap-2">
                                                 <Skeleton className="h-4 w-24" />
                                                 <Skeleton className="h-3 w-16" />
                                             </TableCell>
-                                            <TableCell className="py-7 px-6">
+                                            <TableCell className="py-4 px-4">
                                                 <div className="flex flex-col gap-2">
                                                     <Skeleton className="h-3 w-20" />
                                                     <Skeleton className="h-3 w-24" />
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="py-7 px-6">
+                                            <TableCell className="py-4 px-3">
                                                 <Skeleton className="h-6 w-16 rounded-full" />
                                             </TableCell>
-                                            <TableCell className="py-7 px-6 flex justify-center">
+                                            <TableCell className="py-4 px-2 flex justify-center">
                                                 <Skeleton className="h-8 w-8 rounded-full" />
                                             </TableCell>
-                                            <TableCell className="py-7 pr-10 px-6">
-                                                <div className="flex justify-end gap-2">
-                                                    <Skeleton className="h-8 w-8 rounded-xl" />
-                                                    <Skeleton className="h-8 w-8 rounded-xl" />
-                                                    <Skeleton className="h-8 w-8 rounded-xl" />
+                                            <TableCell className="py-4 pr-5 px-2">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <Skeleton className="h-7 w-7 rounded-lg" />
+                                                    <Skeleton className="h-7 w-7 rounded-lg" />
+                                                    <Skeleton className="h-7 w-7 rounded-lg" />
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : filteredRecords.length === 0 ? (
-                                    <TableRow><TableCell colSpan={7} className="py-32 text-center text-muted-foreground font-black uppercase tracking-[0.3em] text-sm">Empty Ledger • No Data Available</TableCell></TableRow>
-                                ) : paginatedRecords.map(record => (
-                                    <TableRow key={record.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
-                                        <TableCell className="py-4 px-6">
-                                            <div className="flex flex-col gap-1.5 align-middle">
-                                                <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/50 px-2 py-0.5 rounded w-fit tracking-tight shadow-sm select-all">
-                                                    {record.transactionId}
-                                                </span>
-                                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
-                                                    <Calendar size={11} className="opacity-80" />
-                                                    {record.purchaseDate}
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="py-20 text-center">
+                                            <div className="max-w-md mx-auto space-y-3">
+                                                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-400 flex items-center justify-center mx-auto">
+                                                    <Search size={22} />
                                                 </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-4 px-6">
-                                            <div className="flex flex-col gap-1.5 max-w-[320px]">
-                                                <p className="font-bold text-slate-900 dark:text-zinc-150 text-[13px] tracking-tight leading-snug truncate-2-lines group-hover:text-primary transition-colors">{record.description}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
-                                                        {record.vendor}
-                                                    </span>
-                                                    {record.paymentMethod && (
-                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 uppercase tracking-wide">
-                                                            {record.paymentMethod}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-4 px-6 text-right">
-                                            <p className="font-mono font-black text-[13px] text-slate-900 dark:text-zinc-100 tracking-tighter">Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}</p>
-                                            <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Gross total</span>
-                                        </TableCell>
-                                        <TableCell className="py-4 px-6">
-                                            <div className="flex flex-col gap-1">
-                                                <p className="text-[10px] font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest leading-none">{record.company}</p>
-                                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider mt-1">
-                                                    <Building2 size={11} className="text-primary/70" />
-                                                    {record.department}
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-4 px-6">
-                                            <span
-                                                className={cn(
-                                                    "text-[9px] font-extrabold uppercase tracking-widest gap-1.5 px-2.5 py-1 rounded-full border shadow-sm w-fit flex items-center",
-                                                    record.status === 'Paid' 
-                                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30' 
-                                                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/30'
-                                                )}
-                                            >
-                                                <span className={cn("w-1.5 h-1.5 rounded-full", record.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500')}></span>
-                                                {record.status}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="py-4 px-6">
-                                            <div className="flex flex-col items-center gap-1.5">
-                                                <div className="flex items-center gap-0.5">
-                                                    {DOC_KEYS.map((doc) => {
-                                                        const isPresent = !!(record.docs && record.docs[doc.key as keyof typeof record.docs]);
-                                                        return (
-                                                            <div
-                                                                key={doc.key}
-                                                                title={`${doc.label}: ${isPresent ? 'Uploaded' : 'Missing'}`}
-                                                                className={cn(
-                                                                    "w-1.5 h-3 rounded-[1px] transition-all",
-                                                                    isPresent 
-                                                                        ? "bg-emerald-500 dark:bg-emerald-400" 
-                                                                        : "bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700/50"
-                                                                )}
-                                                            />
-                                                        );
-                                                    })}
-                                                </div>
-                                                <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-500 leading-none">
-                                                    {Object.values(record.docs || {}).filter(Boolean).length}/7 docs
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="py-4 text-right pr-10 px-6">
-                                            <div className="inline-flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-zinc-800" aria-label="View Details"><Eye size={14} /></Button>
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-foreground hover:bg-slate-50 dark:hover:bg-zinc-800" aria-label="Edit Entry"><Pencil size={14} /></Button>
-                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 text-slate-400 hover:text-destructive hover:bg-destructive/5" aria-label="Delete Entry"><Trash2 size={14} /></Button>
+                                                <h3 className="font-bold text-slate-800 dark:text-zinc-200 text-sm">Tidak Ada Data Transaksi</h3>
+                                                <p className="text-xs text-slate-400 dark:text-zinc-500">Tidak ada catatan transaksi yang sesuai dengan filter atau kata kunci yang dipilih.</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : paginatedRecords.map(record => {
+                                    const isSettled = !!record.docs?.expenseApproval || (record.remarks && record.remarks.includes('Expense Approval Settled'));
+                                    const itemCount = (record.items || []).length;
+
+                                    return (
+                                        <TableRow key={record.id} className="group transition-colors hover:bg-slate-50/90 dark:hover:bg-zinc-800/60">
+                                            {/* Column 1: Audit Identity */}
+                                            <TableCell className="py-3.5 px-4 align-middle whitespace-normal">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span 
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(record.transactionId);
+                                                                showToast(`ID ${record.transactionId} disalin!`, 'info');
+                                                            }}
+                                                            title="Klik untuk menyalin ID"
+                                                            className="text-[10px] font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200/90 dark:border-blue-800/80 px-2 py-0.5 rounded-lg w-fit tracking-tight shadow-2xs cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                                                        >
+                                                            {record.transactionId}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[9px] text-slate-600 dark:text-zinc-400 font-bold uppercase tracking-wider">
+                                                        <Calendar size={11} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+                                                        <span>{record.purchaseDate || '-'}</span>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Column 2: Item & Procurement Details */}
+                                            <TableCell className="py-3.5 px-4 align-middle whitespace-normal">
+                                                <div className="flex flex-col gap-1">
+                                                    <p 
+                                                        onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }}
+                                                        className="font-bold text-slate-900 dark:text-zinc-100 text-xs sm:text-[13px] tracking-tight leading-snug line-clamp-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                                    >
+                                                        {record.description}
+                                                    </p>
+                                                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                        {record.category && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/90 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 uppercase tracking-wide">
+                                                                {record.category}
+                                                            </span>
+                                                        )}
+                                                        {record.vendor && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/90 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 uppercase tracking-wide truncate max-w-[130px]">
+                                                                {record.vendor}
+                                                            </span>
+                                                        )}
+                                                        {record.paymentMethod && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800 uppercase tracking-wide">
+                                                                {record.paymentMethod}
+                                                            </span>
+                                                        )}
+                                                        {itemCount > 0 && (
+                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800">
+                                                                {itemCount} item
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Column 3: Fiscal Value */}
+                                            <TableCell className="py-3.5 px-4 text-right align-middle whitespace-normal">
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                    <p className="font-mono font-black text-xs sm:text-[13px] text-slate-900 dark:text-zinc-50 tracking-tight">
+                                                        Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}
+                                                    </p>
+                                                    {isSettled ? (
+                                                        <span className="text-[8px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-700/80 flex items-center gap-1 shadow-2xs">
+                                                            <CheckCircle2 size={9} className="stroke-[2.5]" />
+                                                            Settled (Aktual)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-wider">
+                                                            Gross Total
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Column 4: Corporate Entity */}
+                                            <TableCell className="py-3.5 px-4 align-middle whitespace-normal">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <p className="text-[10px] font-black text-slate-800 dark:text-zinc-200 uppercase tracking-wider leading-tight line-clamp-1">
+                                                        {record.company}
+                                                    </p>
+                                                    <div className="flex items-center gap-1 text-[9px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">
+                                                        <Building2 size={10} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                                                        <span className="truncate">{record.department}</span>
+                                                        {record.user && (
+                                                            <>
+                                                                <span className="text-slate-300 dark:text-zinc-600">•</span>
+                                                                <span className="truncate">{record.user}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Column 5: Ledger Status */}
+                                            <TableCell className="py-3.5 px-3 align-middle text-center whitespace-normal">
+                                                <span
+                                                    className={cn(
+                                                        "text-[9px] font-black uppercase tracking-wider gap-1.5 px-2.5 py-0.5 rounded-full border shadow-2xs inline-flex items-center justify-center",
+                                                        record.status === 'Paid' 
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-700' 
+                                                            : record.status === 'Rejected'
+                                                            ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-700'
+                                                            : 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700'
+                                                    )}
+                                                >
+                                                    <span className={cn(
+                                                        "w-1.5 h-1.5 rounded-full",
+                                                        record.status === 'Paid' ? "bg-emerald-500" : record.status === 'Rejected' ? "bg-rose-500" : "bg-amber-500"
+                                                    )}></span>
+                                                    {record.status || 'Pending'}
+                                                </span>
+                                            </TableCell>
+
+                                            {/* Column 6: Audit Docs */}
+                                            <TableCell className="py-3.5 px-2 align-middle text-center whitespace-normal">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <div className="flex items-center gap-0.5 justify-center">
+                                                        {DOC_KEYS.map((doc) => {
+                                                            const isPresent = !!(record.docs && record.docs[doc.key as keyof typeof record.docs]);
+                                                            return (
+                                                                <div
+                                                                    key={doc.key}
+                                                                    title={`${doc.label}: ${isPresent ? 'Lengkap (Ada)' : 'Belum Ada'}`}
+                                                                    className={cn(
+                                                                        "w-1.5 h-3.5 rounded-[1.5px] transition-all cursor-help",
+                                                                        isPresent 
+                                                                            ? "bg-emerald-500 dark:bg-emerald-400 shadow-2xs shadow-emerald-500/30" 
+                                                                            : "bg-slate-200 dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700"
+                                                                    )}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <span className="text-[8px] font-mono font-bold text-slate-500 dark:text-zinc-400 leading-none">
+                                                        {Object.values(record.docs || {}).filter(Boolean).length}/7 docs
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Column 7: Aksi */}
+                                            <TableCell className="py-3.5 text-right pr-4 px-2 align-middle whitespace-normal">
+                                                <div className="inline-flex items-center gap-1">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} 
+                                                        className="w-7 h-7 rounded-lg text-slate-400 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60" 
+                                                        title="Lihat Detail Transaksi"
+                                                    >
+                                                        <Eye size={14} />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} 
+                                                        className="w-7 h-7 rounded-lg text-slate-400 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800" 
+                                                        title="Edit Data"
+                                                    >
+                                                        <Pencil size={13} />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        onClick={() => setDeleteRecord(record)} 
+                                                        className="w-7 h-7 rounded-lg text-slate-400 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60" 
+                                                        title="Hapus Transaksi"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
@@ -1184,7 +1724,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     {/* Mobile View Card List */}
                     <div className="block lg:hidden divide-y divide-slate-100 dark:divide-zinc-800/60">
                         {isLoading ? (
-                            Array.from({ length: 5 }).map((_, idx) => (
+                            Array.from({ length: 4 }).map((_, idx) => (
                                 <div key={idx} className="p-5 space-y-4">
                                     <div className="flex justify-between items-center">
                                         <Skeleton className="h-5 w-24 rounded-md" />
@@ -1200,115 +1740,106 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             ))
                         ) : filteredRecords.length === 0 ? (
                             <div className="py-20 text-center text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">
-                                Empty Ledger • No Data Available
+                                Tidak Ada Data Transaksi
                             </div>
                         ) : (
-                            paginatedRecords.map(record => (
-                                <div key={record.id} className="p-5 space-y-4 hover:bg-slate-50/50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/50 px-2 py-0.5 rounded w-fit tracking-tight shadow-sm select-all">
-                                                {record.transactionId}
-                                            </span>
-                                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
-                                                <Calendar size={11} className="opacity-80" />
-                                                {record.purchaseDate}
-                                            </div>
-                                        </div>
-                                        <span
-                                            className={cn(
-                                                "text-[9px] font-extrabold uppercase tracking-widest gap-1.5 px-2.5 py-0.5 rounded-full border shadow-sm w-fit flex items-center shrink-0",
-                                                record.status === 'Paid' 
-                                                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' 
-                                                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-                                            )}
-                                        >
-                                            <span className={cn("w-1.5 h-1.5 rounded-full", record.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500')}></span>
-                                            {record.status}
-                                        </span>
-                                    </div>
+                            paginatedRecords.map(record => {
+                                const isSettled = !!record.docs?.expenseApproval || (record.remarks && record.remarks.includes('Expense Approval Settled'));
 
-                                    <div className="space-y-2">
-                                        <p className="font-bold text-slate-900 dark:text-zinc-150 text-xs leading-snug">
-                                            {record.description}
-                                        </p>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
-                                                {record.vendor}
-                                            </span>
-                                            {record.paymentMethod && (
-                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 uppercase tracking-wide">
-                                                    {record.paymentMethod}
+                                return (
+                                    <div key={record.id} className="p-5 space-y-4 hover:bg-slate-50/50 dark:hover:bg-zinc-900/40 transition-colors">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded-lg w-fit">
+                                                    {record.transactionId}
                                                 </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
-                                            <Building2 size={11} className="text-primary/70" />
-                                            <span>{record.company}</span>
-                                            <span className="text-slate-300 dark:text-zinc-700/60">•</span>
-                                            <span>{record.department}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-zinc-800/40">
-                                        <div className="flex flex-col">
-                                            <span className="text-[8px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Fiscal Value</span>
-                                            <span className="font-mono font-black text-xs text-foreground">
-                                                Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <div className="flex items-center gap-0.5">
-                                                    {DOC_KEYS.map((doc) => {
-                                                        const isPresent = !!(record.docs && record.docs[doc.key as keyof typeof record.docs]);
-                                                        return (
-                                                            <div
-                                                                key={doc.key}
-                                                                title={`${doc.label}: ${isPresent ? 'Uploaded' : 'Missing'}`}
-                                                                className={cn(
-                                                                    "w-1 h-2 rounded-[0.5px] transition-all",
-                                                                    isPresent 
-                                                                        ? "bg-emerald-500 dark:bg-emerald-400" 
-                                                                        : "bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700/50"
-                                                                )}
-                                                            />
-                                                        );
-                                                    })}
+                                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                                                    <Calendar size={11} className="opacity-80" />
+                                                    {record.purchaseDate || '-'}
                                                 </div>
-                                                <span className="text-[8px] font-mono font-bold text-slate-400 dark:text-zinc-500 leading-none">
-                                                    {Object.values(record.docs || {}).filter(Boolean).length}/7 docs
+                                            </div>
+                                            <span
+                                                className={cn(
+                                                    "text-[9px] font-extrabold uppercase tracking-widest gap-1.5 px-2.5 py-0.5 rounded-full border shadow-sm w-fit flex items-center shrink-0",
+                                                    record.status === 'Paid' 
+                                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200' 
+                                                        : record.status === 'Rejected'
+                                                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200'
+                                                        : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200'
+                                                )}
+                                            >
+                                                <span className={cn("w-1.5 h-1.5 rounded-full", record.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500')}></span>
+                                                {record.status || 'Pending'}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <p 
+                                                onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }}
+                                                className="font-bold text-slate-900 dark:text-zinc-150 text-xs leading-snug cursor-pointer"
+                                            >
+                                                {record.description}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                {record.category && (
+                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
+                                                        {record.category}
+                                                    </span>
+                                                )}
+                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200/50 dark:border-zinc-700/50 uppercase tracking-wide">
+                                                    {record.vendor}
+                                                </span>
+                                                {record.paymentMethod && (
+                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/30 uppercase tracking-wide">
+                                                        {record.paymentMethod}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                                                <Building2 size={11} className="text-blue-500" />
+                                                <span>{record.company}</span>
+                                                <span className="text-slate-300 dark:text-zinc-700/60">•</span>
+                                                <span>{record.department}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-zinc-800/40">
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                                                    {isSettled ? 'Nilai Aktual (Settled)' : 'Fiscal Value (Gross)'}
+                                                </span>
+                                                <span className="font-mono font-black text-xs text-foreground">
+                                                    Rp {new Intl.NumberFormat('id-ID').format(record.subtotal)}
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg" aria-label="View Details">
+                                            <div className="flex items-center gap-2">
+                                                <Button variant="ghost" size="icon" onClick={() => { setSelectedDetail(record); setIsDetailOpen(true); }} className="w-8 h-8 rounded-lg text-slate-400 hover:text-blue-600">
                                                     <Eye size={14} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg" aria-label="Edit Entry">
+                                                <Button variant="ghost" size="icon" onClick={() => { setEditingRecord(record); setIsModalOpen(true); }} className="w-8 h-8 rounded-lg text-slate-400">
                                                     <Pencil size={14} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 text-slate-400 hover:text-destructive hover:bg-destructive/5 rounded-lg" aria-label="Delete Entry">
+                                                <Button variant="ghost" size="icon" onClick={() => setDeleteRecord(record)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600">
                                                     <Trash2 size={14} />
                                                 </Button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </CardContent>
 
                 {/* Pagination Controls */}
                 {filteredRecords.length > 0 && (
-                    <div className="px-8 py-4 border-t flex flex-col md:flex-row justify-between items-center gap-4 bg-muted/10">
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                            Showing <span className="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span>-
-                            <span className="text-foreground">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span>
-                            <span className="mx-1">of</span>
-                            <span className="text-foreground font-black">{filteredRecords.length}</span> entries
+                    <div className="px-6 sm:px-8 py-4 border-t border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-zinc-900/50">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
+                            Menampilkan <span className="text-slate-900 dark:text-zinc-100 font-black">{(currentPage - 1) * itemsPerPage + 1}</span>-
+                            <span className="text-slate-900 dark:text-zinc-100 font-black">{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</span>
+                            <span className="mx-1">dari total</span>
+                            <span className="text-blue-600 dark:text-blue-400 font-black">{filteredRecords.length}</span> transaksi
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
@@ -1316,7 +1847,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 size="sm"
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="text-[10px] font-black uppercase tracking-widest bg-background"
+                                className="text-[10px] font-black uppercase tracking-widest rounded-xl h-8"
                             >
                                 <ChevronLeft size={14} className="mr-1" /> Prev
                             </Button>
@@ -1331,7 +1862,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                 variant={currentPage === page ? "default" : "ghost"}
                                                 size="sm"
                                                 onClick={() => setCurrentPage(page)}
-                                                className={cn("w-8 h-8 p-0 text-[11px] font-bold transition-all", currentPage === page ? "shadow-md shadow-primary/20" : "text-muted-foreground")}
+                                                className={cn("w-8 h-8 p-0 text-[11px] font-bold rounded-xl transition-all", currentPage === page ? "shadow-md shadow-blue-500/20 bg-blue-600 text-white" : "text-muted-foreground")}
                                             >
                                                 {page}
                                             </Button>
@@ -1348,7 +1879,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 size="sm"
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="text-[10px] font-black uppercase tracking-widest bg-background"
+                                className="text-[10px] font-black uppercase tracking-widest rounded-xl h-8"
                             >
                                 Next <ChevronRight size={14} className="ml-1" />
                             </Button>

@@ -51,6 +51,7 @@ import {
   CheckSquare,
   FileText,
   BarChart2,
+  MapPin,
 } from "lucide-react"
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -83,6 +84,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   CheckSquare: CheckSquare,
   FileText: FileText,
   BarChart2: BarChart2,
+  MapPin: MapPin,
 }
 
 interface AppSidebarProps {
@@ -142,17 +144,8 @@ export function AppSidebarModern({
     const allMenus = APP_MENU_STRUCTURE
     return allMenus
       .filter((m) => !m.parentId && m.id !== "admin" && allowedMenuIds.has(m.id))
-      .map((m) => ({
-        title:
-          t(
-            m.id.replace(/-(.)/g, (_: string, c: string) =>
-              c.toUpperCase()
-            ) as any
-          ) || m.label,
-        url: m.id === "dashboard" ? "/" : `/${m.id}`,
-        icon: ICON_MAP[m.iconName] || LayoutGrid,
-        isActive: location.pathname === (m.id === "dashboard" ? "/" : `/${m.id}`),
-        items: allMenus
+      .map((m) => {
+        const subMenus = allMenus
           .filter((c) => c.parentId === m.id && allowedMenuIds.has(c.id))
           .map((c) => ({
             title:
@@ -163,8 +156,24 @@ export function AppSidebarModern({
               ) || c.label,
             url: `/${c.id}`,
             icon: ICON_MAP[c.iconName] || LayoutGrid,
-          })),
-      }))
+          }))
+
+        const isChildActive = subMenus.some((sub) => location.pathname === sub.url)
+        const isSelfActive = location.pathname === (m.id === "dashboard" ? "/" : `/${m.id}`)
+
+        return {
+          title:
+            t(
+              m.id.replace(/-(.)/g, (_: string, c: string) =>
+                c.toUpperCase()
+              ) as any
+            ) || m.label,
+          url: m.id === "dashboard" ? "/" : (subMenus.length > 0 ? subMenus[0].url : `/${m.id}`),
+          icon: ICON_MAP[m.iconName] || LayoutGrid,
+          isActive: isChildActive || isSelfActive,
+          items: subMenus,
+        }
+      })
   }, [allowedMenuIds, t, location.pathname])
 
   const adminItems: NavItem[] = React.useMemo(() => {

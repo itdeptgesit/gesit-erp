@@ -1,44 +1,77 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, Calendar, ShieldCheck, FileText,
-    Receipt, Fingerprint, Download,
-    Building2, User, CheckCircle2, XCircle, Clock, ShieldAlert, Award, Briefcase,
-    ExternalLink, ShoppingCart, CreditCard, Globe, Store, Tag, RefreshCcw, FileSpreadsheet, HelpCircle, Eye, Printer, DollarSign
+    Receipt, Download, Building2, User, CheckCircle2,
+    XCircle, Clock, ShieldAlert, Briefcase, ExternalLink,
+    ShoppingCart, CreditCard, Globe, Store, Tag, RefreshCcw,
+    FileSpreadsheet, Printer, DollarSign, ArrowDownCircle,
+    Check, Sparkles, Layers, Package, ArrowUpRight
 } from 'lucide-react';
 import { PurchaseRecord } from '../types';
 import { sendToGoogleSheet } from '../lib/googleSheets';
-import { useState } from 'react';
 import { useToast } from './ToastProvider';
-
-// SHADCN UI IMPORTS
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 interface PurchaseRecordDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    record: PurchaseRecord | null;
+    record: PurchaseRecord | any | null;
 }
 
 export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps> = ({ isOpen, onClose, record }) => {
     const [isSyncing, setIsSyncing] = useState(false);
     const { showToast } = useToast();
 
-    if (!isOpen || !record) return null;
+    // Defensive parsing for record properties
+    const transactionId = record?.transactionId || record?.transaction_id || `TR-${record?.id || '000'}`;
+    const purchaseDate = record?.purchaseDate || record?.purchase_date || '-';
+    const paymentDate = record?.paymentDate || record?.payment_date || purchaseDate;
+    const paymentMethod = record?.paymentMethod || record?.payment_method || 'Transfer';
+    const evidenceLink = record?.evidenceLink || record?.evidence_link || '';
+    const projectName = record?.projectName || record?.project_name || '-';
+    const inputBy = record?.inputBy || record?.input_by || 'System Automation';
+    const user = record?.user || record?.user_name || '-';
+    const department = record?.department || 'IT';
+    const company = record?.company || 'THE GESIT COMPANIES';
+    const category = record?.category || 'Hardware';
+    const status = record?.status || 'Paid';
+    const description = record?.description || 'Purchase Request';
+    const vendor = record?.vendor || 'Authorized Vendor';
+    const platform = record?.platform || '-';
+    const subtotal = Number(record?.subtotal) || Number(record?.total_va) || 0;
+    const qty = Number(record?.qty) || 1;
+    const remarks = record?.remarks || '';
 
-    const formatFullIDR = (num: number) => {
+    // Parse items array safely
+    const parsedItems = useMemo(() => {
+        if (!record?.items) return [];
+        if (Array.isArray(record.items)) return record.items;
+        if (typeof record.items === 'string') {
+            try {
+                const parsed = JSON.parse(record.items);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    }, [record?.items]);
+
+    // Parse docs safely
+    const parsedDocs = useMemo(() => {
+        if (!record?.docs) return {};
+        if (typeof record.docs === 'string') {
+            try { return JSON.parse(record.docs); } catch { return {}; }
+        }
+        return record.docs;
+    }, [record?.docs]);
+
+    const formatIDR = (num: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -46,334 +79,503 @@ export const PurchaseRecordDetailModal: React.FC<PurchaseRecordDetailModalProps>
         }).format(num);
     };
 
-    const getStatusConfig = (status: string) => {
-        if (status === 'Paid') return {
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50',
-            border: 'border-emerald-200',
-            icon: <CheckCircle2 size={16} />
-        };
-        if (status === 'Pending') return {
-            color: 'text-amber-600',
-            bg: 'bg-amber-50',
-            border: 'border-amber-200',
-            icon: <Clock size={16} />
-        };
-        return {
-            color: 'text-slate-600',
-            bg: 'bg-slate-50',
-            border: 'border-slate-200',
-            icon: <HelpCircle size={16} />
-        };
+    const formatNumber = (num: number) => {
+        return new Intl.NumberFormat('id-ID').format(num);
     };
+
+    // Parse settlement info if present in remarks
+    const settlementData = useMemo(() => {
+        if (!remarks) return null;
+        const match = remarks.match(/\[Expense Approval Settled:\s*(?:CA Rp\s*([\d.,]+),\s*Aktual Rp\s*([\d.,]+),\s*Kembali Rp\s*([\d.,]+)|Refund Rp\s*([\d.,]+))\]/i);
+        const prMatch = remarks.match(/\[(?:PR\s*#?|PR-)(\d+)\]/i);
+
+        if (!match) return null;
+
+        const parseNum = (str: string) => {
+            if (!str) return 0;
+            const clean = str.replace(/\./g, '').replace(/,/g, '.');
+            return parseFloat(clean) || 0;
+        };
+
+        if (match[1] && match[2]) {
+            return {
+                isSettled: true,
+                caAmount: parseNum(match[1]),
+                actualAmount: parseNum(match[2]),
+                refundAmount: parseNum(match[3]),
+                prId: prMatch ? prMatch[1] : null
+            };
+        } else if (match[4]) {
+            return {
+                isSettled: true,
+                caAmount: subtotal + parseNum(match[4]),
+                actualAmount: subtotal,
+                refundAmount: parseNum(match[4]),
+                prId: prMatch ? prMatch[1] : null
+            };
+        }
+        return null;
+    }, [remarks, subtotal]);
+
+    // Clean notes without raw tags
+    const cleanRemarks = useMemo(() => {
+        if (!remarks) return '';
+        return remarks
+            .replace(/\[Expense Approval Settled:[^\]]+\]/gi, '')
+            .replace(/\[(?:PR\s*#?|PR-)\d+\]/gi, '')
+            .trim();
+    }, [remarks]);
+
+    const docItems = [
+        { key: 'prForm', label: 'PR Form', desc: 'Requisition' },
+        { key: 'cashAdvance', label: 'Cash Advance', desc: 'CA Voucher' },
+        { key: 'checkout', label: 'Checkout', desc: 'Order Proof' },
+        { key: 'paymentSlip', label: 'Payment Slip', desc: 'Transfer / VA' },
+        { key: 'invoice', label: 'Official Invoice', desc: 'Faktur / Receipt' },
+        { key: 'expenseApproval', label: 'Expense Approval', desc: 'Settlement' },
+        { key: 'checkByRara', label: 'Audited by Finance', desc: 'Verification' }
+    ];
+
+    const verifiedDocsCount = docItems.filter(item => !!parsedDocs?.[item.key as keyof typeof parsedDocs]).length;
+    const docProgressPercent = Math.round((verifiedDocsCount / docItems.length) * 100);
+
+    const isPaid = status === 'Paid';
 
     const handlePrint = () => {
         window.print();
     };
 
-    const statusCfg = getStatusConfig(record.status);
+    if (!isOpen || !record) return null;
 
-    return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[1400px] w-[95vw] max-h-[90vh] p-0 overflow-hidden rounded-xl border shadow-2xl bg-background flex flex-col no-print">
-                <style>
-                    {`
-                    @media print {
-                        @page { 
-                            size: A4 landscape; 
-                            margin: 10mm; 
-                        }
-                        body * { visibility: hidden; }
-                        #printable-invoice, #printable-invoice * { visibility: visible; }
-                        #printable-invoice { 
-                            position: fixed; 
-                            left: 0; 
-                            top: 0; 
-                            width: 100%;
-                            padding: 0;
-                            background: white !important;
-                            color: black !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                        }
-                        .no-print { display: none !important; }
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto no-print">
+            <style>
+                {`
+                @media print {
+                    @page { 
+                        size: A4 portrait; 
+                        margin: 12mm; 
                     }
-                    `}
-                </style>
+                    body * { visibility: hidden; }
+                    #printable-invoice, #printable-invoice * { visibility: visible; }
+                    #printable-invoice { 
+                        position: fixed; 
+                        left: 0; 
+                        top: 0; 
+                        width: 100%;
+                        padding: 0;
+                        background: white !important;
+                        color: black !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                    }
+                    .no-print { display: none !important; }
+                }
+                `}
+            </style>
 
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                    <div id="printable-invoice" className="p-8 space-y-10 bg-background">
-                        {/* Branding Header */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b pb-6 gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 shrink-0">
-                                    <ShieldCheck className="text-primary-foreground" size={28} />
+            <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl w-full max-w-5xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] border border-slate-200 dark:border-zinc-800 overflow-hidden">
+                
+                {/* Top Header */}
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/50 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                            <Receipt size={24} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2.5">
+                                <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100 uppercase tracking-tight">
+                                    Purchase Details
+                                </h2>
+                                <span className={cn(
+                                    "text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border flex items-center gap-1",
+                                    isPaid 
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                                        : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800"
+                                )}>
+                                    {isPaid ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                                    {status}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">{company}</span>
+                                <span className="text-slate-300 dark:text-zinc-700">•</span>
+                                <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">Divisi {department}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="text-right">
+                            <div className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-0.5">Transaction ID</div>
+                            <div className="text-lg font-mono font-black text-blue-600 dark:text-blue-400 tracking-tight">{transactionId}</div>
+                            <div className="text-[10px] font-semibold text-slate-400 flex items-center justify-end gap-1 mt-0.5">
+                                <Calendar size={11} />
+                                {purchaseDate}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={onClose}
+                            className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Modal Scrollable Body */}
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 space-y-6">
+                    <div id="printable-invoice" className="space-y-6">
+
+                        {/* Top 3 KPI Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Card 1: Fiscal Value */}
+                            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/60 to-white dark:from-zinc-900 dark:to-zinc-900/60 border border-blue-100/80 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">
+                                        Total Realisasi Belanja
+                                    </span>
+                                    <div className="p-1.5 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg">
+                                        <DollarSign size={15} />
+                                    </div>
                                 </div>
-                                <div className="text-left">
-                                    <DialogTitle render={<h1 className="text-3xl font-bold text-foreground tracking-tight uppercase leading-none">Purchase Details</h1>} />
-                                    <p className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mt-2">IT Asset Management</p>
+                                <div className="text-2xl font-black text-slate-900 dark:text-zinc-100 font-mono tracking-tight">
+                                    {formatIDR(subtotal)}
+                                </div>
+                                <div className="mt-2 text-[10px] text-slate-500 dark:text-zinc-400 font-medium flex items-center gap-1.5">
+                                    <Package size={12} className="text-blue-500" />
+                                    <span>Total Kuantitas: <strong>{qty} unit</strong> ({parsedItems.length || 1} rincian item)</span>
                                 </div>
                             </div>
-                            <div className="text-left md:text-right space-y-1 md:pr-12">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">Transaction ID</p>
-                                <p className="text-2xl font-mono font-bold text-primary leading-none tracking-tighter">{record.transactionId}</p>
-                                <div className="flex md:justify-end gap-2 pt-1">
-                                    <Badge variant="outline" className="font-mono text-[9px] uppercase tracking-widest bg-muted/20 border-none px-2 py-0.5">{record.purchaseDate}</Badge>
+
+                            {/* Card 2: Vendor & Payment */}
+                            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-white dark:from-zinc-900 dark:to-zinc-900/60 border border-indigo-100/80 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">
+                                        Vendor & Pembayaran
+                                    </span>
+                                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                                        <CreditCard size={15} />
+                                    </div>
+                                </div>
+                                <div className="text-lg font-bold text-slate-900 dark:text-zinc-100 truncate">
+                                    {vendor}
+                                </div>
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-md">
+                                        {paymentMethod}
+                                    </span>
+                                    <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400">
+                                        Platform: {platform}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Card 3: Audit Compliance Progress */}
+                            <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50/50 to-white dark:from-zinc-900 dark:to-zinc-900/60 border border-emerald-100/80 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
+                                        Kepatuhan Dokumen Audit
+                                    </span>
+                                    <div className="p-1.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                                        <ShieldCheck size={15} />
+                                    </div>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
+                                        {verifiedDocsCount} / {docItems.length}
+                                    </span>
+                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                        Dokumen Lengkap ({docProgressPercent}%)
+                                    </span>
+                                </div>
+                                <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                                    <div 
+                                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                                        style={{ width: `${docProgressPercent}%` }}
+                                    />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                            {/* --- LEFT COLUMN: CORE DETAILS (7/12) --- */}
-                            <div className="lg:col-span-7 space-y-12">
-                                {/* Info Sections Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-6">
-                                        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-b pb-3 flex items-center gap-2">
-                                            <User size={12} className="text-primary" /> Basic Information
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Requester Name</p>
-                                                <p className="text-xl font-bold text-foreground uppercase tracking-tight">{record.user}</p>
-                                            </div>
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                                                        <Briefcase size={14} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Department</p>
-                                                        <p className="text-xs font-bold uppercase">{record.department}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                                                        <Building2 size={14} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Company</p>
-                                                        <p className="text-xs font-bold uppercase">{record.company}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                        {/* Settlement Banner if Settled */}
+                        {settlementData && (
+                            <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 dark:border-emerald-900/40 pb-2.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="p-1 bg-emerald-600 text-white rounded-md">
+                                            <ArrowDownCircle size={14} />
+                                        </span>
+                                        <h4 className="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                                            Penyelesaian Cash Advance (Settled)
+                                        </h4>
+                                        {settlementData.prId && (
+                                            <span className="text-[10px] font-bold px-2 py-0.5 bg-white dark:bg-zinc-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-md font-mono">
+                                                PR-{String(settlementData.prId).padStart(4, '0')}
+                                            </span>
+                                        )}
                                     </div>
+                                    <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-full">
+                                        Voucher Expense Approval Terbit
+                                    </span>
+                                </div>
 
-                                    <div className="space-y-6">
-                                        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-b pb-3 flex items-center gap-2">
-                                            <ShoppingCart size={12} className="text-primary" /> Vendor & Platform
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Vendor</p>
-                                                <p className="text-xl font-bold text-foreground uppercase tracking-tight">{record.vendor}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border w-fit">
-                                                {record.platform === 'Market Place' ? <Globe size={14} className="text-blue-500" /> : <Store size={14} className="text-amber-500" />}
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">{record.platform}</span>
-                                            </div>
-                                            {record.evidenceLink && (
-                                                <div className="pt-2">
-                                                    <Button variant="outline" size="sm" render={<a href={record.evidenceLink} target="_blank" rel="noopener noreferrer" />} className="font-bold text-[10px] uppercase tracking-widest border-primary/20 hover:bg-primary/5">
-                                                            <ExternalLink size={14} className="mr-2" />
-                                                            View Evidence
-                                                    </Button>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
+                                    <div className="p-3 bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Plafon Awal Cash Advance (CA)</span>
+                                        <span className="font-mono font-bold text-slate-700 dark:text-zinc-300 text-sm">
+                                            Rp {formatNumber(settlementData.caAmount)}
+                                        </span>
+                                    </div>
+                                    <div className="p-3 bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block mb-1">Realisasi Pengeluaran Riil</span>
+                                        <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                                            Rp {formatNumber(settlementData.actualAmount)}
+                                        </span>
+                                    </div>
+                                    <div className="p-3 bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                                        <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase block mb-1">Dana Dikembalikan ke Kas</span>
+                                        <span className="font-mono font-black text-blue-600 dark:text-blue-400 text-sm">
+                                            +Rp {formatNumber(Math.abs(settlementData.refundAmount))}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                                                </div>
-                                            )}
+                        {/* Main 2-Column Content Layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                            {/* --- LEFT COLUMN: ITEM DETAILS & PROFILE (7 COLS) --- */}
+                            <div className="lg:col-span-7 space-y-6">
+
+                                {/* Requester & Procurement Metadata */}
+                                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200/70 dark:border-zinc-800 space-y-4">
+                                    <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-200/50 dark:border-zinc-800">
+                                        <User size={14} className="text-blue-500" />
+                                        Informasi Pemohon & Kategori
+                                    </h3>
+
+                                    <div className="grid grid-cols-2 gap-4 text-xs">
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Pemohon / User</span>
+                                            <span className="font-bold text-slate-800 dark:text-zinc-100 text-sm">{user}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Kategori Pengadaan</span>
+                                            <span className="inline-flex items-center gap-1 font-bold text-[10px] uppercase px-2.5 py-1 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 rounded-md">
+                                                <Layers size={11} className="text-indigo-500" />
+                                                {category}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Proyek / Alokasi</span>
+                                            <span className="font-semibold text-slate-700 dark:text-zinc-300">{projectName}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Petugas Input / Sistem</span>
+                                            <span className="font-medium text-slate-500 dark:text-zinc-400">{inputBy}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Overview */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 border-b pb-2">
-                                        <div className="w-1 h-4 bg-primary rounded-full"></div>
-                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">Description</h3>
-                                    </div>
-                                    <div className="p-6 bg-muted/5 rounded-xl border relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-primary/20"></div>
-                                        <p className="text-xl font-bold text-foreground leading-tight italic tracking-tight">"{record.description}"</p>
-                                    </div>
+                                {/* Item Description / Project Subject */}
+                                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                                        Judul & Deskripsi Pengadaan
+                                    </span>
+                                    <p className="text-base font-bold text-slate-900 dark:text-zinc-100 leading-snug">
+                                        "{description}"
+                                    </p>
                                 </div>
 
-                                {/* Itemized List */}
-                                {record.items && record.items.length > 0 && (
-                                    <div className="space-y-4">
-                                        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-                                            <Tag size={12} className="text-primary" /> Items
-                                        </h3>
-                                        <div className="border rounded-xl overflow-hidden shadow-sm bg-muted/5">
-                                            <table className="w-full text-left text-sm border-collapse">
-                                                <thead className="bg-muted/30">
-                                                    <tr className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-                                                        <th className="px-6 py-3">Item Details</th>
-                                                        <th className="px-6 py-3 text-center">Qty</th>
-                                                        <th className="px-6 py-3 text-right">Unit Val</th>
-                                                        <th className="px-6 py-3 text-right">Total</th>
+                                {/* Itemized Table */}
+                                {parsedItems.length > 0 && (
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center px-1">
+                                            <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                                                <Tag size={14} className="text-blue-500" />
+                                                Rincian Item Pembelian ({parsedItems.length})
+                                            </h3>
+                                        </div>
+
+                                        <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+                                            <table className="w-full text-left text-xs border-collapse">
+                                                <thead className="bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-200 dark:border-zinc-800">
+                                                    <tr className="text-[9px] font-black text-slate-400 dark:text-zinc-400 uppercase tracking-widest">
+                                                        <th className="px-5 py-3">Nama Barang / Spesifikasi</th>
+                                                        <th className="px-4 py-3 text-center">Qty</th>
+                                                        <th className="px-4 py-3 text-right">Harga Satuan</th>
+                                                        <th className="px-5 py-3 text-right">Subtotal</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-muted/50">
-                                                    {record.items.map((item, idx) => (
-                                                        <tr key={idx} className="hover:bg-muted/10 transition-colors">
-                                                            <td className="px-6 py-4">
-                                                                <p className="font-bold text-foreground text-[11px] uppercase leading-none mb-1">{item.description}</p>
-                                                                <p className="text-[9px] text-muted-foreground font-medium tracking-widest uppercase opacity-60 italic">{item.vendor || 'Authorized'}</p>
+                                                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                                                    {parsedItems.map((item: any, idx: number) => (
+                                                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                                                            <td className="px-5 py-3.5">
+                                                                <p className="font-bold text-slate-800 dark:text-zinc-100 text-xs mb-0.5">{item.description || '-'}</p>
+                                                                {item.vendor && (
+                                                                    <span className="text-[9px] text-slate-400 font-medium">Vendor: {item.vendor}</span>
+                                                                )}
                                                             </td>
-                                                            <td className="px-6 py-4 text-center">
-                                                                <span className="font-bold text-xs opacity-50">{item.qty}x</span>
+                                                            <td className="px-4 py-3.5 text-center">
+                                                                <span className="font-bold font-mono px-2 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded-md text-slate-700 dark:text-zinc-300">
+                                                                    {item.qty || 1}x
+                                                                </span>
                                                             </td>
-                                                            <td className="px-6 py-4 text-right font-mono font-medium text-[10px] opacity-70">{formatFullIDR(item.price)}</td>
-                                                            <td className="px-6 py-4 text-right font-mono font-bold text-primary text-xs tracking-tighter">{formatFullIDR(item.price * item.qty)}</td>
+                                                            <td className="px-4 py-3.5 text-right font-mono text-slate-600 dark:text-zinc-400">
+                                                                {formatIDR(Number(item.price) || 0)}
+                                                            </td>
+                                                            <td className="px-5 py-3.5 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                                                                {formatIDR((Number(item.price) || 0) * (Number(item.qty) || 1))}
+                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
+                                                <tfoot className="bg-slate-50/70 dark:bg-zinc-800/40 border-t border-slate-200 dark:border-zinc-800">
+                                                    <tr>
+                                                        <td colSpan={3} className="px-5 py-3 font-bold text-slate-600 dark:text-zinc-400 uppercase text-[10px] tracking-wider text-right">
+                                                            Total Subtotal
+                                                        </td>
+                                                        <td className="px-5 py-3 text-right font-mono font-black text-slate-900 dark:text-zinc-100 text-sm">
+                                                            {formatIDR(subtotal)}
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
                                             </table>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* --- RIGHT COLUMN: AUDIT & SUMMARY (5/12) --- */}
-                            <div className="lg:col-span-5 space-y-8">
-                                {/* Payment & Ledger Detail Card */}
-                                <div className="bg-slate-50/50 dark:bg-zinc-900/10 p-6 rounded-2xl border border-slate-100 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-zinc-800/50">
-                                            <div className="flex items-center gap-2">
-                                                <CreditCard size={14} className="text-slate-400 dark:text-zinc-500" />
-                                                <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Financial Summary</h3>
-                                            </div>
-                                        </div>
+                            {/* --- RIGHT COLUMN: COMPLIANCE & NOTES (5 COLS) --- */}
+                            <div className="lg:col-span-5 space-y-6">
 
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Method</span>
-                                                <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{record.paymentMethod || '-'}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Ledger Date</span>
-                                                <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">{record.paymentDate || record.purchaseDate}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Status</span>
-                                                <div className={cn(
-                                                    "flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase border",
-                                                    statusCfg.bg, statusCfg.color, statusCfg.border
-                                                )}>
-                                                    {statusCfg.icon && React.isValidElement(statusCfg.icon)
-                                                        ? React.cloneElement(statusCfg.icon as React.ReactElement<any>, { size: 10 })
-                                                        : statusCfg.icon}
-                                                    {record.status}
-                                                </div>
-                                            </div>
-                                        </div>
+                                {/* Document Compliance Matrix */}
+                                <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+                                    <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-zinc-800">
+                                        <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                                            <ShieldCheck size={14} className="text-emerald-500" />
+                                            Kelengkapan Dokumen Audit
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-slate-400">
+                                            {verifiedDocsCount} / {docItems.length}
+                                        </span>
                                     </div>
 
-                                    <div className="pt-4 mt-4 border-t border-slate-200/60 dark:border-zinc-800/50 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[9px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Total Amount</p>
-                                            <p className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-mono">{formatFullIDR(record.subtotal || 0)}</p>
-                                        </div>
-                                        <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10 shrink-0">
-                                            <DollarSign size={14} className="text-blue-600 dark:text-blue-400" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Remarks */}
-                                {record.remarks && (
-                                    <div className="p-4 bg-amber-50/40 dark:bg-amber-950/10 rounded-xl border border-amber-100 dark:border-amber-900/40">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-1.5 bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 rounded-lg shrink-0">
-                                                <ShieldAlert size={14} />
-                                            </div>
-                                            <div className="space-y-0.5">
-                                                <p className="text-[9px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Remarks / Notes</p>
-                                                <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed italic">"{record.remarks}"</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Compliance Matrix */}
-                                <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/80 shadow-sm space-y-4">
-                                    <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest pb-1 border-b border-slate-100 dark:border-zinc-800/50 flex items-center gap-1.5">
-                                        <ShieldCheck size={14} className="text-emerald-500" /> Checklist / Documents
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                        {Object.entries({
-                                            prForm: 'PR Form',
-                                            cashAdvance: 'Cash Advance',
-                                            checkout: 'Checkout',
-                                            paymentSlip: 'Payment Slip',
-                                            invoice: 'Invoice',
-                                            expenseApproval: 'Expense Approval',
-                                            checkByRara: 'Audited'
-                                        }).map(([key, label]) => {
-                                            const isChecked = !!record.docs?.[key as keyof typeof record.docs];
+                                    <div className="space-y-2">
+                                        {docItems.map((item) => {
+                                            const isChecked = !!parsedDocs?.[item.key as keyof typeof parsedDocs];
                                             return (
                                                 <div
-                                                    key={key}
+                                                    key={item.key}
                                                     className={cn(
-                                                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-[9px] font-extrabold uppercase tracking-wider transition-all",
+                                                        "flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all",
                                                         isChecked
-                                                            ? 'bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/40 shadow-sm'
-                                                            : 'bg-slate-50/30 dark:bg-zinc-900/10 text-slate-400 dark:text-zinc-600 border-slate-200/40 dark:border-zinc-800/40 opacity-40 shadow-none'
+                                                            ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 text-slate-800 dark:text-zinc-200"
+                                                            : "bg-slate-50/40 dark:bg-zinc-900/40 border-slate-100 dark:border-zinc-800 text-slate-400 dark:text-zinc-600 opacity-60"
                                                     )}
                                                 >
-                                                    <CheckCircle2 size={12} className={isChecked ? 'text-emerald-500' : 'text-slate-300 dark:text-zinc-700'} />
-                                                    {label}
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={cn(
+                                                            "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+                                                            isChecked ? "bg-emerald-600 text-white" : "bg-slate-200 dark:bg-zinc-800 text-slate-400"
+                                                        )}>
+                                                            {isChecked ? <Check size={12} strokeWidth={3} /> : <X size={10} />}
+                                                        </div>
+                                                        <span className={cn("font-bold text-xs", isChecked ? "text-slate-800 dark:text-zinc-100" : "")}>
+                                                            {item.label}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        {isChecked ? 'Terverifikasi' : 'Belum Ada'}
+                                                    </span>
                                                 </div>
                                             );
                                         })}
                                     </div>
+
+                                    {evidenceLink && (
+                                        <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                                            <a
+                                                href={evidenceLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2 w-full p-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold transition-all border border-blue-200 dark:border-blue-900/40"
+                                            >
+                                                <ExternalLink size={13} />
+                                                Buka Dokumen Bukti Pembelian / Invoice
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Certification Meta */}
-                                <div className="pt-4 space-y-3 text-center border-t border-slate-100 dark:border-zinc-800/50">
-                                    <div className="inline-block px-4 py-3 bg-slate-50/50 dark:bg-zinc-900/10 rounded-xl border border-slate-200/40 dark:border-zinc-800/40 text-[9px] font-semibold text-slate-500 dark:text-zinc-400">
-                                        <div className="text-[8px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em] mb-1">Digital Verification ID</div>
-                                        <div className="font-mono text-[9px] font-bold text-slate-600 dark:text-zinc-300 uppercase tracking-widest select-all">
-                                            GESIT_PR_{(record.transactionId || '').replace(/-/g, '_')}_AUDIT
+                                {/* Remarks & Operational Notes */}
+                                {cleanRemarks && (
+                                    <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 space-y-2">
+                                        <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 pb-1 border-b border-amber-200/50 dark:border-amber-900/30">
+                                            <ShieldAlert size={14} />
+                                            <h4 className="text-xs font-black uppercase tracking-wider">Catatan Tambahan (Remarks)</h4>
                                         </div>
+                                        <p className="text-xs font-medium text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line pt-1">
+                                            {cleanRemarks}
+                                        </p>
                                     </div>
-                                    <p className="text-[8px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-widest opacity-80">
-                                        Record ID: {record.id.toString().padStart(6, '0')} • System Generation: {new Date().toLocaleString()}
-                                    </p>
+                                )}
+
+                                {/* System Audit Seal */}
+                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 text-center space-y-1">
+                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Digital Ledger Audit ID</div>
+                                    <div className="font-mono text-[10px] font-bold text-slate-600 dark:text-zinc-300 select-all">
+                                        GESIT_PR_{(transactionId || '').replace(/-/g, '_')}_VERIFIED
+                                    </div>
+                                    <div className="text-[8px] text-slate-400">
+                                        Database ID: #{record?.id} • Terdaftar di Log Finansial
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
+
                     </div>
                 </div>
 
-                <DialogFooter className="px-8 py-4 border-t shrink-0 flex flex-row justify-end items-center gap-3 no-print">
-                    <Button variant="outline" onClick={onClose} className="text-[10px] font-bold uppercase tracking-wider border hover:bg-muted/50 transition-all">
-                        Close
+                {/* Footer Controls */}
+                <div className="px-8 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/50 shrink-0 flex flex-row justify-between items-center no-print">
+                    <Button variant="outline" onClick={onClose} className="text-xs font-bold">
+                        Tutup
                     </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={async () => {
-                            setIsSyncing(true);
-                            await sendToGoogleSheet(record);
-                            setIsSyncing(false);
-                            showToast('Synced to digital cloud repository!');
-                        }}
-                        disabled={isSyncing}
-                        className="text-[10px] font-bold uppercase tracking-wider border border-emerald-200 transition-all"
-                    >
-                        {isSyncing ? <RefreshCcw className="animate-spin mr-2" size={14} /> : <FileSpreadsheet className="mr-2" size={14} />}
-                        {isSyncing ? 'Syncing...' : 'Sync to Cloud'}
-                    </Button>
-                    <Button
-                        onClick={handlePrint}
-                        className="text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95"
-                    >
-                        <Printer className="mr-2" size={14} /> Print Record
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={async () => {
+                                setIsSyncing(true);
+                                try {
+                                    await sendToGoogleSheet(record);
+                                    showToast('Berhasil disinkronkan ke Google Sheet!', 'success');
+                                } catch (e: any) {
+                                    showToast('Gagal sinkronisasi: ' + (e.message || ''), 'error');
+                                } finally {
+                                    setIsSyncing(false);
+                                }
+                            }}
+                            disabled={isSyncing}
+                            className="text-xs font-bold gap-2 border-slate-200 dark:border-zinc-700"
+                        >
+                            {isSyncing ? <RefreshCcw className="animate-spin" size={14} /> : <FileSpreadsheet className="text-emerald-600" size={14} />}
+                            {isSyncing ? 'Menyinkronkan...' : 'Sync ke Google Sheet'}
+                        </Button>
+                        <Button
+                            onClick={handlePrint}
+                            className="text-xs font-bold gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                        >
+                            <Printer size={14} /> Cetak / Print Record
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 };

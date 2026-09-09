@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
     LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
     Network, Folder, Shield, ChevronDown, Users, Building2,
-    Briefcase, Layers, Zap, Phone, Settings, Megaphone
+    Briefcase, Layers, Zap, Phone, Settings, Megaphone,
+    Receipt, ArrowLeftRight, FileCheck, MapPin, Key, History, Fingerprint
 } from 'lucide-react';
 import { APP_MENU_STRUCTURE } from '../constants';
 import { UserGroup } from '../types';
@@ -29,7 +30,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Zap: Zap,
     Phone: Phone,
     Settings: Settings,
-    Megaphone: Megaphone
+    Megaphone: Megaphone,
+    Receipt: Receipt,
+    ArrowLeftRight: ArrowLeftRight,
+    FileCheck: FileCheck,
+    MapPin: MapPin,
+    Key: Key,
+    History: History,
+    Fingerprint: Fingerprint,
 };
 
 interface NavbarProps {

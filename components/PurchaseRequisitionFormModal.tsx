@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import { createPortal } from 'react-dom';
 import { cn } from "@/lib/utils";
 import { X, Calendar, FileText, Plus, Trash2, Shield, Info, DollarSign } from 'lucide-react';
@@ -80,6 +81,9 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [bankAccount, setBankAccount] = useState('');
     const [notes, setNotes] = useState('');
     const [category, setCategory] = useState('');
+    const [company, setCompany] = useState('');
+    const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+    const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
     const [currency, setCurrency] = useState<'IDR' | 'USD'>('IDR');
     const [discount, setDiscount] = useState<number | string>(0);
     const [deliveryFee, setDeliveryFee] = useState<number | string>(0);
@@ -100,10 +104,26 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const [financeId, setFinanceId] = useState('');
     const [accountingId, setAccountingId] = useState('');
 
+    // Fetch companies and departments from Supabase
+    useEffect(() => {
+        supabase.from('companies').select('id, name').order('name').then(({ data }) => {
+            if (data && data.length > 0) {
+                setCompanies(data);
+                setCompany(prev => prev || data[0].name);
+            }
+        });
+        supabase.from('departments').select('id, name').order('name').then(({ data }) => {
+            if (data && data.length > 0) {
+                setDepartments(data);
+            }
+        });
+    }, []);
+
     // Reset form to baseline default values
     const resetToDefaults = () => {
         if (!currentUser) return;
         setDepartment(currentUser.department || 'IT');
+        setCompany(companies[0]?.name || '');
         setPaidTo('');
         setBankAccount('');
         setNotes('');
@@ -152,6 +172,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             if (initialData) {
                 // EDIT MODE: prefill all fields from existing record
                 setDepartment(initialData.department || '');
+                setCompany(initialData.company || companies[0]?.name || '');
                 setPaidTo(initialData.paidTo || '');
                 setBankAccount(initialData.bankAccount || '');
                 setNotes(initialData.notes || '');
@@ -172,6 +193,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     if (savedDraft) {
                         const draft = JSON.parse(savedDraft);
                         if (draft.department !== undefined) setDepartment(draft.department);
+                        if (draft.company !== undefined) setCompany(draft.company);
                         if (draft.paidTo !== undefined) setPaidTo(draft.paidTo);
                         if (draft.bankAccount !== undefined) setBankAccount(draft.bankAccount);
                         if (draft.notes !== undefined) setNotes(draft.notes);
@@ -202,6 +224,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             try {
                 const draft = {
                     department,
+                    company,
                     paidTo,
                     bankAccount,
                     notes,
@@ -222,7 +245,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             }
         }
     }, [
-        isOpen, initialData, department, paidTo, bankAccount, notes, category, currency,
+        isOpen, initialData, department, company, paidTo, bankAccount, notes, category, currency,
         reqItems, recItems, supervisorId, vpId, financeId, accountingId, discount, deliveryFee
     ]);
 
@@ -287,6 +310,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             requesterUsername: currentUser?.username || 'Staff',
             requesterFullname: currentUser?.fullName || 'IT Staff',
             department: department,
+            company: company || companies[0]?.name || '',
             requestDate: initialData?.requestDate || new Date().toISOString().split('T')[0],
             paidTo: paidTo,
             bankAccount: bankAccount,
@@ -352,32 +376,57 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     <form id="prFormSubmit" onSubmit={handleSubmit} className="space-y-8">
                         
                         {/* Requester Metadata Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
                             <div>
                                 <label className={labelClass}>Nama Pemohon</label>
-                                <Input className={inputClass} value={currentUser?.fullName || ''} disabled />
+                                <Input className={cn(inputClass, "bg-slate-100/70 dark:bg-zinc-900/50 text-slate-500 dark:text-zinc-400 cursor-not-allowed")} value={currentUser?.fullName || ''} disabled />
                             </div>
                             <div>
                                 <label className={labelClass}>Departemen</label>
-                                <Input className={inputClass} value={department} onChange={e => setDepartment(e.target.value)} required />
+                                <Select value={department} onValueChange={setDepartment}>
+                                    <SelectTrigger className="w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 h-9 text-xs font-medium">
+                                        <SelectValue placeholder="Pilih departemen..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-[220px]">
+                                        {departments.length > 0
+                                            ? departments.map(d => <SelectItem key={d.id} value={d.name} className="text-xs">{d.name}</SelectItem>)
+                                            : <SelectItem value={department || 'IT'} className="text-xs">{department || 'IT'}</SelectItem>
+                                        }
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div>
                                 <label className={labelClass}>Tanggal Request</label>
-                                <Input className={inputClass} value={new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} disabled />
+                                <Input className={cn(inputClass, "bg-slate-100/70 dark:bg-zinc-900/50 text-slate-500 dark:text-zinc-400 cursor-not-allowed")} value={new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} disabled />
+                            </div>
+                        </div>
+
+                        {/* Company, Category, Currency Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                            <div>
+                                <label className={labelClass}>Company</label>
+                                <Select value={company} onValueChange={setCompany}>
+                                    <SelectTrigger className="w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 h-9 text-xs font-medium">
+                                        <SelectValue placeholder="-- Pilih Company --" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-[220px]">
+                                        {companies.map(c => <SelectItem key={c.id} value={c.name} className="text-xs">{c.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div>
                                 <label className={labelClass}>Category</label>
                                 <Select value={category} onValueChange={setCategory}>
                                     <SelectTrigger className="w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 h-9 text-xs">
-                                        <SelectValue placeholder="Select an item" />
+                                        <SelectValue placeholder="Pilih kategori..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Hardware">Hardware</SelectItem>
-                                        <SelectItem value="Accessories">Accessories</SelectItem>
-                                        <SelectItem value="Cloud & Hosting">Cloud & Hosting</SelectItem>
-                                        <SelectItem value="Subscription">Subscription</SelectItem>
-                                        <SelectItem value="Maintenance & Support">Maintenance & Support</SelectItem>
-                                        <SelectItem value="IT Services">IT Services</SelectItem>
+                                        <SelectItem value="Hardware" className="text-xs">🖥️ Hardware</SelectItem>
+                                        <SelectItem value="Accessories" className="text-xs">🖱️ Accessories</SelectItem>
+                                        <SelectItem value="Cloud & Hosting" className="text-xs">☁️ Cloud & Hosting</SelectItem>
+                                        <SelectItem value="Subscription" className="text-xs">📦 Subscription</SelectItem>
+                                        <SelectItem value="Maintenance & Support" className="text-xs">🔧 Maintenance & Support</SelectItem>
+                                        <SelectItem value="IT Services" className="text-xs">💼 IT Services</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -388,14 +437,13 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="IDR" className="font-bold">IDR</SelectItem>
-                                        <SelectItem value="USD" className="font-bold">USD</SelectItem>
+                                        <SelectItem value="IDR" className="font-bold text-xs">🇮🇩 IDR — Rupiah</SelectItem>
+                                        <SelectItem value="USD" className="font-bold text-xs">🇺🇸 USD — Dollar</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {currency === 'USD' && (
                                     <div className="mt-1.5 flex items-center gap-1 text-[9px] font-bold text-blue-600 dark:text-blue-400">
-                                        <span>$1</span>
-                                        <span className="text-slate-400">=</span>
+                                        <span>$1</span><span className="text-slate-400">=</span>
                                         <span>Rp {new Intl.NumberFormat('id-ID').format(usdRate)}</span>
                                         <span className="text-[8px] text-slate-400 font-medium">today</span>
                                     </div>
@@ -416,80 +464,94 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                         </div>
 
                         {/* TABLE 1: Permohonan dari Pengguna */}
-                        <div>
-                            <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-zinc-800 pb-2">
-                                <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest">1. Permohonan dari Pengguna</h3>
-                                <Button type="button" variant="outline" size="sm" onClick={handleAddReqItem} className="text-[10px] h-7 font-bold uppercase tracking-wider">
-                                    <Plus size={12} className="mr-1" /> Add Row
+                        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/80 overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-zinc-700">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center text-white text-[9px] font-black">1</div>
+                                    <h3 className="text-[11px] font-black text-slate-700 dark:text-zinc-200 uppercase tracking-widest">Permohonan dari Pengguna</h3>
+                                </div>
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddReqItem} className="text-[10px] h-7 font-bold uppercase tracking-wider gap-1 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                                    <Plus size={11} /> Add Row
                                 </Button>
                             </div>
-                            <div className="space-y-3">
+                            {/* Column Headers */}
+                            <div className="grid grid-cols-12 gap-3 px-4 py-2 bg-slate-50/50 dark:bg-zinc-900/30 border-b border-slate-100 dark:border-zinc-800">
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">No</div>
+                                <div className="col-span-10 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Deskripsi Barang / Asset</div>
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">Qty</div>
+                            </div>
+                            <div className="divide-y divide-slate-50 dark:divide-zinc-800/60 bg-white dark:bg-zinc-900">
                                 {reqItems.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-150">
-                                        <div className="w-8 text-center text-xs font-bold text-slate-400 font-mono">{idx + 1}</div>
-                                        <div className="flex-1">
+                                    <div key={idx} className="grid grid-cols-12 gap-3 items-center px-4 py-2.5 group animate-in fade-in slide-in-from-top-1 duration-150 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors">
+                                        <div className="col-span-1 text-center text-[10px] font-black text-slate-300 dark:text-zinc-600 font-mono">{idx + 1}</div>
+                                        <div className="col-span-9">
                                             <Input
-                                                className={inputClass}
-                                                placeholder="Deskripsi Barang / Asset"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-medium text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"
+                                                placeholder="Tuliskan deskripsi barang atau asset yang dibutuhkan..."
                                                 value={item.description}
                                                 onChange={e => handleReqItemChange(idx, 'description', e.target.value)}
                                                 required
                                             />
                                         </div>
-                                        <div className="w-24">
+                                        <div className="col-span-1">
                                             <Input
-                                                type="number"
-                                                min="1"
-                                                className={inputClass}
-                                                placeholder="Qty"
+                                                type="number" min="1"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-bold text-center font-mono text-slate-800 dark:text-zinc-200 rounded-none px-0 h-7 transition-all"
                                                 value={item.qty}
                                                 onChange={e => handleReqItemChange(idx, 'qty', parseInt(e.target.value, 10) || 1)}
                                                 required
                                             />
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleRemoveReqItem(idx)}
-                                            disabled={reqItems.length === 1}
-                                            className="h-8 w-8 text-slate-400 hover:text-rose-500"
-                                        >
-                                            <Trash2 size={14} />
-                                        </Button>
+                                        <div className="col-span-1 flex justify-center">
+                                            <button type="button" onClick={() => handleRemoveReqItem(idx)} disabled={reqItems.length === 1}
+                                                className="opacity-0 group-hover:opacity-100 text-slate-300 dark:text-zinc-600 hover:text-rose-500 dark:hover:text-rose-400 transition-all disabled:pointer-events-none p-1 rounded">
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
                         {/* TABLE 2: Rekomendasi oleh IT */}
-                        <div>
-                            <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-zinc-800 pb-2">
-                                <h3 className="text-xs font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest">2. Rekomendasi oleh IT (Untuk Purchase)</h3>
-                                <Button type="button" variant="outline" size="sm" onClick={handleAddRecItem} className="text-[10px] h-7 font-bold uppercase tracking-wider">
-                                    <Plus size={12} className="mr-1" /> Add Row
+                        <div className="rounded-xl border border-slate-200 dark:border-zinc-700/80 overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-zinc-700">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-md bg-emerald-600 flex items-center justify-center text-white text-[9px] font-black">2</div>
+                                    <h3 className="text-[11px] font-black text-slate-700 dark:text-zinc-200 uppercase tracking-widest">Rekomendasi IT — Untuk Purchase</h3>
+                                </div>
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddRecItem} className="text-[10px] h-7 font-bold uppercase tracking-wider gap-1 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+                                    <Plus size={11} /> Add Row
                                 </Button>
                             </div>
-                            <div className="space-y-3">
+                            {/* Column Headers */}
+                            <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50/50 dark:bg-zinc-900/30 border-b border-slate-100 dark:border-zinc-800">
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">No</div>
+                                <div className="col-span-4 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Spesifikasi / Barang</div>
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">Qty</div>
+                                <div className="col-span-2 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Vendor</div>
+                                <div className="col-span-2 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-right">Harga Satuan</div>
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-right">Total</div>
+                                <div className="col-span-1"></div>
+                            </div>
+                            <div className="divide-y divide-slate-50 dark:divide-zinc-800/60 bg-white dark:bg-zinc-900">
                                 {recItems.map((item, idx) => (
-                                    <div key={idx} className="grid grid-cols-12 gap-3 items-center animate-in fade-in slide-in-from-top-1 duration-150">
-                                        <div className="col-span-1 text-center text-xs font-bold text-slate-400 font-mono">{idx + 1}</div>
+                                    <div key={idx} className="grid grid-cols-12 gap-2 items-center px-4 py-2.5 group animate-in fade-in slide-in-from-top-1 duration-150 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors">
+                                        <div className="col-span-1 text-center text-[10px] font-black text-slate-300 dark:text-zinc-600 font-mono">{idx + 1}</div>
                                         
                                         <div className="col-span-4">
                                             <Input
-                                                className={inputClass}
-                                                placeholder="Rekomendasi Barang / Spesifikasi"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-medium text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"
+                                                placeholder="Spesifikasi barang..."
                                                 value={item.description}
                                                 onChange={e => handleRecItemChange(idx, 'description', e.target.value)}
                                                 required
                                             />
                                         </div>
-                                        <div className="col-span-1.5 col-span-2">
+                                        <div className="col-span-1">
                                             <Input
-                                                type="number"
-                                                min="1"
-                                                className={inputClass}
-                                                placeholder="Qty"
+                                                type="number" min="1"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-bold text-center font-mono text-slate-800 dark:text-zinc-200 rounded-none px-0 h-7 transition-all"
                                                 value={item.qty}
                                                 onChange={e => handleRecItemChange(idx, 'qty', parseInt(e.target.value, 10) || 1)}
                                                 required
@@ -497,8 +559,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         </div>
                                         <div className="col-span-2">
                                             <Input
-                                                className={inputClass}
-                                                placeholder="Vendor"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-medium text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"
+                                                placeholder="Nama vendor"
                                                 value={item.vendor}
                                                 onChange={e => handleRecItemChange(idx, 'vendor', e.target.value)}
                                                 required
@@ -507,26 +569,20 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                         <div className="col-span-2">
                                             <Input
                                                 type="text"
-                                                className={cn(inputClass, "font-mono")}
-                                                placeholder="Harga Satuan"
+                                                className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-mono text-right text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"
+                                                placeholder="0"
                                                 value={formatNumberString(item.price)}
                                                 onChange={e => handleRecItemChange(idx, 'price', parseNumberString(e.target.value))}
                                             />
                                         </div>
-                                        <div className="col-span-1 text-right text-xs font-mono font-bold text-slate-700 dark:text-zinc-300">
-                                            {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format((parseToFloat(item.price) || 0) * (item.qty || 1))}
+                                        <div className="col-span-1 text-right text-xs font-mono font-bold text-slate-600 dark:text-zinc-300">
+                                            {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format((parseToFloat(item.price) || 0) * (item.qty || 1))}
                                         </div>
-                                        <div className="col-span-1 text-center">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleRemoveRecItem(idx)}
-                                                disabled={recItems.length === 1}
-                                                className="h-8 w-8 text-slate-400 hover:text-rose-500"
-                                            >
-                                                <Trash2 size={14} />
-                                            </Button>
+                                        <div className="col-span-1 flex justify-center">
+                                            <button type="button" onClick={() => handleRemoveRecItem(idx)} disabled={recItems.length === 1}
+                                                className="opacity-0 group-hover:opacity-100 text-slate-300 dark:text-zinc-600 hover:text-rose-500 dark:hover:text-rose-400 transition-all disabled:pointer-events-none p-1 rounded">
+                                                <Trash2 size={13} />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}

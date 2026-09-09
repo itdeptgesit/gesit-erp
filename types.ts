@@ -69,7 +69,7 @@ export interface PurchaseRecord {
   user: string;
   department: string;
   company: string;
-  status: 'Paid' | 'Pending';
+  status: 'Paid' | 'Pending' | 'Rejected';
   purchaseDate: string;
   paymentDate?: string;
   vendor: string;
@@ -407,6 +407,7 @@ export interface PurchaseRequisition {
   currency?: 'IDR' | 'USD';
   status: 'Pending Supervisor' | 'Pending VP' | 'Pending Finance' | 'Pending Accounting' | 'Approved' | 'Rejected';
   category?: string;
+  company?: string;
   
   // Signature tracking
   supervisorId?: string;

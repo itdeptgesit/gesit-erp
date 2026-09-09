@@ -36,7 +36,7 @@ import {
   LayoutGrid, LifeBuoy, Activity, Calendar, ShoppingCart, Package,
   Network, Folder, Shield, ChevronDown, ChevronRight, X, Users, Building2,
   Briefcase, Layers, Zap, ChevronLeft, PanelLeftClose, PanelLeft, Phone,
-  Settings, Megaphone, Loader2, CheckCircle2, Circle, LayoutDashboard, Kanban
+  Settings, Megaphone, Loader2, CheckCircle2, Circle, LayoutDashboard, Kanban, MapPin
 } from 'lucide-react';
 
 import { checkAssetLoanOverdue } from './utils/LoanNotificationUtils';
@@ -66,6 +66,7 @@ const AnnouncementManager = React.lazy(() => import('./components/AnnouncementMa
 const ExtensionDirectory = React.lazy(() => import('./components/ExtensionDirectory').then(m => ({ default: m.ExtensionDirectory })));
 const AuditLogManager = React.lazy(() => import('./components/AuditLogManager').then(m => ({ default: m.AuditLogManager })));
 const CredentialManager = React.lazy(() => import('./components/CredentialManager'));
+const OfficeLayoutManager = React.lazy(() => import('./components/OfficeLayoutManager').then(m => ({ default: m.OfficeLayoutManager })));
 
 const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -98,6 +99,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Megaphone: Megaphone,
   Key: CheckCircle2,
   User: Circle,
+  MapPin: MapPin,
 }
 
 const PublicLayout: React.FC<{
@@ -703,6 +705,7 @@ const InternalApp: React.FC = () => {
                             <Route path="tracking-log" element={<AuditLogManager currentUser={currentUser} />} />
                             <Route path="announcements" element={<AnnouncementManager />} />
                             <Route path="maintenance" element={<SystemMaintenance />} />
+                            <Route path="office-layout" element={<OfficeLayoutManager currentUser={currentUser} />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                           </Routes>
                         </DashboardLayout>

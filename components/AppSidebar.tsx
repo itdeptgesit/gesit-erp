@@ -4,7 +4,8 @@ import {
     Network, Folder, Shield, Users, Building2,
     Briefcase, Layers, Zap, Phone,
     Settings, Megaphone, ChevronRight, Key,
-    Star, Compass, UserCircle, Download
+    Star, Compass, UserCircle, Download,
+    Receipt, ArrowLeftRight, FileCheck, MapPin, History, Fingerprint
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
@@ -49,7 +50,13 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Settings: Settings,
     Megaphone: Megaphone,
     Key: Key,
-    User: UserCircle
+    User: UserCircle,
+    Receipt: Receipt,
+    ArrowLeftRight: ArrowLeftRight,
+    FileCheck: FileCheck,
+    MapPin: MapPin,
+    History: History,
+    Fingerprint: Fingerprint,
 };
 
 interface NavigationSidebarProps {

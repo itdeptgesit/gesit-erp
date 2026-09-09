@@ -332,6 +332,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 .from('purchase_requisitions')
                 .update({
                     department: payload.department,
+                    company: payload.company,
                     paid_to: payload.paidTo,
                     bank_account: payload.bankAccount,
                     requested_items: payload.requestedItems,
@@ -456,7 +457,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         category: req.category || 'Hardware',
                         evidence_link: '',
                         input_by: 'System (Auto-inserted via PR VP Approval)',
-                        remarks: req.notes || `Auto-generated from Approved Requisition #${req.id}`,
+                        remarks: req.notes ? `${req.notes}\n[PR #${req.id}]` : `Auto-generated from Approved Requisition #${req.id}`,
                         docs: {
                             prForm: true,
                             cashAdvance: false,
@@ -566,27 +567,62 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         const isMyAction = isMyTurnToApproveRequisition(req);
         if (isMyAction) {
             return (
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold text-[10px] animate-pulse"><Zap size={10} className="fill-current" /> Action Required</div>
-                    <div className="text-[9px] text-slate-400 font-medium italic">Pending your signature</div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 animate-pulse">
+                    <Zap size={9} className="fill-blue-600 dark:fill-blue-400 text-blue-600 dark:text-blue-400" />
+                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 tracking-wide">Action Required</span>
                 </div>
             );
         }
         if (req.status.startsWith('Pending')) {
             let waitingFor = 'Approver';
             if (req.status === 'Pending Supervisor') {
-                waitingFor = allUsers.find(u => String(u.id) === req.supervisorId)?.fullName || 'Supervisor';
+                waitingFor = allUsers.find(u => String(u.id) === req.supervisorId)?.fullName?.split(' ')[0] || 'Supervisor';
             } else if (req.status === 'Pending VP') {
-                waitingFor = allUsers.find(u => String(u.id) === req.vpId)?.fullName || 'VP HR/Logistic';
+                waitingFor = allUsers.find(u => String(u.id) === req.vpId)?.fullName?.split(' ')[0] || 'VP';
             } else if (req.status === 'Pending Finance') {
-                waitingFor = allUsers.find(u => String(u.id) === req.financeId)?.fullName || 'Finance';
+                waitingFor = 'Finance';
             } else if (req.status === 'Pending Accounting') {
-                waitingFor = allUsers.find(u => String(u.id) === req.accountingId)?.fullName || 'Accounting';
+                waitingFor = 'Accounting';
             }
-            return (<div className="flex flex-col gap-0.5"><div className="flex items-center gap-1.5 text-amber-600 font-bold text-[10px]"><Clock size={11} /> {req.status.replace('Pending ', '')}</div><div className="text-[9px] text-slate-400 font-medium">Waiting for {waitingFor.split(' ')[0]}</div></div>);
+            return (
+                <div className="flex flex-col gap-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 w-fit">
+                        <Clock size={9} className="text-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">{req.status.replace('Pending ', '')}</span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 pl-1">→ {waitingFor}</span>
+                </div>
+            );
         }
-        if (req.status === 'Approved') return <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[10px]"><CheckCircle2 size={11} /> Approved</div>;
-        return <div className="flex items-center gap-1.5 text-rose-600 font-bold text-[10px]"><XCircle size={11} /> Rejected</div>;
+        if (req.status === 'Approved') return (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 size={9} className="text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Approved</span>
+            </div>
+        );
+        return (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+                <XCircle size={9} className="text-rose-500" />
+                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Rejected</span>
+            </div>
+        );
+    };
+
+    const getCategoryBadge = (category: string | undefined) => {
+        const map: Record<string, { bg: string; text: string; label: string }> = {
+            'Hardware':            { bg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800', text: 'text-violet-600 dark:text-violet-400', label: '🖥️ Hardware' },
+            'Accessories':         { bg: 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800',         text: 'text-sky-600 dark:text-sky-400',     label: '🖱️ Accessories' },
+            'Cloud & Hosting':     { bg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800',      text: 'text-blue-600 dark:text-blue-400',    label: '☁️ Cloud' },
+            'Subscription':        { bg: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800', text: 'text-indigo-600 dark:text-indigo-400', label: '📦 Subscription' },
+            'Maintenance & Support':{ bg: 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800', text: 'text-orange-600 dark:text-orange-400', label: '🔧 Maintenance' },
+            'IT Services':         { bg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800',     text: 'text-teal-600 dark:text-teal-400',    label: '💼 IT Services' },
+        };
+        const c = map[category || ''] || { bg: 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700', text: 'text-slate-500 dark:text-zinc-400', label: category || '—' };
+        return (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wide ${c.bg} ${c.text}`}>
+                {c.label}
+            </span>
+        );
     };
 
     const formatIDR = (num: number) => {
@@ -600,6 +636,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     requester_username: payload.requesterUsername,
                     requester_fullname: payload.requesterFullname,
                     department: payload.department,
+                    company: payload.company,
                     request_date: payload.requestDate,
                     paid_to: payload.paidTo,
                     bank_account: payload.bankAccount,
@@ -792,16 +829,17 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         /* REQUISITIONS TABLE VIEW */
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px] border-b border-slate-100 dark:border-zinc-800">
-                                    <th className="px-6 py-5">PR Number</th>
-                                    <th className="px-6 py-5">Requester</th>
-                                    <th className="px-6 py-5">Paid To</th>
-                                    <th className="px-6 py-5 text-right">Total</th>
-                                    <th className="px-6 py-5">Status</th>
-                                    <th className="px-6 py-5 text-center">Action</th>
+                                <tr className="bg-slate-50 dark:bg-zinc-800/80 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.15em] text-[9px] border-b border-slate-200 dark:border-zinc-700">
+                                    <th className="px-5 py-3.5">PR #</th>
+                                    <th className="px-5 py-3.5">Requester</th>
+                                    <th className="px-5 py-3.5">Category</th>
+                                    <th className="px-5 py-3.5">Paid To</th>
+                                    <th className="px-5 py-3.5 text-right">Grand Total</th>
+                                    <th className="px-5 py-3.5">Status</th>
+                                    <th className="px-5 py-3.5 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
                                 {loading && !paginatedRequisitions.length ? (
                                     Array.from({ length: 5 }).map((_, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
@@ -818,53 +856,64 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 ) : paginatedRequisitions.map(req => {
                                     const isMyTurn = isMyTurnToApproveRequisition(req);
                                     return (
-                                        <tr key={req.id} className={cn("hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group align-middle", isMyTurn && "bg-blue-50/10 dark:bg-blue-900/5")}>
-                                            <td className="px-6 py-5 font-mono font-bold text-xs text-slate-800 dark:text-slate-200">
-                                                PR-{String(req.id).padStart(4, '0')}
-                                            </td>
-                                            <td className="px-6 py-5">
+                                        <tr key={req.id} className={cn("hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-all group align-middle", isMyTurn && "bg-blue-50/30 dark:bg-blue-900/10 border-l-2 border-l-blue-500")}>
+                                            <td className="px-5 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-800 dark:text-slate-100 text-xs">{req.requesterFullname}</span>
-                                                    <span className="text-[9px] text-slate-400 font-mono mt-0.5">{req.department} • {req.requestDate}</span>
+                                                    <span className="font-mono font-black text-xs text-slate-800 dark:text-slate-100">PR-{String(req.id).padStart(4, '0')}</span>
+                                                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium mt-0.5">{req.requestDate}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-5 text-xs text-slate-600 dark:text-zinc-400 font-medium">
-                                                {req.paidTo || '-'}
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-800 dark:text-slate-100 text-xs">{req.requesterFullname}</span>
+                                                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-mono mt-0.5">{req.department}</span>
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-5 text-right font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                {String(req.currency || 'IDR').toUpperCase().includes('USD') || String(req.currency || '').toUpperCase() === 'DOLLAR'
-                                                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(req.grandTotal)
-                                                    : formatIDR(req.grandTotal)}
+                                            <td className="px-5 py-4">
+                                                {getCategoryBadge(req.category)}
                                             </td>
-                                            <td className="px-6 py-5">
+                                            <td className="px-5 py-4">
+                                                <span className="text-xs text-slate-600 dark:text-zinc-300 font-medium">{req.paidTo || <span className="text-slate-300 dark:text-zinc-600 italic">—</span>}</span>
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-100">
+                                                        {String(req.currency || 'IDR').toUpperCase().includes('USD') || String(req.currency || '').toUpperCase() === 'DOLLAR'
+                                                            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(req.grandTotal)
+                                                            : formatIDR(req.grandTotal)}
+                                                    </span>
+                                                    {req.currency === 'USD' && <span className="text-[9px] text-slate-400 font-mono">USD</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
                                                 {getRequisitionStatusDisplay(req)}
                                             </td>
-                                            <td className="px-6 py-5 text-center">
+                                            <td className="px-5 py-4 text-center">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <button
                                                         onClick={() => { setSelectedRequisition(req); setIsReqDetailOpen(true); }}
-                                                        className="p-2 text-slate-400 hover:text-blue-600 transition-all rounded-lg"
+                                                        className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all rounded-lg"
                                                         title="View PR Details"
                                                     >
-                                                        <Eye size={16} />
+                                                        <Eye size={15} />
                                                     </button>
                                                     {isMyTurn ? (
                                                         <>
                                                             <button
                                                                 onClick={() => handleApproveRequisition(req)}
                                                                 disabled={isActionLoading}
-                                                                className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md active:scale-90"
-                                                                title="Approve Requisition"
+                                                                className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm active:scale-90"
+                                                                title="Approve"
                                                             >
-                                                                <Check size={16} strokeWidth={3} />
+                                                                <Check size={14} strokeWidth={3} />
                                                             </button>
                                                             <button
                                                                 onClick={() => setRejectRequisitionTarget(req)}
                                                                 disabled={isActionLoading}
-                                                                className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-md active:scale-90"
-                                                                title="Reject Requisition"
+                                                                className="p-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-sm active:scale-90"
+                                                                title="Reject"
                                                             >
-                                                                <X size={16} strokeWidth={3} />
+                                                                <X size={14} strokeWidth={3} />
                                                             </button>
                                                         </>
                                                     ) : (
@@ -872,19 +921,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                             {isAdmin && req.status !== 'Approved' && req.status !== 'Rejected' && (
                                                                 <button
                                                                     onClick={() => { setEditingRequisition(req); setIsReqFormOpen(true); }}
-                                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all rounded-lg opacity-0 group-hover:opacity-100"
-                                                                    title="Edit Requisition (Admin)"
+                                                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                                                    title="Edit (Admin)"
                                                                 >
-                                                                    <Pencil size={15} />
+                                                                    <Pencil size={13} />
                                                                 </button>
                                                             )}
                                                             {canDelete && (
                                                                 <button
                                                                     onClick={() => setDeleteRequisitionTarget(req)}
-                                                                    className="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-600 transition-all opacity-0 group-hover:opacity-100"
-                                                                    title="Purge Requisition"
+                                                                    className="p-1.5 text-slate-300 dark:text-zinc-700 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                                                    title="Delete"
                                                                 >
-                                                                    <Trash2 size={16} />
+                                                                    <Trash2 size={14} />
                                                                 </button>
                                                             )}
                                                         </>
@@ -936,7 +985,16 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             />
 
             {/* Detail Modals */}
-            <PurchaseRequisitionDetailModal isOpen={isReqDetailOpen} onClose={() => setIsReqDetailOpen(false)} requisition={selectedRequisitionWithNames} currentUser={currentUser} onApprove={handleApproveRequisition} onReject={(req) => setRejectRequisitionTarget(req)} usdRate={usdRate} />
+            <PurchaseRequisitionDetailModal 
+                isOpen={isReqDetailOpen} 
+                onClose={() => setIsReqDetailOpen(false)} 
+                requisition={selectedRequisitionWithNames} 
+                currentUser={currentUser} 
+                onApprove={handleApproveRequisition} 
+                onReject={(req) => setRejectRequisitionTarget(req)} 
+                usdRate={usdRate} 
+                onUpdate={fetchData}
+            />
 
             {/* Reject Reason Modals */}
             <RejectReasonModal isOpen={!!rejectRequisitionTarget} onClose={() => setRejectRequisitionTarget(null)} onSubmit={submitRejectRequisition} itemName={rejectRequisitionTarget ? `PR Requisition for ${rejectRequisitionTarget.requesterFullname}` : ''} />

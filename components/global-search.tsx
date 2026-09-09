@@ -41,8 +41,11 @@ export function GlobalSearch({
     [setOpen]
   )
 
-  const mainMenus = APP_MENU_STRUCTURE.filter((m) => !m.parentId)
-  const adminMenus = APP_MENU_STRUCTURE.filter((m) => m.parentId === "admin")
+  const mainMenus = APP_MENU_STRUCTURE.filter((m) => {
+    const hasChildren = APP_MENU_STRUCTURE.some((c) => c.parentId === m.id);
+    return !hasChildren && m.parentId !== "admin";
+  });
+  const adminMenus = APP_MENU_STRUCTURE.filter((m) => m.parentId === "admin");
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
