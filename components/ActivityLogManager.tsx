@@ -31,6 +31,7 @@ import { ModalWrapper } from './ui/ModalWrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -258,6 +259,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
 
     // UI State
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -372,11 +374,17 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     }, []);
 
     const filteredActivities = activities.filter(activity => {
+        const term = searchTerm.toLowerCase();
         const matchesSearch =
-            activity.activityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            activity.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            activity.itPersonnel.toLowerCase().includes(searchTerm.toLowerCase());
+            activity.activityName?.toLowerCase().includes(term) ||
+            activity.requester?.toLowerCase().includes(term) ||
+            activity.itPersonnel?.toLowerCase().includes(term) ||
+            activity.department?.toLowerCase().includes(term) ||
+            activity.category?.toLowerCase().includes(term) ||
+            activity.location?.toLowerCase().includes(term) ||
+            activity.remarks?.toLowerCase().includes(term);
         const matchesStatus = statusFilter === 'All' || activity.status === statusFilter;
+        const matchesCategory = categoryFilter === 'All' || activity.category === categoryFilter;
 
         let matchesDate = true;
         if (startDate && endDate) {
@@ -384,7 +392,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             matchesDate = activityDate >= startDate && activityDate <= endDate;
         }
 
-        return matchesSearch && matchesStatus && matchesDate;
+        return matchesSearch && matchesStatus && matchesCategory && matchesDate;
     });
 
     const handleExportExcel = () => {
@@ -420,6 +428,23 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         return { total, complete, active, highAlerts };
     }, [filteredActivities]);
 
+    const uniqueCategories = useMemo(() => {
+        const cats = [...new Set(activities.map(a => a.category).filter(Boolean))];
+        return cats.sort();
+    }, [activities]);
+
+    const hasActiveFilters = searchTerm || statusFilter !== 'All' || categoryFilter !== 'All' || (startDate && endDate);
+
+    const resetAllFilters = () => {
+        setSearchTerm('');
+        setStatusFilter('All');
+        setCategoryFilter('All');
+        setDateFilterType('All');
+        setStartDate('');
+        setEndDate('');
+        setCurrentPage(1);
+    };
+
     const toggleFullScreen = () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
@@ -450,18 +475,23 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
     const handleDateFilterTypeChange = (type: string) => {
         setDateFilterType(type);
-        const today = new Date();
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const day = now.getDate();
+        const dayOfWeek = now.getDay();
         if (type === 'All') { setStartDate(''); setEndDate(''); }
-        else if (type === 'Today') { setStartDate(today.toISOString().split('T')[0]); setEndDate(today.toISOString().split('T')[0]); }
+        else if (type === 'Today') {
+            const todayStr = new Date(year, month, day).toISOString().split('T')[0];
+            setStartDate(todayStr); setEndDate(todayStr);
+        }
         else if (type === 'Week') {
-            const first = new Date(today.setDate(today.getDate() - today.getDay()));
-            const last = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+            const first = new Date(year, month, day - dayOfWeek);
+            const last = new Date(year, month, day - dayOfWeek + 6);
             setStartDate(first.toISOString().split('T')[0]); setEndDate(last.toISOString().split('T')[0]);
         } else if (type === 'Month') {
-            setStartDate(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]);
-            setEndDate(new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]);
-        } else if (type === 'Custom') {
-            // Keep existing dates if any, or leave empty for user to fill
+            setStartDate(new Date(year, month, 1).toISOString().split('T')[0]);
+            setEndDate(new Date(year, month + 1, 0).toISOString().split('T')[0]);
         }
     };
 
@@ -648,19 +678,43 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">Comprehensive audit trail of internal activities.</p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto flex-1 max-w-3xl justify-end">
-                        <div className="relative w-full sm:max-w-[200px] md:max-w-xs">
-                            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400" />
+                    <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2.5 w-full flex-1 max-w-4xl justify-end">
+                        <div className="relative w-full xl:w-auto xl:min-w-[240px] xl:max-w-xs">
+                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400" />
                             <Input
                                 type="text"
-                                placeholder="Search activities..."
+                                placeholder="Search name, category, location..."
                                 value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="pl-10 h-10 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40 w-full"
+                                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                className="pl-10 h-9 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40 w-full"
                             />
                         </div>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <NativeSelect
+                            className="flex-1 xl:flex-none min-w-28"
+                            value={statusFilter}
+                            aria-label="Filter by status"
+                            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Completed">Completed</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Pending">Pending</option>
+                        </NativeSelect>
+
+                        <NativeSelect
+                            className="flex-1 xl:flex-none min-w-36"
+                            value={categoryFilter}
+                            aria-label="Filter by category"
+                            onChange={e => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                        >
+                            <option value="All">All Categories</option>
+                            {uniqueCategories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </NativeSelect>
+
+                        <div className="flex items-center gap-2 w-full xl:w-auto flex-wrap">
                             {dateFilterType === 'Custom' && (
                                 <motion.div
                                     initial={{ opacity: 0, x: 20 }}
@@ -671,20 +725,20 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                         type="date"
                                         value={startDate}
                                         onChange={e => setStartDate(e.target.value)}
-                                        className="h-9 w-full sm:w-auto text-xs bg-transparent border border-input rounded-md"
+                                        className="h-9 w-full sm:w-36 text-xs bg-input/30 border border-input rounded-xl"
                                     />
                                     <span className="text-muted-foreground text-xs shrink-0">to</span>
                                     <Input
                                         type="date"
                                         value={endDate}
                                         onChange={e => setEndDate(e.target.value)}
-                                        className="h-9 w-full sm:w-auto text-xs bg-transparent border border-input rounded-md"
+                                        className="h-9 w-full sm:w-36 text-xs bg-input/30 border border-input rounded-xl"
                                     />
                                 </motion.div>
                             )}
 
-                            <select
-                                className="h-9 px-3 py-1 border border-input rounded-md text-xs font-medium bg-background text-foreground hover:bg-accent cursor-pointer outline-none flex-1 sm:flex-none"
+                            <NativeSelect
+                                className="flex-1 xl:flex-none w-full xl:w-auto min-w-28"
                                 value={dateFilterType}
                                 aria-label="Filter by date range"
                                 onChange={e => handleDateFilterTypeChange(e.target.value)}
@@ -694,25 +748,20 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 <option value="Week">This Week</option>
                                 <option value="Month">This Month</option>
                                 <option value="Custom">Custom Period</option>
-                            </select>
+                            </NativeSelect>
                         </div>
 
-                        <Button
-                            variant={statusFilter !== 'All' ? 'default' : 'outline'}
-                            onClick={() => {
-                                const statuses = ['All', 'Completed', 'In Progress', 'Pending'];
-                                const currentIndex = statuses.indexOf(statusFilter);
-                                setStatusFilter(statuses[(currentIndex + 1) % statuses.length]);
-                                setCurrentPage(1);
-                            }}
-                            title="Filter by status"
-                            className="border-border/50 bg-background/50 hover:bg-accent transition-all text-xs font-bold uppercase tracking-wider w-full sm:min-w-36 justify-between shrink-0"
-                        >
-                            <span className="flex items-center gap-2">
-                                <Filter size={14} className="text-muted-foreground" />
-                                {statusFilter === 'All' ? 'All Status' : statusFilter}
-                            </span>
-                        </Button>
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={resetAllFilters}
+                                className="h-9 px-3 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 shrink-0"
+                            >
+                                <FilterX size={14} className="mr-1.5" />
+                                Reset
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
 
@@ -932,7 +981,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 <Button
                                     variant="outline"
                                     className="mt-2"
-                                    onClick={() => { setSearchTerm(''); setStatusFilter('All'); setDateFilterType('All'); }}
+                                    onClick={resetAllFilters}
                                 >
                                     Clear all filters
                                 </Button>
