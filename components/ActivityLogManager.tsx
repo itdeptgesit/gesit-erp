@@ -672,26 +672,27 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             {/* ─── Activity List Table / Mobile List ──────────────────────── */}
             <Card className="rounded-xl border-border/40 shadow-xl overflow-hidden bg-white/50 dark:bg-zinc-900/30 backdrop-blur-sm">
                 {/* Table Header / Search & Filters */}
-                <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b p-4 sm:p-6">
-                    <div>
+<CardHeader className="flex flex-col gap-4 border-b p-4 sm:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full">
+                    <div className="shrink-0">
                         <CardTitle>Recent Activities</CardTitle>
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">Comprehensive audit trail of internal activities.</p>
                     </div>
 
-                    <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-2.5 w-full flex-1 max-w-4xl justify-end">
-                        <div className="relative w-full xl:w-auto xl:min-w-[240px] xl:max-w-xs">
+                    <div className="flex flex-row flex-wrap items-center justify-end gap-2.5 ml-auto">
+                        <div className="relative w-full sm:w-auto sm:min-w-[220px] xl:max-w-xs">
                             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400" />
                             <Input
                                 type="text"
                                 placeholder="Search name, category, location..."
                                 value={searchTerm}
                                 onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                className="pl-10 h-9 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40 w-full"
+                                className="pl-10 h-9 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40"
                             />
                         </div>
 
                         <NativeSelect
-                            className="flex-1 xl:flex-none min-w-28"
+                            className="min-w-28"
                             value={statusFilter}
                             aria-label="Filter by status"
                             onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
@@ -703,7 +704,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                         </NativeSelect>
 
                         <NativeSelect
-                            className="flex-1 xl:flex-none min-w-36"
+                            className="min-w-36"
                             value={categoryFilter}
                             aria-label="Filter by category"
                             onChange={e => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
@@ -714,31 +715,9 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                             ))}
                         </NativeSelect>
 
-                        <div className="flex items-center gap-2 w-full xl:w-auto flex-wrap">
-                            {dateFilterType === 'Custom' && (
-                                <motion.div
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="flex items-center gap-1.5 flex-1 sm:flex-none"
-                                >
-                                    <Input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={e => setStartDate(e.target.value)}
-                                        className="h-9 w-full sm:w-36 text-xs bg-input/30 border border-input rounded-xl"
-                                    />
-                                    <span className="text-muted-foreground text-xs shrink-0">to</span>
-                                    <Input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={e => setEndDate(e.target.value)}
-                                        className="h-9 w-full sm:w-36 text-xs bg-input/30 border border-input rounded-xl"
-                                    />
-                                </motion.div>
-                            )}
-
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                             <NativeSelect
-                                className="flex-1 xl:flex-none w-full xl:w-auto min-w-28"
+                                className="min-w-28"
                                 value={dateFilterType}
                                 aria-label="Filter by date range"
                                 onChange={e => handleDateFilterTypeChange(e.target.value)}
@@ -763,6 +742,49 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                             </Button>
                         )}
                     </div>
+                    </div>
+
+                    {/* Custom Period Panel */}
+                    {dateFilterType === 'Custom' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5 sm:gap-3 rounded-xl bg-muted/20 border border-border/40 px-3.5 py-3"
+                        >
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0 flex items-center gap-1.5">
+                                <Calendar size={13} className="text-blue-500" />
+                                Custom Period
+                            </span>
+                            <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={e => setStartDate(e.target.value)}
+                                    aria-label="Start date"
+                                    className="h-9 w-full sm:w-44 text-xs bg-background border border-input rounded-xl"
+                                />
+                                <span className="text-muted-foreground text-xs shrink-0">to</span>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={e => setEndDate(e.target.value)}
+                                    aria-label="End date"
+                                    className="h-9 w-full sm:w-44 text-xs bg-background border border-input rounded-xl"
+                                />
+                            </div>
+                            {(startDate || endDate) && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                                    className="h-9 px-2.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 shrink-0"
+                                >
+                                    <X size={14} className="mr-1" />
+                                    Clear
+                                </Button>
+                            )}
+                        </motion.div>
+                    )}
                 </CardHeader>
 
                 {/* Table & Mobile Card List */}

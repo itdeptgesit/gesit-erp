@@ -49,7 +49,7 @@ export const SwitchVisualizer: React.FC<SwitchVisualizerProps> = ({ switchDetail
         return <CoreChassis switchDetails={switchDetails} onPortClick={onPortClick} />;
     }
 
-    return <StandardChassis switchDetails={switchDetails} onPortClick={onPortClick} />;
+    return <div className="overflow-hidden"><CoreChassis switchDetails={switchDetails} onPortClick={onPortClick} /></div>;
 };
 
 const AccessPointChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortClick }) => {
@@ -91,9 +91,8 @@ const CoreChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortCli
         : Math.max(1000, (columns * 40) + 400);
 
     return (
-        <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+        <div className="w-full pb-4">
             <div
-                style={{ minWidth: `${minWidth}px` }}
                 className="bg-[#020617] rounded-xl p-6 shadow-2xl border border-slate-800 relative flex items-center h-44 overflow-hidden"
             >
                 {/* Chassis Texture Overlay */}
@@ -102,21 +101,21 @@ const CoreChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortCli
                 <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_3px)] pointer-events-none"></div>
 
                 {/* Left Panel: Info */}
-                <div className="flex flex-col gap-1 px-6 border-r border-slate-800/80 w-52 shrink-0 z-10">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
-                        <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">System Healthy</span>
+                <div className="flex flex-col gap-1 px-3 border-r border-slate-800/80 w-36 shrink-0 z-10 overflow-hidden">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981] shrink-0"></div>
+                        <span className="text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] truncate">System Healthy</span>
                     </div>
-                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-[0.25em]">{switchDetails.model}</span>
-                    <span className="text-[14px] font-bold text-white tracking-tight drop-shadow-md leading-tight">{switchDetails.name}</span>
-                    <div className="flex gap-2 mt-3 items-center">
-                        <div className="px-2 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded text-[7px] font-bold uppercase tracking-wider">L3 Managed</div>
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_#3b82f6]"></div>
+                    <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] truncate">{switchDetails.model}</span>
+                    <span className="text-[12px] font-bold text-white tracking-tight drop-shadow-md leading-tight truncate">{switchDetails.name}</span>
+                    <div className="flex gap-1.5 mt-2 items-center">
+                        <div className="px-1.5 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded text-[6px] font-bold uppercase tracking-wider whitespace-nowrap">L3 Managed</div>
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_#3b82f6] shrink-0"></div>
                     </div>
                 </div>
 
                 {/* Center Panel: Ports */}
-                <div className="flex-1 flex gap-3 items-center justify-center px-8 z-10 overflow-visible">
+                <div className="flex-1 flex gap-3 items-center justify-center px-8 z-10 overflow-hidden">
                     {portCount <= 12 ? (
                         <div className="flex gap-4 items-end">
                             {ports.map(port => (
@@ -136,7 +135,7 @@ const CoreChassis: React.FC<SwitchVisualizerProps> = ({ switchDetails, onPortCli
                                         const isGroupEdge = (colIndex + 1) % 8 === 0 && colIndex !== columns - 1;
                                         return (
                                             <React.Fragment key={colIndex}>
-                                                <div className="flex flex-col gap-3">
+                                                <div className="flex flex-col gap-4">
                                                     {tPort && <RJ45Port port={tPort} onClick={() => onPortClick(tPort)} isTop />}
                                                     {bPort && <RJ45Port port={bPort} onClick={() => onPortClick(bPort)} />}
                                                 </div>

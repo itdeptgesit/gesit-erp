@@ -134,373 +134,408 @@ export interface FinanceFormData {
   bankName: string;
   paymentMethod: 'Cash' | 'Transfer';
   transferTo: string;
+  paidTo?: string;
+  requestDate?: string;
   amount?: number; // Optional override
+  paperSize?: 'a4_half' | 'a5' | 'a4_duplicate';
 }
 
-
-type PdfCardContext = {
-  doc: jsPDF;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  index: number;
-};
-
-const drawCardFrame = ({ doc, x, y, w, h }: PdfCardContext) => {
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.2);
-  doc.setLineDashPattern([2, 2], 0);
-  doc.rect(x, y, w, h);
-  doc.setLineDashPattern([], 0);
-  doc.setDrawColor(0, 0, 0);
-};
-
-const drawCompactHeader = (
-  doc: jsPDF,
-  logoBase64: string | null,
-  x: number,
-  y: number,
-  w: number,
-  title: string
-) => {
-  if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', x + 4, y + 4, 7, 7, undefined, 'FAST');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('THE GESIT COMPANIES', x + 13, y + 8.5);
-  } else {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('THE GESIT COMPANIES', x + 4, y + 8.5);
-  }
-
-  doc.setFont('calibri', 'bold');
-  doc.setFontSize(10);
-  const tw = doc.getTextWidth(title);
-  const tx = x + (w - tw) / 2;
-  doc.text(title, tx, y + 17);
-  doc.setLineWidth(0.35);
-  doc.line(tx, y + 18, tx + tw, y + 18);
-};
-
-const drawCompactField = (
-  doc: jsPDF,
-  label: string,
-  value: string,
-  x: number,
-  y: number,
-  labelW: number,
-  valueW: number,
-  fontSize = 6.6
-) => {
-  doc.setFont('calibri', 'normal');
-  doc.setFontSize(fontSize);
-  doc.text(label, x, y);
-  doc.text(':', x + labelW, y);
-
-  const valueX = x + labelW + 1.5;
-  const lines = doc.splitTextToSize(value || '', valueW);
-  doc.text(lines[0] || '', valueX, y);
-  doc.setLineWidth(0.15);
-  doc.line(valueX, y + 0.9, valueX + valueW, y + 0.9);
-};
-
-const drawPaymentMethod = (
-  doc: jsPDF,
-  method: 'Cash' | 'Transfer',
-  transferTo: string,
-  x: number,
-  y: number,
-  w: number
-) => {
-  doc.setFont('calibri', 'normal');
-  doc.setFontSize(6.6);
-  doc.text('Payment Method', x, y);
-  doc.text(':', x + 25, y);
-
-  const boxY = y - 3.2;
-  const cashX = x + 28;
-  const transferX = x + 48;
-
-  doc.rect(cashX, boxY, 3.2, 3.2);
-  doc.text('Cash', cashX + 4.5, y);
-
-  doc.rect(transferX, boxY, 3.2, 3.2);
-  doc.text('Transfer', transferX + 4.5, y);
-
-  if (method === 'Cash') {
-    doc.setLineWidth(0.25);
-    doc.line(cashX + 0.4, boxY + 1.5, cashX + 1.3, boxY + 2.4);
-    doc.line(cashX + 1.3, boxY + 2.4, cashX + 2.8, boxY + 0.8);
-  } else {
-    doc.setLineWidth(0.25);
-    doc.line(transferX + 0.4, boxY + 1.5, transferX + 1.3, boxY + 2.4);
-    doc.line(transferX + 1.3, boxY + 2.4, transferX + 2.8, boxY + 0.8);
-  }
-
-  doc.setLineWidth(0.15);
-  const destX = x + 69;
-  doc.text('To', destX, y);
-  doc.text(':', destX + 7, y);
-  doc.text(method === 'Transfer' ? (transferTo || '') : '', destX + 9, y);
-  doc.line(destX + 8, y + 0.9, x + w, y + 0.9);
-
-  doc.setLineWidth(0.2);
-};
-
-const drawCompactItemsTable = (
+/**
+ * Draw a single finance voucher (Cash Advance or Payment Requisition)
+ * Sized for A5 (148.5 x 210 mm)
+ */
+const drawSingleFinanceVoucher = (
   doc: jsPDF,
   req: PurchaseRequisition,
-  costCenter: string,
-  x: number,
-  y: number,
-  w: number,
-  h: number
+  type: 'cash_advance' | 'payment_requisition',
+  formData: FinanceFormData,
+  logoImg: HTMLImageElement | null,
+  logoBase64: string | null,
+  offsetX: number = 0,
+  isCopy: boolean = false
 ) => {
-  const colW = [8, 18, w - 8 - 18 - 21, 21];
-  const colX = [x];
+  const pageW = 148.5;
+  const pageH = 210;
+  const marginL = 8;
+  const marginR = 8;
+  const contentW = pageW - marginL - marginR; // 132.5mm
+
+  let y = 8;
+
+  // 1. LOGO & COMPANY NAME
+  if (logoImg && logoBase64) {
+    const originalW = logoImg.naturalWidth || logoImg.width || 100;
+    const originalH = logoImg.naturalHeight || logoImg.height || 100;
+    const aspect = originalW / originalH;
+    const logoH = 9.5;
+    const logoW = logoH * aspect;
+
+    const companyText = 'THE GESIT COMPANIES';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+
+    const emblemX = offsetX + marginL;
+    const textX = emblemX + logoW + 3;
+
+    doc.addImage(logoBase64, 'PNG', emblemX, y - 4, logoW, logoH, undefined, 'FAST');
+    doc.text(companyText, textX, y + 2.5);
+  }
+
+  // Duplicate badge if isCopy
+  if (isCopy) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(120, 120, 120);
+    doc.text('[ ARSIP / COPY ]', offsetX + pageW - marginR, y + 2.5, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+  }
+
+  y += 14;
+
+  // 2. MAIN TITLE
+  doc.setFont('calibri', 'bold');
+  doc.setFontSize(13.5);
+  const titleText = type === 'cash_advance' ? 'CASH ADVANCE' : 'PAYMENT REQUISITION';
+  const centerX = offsetX + (pageW / 2);
+  doc.text(titleText, centerX, y, { align: 'center' });
+
+  // Title Underline
+  const titleW = doc.getTextWidth(titleText);
+  doc.setLineWidth(0.4);
+  doc.line(centerX - (titleW / 2), y + 1.5, centerX + (titleW / 2), y + 1.5);
+
+  y += 10;
+
+  // 3. METADATA HEADER
+  doc.setFont('calibri', 'normal');
+  doc.setFontSize(8.5);
+
+  const col1X = offsetX + marginL;
+  const col1LabelW = 24;
+  const col1ValX = col1X + col1LabelW + 2;
+
+  const col2LabelW = 18;
+  const col2LineW = 24;
+  const col2X = offsetX + marginL + contentW - col2LabelW - col2LineW - 2;
+  const col2ValX = col2X + col2LabelW + 2;
+
+  const col1LineW = col2X - col1ValX - 3;
+  const rowHeight = 7.5;
+
+  // Row 1: Company & Cek/BG No.
+  doc.text('Company', col1X, y);
+  doc.text(':', col1X + col1LabelW, y);
+  doc.text(formData.companyName || '', col1ValX, y);
+  doc.setLineWidth(0.15);
+  doc.line(col1ValX, y + 0.8, col1ValX + col1LineW, y + 0.8);
+
+  doc.text('Cek / BG No.', col2X, y);
+  doc.text(':', col2X + col2LabelW, y);
+  doc.text(formData.cekBgNo || '', col2ValX, y);
+  doc.line(col2ValX, y + 0.8, col2ValX + col2LineW, y + 0.8);
+
+  y += rowHeight;
+
+  // Row 2: Project Name & Bank
+  doc.text('Project Name', col1X, y);
+  doc.text(':', col1X + col1LabelW, y);
+  const projNameLines = doc.splitTextToSize(formData.projectName || '', col1LineW);
+  doc.text(projNameLines[0] || '', col1ValX, y);
+  doc.line(col1ValX, y + 0.8, col1ValX + col1LineW, y + 0.8);
+
+  doc.text('Bank', col2X, y);
+  doc.text(':', col2X + col2LabelW, y);
+  doc.text(formData.bankName || '', col2ValX, y);
+  doc.line(col2ValX, y + 0.8, col2ValX + col2LineW, y + 0.8);
+
+  y += rowHeight;
+
+  // Row 3: Request Date & Pay to
+  doc.text('Request Date', col1X, y);
+  doc.text(':', col1X + col1LabelW, y);
+  doc.text(formatIndonesianDate(formData.requestDate || req.requestDate), col1ValX, y);
+  doc.line(col1ValX, y + 0.8, col1ValX + col1LineW, y + 0.8);
+
+  const paidToText = formData.paidTo || req.paidTo || formData.transferTo || '';
+  doc.text('Pay to', col2X, y);
+  doc.text(':', col2X + col2LabelW, y);
+  const paidToLines = doc.splitTextToSize(paidToText, col2LineW + 2);
+  doc.text(paidToLines[0] || '', col2ValX, y);
+  doc.line(col2ValX, y + 0.8, col2ValX + col2LineW, y + 0.8);
+
+  y += rowHeight;
+
+  // Row 4: Payment Method
+  doc.text('Payment Method', col1X, y);
+  doc.text(':', col1X + col1LabelW, y);
+
+  // Checkbox Cash
+  const boxY = y - 3.2;
+  doc.setLineWidth(0.2);
+  doc.rect(col1ValX, boxY, 3.5, 3.5);
+  doc.text('Cash', col1ValX + 5.5, y);
+  if (formData.paymentMethod === 'Cash') {
+    doc.setLineWidth(0.35);
+    doc.line(col1ValX + 0.5, boxY + 1.8, col1ValX + 1.3, boxY + 2.7);
+    doc.line(col1ValX + 1.3, boxY + 2.7, col1ValX + 3.0, boxY + 0.8);
+    doc.setLineWidth(0.2);
+  }
+
+  // Checkbox Transfer
+  const transferX = col1ValX + 16;
+  doc.rect(transferX, boxY, 3.5, 3.5);
+  doc.text('Transfer to :', transferX + 5.5, y);
+  if (formData.paymentMethod === 'Transfer') {
+    doc.setLineWidth(0.35);
+    doc.line(transferX + 0.5, boxY + 1.8, transferX + 1.3, boxY + 2.7);
+    doc.line(transferX + 1.3, boxY + 2.7, transferX + 3.0, boxY + 0.8);
+    doc.setLineWidth(0.2);
+  }
+
+  // Transfer destination line
+  const transferDestX = transferX + 22;
+  const transferDestW = (offsetX + marginL + contentW) - transferDestX;
+  if (formData.paymentMethod === 'Transfer') {
+    const destText = formData.transferTo || req.bankAccount || '';
+    const destLines = doc.splitTextToSize(destText, transferDestW - 2);
+    doc.text(destLines[0] || '', transferDestX + 1, y);
+  }
+  doc.setLineWidth(0.15);
+  doc.line(transferDestX, y + 0.8, offsetX + marginL + contentW, y + 0.8);
+
+  y += 8;
+
+  // 4. ITEMS TABLE
+  const colW = [8, 24, 48.5, 20, 32]; // Total 132.5 mm
+  let colX: number[] = [offsetX + marginL];
   for (let i = 0; i < colW.length - 1; i++) {
     colX.push(colX[i] + colW[i]);
   }
 
-  const headerH = 5.5;
-  doc.setLineWidth(0.2);
-  doc.rect(x, y, w, h);
+  const tableHeaderH = 7.5;
+  doc.setLineWidth(0.25);
+
+  // Header Background & Borders
+  doc.rect(offsetX + marginL, y, contentW, tableHeaderH);
   for (let i = 1; i < colX.length; i++) {
-    doc.line(colX[i], y, colX[i], y + h);
+    doc.line(colX[i], y, colX[i], y + tableHeaderH);
   }
-  doc.line(x, y + headerH, x + w, y + headerH);
 
   doc.setFont('calibri', 'bold');
-  doc.setFontSize(5.9);
-  doc.text('No.', colX[0] + colW[0] / 2, y + 3.7, { align: 'center' });
-  doc.text('Dept.', colX[1] + colW[1] / 2, y + 3.7, { align: 'center' });
-  doc.text('Description', colX[2] + colW[2] / 2, y + 3.7, { align: 'center' });
-  doc.text('Amount', colX[3] + colW[3] / 2, y + 3.7, { align: 'center' });
+  doc.setFontSize(8);
+  doc.text('No.', colX[0] + colW[0] / 2, y + 4.8, { align: 'center' });
+  doc.text('Cost Center /\nDepartment', colX[1] + colW[1] / 2, y + 3.2, { align: 'center' });
+  doc.text('Description', colX[2] + colW[2] / 2, y + 4.8, { align: 'center' });
+  doc.text('Currency', colX[3] + colW[3] / 2, y + 4.8, { align: 'center' });
+  doc.text('Amount', colX[4] + colW[4] / 2, y + 4.8, { align: 'center' });
 
+  y += tableHeaderH;
+
+  // Items
   const items = req.itRecommendations || req.requestedItems || [];
-  const maxRows = Math.max(1, Math.floor((h - headerH - 1.5) / 5.2));
+  const itemRowH = 5;
+  const lineH = 3.5;
+
+  // Pre-calculate heights & overflow prevention
+  // Footer (6mm) + spacing (7mm) + in words (9mm) + signatures (22mm) + margin (6mm) = ~50mm
+  const maxTableH = Math.max(25, pageH - y - 50);
+
+  let measuredRowsH = 0;
+  let visibleCount = 0;
+  for (const item of items) {
+    const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
+    const rh = descLines.length * lineH + (itemRowH - lineH);
+    if (measuredRowsH + rh > maxTableH && visibleCount > 0) {
+      break;
+    }
+    measuredRowsH += rh;
+    visibleCount++;
+  }
+
+  const tableDataH = Math.max(measuredRowsH + 4, 18);
+
+  doc.setLineWidth(0.25);
+  doc.rect(offsetX + marginL, y, contentW, tableDataH);
+  for (let i = 1; i < colX.length; i++) {
+    doc.line(colX[i], y, colX[i], y + tableDataH);
+  }
 
   doc.setFont('calibri', 'normal');
-  doc.setFontSize(5.8);
+  doc.setFontSize(7.5);
+  let rowY = y + 4;
 
   if (items.length === 0) {
-    doc.text('-', colX[2] + 2, y + headerH + 4);
-    return;
+    doc.text('1', colX[0] + colW[0] / 2, rowY, { align: 'center' });
+    doc.text(formData.costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
+    doc.text(formData.projectName || 'Pengeluaran Operasional / IT', colX[2] + 2, rowY);
+    doc.text(req.currency || 'IDR', colX[3] + colW[3] / 2, rowY, { align: 'center' });
+    const finalAmt = formData.amount !== undefined ? formData.amount : (req.grandTotal || 0);
+    if (finalAmt > 0) {
+      doc.text(new Intl.NumberFormat('id-ID').format(finalAmt), colX[4] + colW[4] - 2, rowY, { align: 'right' });
+    }
+  } else {
+    for (let i = 0; i < visibleCount; i++) {
+      const item = items[i];
+      doc.text(String(i + 1), colX[0] + colW[0] / 2, rowY, { align: 'center' });
+
+      if (i === 0) {
+        doc.text(formData.costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, { align: 'center' });
+      }
+
+      const descLines = doc.splitTextToSize(item.description || '-', colW[2] - 4);
+      doc.text(descLines, colX[2] + 2, rowY);
+
+      if ('price' in item && (item as any).price) {
+        doc.text(req.currency || 'IDR', colX[3] + colW[3] / 2, rowY, { align: 'center' });
+        const totalItemAmount = ((item as any).price || 0) * (item.qty || 1);
+        doc.text(new Intl.NumberFormat('id-ID').format(totalItemAmount), colX[4] + colW[4] - 2, rowY, { align: 'right' });
+      }
+
+      rowY += descLines.length * lineH + (itemRowH - lineH);
+    }
+
+    if (items.length > visibleCount) {
+      doc.setFont('calibri', 'italic');
+      doc.setFontSize(6.5);
+      doc.text(`+ ${items.length - visibleCount} item lainnya (lihat lampiran)`, colX[2] + 2, y + tableDataH - 1.5);
+      doc.setFont('calibri', 'normal');
+      doc.setFontSize(7.5);
+    }
   }
 
-  const visible = items.slice(0, maxRows);
-  let rowY = y + headerH + 3.8;
+  y += tableDataH;
 
-  visible.forEach((item, i) => {
-    doc.text(String(i + 1), colX[0] + colW[0] / 2, rowY, { align: 'center' });
+  // Footer Total Row
+  const footerH = 6;
+  doc.rect(offsetX + marginL, y, contentW, footerH);
+  doc.line(colX[3], y, colX[3], y + footerH);
+  doc.line(colX[4], y, colX[4], y + footerH);
 
-    if (i === 0) {
-      doc.text(costCenter || req.department || '', colX[1] + colW[1] / 2, rowY, {
-        align: 'center'
-      });
-    }
+  doc.setFont('calibri', 'bold');
+  doc.setFontSize(8);
+  doc.text('Total', colX[3] + colW[3] / 2, y + 4.2, { align: 'center' });
 
-    const desc = doc.splitTextToSize(item.description || '-', colW[2] - 3);
-    doc.text(desc[0] || '-', colX[2] + 1.5, rowY);
-
-    const hasPrice = 'price' in item && Number((item as any).price || 0) > 0;
-    const amount = hasPrice
-      ? Number((item as any).price || 0) * Number(item.qty || 1)
-      : 0;
-
-    if (amount > 0) {
-      doc.text(
-        new Intl.NumberFormat('id-ID').format(amount),
-        colX[3] + colW[3] - 1.5,
-        rowY,
-        { align: 'right' }
-      );
-    }
-
-    rowY += 5.2;
-  });
-
-  if (items.length > visible.length) {
-    doc.setFont('calibri', 'italic');
-    doc.setFontSize(5.2);
-    doc.text(
-      `+ ${items.length - visible.length} item lainnya`,
-      colX[2] + 1.5,
-      y + h - 1.5
-    );
+  const finalAmount = formData.amount !== undefined ? formData.amount : (req.grandTotal || 0);
+  if (finalAmount > 0) {
+    doc.text(new Intl.NumberFormat('id-ID').format(finalAmount), colX[4] + colW[4] - 2, y + 4.2, { align: 'right' });
   }
-};
 
-const drawCompactSignatures = (
-  doc: jsPDF,
-  x: number,
-  y: number,
-  w: number,
-  h: number
-) => {
-  const labels = ['Requested by', 'Approved by', 'Finance', 'Accounting', 'Received by'];
-  const slotW = w / labels.length;
-  const headerH = 5;
+  y += footerH + 7;
 
-  doc.setLineWidth(0.2);
-  doc.setFont('calibri', 'bold');
-  doc.setFontSize(5.5);
-
-  labels.forEach((label, i) => {
-    const sx = x + i * slotW;
-    doc.rect(sx, y, slotW, h);
-    doc.line(sx, y + headerH, sx + slotW, y + headerH);
-    doc.text(label, sx + slotW / 2, y + 3.5, { align: 'center' });
-
-    if (i === labels.length - 1) {
-      doc.line(sx + 3, y + h - 3, sx + slotW - 3, y + h - 3);
-    }
-  });
-};
-
-const drawFinanceCard = async (
-  ctx: PdfCardContext,
-  req: PurchaseRequisition,
-  type: 'cash_advance' | 'payment_requisition',
-  formData: FinanceFormData,
-  logoBase64: string | null
-) => {
-  const { doc, x, y, w } = ctx;
-
-  drawCardFrame(ctx);
-
-  const title = type === 'cash_advance' ? 'CASH ADVANCE' : 'PAYMENT REQUISITION';
-  drawCompactHeader(doc, logoBase64, x, y, w, title);
-
-  const leftX = x + 4;
-  const rightX = x + 53;
-  const fieldWLeft = 45;
-  const fieldWRight = 47;
-  let fy = y + 24;
-
-  drawCompactField(doc, 'Company', formData.companyName, leftX, fy, 17, fieldWLeft - 18);
-  drawCompactField(doc, 'Cek / BG No.', formData.cekBgNo, rightX, fy, 16, fieldWRight - 17);
-
-  fy += 7;
-  drawCompactField(doc, 'Project', formData.projectName, leftX, fy, 17, fieldWLeft - 18);
-  drawCompactField(doc, 'Bank', formData.bankName, rightX, fy, 16, fieldWRight - 17);
-
-  fy += 7;
-  drawCompactField(doc, 'Request Date', formatIndonesianDate(req.requestDate), leftX, fy, 17, fieldWLeft - 18);
-  drawCompactField(doc, 'Pay to', req.paidTo || formData.transferTo || '', rightX, fy, 16, fieldWRight - 17);
-
-  fy += 7;
-  drawPaymentMethod(
-    doc,
-    formData.paymentMethod,
-    formData.transferTo || req.bankAccount || '',
-    leftX,
-    fy,
-    97
-  );
-
-  fy += 5.5;
-
-  // Compact item area. The second file uses a 2 x 3 card layout,
-  // so the table is intentionally kept compact to stay inside each 105 x 99 mm card.
-  drawCompactItemsTable(
-    doc,
-    req,
-    formData.costCenter,
-    x + 4,
-    fy,
-    97,
-    24
-  );
-
-  fy += 27;
-
-  const amount = formData.amount !== undefined ? formData.amount : (req.grandTotal || 0);
-  doc.setFont('calibri', 'bold');
-  doc.setFontSize(7.5);
-  doc.text(
-    `TOTAL ${new Intl.NumberFormat('id-ID').format(amount)} ${req.currency || 'IDR'}`,
-    x + 101,
-    fy,
-    { align: 'right' }
-  );
-  doc.line(x + 4, fy + 1.2, x + 101, fy + 1.2);
-
-  fy += 5.5;
+  // 5. IN WORDS
   doc.setFont('calibri', 'normal');
-  doc.setFontSize(6.1);
-  doc.text('In Words :', x + 4, fy);
-  const words = amount > 0 ? convertNumberToWords(amount) : '';
-  const wordsLines = doc.splitTextToSize(words, 78);
-  doc.text(wordsLines[0] || '', x + 18, fy);
-  doc.line(x + 17, fy + 0.9, x + 101, fy + 0.9);
+  doc.setFontSize(8);
+  doc.text('In Words :', offsetX + marginL, y);
 
-  fy += 7;
-  drawCompactSignatures(doc, x + 4, fy, 97, 16);
+  const wordsText = finalAmount > 0 ? convertNumberToWords(finalAmount) : '';
+  const wordsLines = doc.splitTextToSize(wordsText, contentW - 20);
+  doc.text(wordsLines[0] || '', offsetX + marginL + 18, y);
+  doc.setLineWidth(0.15);
+  doc.line(offsetX + marginL + 16, y + 0.8, offsetX + marginL + contentW, y + 0.8);
+
+  y += 9;
+
+  // 6. SIGNATURE BOXES
+  const boxedHeaders = ['Requested by', 'Approved by', 'Finance', 'Accounting'];
+  const sigBoxW = contentW / 5; // 26.5 mm each
+  const sigBoxH = 22;
+  const sigHeaderH = 7;
+
+  // First 4: bordered boxes
+  let sigX = offsetX + marginL;
+  for (let i = 0; i < boxedHeaders.length; i++) {
+    doc.setLineWidth(0.25);
+    doc.rect(sigX, y, sigBoxW, sigBoxH);
+    doc.line(sigX, y + sigHeaderH, sigX + sigBoxW, y + sigHeaderH);
+
+    doc.setFont('calibri', 'bold');
+    doc.setFontSize(8);
+    doc.text(boxedHeaders[i], sigX + sigBoxW / 2, y + 4.8, { align: 'center' });
+
+    sigX += sigBoxW;
+  }
+
+  // Received by: no outer border — just label + underline
+  const recCenterX = sigX + sigBoxW / 2;
+  doc.setFont('calibri', 'bold');
+  doc.setFontSize(8);
+  doc.text('Received by', recCenterX, y + 4.8, { align: 'center' });
+
+  const lineInset = 3;
+  doc.setLineWidth(0.25);
+  doc.line(sigX + lineInset, y + sigBoxH - 3, sigX + sigBoxW - lineInset, y + sigBoxH - 3);
 };
 
+/**
+ * Cutting guide line in the middle of A4 landscape (x = 148.5 mm)
+ */
+const drawCuttingGuide = (doc: jsPDF, pageH: number = 210) => {
+  const cutX = 148.5;
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([2, 2], 0);
+
+  // Full page height dashed line
+  doc.line(cutX, 0, cutX, pageH);
+
+  doc.setLineDashPattern([], 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text('✂ POTONG DI SINI / CUT HERE', cutX, 5, { align: 'center' });
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setTextColor(0, 0, 0);
+};
 
 export async function exportFinanceFormPDF(
   req: PurchaseRequisition,
   type: 'cash_advance' | 'payment_requisition',
   formData: FinanceFormData
 ) {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
+  const paperSize = formData.paperSize || 'a4_half';
 
+  let doc: jsPDF;
+  if (paperSize === 'a5') {
+    doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a5'
+    });
+  } else {
+    // 'a4_half' and 'a4_duplicate' both use A4 landscape
+    doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+  }
+
+  const logoImg = await loadLogoImage();
   const logoBase64 = await loadLogoBase64();
 
   await loadCalibriFont(doc);
 
-  // A4 portrait = 210 x 297 mm.
-  // 6 forms = 2 columns x 3 rows, exactly like the second file.
-  const pageW = 210;
-  const pageH = 297;
-  const cardW = pageW / 2;   // 105 mm
-  const cardH = pageH / 3;   // 99 mm
-
-  // Dashed cutting guides: vertical center + two horizontal divisions.
-  const drawCutGuides = () => {
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.25);
-    doc.setLineDashPattern([2, 2], 0);
-
-    doc.line(cardW, 0, cardW, pageH);
-    doc.line(0, cardH, pageW, cardH);
-    doc.line(0, cardH * 2, pageW, cardH * 2);
-
-    doc.setLineDashPattern([], 0);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5);
-    doc.setTextColor(150, 150, 150);
-
-    doc.text('✂', cardW, 3, { align: 'center' });
-    doc.text('✂', cardW, cardH + 3, { align: 'center' });
-    doc.text('✂', cardW, cardH * 2 + 3, { align: 'center' });
-
-    doc.setDrawColor(0, 0, 0);
-    doc.setTextColor(0, 0, 0);
-  };
-
-  // One requested form per card.
-  drawFinanceCard(
-    { doc, x: 0, y: 0, w: cardW, h: cardH, index: 0 },
-    req,
-    type,
-    formData,
-    logoBase64
-  );
-
-  drawCutGuides();
+  if (paperSize === 'a5') {
+    // Full A5 single voucher
+    drawSingleFinanceVoucher(doc, req, type, formData, logoImg, logoBase64, 0, false);
+  } else if (paperSize === 'a4_duplicate') {
+    // Left half: Original
+    drawSingleFinanceVoucher(doc, req, type, formData, logoImg, logoBase64, 0, false);
+    // Right half: Copy
+    drawSingleFinanceVoucher(doc, req, type, formData, logoImg, logoBase64, 148.5, true);
+    // Cutting guide line in middle
+    drawCuttingGuide(doc, 210);
+  } else {
+    // 'a4_half' (Default): Left half voucher, center cutting line
+    drawSingleFinanceVoucher(doc, req, type, formData, logoImg, logoBase64, 0, false);
+    drawCuttingGuide(doc, 210);
+  }
 
   const cleanId = String(req.id || '000').padStart(4, '0');
   const typeStr = type === 'cash_advance' ? 'CA' : 'PRQ';
-  doc.save(`${typeStr}-${cleanId}-6UP.pdf`);
+  doc.save(`${typeStr}-${cleanId}.pdf`);
 }
 
 // ==========================================

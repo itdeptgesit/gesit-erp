@@ -28,6 +28,7 @@ import { exportToExcel } from '../lib/excelExport';
 
 // SHADCN UI IMPORTS
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     DropdownMenu,
@@ -41,6 +42,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -80,7 +84,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const role = currentUser?.role?.toLowerCase() || '';
     const groups = currentUser?.groups || [];
-    const isAdmin = role.includes('admin');
+    const SUPPORT_GROUPS = ['it', 'it_staff', 'it_management', 'support', 'admin'];
+    const isAdmin = (role === 'super admin' || role === 'super_admin') ||
+        groups.some(g => SUPPORT_GROUPS.includes(g.toLowerCase()));
 
     // Profile Dropdown state
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -95,11 +101,9 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
         }
     };
 
-    // Simplified Mechanism: Support = Admin Role OR IT Group members OR specifically authorized by Admin.
+    // Simplified Mechanism: Support = IT Admin roles or IT group members or specifically authorized by Admin.
     // Requesters = Everyone else (Staff & User roles).
-    const isSupport = role.includes('admin') ||
-        groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support')) ||
-        currentUser?.isHelpdeskSupport === true;
+    const isSupport = isAdmin;
 
     // Client-side UI states from HelpdeskPublic
     const [viewMode, setViewMode] = useState<'list' | 'form' | 'success' | 'detail' | 'archive'>(isSupport ? 'list' : 'form');
@@ -156,16 +160,15 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
     useEffect(() => {
         const fetchItStaff = async () => {
             try {
-                // Fetch users who are Admins, in IT/Support groups, OR marked as Helpdesk Support
+                // Fetch users who are IT admins/staff, in IT/Support groups, OR marked as Helpdesk Support
                 const { data } = await supabase
                     .from('user_accounts')
-                    .select('full_name, email, groups, role, is_helpdesk_support');
+                    .select('full_name, email, groups, role');
 
                 if (data) {
                     const authorizedStaff = data.filter(u =>
-                        (u.role?.toLowerCase().includes('admin')) ||
-                        (u.groups && u.groups.some((g: string) => g.toLowerCase() === 'it' || g.toLowerCase().includes('support'))) ||
-                        (u.is_helpdesk_support === true)
+                        (u.role?.toLowerCase() === 'super admin' || u.role?.toLowerCase() === 'super_admin') ||
+                        (u.groups && u.groups.some((g: string) => SUPPORT_GROUPS.includes(g.toLowerCase())))
                     );
                     setItStaff(authorizedStaff.map((u: any) => ({ name: u.full_name || u.email, email: u.email })));
                 }
@@ -181,8 +184,8 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
     const [newTicketData, setNewTicketData] = useState({
         subject: '',
         description: '',
-        priority: 'Medium' as any,           // Will be set by support staff
-        department: 'General' as string,     // Will be categorized by support staff
+        priority: 'Medium' as any,           // Ditentukan oleh Tim IT saat menangani tiket
+        department: ((currentUser?.department as string) || 'General'),  // Diambil otomatis dari profil user
         attachments: [] as { url: string; name: string; type: string }[]
     });
     const newTicketFileInputRef = useRef<HTMLInputElement>(null);
@@ -862,7 +865,10 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             const matchesSearch = (t.requesterName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.ticketId || '').toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = statusFilter === 'All' ? true : t.status === statusFilter;
+            const isResolved = t.status === 'Resolved' || t.status === 'Closed';
+            const matchesStatus = statusFilter === 'All' ? true
+                : statusFilter === 'Open' ? !isResolved
+                : t.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
     }, [tickets, searchTerm, statusFilter, isSupport, supportFilter, currentUser?.email]);
@@ -1274,10 +1280,14 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             const payload: any = {
                 status: nextStatus,
                 resolution: finalResolution,
-                assigned_to: currentUser?.fullName || 'IT Support',
-                assigned_to_email: userEmail,
                 updated_at: new Date().toISOString()
             };
+
+            if (isSupport) {
+                // Only IT assigns/claims the ticket; requester actions must not overwrite the assigned staff
+                payload.assigned_to = currentUser?.fullName || 'IT Support';
+                payload.assigned_to_email = userEmail;
+            }
 
             if (nextStatus === 'Resolved') {
                 payload.resolved_at = new Date().toISOString();
@@ -1598,29 +1608,33 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
             </PageHeader>
 
 
-            {/* Action Bar */}
-            {!isManagementMode && viewMode === 'archive' && (
-                <div className="w-full flex justify-end mb-6">
-                    <Button 
-                        onClick={() => setViewMode('form')}
-                        className="/20 group"
-                    >
-                        <LifeBuoy size={16} className="mr-2 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-black uppercase tracking-widest">{t('submitTicket')}</span>
-                    </Button>
-                </div>
-            )}
-            {!isManagementMode && viewMode === 'form' && (
-                <div className="w-full mb-6 flex items-center gap-4">
-                    <Button 
-                        variant="ghost"
-                        onClick={() => setViewMode('archive')}
-                        className="dark: group"
-                    >
-                        <Inbox size={16} className="mr-2 text-slate-400 group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{t('myTickets')}</span>
-                    </Button>
-                </div>
+            {/* Mode Switcher (Requester) */}
+            {!isManagementMode && (
+                <Tabs
+                    value={viewMode === 'form' || viewMode === 'success' ? 'form' : 'archive'}
+                    onValueChange={(val) => {
+                        if (val === 'form') {
+                            setNewTicketData({
+                                subject: '',
+                                description: '',
+                                priority: 'Medium' as any,
+                                department: (currentUser?.department as string) || 'General',
+                                attachments: []
+                            });
+                        }
+                        setViewMode(val as any);
+                    }}
+                    className="w-fit mb-6"
+                >
+                    <TabsList>
+                        <TabsTrigger value="form">
+                            <LifeBuoy size={14} className="mr-2" /> {t('submitTicket')}
+                        </TabsTrigger>
+                        <TabsTrigger value="archive">
+                            <Inbox size={14} className="mr-2" /> {t('myTickets')}
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
             )}
 
             {toast && (
@@ -1698,22 +1712,59 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('supportTeamBackSoon')}</p>
                                         </div>
                                     </CardHeader>
-                                    <CardContent className="space-y-6">
+                                    <CardContent className="space-y-7">
+                                        {/* Info Banner */}
+                                        <div className="flex items-start gap-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/60 dark:bg-indigo-950/20 px-4 py-3">
+                                            <Info size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+                                            <p className="text-[12px] font-medium text-indigo-900/80 dark:text-indigo-200/80 leading-relaxed">
+                                                Lengkapi <span className="font-bold">Subjek</span> dan <span className="font-bold">Deskripsi</span> di bawah ini, lalu klik <span className="font-bold">Kirim Laporan</span>. Prioritas tiket akan ditentukan oleh Tim IT setelah laporan diterima.
+                                            </p>
+                                        </div>
+
                                         {/* Subject Field */}
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">{t('subject')}</label>
-                                            <input
-                                                type="text"
-                                                className="flex h-12 w-full rounded-xl border border-border bg-slate-50/50 dark:bg-zinc-800/50 px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/5 focus-visible:border-indigo-500/50 transition-all"
+                                            <div className="flex items-center justify-between">
+                                                <Label htmlFor="ticket-subject" className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                                    {t('subject')} <span className="text-rose-500">*</span>
+                                                </Label>
+                                                <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">{newTicketData.subject.length}/120</span>
+                                            </div>
+                                            <Input
+                                                id="ticket-subject"
+                                                className="h-11"
+                                                maxLength={120}
                                                 placeholder={t('subjectPlaceholder')}
                                                 value={newTicketData.subject}
                                                 onChange={e => setNewTicketData({ ...newTicketData, subject: e.target.value })}
                                             />
+                                            <p className="text-[11px] font-medium text-muted-foreground/90 leading-relaxed">
+                                                Ringkasan singkat masalah atau permintaan — contoh: "Reset password email".
+                                            </p>
+                                        </div>
+
+                                        {/* Departemen: auto dari profil user */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="ticket-department" className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Departemen</Label>
+                                            <div className="relative">
+                                                <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+                                                <Input
+                                                    id="ticket-department"
+                                                    className="h-11 pl-10 bg-slate-50/80 dark:bg-zinc-800/80"
+                                                    value={newTicketData.department}
+                                                    readOnly
+                                                />
+                                                <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
+                                            </div>
+                                            <p className="text-[11px] font-medium text-muted-foreground/90 leading-relaxed">
+                                                Terisi otomatis dari profil Anda.
+                                            </p>
                                         </div>
 
                                         {/* Deskripsi Field */}
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">{t('description')}</label>
+                                            <Label htmlFor="ticket-description" className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                                                {t('description')} <span className="text-rose-500">*</span>
+                                            </Label>
                                             <div className="border border-border rounded-xl overflow-hidden bg-slate-50/50 dark:bg-zinc-800/50 focus-within:ring-4 focus-within:ring-indigo-500/5 focus-within:border-indigo-500/50 transition-all">
                                                 {/* Rich Text Toolbar */}
                                                 <div className="px-3 py-2 bg-white/50 dark:bg-zinc-900/50 border-b border-border flex flex-wrap gap-1.5 items-center">
@@ -1732,16 +1783,17 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                             size="icon"
                                                             type="button"
                                                             onClick={() => applyNewTicketFormatting(item.type)}
-                                                            className="w-8 dark: transition-all"
+                                                            className="w-8 transition-all"
                                                         >
                                                             <item.icon size={13} />
                                                         </Button>
                                                     ))}
                                                     {isUploading && <Loader2 size={13} className="animate-spin text-indigo-500 ml-2" />}
                                                 </div>
-                                                <textarea
+                                                <Textarea
                                                     ref={newTicketDescriptionRef}
-                                                    className="w-full h-[220px] p-5 bg-transparent border-none outline-none text-[14px] font-medium placeholder:text-slate-400 resize-none leading-relaxed"
+                                                    id="ticket-description"
+                                                    className="min-h-[220px] h-[220px] resize-none bg-transparent border-0 shadow-none rounded-none px-5 py-5 text-[14px] font-medium leading-relaxed focus-visible:ring-0 focus-visible:border-0"
                                                     placeholder={t('descPlaceholder')}
                                                     value={newTicketData.description}
                                                     onChange={e => setNewTicketData({ ...newTicketData, description: e.target.value })}
@@ -1785,25 +1837,33 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 {/* Hidden File Input */}
                                                 <input type="file" ref={newTicketFileInputRef} className="hidden" multiple onChange={handleNewTicketFileUpload} />
                                             </div>
+                                            <p className="text-[11px] font-medium text-muted-foreground/90 leading-relaxed">
+                                                Jelaskan detail masalah. Gunakan toolbar (B, I, daftar, tautan) untuk format teks, dan lampirkan gambar/file bila diperlukan.
+                                            </p>
                                         </div>
                                     </CardContent>
-                                    <div className="p-6 border-t bg-slate-50/50 dark:bg-zinc-800/30 flex items-center justify-end gap-3">
-                                        <Button
-                                            variant="ghost"
-                                            onClick={() => setViewMode('archive')}
-                                            className="text-[11px] font-black uppercase tracking-widest transition-all"
-                                        >
-                                            {t('cancel')}
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={handleCreateTicket}
-                                            disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
-                                            className="text-[11px] font-black uppercase tracking-widest dark: /20 dark:/10"
-                                        >
-                                            {isActionLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={14} className="mr-2" />}
-                                            {t('submitReport')}
-                                        </Button>
+                                    <div className="p-6 border-t bg-slate-50/50 dark:bg-zinc-800/30 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                                            <span className="text-rose-500 font-bold">*</span> Wajib diisi — Subjek &amp; Deskripsi
+                                        </p>
+                                        <div className="flex items-center justify-end gap-3">
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => setViewMode('archive')}
+                                                className="text-[11px] font-black uppercase tracking-widest transition-all"
+                                            >
+                                                {t('cancel')}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleCreateTicket}
+                                                disabled={isActionLoading || !newTicketData.subject.trim() || !newTicketData.description.trim()}
+                                                className="text-[11px] font-black uppercase tracking-widest"
+                                            >
+                                                {isActionLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={14} className="mr-2" />}
+                                                {t('submitReport')}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </Card>
                             </div>
@@ -2058,185 +2118,211 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         </Card>
                     </div>
                 ) : (isManagementMode && managementTab === 'queue') ? (
-                    <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-280px)] min-h-[600px] lg:min-h-[650px]">
-                        {/* LEFT COLUMN: Support Queue - ONLY FOR IT STAFF */}
-                        <div className={`w-full lg:w-96 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 h-[600px] lg:h-full ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                            <div className="p-5 border-b border-slate-100 dark:border-zinc-800/60 flex flex-col gap-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
-                                {/* Header Title & Meta actions */}
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Messages</h2>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => fetchTickets()} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" title="Refresh">
-                                            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
-                                        </button>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger render={
-                                                <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors" title="Filters & Options" />
-                                            }>
-                                                <MoreHorizontal size={16} />
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-56 font-medium z-[200]">
-                                                <DropdownMenuGroup>
-                                                    <DropdownMenuLabel className="text-xs">Filter Status</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    {['All', 'Open', 'In Progress', 'Resolved'].map(st => (
-                                                        <DropdownMenuItem key={st} onClick={() => setStatusFilter(st)} className="text-xs flex justify-between">
-                                                            <span>{st === 'In Progress' ? 'Active' : st}</span>
-                                                            {statusFilter === st && <Check size={14} className="text-indigo-500" />}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuGroup>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuGroup>
-                                                    <DropdownMenuLabel className="text-xs">Ticket View</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => setSupportFilter('all')} className="text-xs flex justify-between">All Tickets {supportFilter === 'all' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setSupportFilter('assigned')} className="text-xs flex justify-between">My Tasks {supportFilter === 'assigned' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setSupportFilter('mine')} className="text-xs flex justify-between">My Reports {supportFilter === 'mine' && <Check size={14} className="text-indigo-500" />}</DropdownMenuItem>
-                                                </DropdownMenuGroup>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={handleExportExcel} className="text-xs text-emerald-600"><FileSpreadsheet size={14} className="mr-2" /> Export to Excel</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={resetFilters} className="text-xs text-rose-600"><RotateCcw size={14} className="mr-2" /> Reset Filters</DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
+                    <div className="space-y-4">
+                        {/* TOOLBAR */}
+                        <Card className="border-border/60 shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+                                <div>
+                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                        <ClipboardList size={16} className="text-primary" />
+                                        IT Support Queue
+                                    </CardTitle>
+                                    <p className="text-[11px] font-medium text-muted-foreground mt-1">{filteredTickets.length} Total Tickets</p>
                                 </div>
-
-                                {/* Search Bar */}
-                                <div className="relative group">
-                                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                                    <input
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="text-xs font-semibold">
+                                        <FileSpreadsheet size={14} className="mr-2 text-emerald-600" /> Export
+                                    </Button>
+                                    <Button variant="outline" size="icon-sm" onClick={() => fetchTickets()} title="Refresh">
+                                        <RefreshCcw size={14} className={isLoading ? 'animate-spin' : ''} />
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger render={
+                                            <button className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-input/30 px-3 text-xs font-semibold text-foreground transition-all hover:bg-input/50 dark:border-white/10 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10" />
+                                        }>
+                                            <MoreHorizontal size={14} /> Filter
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-56 font-medium z-[200]">
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuLabel className="text-xs">Filter Status</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {['All', 'Open', 'In Progress', 'Resolved'].map(st => (
+                                                    <DropdownMenuItem key={st} onClick={() => setStatusFilter(st)} className="text-xs flex justify-between">
+                                                        <span>{st === 'In Progress' ? 'Active' : st}</span>
+                                                        {statusFilter === st && <Check size={14} className="text-primary" />}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuLabel className="text-xs">Ticket View</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => setSupportFilter('all')} className="text-xs flex justify-between">All Tickets {supportFilter === 'all' && <Check size={14} className="text-primary" />}</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setSupportFilter('assigned')} className="text-xs flex justify-between">My Tasks {supportFilter === 'assigned' && <Check size={14} className="text-primary" />}</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setSupportFilter('mine')} className="text-xs flex justify-between">My Reports {supportFilter === 'mine' && <Check size={14} className="text-primary" />}</DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={resetFilters} className="text-xs text-rose-600"><RotateCcw size={14} className="mr-2" /> Reset Filters</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
                                         type="text"
-                                        placeholder="Search messages..."
-                                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 rounded-lg text-sm font-medium outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all dark:text-white placeholder:text-slate-400"
+                                        placeholder="Search ticket ID, subject, requester, email, department..."
+                                        className="pl-9"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {isLoading ? (
-                                    <div className="p-10 text-center flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-blue-500" /><p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
-                                ) : paginatedTickets.length === 0 ? (
-                                    <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">No entries.</div>
-                                ) : (
-                                    <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                                        {paginatedTickets.map(ticket => {
-                                            const isSelected = selectedTicket?.id === ticket.id;
-
-                                            const avatarColors: any = {
-                                                'Open': 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400',
-                                                'Resolved': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
-                                                'In Progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
-                                                'Pending': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
-                                            };
-
-                                            const statusDot: any = {
-                                                'Open': 'bg-rose-500',
-                                                'Resolved': 'bg-emerald-500',
-                                                'In Progress': 'bg-blue-500',
-                                                'Pending': 'bg-amber-400',
-                                            };
-
-                                            const statusLabel: any = {
-                                                'Open': 'Waiting for response',
-                                                'In Progress': 'In Progress',
-                                                'Pending': 'On Hold',
-                                                'Resolved': 'Resolved',
-                                            };
-
-                                            const priorityBadge: any = {
-                                                'Critical': 'bg-rose-500 text-white',
-                                                'High': 'bg-orange-500 text-white',
-                                                'Medium': 'bg-blue-500 text-white',
-                                                'Low': 'bg-slate-300 text-slate-700',
-                                            };
-
-                                            const initials = ticket.requesterName
-                                                .split(' ')
-                                                .map((n: string) => n[0])
-                                                .join('')
-                                                .substring(0, 2)
-                                                .toUpperCase();
-
-                                            const timeAgo = (() => {
-                                                const d = new Date(ticket.updatedAt || ticket.createdAt);
-                                                const now = new Date();
-                                                const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-                                                if (diff < 60) return 'Just now';
-                                                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-                                                if (diff < 86400) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                                if (diff < 604800) return d.toLocaleDateString([], { weekday: 'short' });
-                                                return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-                                            })();
-
-                                            return (
-                                                <div
-                                                    key={ticket.id}
-                                                    onClick={() => setSelectedTicket(ticket)}
-                                                    className={`group flex items-start gap-4 px-5 py-4 cursor-pointer transition-all duration-200 relative
-                                                        ${isSelected
-                                                            ? 'bg-slate-50 dark:bg-zinc-800'
-                                                            : 'hover:bg-slate-50/50 dark:hover:bg-zinc-800/50'
-                                                        }
-                                                    `}
-                                                >
-                                                    {/* Avatar */}
-                                                    <div className="relative shrink-0 pt-0.5">
-                                                        <UserAvatar name={ticket.requesterName} url={userAvatars[ticket.requesterName]} size="md" />
-                                                        {/* Status dot - Green if active/open, else muted */}
-                                                        <span className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 ${ticket.status === 'Open' || ticket.status === 'In Progress' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'}`} />
-                                                    </div>
-
-                                                    {/* Content */}
-                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className={`text-[14px] font-bold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>
-                                                                {ticket.requesterName}
-                                                            </span>
-                                                            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 shrink-0 ml-2">{timeAgo}</span>
+                        {/* TICKETS DATA TABLE */}
+                        <Card className="border-border/60 shadow-sm">
+                            <CardContent className="p-0">
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead>Ticket</TableHead>
+                                                <TableHead className="min-w-[220px]">Subject</TableHead>
+                                                <TableHead>Requester</TableHead>
+                                                <TableHead>Department</TableHead>
+                                                <TableHead>Priority</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Assigned To</TableHead>
+                                                <TableHead>Last Activity</TableHead>
+                                                <TableHead>Rating</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {isLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={9} className="h-40 text-center">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <Loader2 size={24} className="animate-spin text-primary/60" />
+                                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Scanning...</p>
                                                         </div>
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <p className={`text-[13px] truncate ${isSelected ? 'text-slate-600 dark:text-zinc-400 font-medium' : 'text-slate-500 dark:text-zinc-500 font-normal'} flex-1`}>
-                                                                {ticket.subject}
-                                                            </p>
-                                                            {ticket.status === 'Open' && (
-                                                                <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                                                            )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : paginatedTickets.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={9} className="h-40 text-center">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <Inbox className="h-8 w-8 text-muted-foreground/40" />
+                                                            <p className="text-sm font-medium text-muted-foreground">No tickets found.</p>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="px-5 py-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-900 z-10">
-                                <span className="text-[10px] font-bold text-slate-400 tracking-wide leading-none pt-0.5">{filteredTickets.length} Total Tickets</span>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                paginatedTickets.map(ticket => {
+                                                    const statusVariant: any = {
+                                                        'Open': 'destructive',
+                                                        'Resolved': 'default',
+                                                        'In Progress': 'default',
+                                                        'Pending': 'secondary',
+                                                    };
+                                                    const statusClass: any = {
+                                                        'Resolved': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-transparent',
+                                                        'In Progress': 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-transparent',
+                                                    };
+                                                    const priorityVariant: any = {
+                                                        'Critical': 'destructive',
+                                                        'High': 'default',
+                                                        'Medium': 'secondary',
+                                                        'Low': 'outline',
+                                                    };
+                                                    return (
+                                                        <TableRow
+                                                            key={ticket.id}
+                                                            onClick={() => setSelectedTicket(ticket)}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <TableCell className="font-mono text-[11px] font-bold text-muted-foreground whitespace-nowrap">#{ticket.ticketId}</TableCell>
+                                                            <TableCell>
+                                                                <p className="text-sm font-semibold text-foreground line-clamp-1 max-w-[240px]">{ticket.subject}</p>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex items-center gap-2 min-w-[170px]">
+                                                                    <UserAvatar name={ticket.requesterName} url={userAvatars[ticket.requesterName]} size="sm" />
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[13px] font-semibold text-foreground truncate">{ticket.requesterName}</p>
+                                                                        <p className="text-[10px] text-muted-foreground truncate">{ticket.requesterEmail}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-[12px] text-muted-foreground whitespace-nowrap">{ticket.department || '-'}</TableCell>
+                                                            <TableCell>
+                                                                <Badge variant={priorityVariant[ticket.priority] || 'secondary'} className="rounded-md text-[10px] font-bold uppercase tracking-wide">
+                                                                    {ticket.priority}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge variant={statusVariant[ticket.status] || 'secondary'} className={cn('rounded-md text-[10px] font-bold uppercase tracking-wide', statusClass[ticket.status])}>
+                                                                    {ticket.status === 'Pending' ? 'On Hold' : ticket.status}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="text-[12px] text-muted-foreground whitespace-nowrap">{ticket.assignedTo || <span className="italic">Unassigned</span>}</TableCell>
+                                                            <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">{(() => {
+                                                                const d = new Date(ticket.updatedAt || ticket.createdAt);
+                                                                return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                            })()}</TableCell>
+                                                            <TableCell>
+                                                                {ticket.status === 'Resolved' && ticket.rating ? (
+                                                                    <div className="flex gap-0.5">
+                                                                        {[1, 2, 3, 4, 5].map(star => (
+                                                                            <Star key={star} size={12} className={ticket.rating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'} />
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] text-muted-foreground/60">—</span>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                            <div className="px-4 py-3 border-t border-border flex items-center justify-between bg-muted/20">
+                                <span className="text-[11px] font-bold text-muted-foreground">{filteredTickets.length} Total Tickets</span>
                                 <div className="flex items-center gap-1">
-                                    <button
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         disabled={currentPage === 1}
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-20 text-slate-500"
                                     >
                                         <ChevronLeft size={14} />
-                                    </button>
-                                    <span className="text-[10px] font-bold text-slate-400 px-1">{currentPage} / {totalPages || 1}</span>
-                                    <button
+                                    </Button>
+                                    <span className="text-[11px] font-bold text-muted-foreground px-1">{currentPage} / {totalPages || 1}</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         disabled={currentPage >= totalPages}
                                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-20 text-slate-500"
                                     >
                                         <ChevronRight size={14} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
+
+                        {/* CHAT & MANAGE MODAL */}
+                        <Dialog open={!!selectedTicket} onOpenChange={(open) => { if (!open) setSelectedTicket(null); }}>
+                            <DialogContent className="max-w-[1250px] sm:max-w-[1250px] px-0 py-0 gap-0 overflow-hidden rounded-2xl border-none bg-white dark:bg-zinc-900" showCloseButton={false}>
+                                <div className="h-[85vh] w-full flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-zinc-900">
+                                    
+                            
 
                         {/* CENTER COLUMN */}
-                        <div className={`flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex flex-col overflow-hidden h-[600px] lg:h-full ${!selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className="flex flex-col flex-1 overflow-hidden bg-white dark:bg-zinc-900">
                             {selectedTicket ? (
                                 <>
                                     {/* Chat Header */}
@@ -2452,7 +2538,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
 
                         {/* RIGHT COLUMN: Ticket Details */}
-                        <div className={`fixed inset-0 z-[100] bg-white dark:bg-zinc-900 lg:static lg:z-0 lg:w-80 lg:bg-white lg:dark:bg-zinc-900 lg:rounded-xl lg:border lg:border-slate-200 lg:dark:border-zinc-800 lg:shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${(!selectedTicket || !showMobileDetails) ? 'hidden lg:flex' : 'flex'}`}>
+                        <div className={`w-full lg:w-80 shrink-0 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-zinc-800 ${(!selectedTicket || !showMobileDetails) ? 'hidden lg:flex' : 'flex'}`}>
                             {selectedTicket ? (
                                 <>
                                     {/* Action Header */}
@@ -2774,53 +2860,65 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                 </div>
                             )}
                         </div>
-                    </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+                </div>
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-280px)] min-h-[650px]">
                         {/* LEFT COLUMN: User's Ticket List */}
                         <div className={`w-full lg:w-96 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${selectedTicket ? 'hidden lg:flex' : 'flex'}`}>
-                            <div className="p-4 border-b border-slate-100 dark:border-zinc-800/60 flex flex-col gap-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                            <div className="p-4 border-b border-border/60 flex flex-col gap-3 bg-card/95 backdrop-blur-xl shrink-0 z-10 sticky top-0">
+                                {/* Title & Count */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                        <LifeBuoy size={16} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-sm font-semibold tracking-tight text-foreground">{t('myTickets')}</h2>
+                                        <p className="text-[11px] font-medium text-muted-foreground">
+                                            {filteredTickets.length} {filteredTickets.length === 1 ? 'Ticket' : 'Tickets'}
+                                        </p>
+                                    </div>
+                                </div>
+
                                 {/* Search Bar */}
-                                <div className="relative group">
-                                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                                    <input
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
                                         type="text"
                                         placeholder={t('searchTickets')}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-zinc-800/50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white placeholder:text-slate-400"
+                                        className="pl-9"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
                                 </div>
 
                                 {/* Status Filters */}
-                                <div className="flex bg-slate-50 dark:bg-zinc-800/50 p-1 rounded-xl">
-                                    {['All', 'Progress', 'Resolved'].map(st => {
-                                        const isActive = (st === 'All' && statusFilter === 'All') ||
-                                            (st === 'Progress' && statusFilter !== 'All' && statusFilter !== 'Resolved') ||
-                                            (st === 'Resolved' && statusFilter === 'Resolved');
-
-                                        return (
-                                            <button
-                                                key={st}
-                                                onClick={() => {
-                                                    if (st === 'All') setStatusFilter('All');
-                                                    else if (st === 'Progress') setStatusFilter('Open'); // Simplified fallback
-                                                    else setStatusFilter('Resolved');
-                                                }}
-                                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${isActive ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
-                                            >
-                                                {st === 'All' ? t('statusAll') : st === 'Progress' ? t('statusProgress') : t('statusResolved')}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <Tabs
+                                    value={statusFilter === 'All' ? 'All' : statusFilter === 'Resolved' ? 'Resolved' : 'Progress'}
+                                    onValueChange={(val) => {
+                                        if (val === 'All') setStatusFilter('All');
+                                        else if (val === 'Progress') setStatusFilter('Open');
+                                        else setStatusFilter('Resolved');
+                                    }}
+                                >
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="All">{t('statusAll')}</TabsTrigger>
+                                        <TabsTrigger value="Progress">{t('statusProgress')}</TabsTrigger>
+                                        <TabsTrigger value="Resolved">{t('statusResolved')}</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             </div>
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {isLoading ? (
                                     <div className="p-10 text-center flex flex-col items-center gap-2"><Loader2 size={24} className="animate-spin text-blue-500" /><p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Scanning...</p></div>
                                 ) : filteredTickets.length === 0 ? (
-                                    <div className="p-10 text-center text-slate-300 dark:text-slate-600 font-bold text-[8px] tracking-widest italic uppercase">Tidak ada laporan.</div>
+                                    <div className="flex flex-col items-center justify-center gap-2 min-h-[200px] p-10 text-center">
+                                        <Inbox className="h-8 w-8 text-muted-foreground/40" />
+                                        <p className="text-sm font-medium text-muted-foreground">Tidak ada laporan.</p>
+                                    </div>
                                 ) : (
                                     <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
                                         {filteredTickets.map(ticket => {
@@ -2830,6 +2928,31 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                 'Resolved': 'bg-emerald-500',
                                                 'In Progress': 'bg-blue-500',
                                                 'Pending': 'bg-amber-400',
+                                            };
+
+                                            const statusBadgeVariant: any = {
+                                                'Open': 'destructive',
+                                                'Resolved': 'default',
+                                                'In Progress': 'default',
+                                                'Pending': 'secondary',
+                                            };
+                                            const statusBadgeClass: any = {
+                                                'Resolved': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-transparent',
+                                                'In Progress': 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-transparent',
+                                            };
+
+                                            const statusLabel: any = {
+                                                'Open': 'Open',
+                                                'Resolved': 'Resolved',
+                                                'In Progress': 'In Progress',
+                                                'Pending': 'On Hold',
+                                            };
+
+                                            const priorityDot: any = {
+                                                'Critical': 'bg-rose-500',
+                                                'High': 'bg-orange-500',
+                                                'Medium': 'bg-blue-500',
+                                                'Low': 'bg-slate-400',
                                             };
 
                                             return (
@@ -2853,12 +2976,12 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                     </div>
 
                                                     {/* Content */}
-                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className={`text-[12px] font-black uppercase tracking-tight ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className={`text-[11px] font-black uppercase tracking-tight ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
                                                                 #{ticket.ticketId}
                                                             </span>
-                                                            <span className="text-[10px] font-medium text-slate-400 shrink-0 ml-2">{(() => {
+                                                            <span className="text-[10px] font-medium text-slate-400 shrink-0">{(() => {
                                                                 const d = new Date(ticket.updatedAt || ticket.createdAt);
                                                                 const now = new Date();
                                                                 const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
@@ -2871,6 +2994,15 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         <h4 className={`text-[14px] font-bold truncate leading-snug ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-zinc-300'}`}>
                                                             {ticket.subject}
                                                         </h4>
+                                                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                            <Badge variant={statusBadgeVariant[ticket.status] || 'secondary'} className={cn('rounded-md text-[10px] font-bold uppercase tracking-wide', statusBadgeClass[ticket.status])}>
+                                                                {statusLabel[ticket.status] || ticket.status}
+                                                            </Badge>
+                                                            <Badge variant="outline" className="gap-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide">
+                                                                <span className={`h-1.5 w-1.5 rounded-full ${priorityDot[ticket.priority] || 'bg-slate-400'}`} />
+                                                                {ticket.priority}
+                                                            </Badge>
+                                                        </div>
                                                         <p className="text-[12px] text-slate-500 dark:text-zinc-500 line-clamp-1 italic font-medium mt-0.5">
                                                             {ticket.description.replace(/[#*`]/g, '')}
                                                         </p>
@@ -3013,7 +3145,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         onClick={handleSendReply}
                                                         disabled={isActionLoading || !resolutionNote.trim()}
                                                         size="icon"
-                                                        className="w-10 shrink-0 transition-all /20 ml-2"
+                                                        className="w-10 shrink-0 ml-2"
                                                     >
                                                         {isActionLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={18} className="translate-x-[1px]" />}
                                                     </Button>
@@ -3107,6 +3239,18 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                                                         {t('ticketResolved')}
                                                     </div>
                                                 )}
+
+                                                {/* Reopen: requester can reopen a resolved ticket */}
+                                                <div className="mt-5 flex justify-center">
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(selectedTicket.id, 'In Progress', 'Ticket reopened by requester.')}
+                                                        disabled={isActionLoading}
+                                                        className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                                                    >
+                                                        <RefreshCcw size={14} />
+                                                        Reopen Ticket
+                                                    </button>
+                                                </div>
 
                                             </div>
                                         )}

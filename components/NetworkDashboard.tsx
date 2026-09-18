@@ -4,7 +4,8 @@
 import React, { useState, useMemo, useEffect, useTransition } from 'react';
 import {
     Server, RefreshCcw, Layout, Search, GitBranch, Plus,
-    Loader2, Pencil, Trash2, Save, Cable, Activity
+    Loader2, Pencil, Trash2, Save, Cable, Activity,
+    Layers, AlertTriangle, Globe, Wifi, Network
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NetworkSwitch, SwitchPort, PortStatus, UserAccount, DeviceType } from '../types';
@@ -30,6 +31,15 @@ import { Badge } from "@/components/ui/badge";
 interface NetworkDashboardProps {
     onBack: () => void;
     currentUser: UserAccount | null;
+}
+
+function getDeviceKind(sw: NetworkSwitch): 'core' | 'ap' | 'switch' {
+    const model = (sw.model || '').toLowerCase();
+    const name = (sw.name || '').toLowerCase();
+    const uplinkId = (sw.uplinkId || '').toLowerCase();
+    if (uplinkId === 'internet' || uplinkId === 'gateway' || uplinkId === 'root' || /core|isp|router|mikrotik/.test(model)) return 'core';
+    if (model.includes('ap') || model.includes('unifi') || /access ?point/.test(name) || name.includes('ap')) return 'ap';
+    return 'switch';
 }
 
 export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, currentUser }) => {
@@ -539,7 +549,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     };
 
     return (
-        <div className={`animate-in fade-in duration-500 ${
+        <div className={`animate-in fade-in duration-500 overflow-x-hidden ${
             activeTab === 'topology' 
                 ? 'flex flex-col space-y-4 h-[calc(100vh-115px)] overflow-hidden pb-0' 
                 : 'space-y-8 pb-20'
@@ -549,12 +559,12 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                 description="Sentralisasi manajemen infrastruktur IT & monitoring jaringan real-time"
             >
                 <div className="flex items-center gap-2">
-                    <div className="flex bg-slate-50 dark:bg-zinc-900 p-1 rounded-lg border border-slate-200 dark:border-zinc-800 mr-2">
+                    <div className="flex bg-muted p-1 rounded-lg border border-border/40 mr-2">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleExportSwitches}
-                            className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                            className="w-8 text-muted-foreground hover:text-foreground"
                             title="Export Nodes"
                         >
                             <FileSpreadsheet size={16} />
@@ -563,7 +573,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                             variant="ghost"
                             size="icon"
                             onClick={handleExportWiring}
-                            className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                            className="w-8 text-muted-foreground hover:text-foreground"
                             title="Export Wiring"
                         >
                             <Server size={16} />
@@ -581,7 +591,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                         <Button
                             onClick={handleSaveLayout}
                             disabled={isSaving}
-                            className="font-semibold text-xs /20"
+                            className="font-semibold text-xs"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin mr-2" /> : <Save size={14} className="mr-2" />}
                             Sync Geometry
@@ -592,20 +602,20 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
 
 
 
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col flex-1">
-                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-zinc-950 border-b border-slate-100 dark:border-zinc-800 shadow-sm">
-                    <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+            <div className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col flex-1">
+                <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 bg-card border-b border-border/40 shadow-sm">
+                    <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full md:w-auto overflow-x-auto hide-scrollbar">
                         {[{ id: 'topology', label: 'Topology', icon: GitBranch }, { id: 'status', label: 'Nodes', icon: Layout }, { id: 'wiring', label: 'Wiring', icon: Cable }, { id: 'devices', label: 'Hardware', icon: Server }].map(tab => (
                             <button 
                                 key={tab.id} 
                                 onClick={() => startTransition(() => setActiveTab(tab.id as any))} 
-                                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap 
-                                    ${activeTab === tab.id 
-                                        ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' 
-                                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
-                                    } ${isPending ? 'opacity-50 grayscale' : ''}`}
+                                className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                    activeTab === tab.id 
+                                        ? 'bg-background text-foreground shadow-sm' 
+                                        : 'hover:text-foreground'
+                                } ${isPending ? 'opacity-50 grayscale' : ''}`}
                             >
-                                <tab.icon size={12} />
+                                <tab.icon size={14} />
                                 {tab.label}
                             </button>
                         ))}
@@ -613,11 +623,11 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                     <div className="relative flex-1 md:max-w-xs">
                         <Input 
                             placeholder="Filter registry..." 
-                            className="w-full pl-9 h-11 bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 rounded-xl focus-visible:ring-1 focus-visible:ring-slate-300" 
+                            className="w-full pl-9 bg-muted/50 border-border/60 rounded-md focus-visible:ring-1 focus-visible:ring-ring" 
                             value={searchTerm} 
                             onChange={e => setSearchTerm(e.target.value)} 
                         />
-                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     </div>
                 </div>
                 <div className={`p-0 flex-1 relative ${activeTab === 'topology' ? 'h-full overflow-hidden flex flex-col' : 'min-h-[600px]'}`}>
@@ -631,7 +641,7 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                 className="flex flex-col items-center justify-center h-[650px] gap-4 transition-all duration-300"
                             >
                                 <RefreshCcw className="animate-spin text-blue-500" size={24} />
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scanning Infrastructure...</p>
+                                <p className="text-xs font-medium text-muted-foreground">Scanning Infrastructure...</p>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -672,54 +682,160 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
                                 ) : (
                                     <div className="p-6 md:p-8">
                                         {activeTab === 'status' ? (
-                                            <div className="space-y-8">{filteredSwitches.map(sw => (
-                                                <div key={sw.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
-                                                    <div className="flex justify-between items-end mb-6"><div><div className="flex items-center gap-3"><h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{sw.name}</h3><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 text-[9px] font-bold border border-slate-200 dark:border-zinc-700 uppercase">{sw.model}</span></div><p className="text-slate-400 text-[10px] mt-1 font-bold uppercase tracking-widest">{sw.location} • {sw.rack} • <span className="text-blue-500">{sw.ip}</span></p></div></div>
-                                                    <SwitchVisualizer switchDetails={sw} onPortClick={(port) => { setSelectedPort(port); setSelectedSwitch(sw); }} />
+                                            filteredSwitches.length === 0 ? (
+                                                <div className="py-20 flex flex-col items-center justify-center text-center space-y-3 rounded-2xl border-2 border-dashed border-border/60 bg-muted/10">
+                                                    <Search size={32} className="text-muted-foreground/40" />
+                                                    <p className="text-sm font-semibold text-foreground">No nodes found</p>
+                                                    <p className="text-xs text-muted-foreground">Adjust the registry filter or provision a new node.</p>
                                                 </div>
-                                            ))}</div>
+                                            ) : (
+                                                <div className="space-y-6">
+                                                    {filteredSwitches.map(sw => {
+                                                        const activePorts = sw.ports.filter(p => p.status === PortStatus.ACTIVE).length;
+                                                        const errorPorts = sw.ports.filter(p => p.status === PortStatus.ERROR).length;
+                                                        const totalPorts = sw.totalPorts || sw.ports.length;
+                                                        const nodeOnline = !sw.status || sw.status === 'active';
+                                                        const isGateway = sw.uplinkId === 'internet' || sw.uplinkId === 'gateway' || sw.uplinkId === 'root';
+                                                        return (
+                                                            <div key={sw.id} className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+                                                                <div className="flex flex-col gap-4 p-5 md:px-6 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 bg-muted/20">
+                                                                    <div className="flex items-center gap-3 min-w-0">
+                                                                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                                                            <Server size={18} />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                                <h3 className="text-base font-semibold text-foreground">{sw.name}</h3>
+                                                                                {sw.model && <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium border border-border/60">{sw.model}</span>}
+                                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${nodeOnline ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'}`}>
+                                                                                    <span className={`w-1.5 h-1.5 rounded-full ${nodeOnline ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
+                                                                                    {nodeOnline ? 'Online' : 'Offline'}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="text-xs text-muted-foreground mt-1 font-medium truncate">{sw.location} • {sw.rack} • <span className="text-primary font-mono">{sw.ip}</span></p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                                                                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-card border border-border/60" title="Active ports / total ports">
+                                                                                <Layers size={13} className="text-muted-foreground" /> {activePorts}/{totalPorts} ports
+                                                                            </span>
+                                                                            {errorPorts > 0 && (
+                                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title={`${errorPorts} port(s) in error state`}>
+                                                                                    <AlertTriangle size={13} /> {errorPorts} error
+                                                                                </span>
+                                                                            )}
+                                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-card border border-border/60">
+                                                                                <Globe size={13} className="text-muted-foreground" /> {isGateway ? 'Gateway' : 'Mesh'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="inline-flex items-center gap-1">
+                                                                            {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 h-8 text-muted-foreground hover:text-primary" title="Edit node"><Pencil size={14} /></Button>}
+                                                                            {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="w-8 h-8 text-muted-foreground hover:text-destructive" title="Purge node"><Trash2 size={14} /></Button>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="p-5 md:p-6 overflow-hidden">
+                                                                    <SwitchVisualizer switchDetails={sw} onPortClick={(port) => { setSelectedPort(port); setSelectedSwitch(sw); }} />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )
                                         ) : activeTab === 'wiring' ? (
-                                            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
+                                            <div className="bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm"><WiringSchedule switches={switches} /></div>
                                         ) : (
-                                            <div className="bg-white dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-x-auto shadow-sm">
-                                                <Table className="w-full">
+                                            <div className="bg-card rounded-xl border border-border/60 overflow-x-auto shadow-sm">
+                                                <Table className="w-full min-w-[760px]">
                                                     <TableHeader>
-                                                        <TableRow className="bg-white dark:bg-zinc-950 hover:bg-transparent">
-                                                            <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Device Identity</TableHead>
-                                                            <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Networking</TableHead>
-                                                            <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Infrastructure Detail</TableHead>
-                                                            <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Load Status</TableHead>
-                                                            <TableHead className="px-6 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Operations</TableHead>
+                                                        <TableRow className="bg-muted/20 hover:bg-transparent">
+                                                            <TableHead className="px-6 py-3 font-semibold text-xs text-foreground/80">Device Identity</TableHead>
+                                                            <TableHead className="px-6 py-3 font-semibold text-xs text-foreground/80">Networking</TableHead>
+                                                            <TableHead className="px-6 py-3 font-semibold text-xs text-foreground/80">Infrastructure Detail</TableHead>
+                                                            <TableHead className="px-6 py-3 font-semibold text-xs text-foreground/80 text-center">Load Status</TableHead>
+                                                            <TableHead className="px-6 py-3 font-semibold text-xs text-foreground/80 text-center">Operations</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
-                                                    <TableBody className="divide-y divide-slate-50 dark:divide-slate-900 font-medium">
-                                                        {filteredSwitches.map(sw => (
-                                                            <TableRow key={sw.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-all group">
-                                                                <TableCell className="px-6 py-4">
-                                                                    <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-tight leading-none">{sw.name}</p>
-                                                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1.5 leading-none tracking-widest">{sw.model}</p>
-                                                                </TableCell>
-                                                                <TableCell className="px-6 py-4">
-                                                                    <p className="font-mono text-blue-600 dark:text-blue-400 text-[11px] font-black">{sw.ip}</p>
-                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1 tracking-wider">Static Access</p>
-                                                                </TableCell>
-                                                                <TableCell className="px-6 py-4 text-slate-500 dark:text-zinc-400 text-[11px] font-bold uppercase tracking-tight">
-                                                                    <p className="text-slate-700 dark:text-slate-300">{sw.location}</p>
-                                                                    <p className="text-[9px] text-slate-400 font-bold mt-1 tracking-widest">SN: {sw.serialNumber || 'N/A'}</p>
-                                                                </TableCell>
-                                                                <TableCell className="px-6 py-4 text-center">
-                                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border ${sw.ports.filter(p => p.status === PortStatus.ACTIVE).length > sw.totalPorts * 0.8 ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border-rose-100 dark:border-rose-900/30' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/30'}`}>
-                                                                        {sw.ports.filter(p => p.status === PortStatus.ACTIVE).length} / {sw.totalPorts}
-                                                                    </span>
-                                                                </TableCell>
-                                                                <TableCell className="px-6 py-4">
-                                                                    <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"><Pencil size={14} /></Button>}
-                                                                        {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="w-8"><Trash2 size={14} /></Button>}
-                                                                    </div>
+                                                    <TableBody className="divide-y divide-border/40">
+                                                        {filteredSwitches.length === 0 ? (
+                                                            <TableRow>
+                                                                <TableCell colSpan={5} className="px-6 py-16 text-center">
+                                                                    <Search size={28} className="mx-auto text-muted-foreground/40 mb-2" />
+                                                                    <p className="text-sm font-semibold text-foreground">No devices found</p>
+                                                                    <p className="text-xs text-muted-foreground mt-1">Adjust the registry filter or provision a new device.</p>
                                                                 </TableCell>
                                                             </TableRow>
-                                                        ))}
+                                                        ) : (
+                                                            filteredSwitches.map(sw => {
+                                                                const kind = getDeviceKind(sw);
+                                                                const activePorts = sw.ports.filter(p => p.status === PortStatus.ACTIVE).length;
+                                                                const errorPorts = sw.ports.filter(p => p.status === PortStatus.ERROR).length;
+                                                                const totalPorts = sw.totalPorts || sw.ports.length;
+                                                                const usage = totalPorts ? Math.min((activePorts / totalPorts) * 100, 100) : 0;
+                                                                const nodeOnline = !sw.status || sw.status === 'active';
+                                                                return (
+                                                                    <TableRow key={sw.id} className="hover:bg-muted/30 transition-colors group">
+                                                                        <TableCell className="px-6 py-4">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className={`w-8 h-8 flex items-center justify-center shrink-0 border border-border/60 ${kind === 'ap' ? 'rounded-full bg-sky-500/10 text-sky-500' : kind === 'core' ? 'rounded-xl bg-primary/10 text-primary' : 'rounded-xl bg-muted/50 text-muted-foreground'}`}>
+                                                                                    {kind === 'ap' ? <Wifi size={15} /> : kind === 'core' ? <Network size={15} /> : <Server size={15} />}
+                                                                                </div>
+                                                                                <div className="min-w-0">
+                                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                                        <p className="font-semibold text-foreground text-sm leading-none">{sw.name}</p>
+                                                                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${nodeOnline ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'}`}>
+                                                                                            <span className={`w-1 h-1 rounded-full ${nodeOnline ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
+                                                                                            {nodeOnline ? 'Online' : 'Offline'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <p className="text-xs text-muted-foreground mt-1.5 leading-none font-medium">{sw.model || 'Generic Device'}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="px-6 py-4">
+                                                                            <p className="font-mono text-primary text-xs font-semibold">{sw.ip}</p>
+                                                                            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                                                                                <Globe size={11} className="text-muted-foreground/70" /> Static Access
+                                                                            </p>
+                                                                        </TableCell>
+                                                                        <TableCell className="px-6 py-4">
+                                                                            <p className="text-foreground text-sm font-medium leading-none">{sw.location}</p>
+                                                                            <p className="text-xs text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2">
+                                                                                <span>Rack {sw.rack}</span>
+                                                                                {sw.serialNumber && (
+                                                                                    <>
+                                                                                        <span className="text-muted-foreground/40">•</span>
+                                                                                        <span className="font-mono">SN: {sw.serialNumber}</span>
+                                                                                    </>
+                                                                                )}
+                                                                            </p>
+                                                                        </TableCell>
+                                                                        <TableCell className="px-6 py-4">
+                                                                            <div className="flex flex-col items-center justify-center gap-1.5">
+                                                                                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                                                                                    <div className={`h-full rounded-full transition-all ${errorPorts > 0 ? 'bg-amber-500' : usage > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${usage}%` }} />
+                                                                                </div>
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    <span className="text-xs font-semibold text-muted-foreground">{activePorts}/{totalPorts}</span>
+                                                                                    {errorPorts > 0 && (
+                                                                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400" title={`${errorPorts} port(s) in error state`}>
+                                                                                            <AlertTriangle size={11} /> {errorPorts}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="px-6 py-4">
+                                                                            <div className="flex justify-center gap-1">
+                                                                                {canManage && <Button variant="ghost" size="icon" onClick={() => { setEditingDevice(sw); setIsAddDeviceOpen(true); }} className="w-8 h-8 text-muted-foreground hover:text-primary" title="Edit device"><Pencil size={14} /></Button>}
+                                                                                {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleteDevice(sw)} className="w-8 h-8 text-muted-foreground hover:text-destructive" title="Delete device"><Trash2 size={14} /></Button>}
+                                                                            </div>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                );
+                                                            })
+                                                        )}
                                                     </TableBody>
                                                 </Table>
                                             </div>
