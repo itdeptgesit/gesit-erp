@@ -44,6 +44,7 @@ import { UserAvatar } from "./UserAvatar";
 import { StatCard } from "./StatCard";
 import { exportToExcel } from "../lib/excelExport";
 import { exportDirectoryPDF } from "../lib/directoryPdfExport";
+import { DirectoryExportModal } from "./DirectoryExportModal";
 import { useToast } from "./ToastProvider";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet } from "lucide-react";
@@ -474,6 +475,7 @@ export const ExtensionDirectory = ({
     const [extensions, setExtensions] = useState<PhoneExtension[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [editingExt, setEditingExt] = useState<PhoneExtension | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
@@ -833,17 +835,18 @@ export const ExtensionDirectory = ({
     };
 
     const handleExportPDF = () => {
-        if (extensions.length === 0) return;
+        const dataToExport = filteredExtensions.length > 0 ? filteredExtensions : extensions;
+        if (dataToExport.length === 0) return;
 
-        exportDirectoryPDF(extensions);
+        setIsExportModalOpen(true);
 
         if (currentUser) {
             trackActivity(
                 currentUser.fullName,
                 currentUser.role,
-                'Export PDF',
+                'Open Export PDF Modal',
                 'Directory',
-                `Exported ${extensions.length} extensions to PDF`
+                `Opened PDF export preview with ${dataToExport.length} extensions`
             );
         }
     };
@@ -1302,6 +1305,13 @@ export const ExtensionDirectory = ({
                     </div>
                 </form>
             </ModalWrapper>
+
+            <DirectoryExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                extensions={filteredExtensions.length > 0 ? filteredExtensions : extensions}
+                isAdmin={isAdmin}
+            />
 
         </div >
     );
