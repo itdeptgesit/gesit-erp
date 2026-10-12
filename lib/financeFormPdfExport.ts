@@ -483,7 +483,6 @@ const drawCuttingGuide = (doc: jsPDF, pageH: number = 210) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(140, 140, 140);
-  doc.text('✂ POTONG DI SINI / CUT HERE', cutX, 5, { align: 'center' });
 
   doc.setDrawColor(0, 0, 0);
   doc.setTextColor(0, 0, 0);
