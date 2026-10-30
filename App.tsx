@@ -253,16 +253,18 @@ const InternalApp: React.FC = () => {
     const checkSession = async () => {
       console.log("App.tsx: Checking session...");
       try {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          const bypassEmail = localStorage.getItem('bypass_email') || 'admin@gesit.co.id';
-          console.log(`App.tsx: Localhost detected, bypassing login as ${bypassEmail}`);
-          await handleLogin(bypassEmail);
-          return;
-        }
         const { data: { session } } = await supabase.auth.getSession();
         console.log("App.tsx: Session check result:", !!session);
         if (session?.user?.email) {
           await handleLogin(session.user.email);
+          return;
+        }
+
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const bypassEmail = localStorage.getItem('bypass_email') || 'admin@gesit.co.id';
+          console.log(`App.tsx: Localhost detected without session, checking bypass login as ${bypassEmail}`);
+          await handleLogin(bypassEmail);
+          return;
         }
       } catch (err: any) {
         console.error("LoginPage: Login error:", err);

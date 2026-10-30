@@ -75,7 +75,7 @@ export interface PurchaseRecord {
   vendor: string;
   platform: string;
   paymentMethod?: 'Transfer' | 'VA' | 'Debit/CC';
-  category?: 'Hardware' | 'Accessories' | 'Cloud & Hosting' | 'Subscription' | 'Maintenance & Support' | 'IT Services' | string;
+  category?: 'Hardware' | 'Accessories' | 'Consumable' | 'Cloud & Hosting' | 'Subscription' | 'Maintenance & Support' | 'IT Services' | string;
   evidenceLink?: string;
   inputBy?: string;
   remarks: string;
@@ -388,6 +388,7 @@ export interface ITRecommendationItem {
   qty: number;
   vendor: string;
   price: number;
+  category?: string;
 }
 
 export interface PurchaseRequisition {

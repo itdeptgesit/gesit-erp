@@ -453,6 +453,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                     <tr className="bg-slate-50 dark:bg-zinc-800 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                         <th className="py-3 px-6 w-16 text-center">No</th>
                                         <th className="py-3 px-6">Rekomendasi Barang / Spesifikasi</th>
+                                        <th className="py-3 px-4 w-32">Kategori</th>
                                         <th className="py-3 px-6 w-24 text-center">Jumlah</th>
                                         <th className="py-3 px-6 w-40">Rekomendasi Vendor</th>
                                         <th className="py-3 px-6 w-40 text-right">Harga</th>
@@ -463,6 +464,11 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                         <tr key={idx}>
                                             <td className="py-3 px-6 text-center font-mono font-bold text-slate-400">{idx + 1}</td>
                                             <td className="py-3 px-6 font-bold break-words whitespace-normal max-w-[200px]">{item.description}</td>
+                                            <td className="py-3 px-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wide bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300">
+                                                    {item.category || requisition.category || '—'}
+                                                </span>
+                                            </td>
                                             <td className="py-3 px-6 text-center font-bold">{item.qty}</td>
                                             <td className="py-3 px-6 font-bold break-words whitespace-normal max-w-[160px]">{item.vendor}</td>
                                             <td className="py-3 px-6 text-right font-mono font-bold whitespace-nowrap">{item.price && item.price > 0 ? formatCurrency(item.price, requisition.currency) : '-'}</td>

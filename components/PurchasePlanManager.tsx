@@ -395,13 +395,15 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             description: item.description,
                             qty: item.qty,
                             price: item.price,
-                            vendor: item.vendor
+                            vendor: item.vendor,
+                            category: item.category || req.category || 'Hardware'
                         }))
                         : req.requestedItems.map(item => ({
                             description: item.description,
                             qty: item.qty,
                             price: req.grandTotal / (req.requestedItems.length || 1),
-                            vendor: ''
+                            vendor: '',
+                            category: req.category || 'Hardware'
                         }));
 
                     const vendorName = req.itRecommendations && req.itRecommendations.length > 0
@@ -612,10 +614,12 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         const map: Record<string, { bg: string; text: string }> = {
             'Hardware':             { bg: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800', text: 'text-violet-600 dark:text-violet-400' },
             'Accessories':          { bg: 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800',         text: 'text-sky-600 dark:text-sky-400' },
+            'Consumable':           { bg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800', text: 'text-emerald-600 dark:text-emerald-400' },
             'Cloud & Hosting':      { bg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800',      text: 'text-blue-600 dark:text-blue-400' },
             'Subscription':         { bg: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800', text: 'text-indigo-600 dark:text-indigo-400' },
             'Maintenance & Support':{ bg: 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800', text: 'text-orange-600 dark:text-orange-400' },
             'IT Services':          { bg: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800',     text: 'text-teal-600 dark:text-teal-400' },
+            'Mixed':                { bg: 'bg-fuchsia-50 dark:bg-fuchsia-950/40 border-fuchsia-200 dark:border-fuchsia-800', text: 'text-fuchsia-600 dark:text-fuchsia-400' },
         };
         const c = map[category || ''] || { bg: 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700', text: 'text-slate-500 dark:text-zinc-400' };
         return (

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { createPortal } from 'react-dom';
 import { cn } from "@/lib/utils";
-import { X, Calendar, FileText, Plus, Trash2, Shield, Info, DollarSign } from 'lucide-react';
+import { X, Calendar, FileText, Plus, Trash2, Shield, Info, DollarSign, Monitor, Mouse, Printer, Cloud, Package, Wrench, Briefcase, Layers } from 'lucide-react';
 import { ModalWrapper } from '@/components/ui/ModalWrapper';
 import { PurchaseRequisition, PurchaseRequisitionItem, ITRecommendationItem, UserAccount } from '../types';
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,16 @@ const parseToFloat = (value: string | number): number => {
     return parseFloat(clean) || 0;
 };
 
+const CATEGORY_OPTIONS = [
+    { value: 'Hardware', label: 'Hardware', icon: Monitor },
+    { value: 'Accessories', label: 'Accessories', icon: Mouse },
+    { value: 'Consumable', label: 'Consumable', icon: Printer },
+    { value: 'Cloud & Hosting', label: 'Cloud & Hosting', icon: Cloud },
+    { value: 'Subscription', label: 'Subscription', icon: Package },
+    { value: 'Maintenance & Support', label: 'Maintenance & Support', icon: Wrench },
+    { value: 'IT Services', label: 'IT Services', icon: Briefcase },
+];
+
 export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModalProps> = ({
     isOpen,
     onClose,
@@ -95,7 +105,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     
     // IT Recommendation items list
     const [recItems, setRecItems] = useState<ITRecommendationItem[]>([
-        { no: 1, description: '', qty: 1, vendor: '', price: 0 }
+        { no: 1, description: '', qty: 1, vendor: '', price: 0, category: 'Hardware' }
     ]);
 
     // Approver selections
@@ -181,7 +191,9 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                 setDiscount(initialData.discount || 0);
                 setDeliveryFee(initialData.deliveryFee || 0);
                 setReqItems(initialData.requestedItems?.length ? initialData.requestedItems : [{ no: 1, description: '', qty: 1 }]);
-                setRecItems(initialData.itRecommendations?.length ? initialData.itRecommendations : [{ no: 1, description: '', qty: 1, vendor: '', price: 0 }]);
+                setRecItems(initialData.itRecommendations?.length 
+                    ? initialData.itRecommendations.map(it => ({ ...it, category: it.category || initialData.category || 'Hardware' })) 
+                    : [{ no: 1, description: '', qty: 1, vendor: '', price: 0, category: initialData.category || 'Hardware' }]);
                 setSupervisorId(initialData.supervisorId || '');
                 setVpId(initialData.vpId || '');
                 setFinanceId(initialData.financeId || '');
@@ -270,7 +282,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
 
     // IT Recommendation Helpers
     const handleAddRecItem = () => {
-        setRecItems(prev => [...prev, { no: prev.length + 1, description: '', qty: 1, vendor: '', price: 0 }]);
+        const lastCat = recItems[recItems.length - 1]?.category || category || 'Hardware';
+        setRecItems(prev => [...prev, { no: prev.length + 1, description: '', qty: 1, vendor: '', price: 0, category: lastCat }]);
     };
 
     const handleRemoveRecItem = (idx: number) => {
@@ -289,6 +302,12 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
     const subTotal = recItems.reduce((sum, item) => sum + (parseToFloat(item.price) || 0) * (Number(item.qty) || 0), 0);
     const grandTotal = Math.max(0, subTotal - (parseToFloat(discount) || 0) + (parseToFloat(deliveryFee) || 0));
 
+    // Auto-detect overall category from recommendation items if multiple categories exist
+    const distinctItemCategories = Array.from(new Set(recItems.map(i => i.category).filter(Boolean)));
+    const computedOverallCategory = distinctItemCategories.length > 1
+        ? 'Mixed'
+        : (distinctItemCategories[0] || category || 'Hardware');
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -296,10 +315,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         const filteredReqItems = reqItems.filter(item => item.description.trim() !== '');
         const filteredRecItems = recItems.filter(item => item.description.trim() !== '');
 
-        if (!category) {
-            alert('Please select a category first.');
-            return;
-        }
+        const finalCategory = computedOverallCategory;
 
         if (filteredReqItems.length === 0) {
             alert('Please add at least one requested item.');
@@ -317,7 +333,8 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             requestedItems: filteredReqItems,
             itRecommendations: filteredRecItems.map(item => ({
                 ...item,
-                price: parseToFloat(item.price)
+                price: parseToFloat(item.price) || 0,
+                category: item.category || finalCategory
             })),
             notes: notes,
             grandTotal: grandTotal,
@@ -325,7 +342,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
             deliveryFee: parseToFloat(deliveryFee) || 0,
             currency: currency,
             status: initialData?.status || 'Pending Supervisor',
-            category: category,
+            category: finalCategory,
             supervisorId: supervisorId || null,
             supervisorName: allUsers.find(u => String(u.id) === supervisorId)?.fullName || null,
             vpId: vpId || null,
@@ -415,20 +432,35 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                 </Select>
                             </div>
                             <div>
-                                <label className={labelClass}>Category</label>
-                                <Select value={category} onValueChange={setCategory}>
-                                    <SelectTrigger className="w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 h-9 text-xs">
-                                        <SelectValue placeholder="Pilih kategori..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Hardware" className="text-xs">🖥️ Hardware</SelectItem>
-                                        <SelectItem value="Accessories" className="text-xs">🖱️ Accessories</SelectItem>
-                                        <SelectItem value="Cloud & Hosting" className="text-xs">☁️ Cloud & Hosting</SelectItem>
-                                        <SelectItem value="Subscription" className="text-xs">📦 Subscription</SelectItem>
-                                        <SelectItem value="Maintenance & Support" className="text-xs">🔧 Maintenance & Support</SelectItem>
-                                        <SelectItem value="IT Services" className="text-xs">💼 IT Services</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <label className={labelClass}>
+                                    Overall Category
+                                    <span className="ml-1.5 text-[9px] font-normal text-slate-400 lowercase">(auto-detected from items)</span>
+                                </label>
+                                <div className="h-9 px-3 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-100/60 dark:bg-zinc-800/40 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-zinc-200">
+                                    <div className="flex items-center gap-2">
+                                        {(() => {
+                                            if (computedOverallCategory === 'Mixed') {
+                                                return (
+                                                    <>
+                                                        <Layers className="w-3.5 h-3.5 text-fuchsia-500" />
+                                                        <span>Mixed Categories</span>
+                                                    </>
+                                                );
+                                            }
+                                            const matched = CATEGORY_OPTIONS.find(c => c.value === computedOverallCategory);
+                                            const Icon = matched?.icon || Monitor;
+                                            return (
+                                                <>
+                                                    <Icon className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                                                    <span>{matched?.label || computedOverallCategory}</span>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                    <span className="text-[9px] font-mono font-normal text-slate-400">
+                                        {distinctItemCategories.length > 1 ? `${distinctItemCategories.length} types` : '1 type'}
+                                    </span>
+                                </div>
                             </div>
                             <div>
                                 <label className={labelClass}>Currency</label>
@@ -527,10 +559,11 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                             {/* Column Headers */}
                             <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50/50 dark:bg-zinc-900/30 border-b border-slate-100 dark:border-zinc-800">
                                 <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">No</div>
-                                <div className="col-span-4 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Spesifikasi / Barang</div>
+                                <div className="col-span-3 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Spesifikasi / Barang</div>
+                                <div className="col-span-2 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Kategori</div>
                                 <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-center">Qty</div>
                                 <div className="col-span-2 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Vendor</div>
-                                <div className="col-span-2 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-right">Harga Satuan</div>
+                                <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-right">Harga</div>
                                 <div className="col-span-1 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider text-right">Total</div>
                                 <div className="col-span-1"></div>
                             </div>
@@ -539,7 +572,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                     <div key={idx} className="grid grid-cols-12 gap-2 items-center px-4 py-2.5 group animate-in fade-in slide-in-from-top-1 duration-150 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors">
                                         <div className="col-span-1 text-center text-[10px] font-black text-slate-300 dark:text-zinc-600 font-mono">{idx + 1}</div>
                                         
-                                        <div className="col-span-4">
+                                        <div className="col-span-3">
                                             <Input
                                                 className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-medium text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"
                                                 placeholder="Spesifikasi barang..."
@@ -547,6 +580,40 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                                 onChange={e => handleRecItemChange(idx, 'description', e.target.value)}
                                                 required
                                             />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <Select 
+                                                value={item.category || 'Hardware'} 
+                                                onValueChange={v => handleRecItemChange(idx, 'category', v)}
+                                            >
+                                                <SelectTrigger className="w-full h-7 text-[11px] font-semibold bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 rounded-none px-0 focus:ring-0">
+                                                    <div className="flex items-center gap-1.5 truncate">
+                                                        {(() => {
+                                                            const opt = CATEGORY_OPTIONS.find(o => o.value === (item.category || 'Hardware'));
+                                                            const Icon = opt?.icon || Monitor;
+                                                            return (
+                                                                <>
+                                                                    <Icon className="w-3 h-3 text-slate-500 shrink-0" />
+                                                                    <span className="truncate">{opt?.label || item.category || 'Hardware'}</span>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-[220px]">
+                                                    {CATEGORY_OPTIONS.map(opt => {
+                                                        const Icon = opt.icon;
+                                                        return (
+                                                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Icon className="w-3.5 h-3.5 text-slate-500" />
+                                                                    <span>{opt.label}</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="col-span-1">
                                             <Input
@@ -566,7 +633,7 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                                                 required
                                             />
                                         </div>
-                                        <div className="col-span-2">
+                                        <div className="col-span-1">
                                             <Input
                                                 type="text"
                                                 className="w-full bg-transparent border-0 border-b border-transparent group-hover:border-slate-200 dark:group-hover:border-zinc-700 focus-visible:ring-0 focus-visible:border-blue-400 text-xs font-mono text-right text-slate-800 dark:text-zinc-200 placeholder:text-slate-300 dark:placeholder:text-zinc-600 rounded-none px-0 h-7 transition-all"

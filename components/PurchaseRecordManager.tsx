@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
     ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Check, BarChart3, Eye, Tag, PieChart, Calendar, Building2,
-    Save, AlertTriangle, Database, LayoutGrid, TableProperties, SlidersHorizontal, RotateCcw
+    Save, AlertTriangle, Database, LayoutGrid, TableProperties, SlidersHorizontal, RotateCcw, ExternalLink, Paperclip
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Area
@@ -35,15 +35,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900/95 dark:bg-zinc-950/95 backdrop-blur-md text-white border border-slate-200/10 dark:border-white/10 rounded-2xl p-4 shadow-2xl w-[220px] pointer-events-none flex flex-col gap-2">
+            <div className="bg-slate-900/95 dark:bg-zinc-950/95 backdrop-blur-md text-white border border-slate-200/10 dark:border-white/10 rounded-2xl p-3.5 shadow-2xl w-[230px] pointer-events-none flex flex-col gap-2">
                 <p className="text-slate-400 dark:text-zinc-500 text-[10px] font-bold uppercase tracking-widest m-0 leading-none">{label}</p>
-                <div className="flex flex-col gap-1">
-                    {payload.map((pld: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center text-xs font-bold mt-1">
-                            <span className="text-slate-400 dark:text-zinc-400 uppercase text-[9px] tracking-wider">Total Value</span>
-                            <span className="text-white font-mono">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(pld.value)}</span>
-                        </div>
-                    ))}
+                <div className="flex flex-col gap-1.5 divide-y divide-white/10">
+                    {payload.map((pld: any, index: number) => {
+                        const isBudget = pld.dataKey === 'budget';
+                        return (
+                            <div key={index} className="flex justify-between items-center text-xs font-bold pt-1 first:pt-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: pld.color || (isBudget ? '#94a3b8' : '#3b82f6') }}></span>
+                                    <span className="text-slate-400 dark:text-zinc-400 uppercase text-[9px] tracking-wider">
+                                        {isBudget ? 'Target Budget' : 'Actual Spent'}
+                                    </span>
+                                </div>
+                                <span className={cn("font-mono text-xs", isBudget ? "text-slate-300" : "text-white font-black")}>
+                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(pld.value)}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -126,6 +136,17 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const [editingRecord, setEditingRecord] = useState<PurchaseRecord | null>(null);
     const [deleteRecord, setDeleteRecord] = useState<PurchaseRecord | null>(null);
     const [selectedDetail, setSelectedDetail] = useState<PurchaseRecord | null>(null);
+    const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(new Set());
+    const [isChartOpen, setIsChartOpen] = useState(true);
+
+    const toggleRowExpand = (id: number) => {
+        setExpandedRecordIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isSyncingAll, setIsSyncingAll] = useState(false);
@@ -164,7 +185,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         }));
     };
 
-    const STANDARD_CATEGORIES = ['Hardware', 'Accessories', 'Cloud & Hosting', 'Subscription', 'Maintenance & Support', 'IT Services'];
+    const STANDARD_CATEGORIES = ['Hardware', 'Accessories', 'Consumable', 'Cloud & Hosting', 'Subscription', 'Maintenance & Support', 'IT Services'];
     const MONTH_KEYS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 
     const fetchRecords = async () => {
@@ -197,7 +218,10 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         } catch (err) { console.error(err); } finally { setIsLoading(false); }
     };
 
-    useEffect(() => { fetchRecords(); }, []);
+    useEffect(() => {
+        fetchRecords();
+        fetchBudgets(budgetYear);
+    }, []);
 
     const fetchBudgets = async (year: number) => {
         try {
@@ -226,6 +250,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         const seed = [
                             { category: 'Hardware', january: 10000000, february: 15000000, march: 2000000, april: 1000000, may: 20000000, june: 0, july: 0, august: 0, september: 0, october: 0, november: 0, december: 0 },
                             { category: 'Accessories', january: 500000, february: 500000, march: 500000, april: 500000, may: 500000, june: 500000, july: 500000, august: 500000, september: 500000, october: 500000, november: 500000, december: 500000 },
+                            { category: 'Consumable', january: 1000000, february: 1000000, march: 1000000, april: 1000000, may: 1000000, june: 1000000, july: 1000000, august: 1000000, september: 1000000, october: 1000000, november: 1000000, december: 1000000 },
                             { category: 'Cloud & Hosting', january: 4000000, february: 4000000, march: 4000000, april: 4000000, may: 4000000, june: 4000000, july: 4000000, august: 4000000, september: 4000000, october: 4000000, november: 4000000, december: 4000000 },
                             { category: 'Subscription', january: 3500000, february: 4000000, march: 1000000, april: 1000000, may: 1000000, june: 1000000, july: 1000000, august: 1000000, september: 1000000, october: 1000000, november: 1000000, december: 1000000 },
                             { category: 'Maintenance & Support', january: 2000000, february: 500000, march: 500000, april: 500000, may: 500000, june: 500000, july: 500000, august: 500000, september: 500000, october: 500000, november: 500000, december: 500000 },
@@ -255,6 +280,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     const seed = [
                         { category: 'Hardware', january: 10000000, february: 15000000, march: 2000000, april: 1000000, may: 20000000, june: 0, july: 0, august: 0, september: 0, october: 0, november: 0, december: 0 },
                         { category: 'Accessories', january: 500000, february: 500000, march: 500000, april: 500000, may: 500000, june: 500000, july: 500000, august: 500000, september: 500000, october: 500000, november: 500000, december: 500000 },
+                        { category: 'Consumable', january: 1000000, february: 1000000, march: 1000000, april: 1000000, may: 1000000, june: 1000000, july: 1000000, august: 1000000, september: 1000000, october: 1000000, november: 1000000, december: 1000000 },
                         { category: 'Cloud & Hosting', january: 4000000, february: 4000000, march: 4000000, april: 4000000, may: 4000000, june: 4000000, july: 4000000, august: 4000000, september: 4000000, october: 4000000, november: 4000000, december: 4000000 },
                         { category: 'Subscription', january: 3500000, february: 4000000, march: 1000000, april: 1000000, may: 1000000, june: 1000000, july: 1000000, august: 1000000, september: 1000000, october: 1000000, november: 1000000, december: 1000000 },
                         { category: 'Maintenance & Support', january: 2000000, february: 500000, march: 500000, april: 500000, may: 500000, june: 500000, july: 500000, august: 500000, september: 500000, october: 500000, november: 500000, december: 500000 },
@@ -277,11 +303,23 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             const y = dateObj.getFullYear();
             if (y !== budgetYear) return;
             const m = dateObj.getMonth(); // 0-11
-            const cat = r.category || 'Uncategorized';
-            if (!map[cat]) {
-                map[cat] = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0 };
+
+            if (r.items && Array.isArray(r.items) && r.items.length > 0) {
+                r.items.forEach((it: any) => {
+                    const cat = it.category || r.category || 'Uncategorized';
+                    if (!map[cat]) {
+                        map[cat] = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0 };
+                    }
+                    const amount = (Number(it.price || it.total || 0) * Number(it.qty || 1)) || 0;
+                    map[cat][m] = (map[cat][m] || 0) + amount;
+                });
+            } else {
+                const cat = r.category || 'Uncategorized';
+                if (!map[cat]) {
+                    map[cat] = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0 };
+                }
+                map[cat][m] = (map[cat][m] || 0) + (r.subtotal || 0);
             }
-            map[cat][m] = (map[cat][m] || 0) + (r.subtotal || 0);
         });
         return map;
     }, [records, budgetYear]);
@@ -428,7 +466,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             const matchesStatus = statusFilter === 'All' ? true : r.status === statusFilter;
             const matchesProject = projectFilter === 'All' ? true : r.projectName === projectFilter;
             const matchesCompany = companyFilter === 'All' ? true : r.company === companyFilter;
-            const matchesCategory = categoryFilter === 'All' ? true : r.category === categoryFilter;
+            const matchesCategory = categoryFilter === 'All' 
+                ? true 
+                : (r.category === categoryFilter || (r.items && Array.isArray(r.items) && r.items.some((it: any) => it.category === categoryFilter)));
 
             let matchesDate = true;
             if (r.purchaseDate) {
@@ -619,11 +659,26 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     }, [records]);
 
     const availableCategories = useMemo(() => {
-        const distinct = Array.from(new Set(records.map(r => r.category).filter(Boolean)));
-        return distinct.sort();
+        const set = new Set<string>();
+        records.forEach(r => {
+            if (r.category) set.add(r.category);
+            if (r.items && Array.isArray(r.items)) {
+                r.items.forEach((it: any) => {
+                    if (it.category) set.add(it.category);
+                });
+            }
+        });
+        return Array.from(set).filter(Boolean).sort();
     }, [records]);
 
     const financialHealth = useMemo(() => {
+        // Compute base metrics from the currently selected period (filteredRecords)
+        const totalDisbursed = filteredRecords.filter(r => r.status === 'Paid').reduce((sum, r) => sum + (r.subtotal || 0), 0);
+        const liability = filteredRecords.filter(r => r.status !== 'Paid').reduce((sum, r) => sum + (r.subtotal || 0), 0);
+        const fiscalVolume = filteredRecords.reduce((sum, r) => sum + (r.subtotal || 0), 0);
+        const pendingCount = filteredRecords.filter(r => r.status === 'Pending').length;
+
+        // Cash outflow change: compare selected period or this month vs previous month
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
 
@@ -636,7 +691,6 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         const lastMonthRecords = records.filter(r => {
             if (!r.purchaseDate) return false;
             const d = new Date(r.purchaseDate);
-            // Handle January case for previous month
             const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
             const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
             return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
@@ -650,15 +704,24 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             outflowChange = Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100);
         }
 
-        const pendingCount = records.filter(r => r.status === 'Pending').length;
-
-        // Largest Category
+        // Largest Category in current filtered view (or all records if none filtered)
+        const targetRecords = filteredRecords.length > 0 ? filteredRecords : records;
         const catTotals: Record<string, number> = {};
         let totalSpend = 0;
-        records.forEach(r => {
-            const cat = r.category || 'Uncategorized';
-            catTotals[cat] = (catTotals[cat] || 0) + (r.subtotal || 0);
-            totalSpend += (r.subtotal || 0);
+        targetRecords.forEach(r => {
+            if (r.items && Array.isArray(r.items) && r.items.length > 0) {
+                r.items.forEach((it: any) => {
+                    const cat = it.category || r.category || 'Uncategorized';
+                    const amount = (Number(it.price || it.total || 0) * Number(it.qty || 1)) || 0;
+                    catTotals[cat] = (catTotals[cat] || 0) + amount;
+                    totalSpend += amount;
+                });
+            } else {
+                const cat = r.category || 'Uncategorized';
+                const amount = r.subtotal || 0;
+                catTotals[cat] = (catTotals[cat] || 0) + amount;
+                totalSpend += amount;
+            }
         });
 
         const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
@@ -671,43 +734,149 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         if (pendingCount > 10) risk = 'High';
         else if (pendingCount > 5) risk = 'Medium';
 
+        // Real budget efficiency calculation:
+        // If budgets are defined for the year/month, calculate Disbursed / Allocated Budget.
+        // Fallback: Disbursed vs Fiscal Volume (settled ratio).
+        let budgetEfficiency = 100;
+        let efficiencySubValue = "Settled Ratio";
+
+        // Check if there is budget allocated for this period
+        const targetYear = yearFilter !== 'All' ? parseInt(yearFilter, 10) : new Date().getFullYear();
+        let allocatedBudget = 0;
+
+        if (monthFilter !== 'All') {
+            const mKey = monthFilter.toLowerCase() as keyof PurchaseBudget;
+            allocatedBudget = budgets.filter(b => b.year === targetYear).reduce((sum, b) => sum + (Number(b[mKey]) || 0), 0);
+        } else if (quarterFilter !== 'All') {
+            const quarterMonthsMap: Record<string, (keyof PurchaseBudget)[]> = {
+                'Q1': ['january', 'february', 'march'],
+                'Q2': ['april', 'may', 'june'],
+                'Q3': ['july', 'august', 'september'],
+                'Q4': ['october', 'november', 'december'],
+            };
+            const qMonths = quarterMonthsMap[quarterFilter] || [];
+            allocatedBudget = budgets.filter(b => b.year === targetYear).reduce((sum, b) => {
+                const qSum = qMonths.reduce((mSum, m) => mSum + (Number(b[m]) || 0), 0);
+                return sum + qSum;
+            }, 0);
+        } else {
+            allocatedBudget = budgets.filter(b => b.year === targetYear).reduce((sum, b) => {
+                const yrSum = MONTH_KEYS.reduce((mSum, m) => mSum + (Number(b[m as keyof PurchaseBudget]) || 0), 0);
+                return sum + yrSum;
+            }, 0);
+        }
+
+        if (allocatedBudget > 0) {
+            budgetEfficiency = Math.round((totalDisbursed / allocatedBudget) * 100);
+            efficiencySubValue = `${Math.round(totalDisbursed / 1000000)}M / ${Math.round(allocatedBudget / 1000000)}M Budget`;
+        } else if (fiscalVolume > 0) {
+            budgetEfficiency = Math.round((totalDisbursed / fiscalVolume) * 100);
+            efficiencySubValue = "Settled vs Volume";
+        }
+
+        // Category Budget Warnings (> 85% warning, > 100% exceeded)
+        const categoryAlerts: Array<{ category: string; spent: number; budget: number; percent: number }> = [];
+        const activeYear = targetYear || budgetYear;
+        const monthNamesList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        budgets.filter(b => b.year === activeYear).forEach(b => {
+            let catBudget = 0;
+            if (monthFilter !== 'All') {
+                const mKey = MONTH_KEYS[monthNamesList.indexOf(monthFilter)] as keyof PurchaseBudget;
+                catBudget = Number(b[mKey]) || 0;
+            } else if (quarterFilter !== 'All') {
+                const qMap: Record<string, (keyof PurchaseBudget)[]> = {
+                    'Q1': ['january', 'february', 'march'],
+                    'Q2': ['april', 'may', 'june'],
+                    'Q3': ['july', 'august', 'september'],
+                    'Q4': ['october', 'november', 'december'],
+                };
+                catBudget = (qMap[quarterFilter] || []).reduce((s, k) => s + (Number(b[k]) || 0), 0);
+            } else {
+                catBudget = MONTH_KEYS.reduce((s, k) => s + (Number(b[k as keyof PurchaseBudget]) || 0), 0);
+            }
+
+            const catSpent = catTotals[b.category] || 0;
+            if (catBudget > 0 && catSpent > 0) {
+                const pct = Math.round((catSpent / catBudget) * 100);
+                if (pct >= 85) {
+                    categoryAlerts.push({
+                        category: b.category,
+                        spent: catSpent,
+                        budget: catBudget,
+                        percent: pct
+                    });
+                }
+            }
+        });
+
         return {
             outflowChange,
             pendingCount,
             largestCategory: { name: largestName, percentage: largestPercentage },
             riskLevel: risk,
-            totalDisbursed: records.filter(r => r.status === 'Paid').reduce((sum, r) => sum + (r.subtotal || 0), 0),
-            liability: records.filter(r => r.status !== 'Paid').reduce((sum, r) => sum + (r.subtotal || 0), 0),
-            fiscalVolume: records.reduce((sum, r) => sum + (r.subtotal || 0), 0)
+            totalDisbursed,
+            liability,
+            fiscalVolume,
+            budgetEfficiency,
+            efficiencySubValue,
+            categoryAlerts: categoryAlerts.sort((a, b) => b.percent - a.percent)
         };
-    }, [records]);
+    }, [records, filteredRecords, budgets, yearFilter, monthFilter, quarterFilter]);
 
     const chartData = useMemo(() => {
-        const grouped: Record<string, { name: string; total: number; sortKey: number }> = {};
-
-        filteredRecords.forEach(r => {
-            if (!r.purchaseDate) return;
+        // Show fiscal monthly trend for the selected year (or active budget year)
+        const targetYear = yearFilter !== 'All' ? parseInt(yearFilter, 10) : budgetYear;
+        const trendRecords = records.filter(r => {
+            if (!r.purchaseDate) return false;
             const d = new Date(r.purchaseDate);
-            if (isNaN(d.getTime())) return;
-            const y = d.getFullYear();
-            const m = d.getMonth();
-            const key = `${y}-${m}`;
-            const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-
-            if (!grouped[key]) {
-                grouped[key] = {
-                    name: label,
-                    total: 0,
-                    sortKey: y * 12 + m
-                };
+            if (isNaN(d.getTime())) return false;
+            if (d.getFullYear() !== targetYear) return false;
+            if (companyFilter !== 'All' && r.company !== companyFilter) return false;
+            if (projectFilter !== 'All' && r.projectName !== projectFilter) return false;
+            if (categoryFilter !== 'All') {
+                const matchesRecordCat = r.category === categoryFilter;
+                const matchesItemCat = r.items && Array.isArray(r.items) && r.items.some((it: any) => it.category === categoryFilter);
+                if (!matchesRecordCat && !matchesItemCat) return false;
             }
-            grouped[key].total += (r.subtotal || 0);
+            return true;
         });
 
-        return Object.values(grouped)
-            .sort((a, b) => a.sortKey - b.sortKey)
-            .map(item => ({ name: item.name, total: item.total }));
-    }, [filteredRecords]);
+        const monthShorts = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Sum total budget per month for targetYear
+        const yearBudgets = budgets.filter(b => b.year === targetYear && (categoryFilter === 'All' || b.category === categoryFilter));
+        const budgetPerMonth: number[] = new Array(12).fill(0);
+        yearBudgets.forEach(b => {
+            MONTH_KEYS.forEach((mKey, idx) => {
+                budgetPerMonth[idx] += (Number(b[mKey as keyof PurchaseBudget]) || 0);
+            });
+        });
+
+        // Sum actual spent per month for targetYear
+        const spentPerMonth: number[] = new Array(12).fill(0);
+        trendRecords.forEach(r => {
+            const d = new Date(r.purchaseDate!);
+            const m = d.getMonth();
+            if (r.items && Array.isArray(r.items) && r.items.length > 0 && categoryFilter !== 'All') {
+                r.items.forEach((it: any) => {
+                    if (it.category === categoryFilter) {
+                        spentPerMonth[m] += (Number(it.price || it.total || 0) * Number(it.qty || 1)) || 0;
+                    }
+                });
+            } else {
+                spentPerMonth[m] += (r.subtotal || 0);
+            }
+        });
+
+        return monthShorts.map((name, idx) => ({
+            name,
+            total: spentPerMonth[idx],
+            budget: budgetPerMonth[idx],
+            variance: budgetPerMonth[idx] - spentPerMonth[idx],
+            isOver: budgetPerMonth[idx] > 0 && spentPerMonth[idx] > budgetPerMonth[idx]
+        }));
+    }, [records, budgets, yearFilter, budgetYear, companyFilter, projectFilter, categoryFilter]);
 
     const deptData = useMemo(() => {
         const data: Record<string, number> = {};
@@ -733,8 +902,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         const totalFiltered = filteredRecords.reduce((sum, r) => sum + (r.subtotal || 0), 0);
 
         filteredRecords.forEach(r => {
-            const cat = r.category || 'Uncategorized';
-            data[cat] = (data[cat] || 0) + (r.subtotal || 0);
+            if (r.items && Array.isArray(r.items) && r.items.length > 0) {
+                r.items.forEach((it: any) => {
+                    const cat = it.category || r.category || 'Uncategorized';
+                    const amount = (Number(it.price || it.total || 0) * Number(it.qty || 1)) || 0;
+                    data[cat] = (data[cat] || 0) + amount;
+                });
+            } else {
+                const cat = r.category || 'Uncategorized';
+                data[cat] = (data[cat] || 0) + (r.subtotal || 0);
+            }
         });
         return Object.entries(data)
             .map(([name, total]) => ({
@@ -783,6 +960,48 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* Main Tabs switcher (Ledger vs Budget Tracker) and Row Controls */}
+            {financialHealth.categoryAlerts && financialHealth.categoryAlerts.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 dark:bg-amber-500/5 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                            <AlertTriangle size={16} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                                    Budget Threshold Alert ({financialHealth.categoryAlerts.length})
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-200/70 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                                    {financialHealth.categoryAlerts.some(a => a.percent >= 100) ? 'Exceeded Limit' : 'Near Limit'}
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-amber-800/90 dark:text-amber-300/80 mt-0.5">
+                                Kategori berikut telah menyerap anggaran &ge; 85% dari alokasi yang ditetapkan:
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                        {financialHealth.categoryAlerts.map(alert => (
+                            <div 
+                                key={alert.category}
+                                className={cn(
+                                    "px-2.5 py-1 rounded-lg border text-[10px] font-bold flex items-center gap-1.5 shadow-2xs",
+                                    alert.percent >= 100 
+                                        ? "bg-rose-100/80 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800" 
+                                        : "bg-amber-100/80 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                                )}
+                            >
+                                <span>{alert.category}:</span>
+                                <span className="font-mono font-black">{alert.percent}%</span>
+                                <span className="font-normal opacity-75">
+                                    (Rp {Math.round(alert.spent / 1000000)}M / {Math.round(alert.budget / 1000000)}M)
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md shadow-xs">
                 <div className="flex items-center gap-3">
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full sm:w-auto">
@@ -1309,8 +1528,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 />
                 <StatCard
                     label="Budget Efficiency"
-                    value={`${Math.min(100, Math.round((financialHealth.totalDisbursed / (financialHealth.totalDisbursed * 1.25 || 1)) * 100))}%`}
-                    subValue="Utilization Rate"
+                    value={`${financialHealth.budgetEfficiency}%`}
+                    subValue={financialHealth.efficiencySubValue}
                     icon={PieChart}
                     color="violet"
                 />
@@ -1321,44 +1540,70 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             <div className="grid grid-cols-1 gap-6">
                 {/* Main Chart Card */}
                 <Card className="rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-900">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-6">
+                    <CardContent className="p-5">
+                        <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                                    <BarChart3 size={18} />
+                                <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                                    <BarChart3 size={16} />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-sm uppercase">Fiscal Trend</h2>
-                                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Volume Transaksi Bulanan</p>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Fiscal Performance</h2>
+                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">
+                                            Target Budget vs Realisasi Riil
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] font-medium text-slate-400 dark:text-zinc-400">
+                                        Perbandingan pengeluaran aktual vs kuota anggaran per bulan (Tahun {yearFilter !== 'All' ? yearFilter : budgetYear})
+                                    </p>
                                 </div>
                             </div>
+                            <div className="flex items-center gap-3">
+                                <div className="hidden sm:flex items-center gap-3 text-[10px] font-bold">
+                                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400">
+                                        <span className="w-2.5 h-2.5 rounded-sm bg-slate-200 dark:bg-zinc-700"></span>
+                                        <span>Target Budget</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                                        <span className="w-2.5 h-2.5 rounded-sm bg-blue-600"></span>
+                                        <span>Actual Spent</span>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setIsChartOpen(!isChartOpen)}
+                                    className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200"
+                                >
+                                    {isChartOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                    <span className="ml-1 text-[10px] uppercase font-bold">{isChartOpen ? 'Kecilkan' : 'Tampilkan'}</span>
+                                </Button>
+                            </div>
                         </div>
-                        <div className="h-[200px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.01} />
-                                        </linearGradient>
-                                        <linearGradient id="strokeTotal" x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="0%" stopColor="#6366f1" />
-                                            <stop offset="100%" stopColor="#3b82f6" />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(226, 232, 240, 0.4)" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
-                                    <Tooltip
-                                        isAnimationActive={false}
-                                        cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                        content={<CustomTooltip />}
-                                    />
-                                    <Area type="monotone" dataKey="total" stroke="url(#strokeTotal)" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3.5} />
-                                    <Bar dataKey="total" barSize={32} radius={[6, 6, 0, 0]} fill="url(#strokeTotal)" opacity={0.1} />
-                                </ComposedChart>
-                            </ResponsiveContainer>
-                        </div>
+
+                        {isChartOpen && (
+                            <div className="h-[180px] w-full pt-2">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(226, 232, 240, 0.4)" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={8} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
+                                        <Tooltip
+                                            isAnimationActive={false}
+                                            cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }}
+                                            content={<CustomTooltip />}
+                                        />
+                                        <Bar dataKey="budget" name="Target Budget" barSize={16} radius={[4, 4, 0, 0]} fill="#cbd5e1" opacity={0.65} />
+                                        <Bar dataKey="total" name="Actual Spent" barSize={16} radius={[4, 4, 0, 0]}>
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.isOver ? '#f43f5e' : '#3b82f6'} />
+                                            ))}
+                                        </Bar>
+                                        <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3, fill: '#2563eb' }} />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -1539,13 +1784,27 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                 ) : paginatedRecords.map(record => {
                                     const isSettled = !!record.docs?.expenseApproval || (record.remarks && record.remarks.includes('Expense Approval Settled'));
                                     const itemCount = (record.items || []).length;
+                                    const isExpanded = expandedRecordIds.has(record.id);
 
                                     return (
-                                        <TableRow key={record.id} className="group transition-colors hover:bg-slate-50/90 dark:hover:bg-zinc-800/60">
+                                        <React.Fragment key={record.id}>
+                                        <TableRow className={cn(
+                                            "group transition-colors",
+                                            isExpanded ? "bg-blue-50/40 dark:bg-zinc-800/80" : "hover:bg-slate-50/90 dark:hover:bg-zinc-800/60"
+                                        )}>
                                             {/* Column 1: Audit Identity */}
                                             <TableCell className="py-3.5 px-4 align-middle whitespace-normal">
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center gap-1.5">
+                                                        {itemCount > 0 && (
+                                                            <button
+                                                                onClick={() => toggleRowExpand(record.id)}
+                                                                className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-0.5 rounded transition-transform"
+                                                                title={isExpanded ? "Tutup rincian item" : "Buka rincian item"}
+                                                            >
+                                                                {isExpanded ? <ChevronDown size={14} className="text-blue-600 dark:text-blue-400" /> : <ChevronRight size={14} />}
+                                                            </button>
+                                                        )}
                                                         <span 
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText(record.transactionId);
@@ -1593,6 +1852,18 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800">
                                                                 {itemCount} item
                                                             </span>
+                                                        )}
+                                                        {record.evidenceLink && (
+                                                            <a 
+                                                                href={record.evidenceLink} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer" 
+                                                                className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800 inline-flex items-center gap-1 hover:underline"
+                                                                title="Buka lampiran bukti transaksi"
+                                                            >
+                                                                <Paperclip size={10} />
+                                                                <span>Bukti</span>
+                                                            </a>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1715,6 +1986,58 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                                 </div>
                                             </TableCell>
                                         </TableRow>
+
+                                        {/* Expandable Accordion Subrow for Multi-Items */}
+                                        {isExpanded && record.items && record.items.length > 0 && (
+                                            <TableRow className="bg-slate-50/70 dark:bg-zinc-900/60 border-b border-blue-100 dark:border-zinc-800">
+                                                <TableCell colSpan={7} className="py-2.5 px-6">
+                                                    <div className="rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 p-3 shadow-2xs">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                                                                    Rincian Item Invoice ({record.items.length})
+                                                                </span>
+                                                                <span className="text-[9px] text-slate-400 font-normal">
+                                                                    — Total Item: {record.items.reduce((s: number, it: any) => s + (Number(it.qty) || 1), 0)} pcs
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300">
+                                                                Subtotal Items: Rp {new Intl.NumberFormat('id-ID').format(
+                                                                    record.items.reduce((s: number, it: any) => s + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0)
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        <div className="divide-y divide-slate-100 dark:divide-zinc-800/80 text-xs">
+                                                            {record.items.map((item: any, itemIdx: number) => {
+                                                                const itemTotal = (Number(item.price) || 0) * (Number(item.qty) || 1);
+                                                                return (
+                                                                    <div key={itemIdx} className="grid grid-cols-12 gap-2 py-1.5 items-center">
+                                                                        <div className="col-span-1 font-mono text-[10px] font-bold text-slate-400">
+                                                                            #{itemIdx + 1}
+                                                                        </div>
+                                                                        <div className="col-span-5 font-semibold text-slate-800 dark:text-zinc-200 text-xs truncate">
+                                                                            {item.description || item.item_name || 'Item'}
+                                                                        </div>
+                                                                        <div className="col-span-2">
+                                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 uppercase tracking-wide">
+                                                                                {item.category || record.category || 'General'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="col-span-1 text-center font-mono text-xs font-bold text-slate-600 dark:text-zinc-300">
+                                                                            {item.qty || 1}x
+                                                                        </div>
+                                                                        <div className="col-span-3 text-right font-mono font-semibold text-slate-700 dark:text-zinc-300 text-xs">
+                                                                            Rp {new Intl.NumberFormat('id-ID').format(itemTotal)}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </TableBody>
