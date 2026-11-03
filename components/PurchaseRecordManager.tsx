@@ -1244,9 +1244,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             {viewMode === 'ledger' ? (
                 <>
 
-            {/* Sleek Executive Filter Toolbar */}
+            {/* Sleek Executive Filter Toolbar (Threads Design System Tokens) */}
             <div className="space-y-3">
-                <Card className="rounded-[24px] overflow-visible">
+                <Card className="rounded-[16px] border border-slate-200/80 dark:border-[#1e1e1e] bg-white dark:bg-[#101010] shadow-sm overflow-visible">
                     <CardContent className="p-3 sm:p-3.5 space-y-3">
                         {/* Main Single-Line Filter Row */}
                         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
@@ -1258,15 +1258,15 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                         type="button"
                                         onClick={() => setIsPeriodOpen(!isPeriodOpen)}
                                         className={cn(
-                                            "h-9 px-3 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer",
+                                            "h-9 px-3 rounded-[8px] text-[13px] font-semibold flex items-center gap-2 border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                             isPeriodOpen || (quarterFilter !== 'All' || monthFilter !== 'All' || startDate || endDate)
-                                                ? "bg-blue-50/90 dark:bg-blue-950/70 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold"
-                                                : "bg-white dark:bg-zinc-800/90 border-slate-200/90 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-750"
+                                                ? "bg-blue-50/90 dark:bg-[#1e1e1e] border-blue-300 dark:border-blue-700 text-blue-700 dark:text-[#f3f5f7] font-bold"
+                                                : "bg-white dark:bg-[#101010] border-slate-200/90 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e]"
                                         )}
                                     >
                                         <Calendar size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                                        <span className="font-bold text-slate-800 dark:text-zinc-100">Period:</span>
-                                        <span className="font-semibold text-slate-700 dark:text-zinc-200">{periodLabel}</span>
+                                        <span className="font-bold text-slate-800 dark:text-[#f3f5f7]">Period:</span>
+                                        <span className="font-semibold text-slate-700 dark:text-[#777777]">{periodLabel}</span>
                                         {isPeriodOpen ? <ChevronUp size={13} className="text-slate-400 shrink-0" /> : <ChevronDown size={13} className="text-slate-400 shrink-0" />}
                                     </button>
 
@@ -1487,17 +1487,17 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                                 {/* Search Bar */}
                                 <div className="relative flex-1 min-w-[220px]">
-                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#777777]" />
                                     <Input
                                         placeholder="Search descriptions, companies, projects..."
-                                        className="pl-9 pr-8 h-9 bg-slate-50/80 dark:bg-zinc-800/80 border-slate-200/90 dark:border-zinc-700 rounded-xl text-xs font-medium text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-blue-500/30"
+                                        className="pl-9 pr-8 h-9 bg-slate-50/80 dark:bg-[#101010] border-slate-200/90 dark:border-[#1e1e1e] rounded-[8px] text-[13px] font-medium text-slate-900 dark:text-[#f3f5f7] placeholder:text-slate-400 dark:placeholder:text-[#777777] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                                         value={searchTerm}
                                         onChange={e => setSearchTerm(e.target.value)}
                                     />
                                     {searchTerm && (
                                         <button
                                             onClick={() => setSearchTerm('')}
-                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-700 text-slate-500 dark:text-zinc-300 hover:bg-slate-300 dark:hover:bg-zinc-600 flex items-center justify-center text-[10px] font-bold"
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 dark:bg-[#1e1e1e] text-slate-500 dark:text-[#777777] hover:bg-slate-300 dark:hover:bg-[#252525] flex items-center justify-center text-[10px] font-bold"
                                         >
                                             ✕
                                         </button>
@@ -1512,16 +1512,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     size="sm"
                                     onClick={() => setShowMoreFilters(!showMoreFilters)}
                                     className={cn(
-                                        "h-9 px-3.5 text-xs font-semibold gap-2 rounded-xl transition-all border",
+                                        "h-9 px-3.5 text-xs font-semibold gap-2 rounded-[8px] transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                         showMoreFilters || activeMoreFiltersCount > 0
-                                            ? "bg-blue-50 dark:bg-blue-950/70 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60"
-                                            : "bg-white dark:bg-zinc-800/90 border-slate-200/90 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-750 shadow-2xs"
+                                            ? "bg-blue-50 dark:bg-[#1e1e1e] border-blue-200 dark:border-blue-700 text-blue-700 dark:text-[#f3f5f7] hover:bg-blue-100 dark:hover:bg-[#252525]"
+                                            : "bg-white dark:bg-[#101010] border-slate-200/90 dark:border-[#1e1e1e] text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] shadow-2xs"
                                     )}
                                 >
-                                    <SlidersHorizontal size={13} className={activeMoreFiltersCount > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-zinc-400"} />
+                                    <SlidersHorizontal size={13} className={activeMoreFiltersCount > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-[#777777]"} />
                                     <span>More Filters</span>
                                     {activeMoreFiltersCount > 0 && (
-                                        <span className="px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[10px] font-bold">
+                                        <span className="px-1.5 py-0.2 rounded-[50px] bg-blue-600 text-white text-[10px] font-bold">
                                             {activeMoreFiltersCount}
                                         </span>
                                     )}
@@ -1544,7 +1544,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                         setStartDate('');
                                         setEndDate('');
                                     }}
-                                    className="h-9 px-3 text-xs font-semibold gap-1.5 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                    className="h-9 px-3 text-xs font-semibold gap-1.5 text-slate-500 dark:text-[#777777] hover:text-slate-900 dark:hover:text-[#f3f5f7] rounded-[8px] hover:bg-slate-100 dark:hover:bg-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                 >
                                     <RotateCcw size={13} />
                                     <span>Reset</span>
@@ -1554,33 +1554,33 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                         {/* Active Filter Chips */}
                         {(searchTerm || companyFilter !== 'All' || departmentFilter !== 'All' || categoryFilter !== 'All' || vendorFilter !== 'All' || statusFilter !== 'All' || monthFilter !== 'All' || quarterFilter !== 'All' || projectFilter !== 'All' || startDate || endDate) && (
-                            <div className="pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mr-1">
+                            <div className="pt-2.5 border-t border-slate-100 dark:border-[#1e1e1e] flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#777777] mr-1">
                                     Filter Aktif:
                                 </span>
 
                                 {searchTerm && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80">
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-[50px] text-[12px] font-semibold bg-blue-50 text-blue-700 dark:bg-[#1e1e1e] dark:text-[#f3f5f7] border border-blue-200/80 dark:border-blue-900">
                                         Cari: "{searchTerm}"
-                                        <button onClick={() => setSearchTerm('')} className="hover:text-blue-900 dark:hover:text-blue-100 ml-0.5">
+                                        <button onClick={() => setSearchTerm('')} className="hover:text-blue-900 dark:hover:text-white ml-0.5">
                                             <X size={11} />
                                         </button>
                                     </span>
                                 )}
 
                                 {companyFilter !== 'All' && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80">
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-[50px] text-[12px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-[#1e1e1e] dark:text-[#f3f5f7] border border-indigo-200/80 dark:border-indigo-900">
                                         Entitas: {companyFilter}
-                                        <button onClick={() => setCompanyFilter('All')} className="hover:text-indigo-900 dark:hover:text-indigo-100 ml-0.5">
+                                        <button onClick={() => setCompanyFilter('All')} className="hover:text-indigo-900 dark:hover:text-white ml-0.5">
                                             <X size={11} />
                                         </button>
                                     </span>
                                 )}
 
                                 {departmentFilter !== 'All' && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80">
+                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-[50px] text-[12px] font-semibold bg-sky-50 text-sky-700 dark:bg-[#1e1e1e] dark:text-[#f3f5f7] border border-sky-200/80 dark:border-sky-900">
                                         Dept: {departmentFilter}
-                                        <button onClick={() => setDepartmentFilter('All')} className="hover:text-sky-900 dark:hover:text-sky-100 ml-0.5">
+                                        <button onClick={() => setDepartmentFilter('All')} className="hover:text-sky-900 dark:hover:text-white ml-0.5">
                                             <X size={11} />
                                         </button>
                                     </span>
@@ -1671,26 +1671,26 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             </div>
                         )}
 
-                        {/* Expandable Subrow: More Filters */}
+                        {/* Expandable Subrow: More Filters (Threads Token Driven) */}
                         {showMoreFilters && (
-                            <div className="pt-4 mt-3 border-t border-slate-100 dark:border-zinc-800 space-y-3.5 animate-in slide-in-from-top-2 duration-200">
+                            <div className="pt-4 mt-3 border-t border-slate-100 dark:border-[#1e1e1e] space-y-3.5 animate-in slide-in-from-top-2 duration-200">
                                 {/* Filter Dropdowns Grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                     {/* 1. Departemen */}
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#777777] flex items-center gap-1">
                                             <Building2 size={11} className="text-blue-500" /> Departemen
                                         </label>
                                         <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                                             <SelectTrigger className={cn(
-                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                "w-full h-8.5 rounded-[8px] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                                 departmentFilter !== 'All' 
-                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
-                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                    ? "border-blue-300 text-blue-700 dark:text-[#f3f5f7] bg-blue-50/80 dark:bg-[#1e1e1e]" 
+                                                    : "bg-slate-50 dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7]"
                                             )}>
                                                 <span className="truncate">{departmentFilter === 'All' ? 'Semua Departemen' : departmentFilter}</span>
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                            <SelectContent className="bg-white dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] shadow-xl max-h-[250px]">
                                                 <SelectItem value="All">Semua Departemen</SelectItem>
                                                 {availableDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                             </SelectContent>
@@ -1699,19 +1699,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                                     {/* 2. Kategori */}
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#777777] flex items-center gap-1">
                                             <Tag size={11} className="text-indigo-500" /> Kategori Pengeluaran
                                         </label>
                                         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                             <SelectTrigger className={cn(
-                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                "w-full h-8.5 rounded-[8px] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                                 categoryFilter !== 'All' 
-                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
-                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                    ? "border-blue-300 text-blue-700 dark:text-[#f3f5f7] bg-blue-50/80 dark:bg-[#1e1e1e]" 
+                                                    : "bg-slate-50 dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7]"
                                             )}>
                                                 <span className="truncate">{categoryFilter === 'All' ? 'Semua Kategori' : categoryFilter}</span>
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                            <SelectContent className="bg-white dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] shadow-xl max-h-[250px]">
                                                 <SelectItem value="All">Semua Kategori</SelectItem>
                                                 {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                                             </SelectContent>
@@ -1720,19 +1720,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                                     {/* 3. Vendor / Supplier */}
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#777777] flex items-center gap-1">
                                             <Briefcase size={11} className="text-violet-500" /> Vendor / Supplier
                                         </label>
                                         <Select value={vendorFilter} onValueChange={setVendorFilter}>
                                             <SelectTrigger className={cn(
-                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                "w-full h-8.5 rounded-[8px] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                                 vendorFilter !== 'All' 
-                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
-                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                    ? "border-blue-300 text-blue-700 dark:text-[#f3f5f7] bg-blue-50/80 dark:bg-[#1e1e1e]" 
+                                                    : "bg-slate-50 dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7]"
                                             )}>
                                                 <span className="truncate">{vendorFilter === 'All' ? 'Semua Vendor' : vendorFilter}</span>
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                            <SelectContent className="bg-white dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] shadow-xl max-h-[250px]">
                                                 <SelectItem value="All">Semua Vendor</SelectItem>
                                                 {availableVendors.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                                             </SelectContent>
@@ -1741,19 +1741,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                                     {/* 4. Status Pembayaran */}
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#777777] flex items-center gap-1">
                                             <CheckCircle2 size={11} className="text-emerald-500" /> Status Pembayaran
                                         </label>
                                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                                             <SelectTrigger className={cn(
-                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                "w-full h-8.5 rounded-[8px] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                                                 statusFilter !== 'All' 
-                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
-                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                    ? "border-blue-300 text-blue-700 dark:text-[#f3f5f7] bg-blue-50/80 dark:bg-[#1e1e1e]" 
+                                                    : "bg-slate-50 dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7]"
                                             )}>
                                                 <span className="truncate">{statusFilter === 'All' ? 'Semua Status' : statusFilter}</span>
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                            <SelectContent className="bg-white dark:bg-[#101010] border-slate-200 dark:border-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] shadow-xl">
                                                 <SelectItem value="All">Semua Status</SelectItem>
                                                 <SelectItem value="Paid">Paid (Lunas)</SelectItem>
                                                 <SelectItem value="Pending">Pending (Menunggu)</SelectItem>
