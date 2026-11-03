@@ -129,7 +129,16 @@
 .gesit-dash .chart-badge{font-size:11px;font-weight:800;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
 .gesit-dash .chart-svg{width:100%;height:86px;margin-top:10px}
 .gesit-dash .chart-val{font-size:15px;font-weight:800;margin-top:2px}
-.gesit-dash .chart-val span{font-size:11px;color:var(--faint);font-weight:600}
+/* Focus Visible Accessibility (WCAG 2.2 AA) */
+.gesit-dash a:focus-visible,
+.gesit-dash button:focus-visible,
+.gesit-dash .top-ic:focus-visible,
+.gesit-dash .btn-filter:focus-visible,
+.gesit-dash .btn-new:focus-visible,
+.gesit-dash .tix-link:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+}
 .gesit-dash .chart-x{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:5px}
 .gesit-dash .chart-cap{font-size:10.5px;color:var(--faint);margin-top:7px}
 @media (max-width:1100px){.gesit-dash .mon-b{grid-template-columns:1fr}
@@ -733,24 +742,20 @@
    ===================================================================== */
 [data-theme="dark"] .gesit-dash,
 .dark .gesit-dash {
-  --bg: #101214;
-  --card: rgba(255, 255, 255, 0.06);
-  --line: rgba(255, 255, 255, 0.09);
-  --ink: #f2f4f7;
-  --muted: #a6b0bf;
-  --faint: #8490a0;
-  --donut-track: rgba(255, 255, 255, 0.09);
-  --donut-dark: #667085;
-  --donut-other: rgba(255, 255, 255, 0.25);
-  --bar-done: #2f6bff;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.4);
+  --bg: #000000;
+  --card: #101010;
+  --line: #1e1e1e;
+  --ink: #f3f5f7;
+  --muted: #777777;
+  --faint: #555555;
+  --donut-track: #1e1e1e;
+  --donut-dark: #385898;
+  --donut-other: #252525;
+  --bar-done: #385898;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.6);
 
-  background:
-    radial-gradient(900px 480px at 10% -60px, rgba(47, 107, 255, 0.12) 0%, transparent 60%),
-    radial-gradient(820px 430px at 90% -40px, rgba(201, 162, 39, 0.08) 0%, transparent 55%),
-    radial-gradient(1000px 620px at 55% 112%, rgba(18, 128, 92, 0.08) 0%, transparent 60%),
-    #101214 !important;
-  color: #f2f4f7;
+  background: #000000 !important;
+  color: #f3f5f7;
 }
 
 /* Topbar Mode Gelap */
@@ -764,39 +769,39 @@
 .dark .gesit-dash .theme-toggle-btn,
 [data-theme="dark"] .gesit-dash .lang,
 .dark .gesit-dash .lang {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  color: #f2f4f7 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  background: #101010 !important;
+  border: 1px solid #1e1e1e !important;
+  color: #f3f5f7 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 }
 
 [data-theme="dark"] .gesit-dash nav.main a,
 .dark .gesit-dash nav.main a {
-  color: #a6b0bf !important;
+  color: #777777 !important;
 }
 
 [data-theme="dark"] .gesit-dash nav.main a.on,
 .dark .gesit-dash nav.main a.on {
-  background: #23282f !important;
+  background: #1e1e1e !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] .gesit-dash .nav-dropdown,
 .dark .gesit-dash .nav-dropdown {
-  background: #181b20 !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5) !important;
+  background: #101010 !important;
+  border: 1px solid #1e1e1e !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7) !important;
 }
 
 [data-theme="dark"] .gesit-dash .nav-dropdown-item,
 .dark .gesit-dash .nav-dropdown-item {
-  color: #f2f4f7 !important;
+  color: #f3f5f7 !important;
 }
 
 [data-theme="dark"] .gesit-dash .nav-dropdown-item:hover,
 .dark .gesit-dash .nav-dropdown-item:hover {
-  background: rgba(47, 107, 255, 0.2) !important;
-  color: #7db4ff !important;
+  background: #1e1e1e !important;
+  color: #ffffff !important;
 }
 
 /* Sapaan & Filter */
@@ -820,54 +825,67 @@
 /* Kartu Utama & KPI Mode Gelap */
 [data-theme="dark"] .gesit-dash .card,
 .dark .gesit-dash .card {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
-  color: #f2f4f7 !important;
+  background: #101010 !important;
+  border: 1px solid #1e1e1e !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  color: #f3f5f7 !important;
+}
+
+[data-theme="dark"] .gesit-dash .kpi,
+.dark .gesit-dash .kpi {
+  background: #101010 !important;
+  border: 1px solid #1e1e1e !important;
+  border-radius: 12px !important;
 }
 
 [data-theme="dark"] .gesit-dash .card h3,
 .dark .gesit-dash .card h3 {
-  color: #f2f4f7 !important;
+  color: #f3f5f7 !important;
+  font-size: 15px !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
 }
 
 [data-theme="dark"] .gesit-dash .card .sub,
 .dark .gesit-dash .card .sub {
-  color: #a6b0bf !important;
+  color: #777777 !important;
+  font-size: 12px !important;
 }
 
 [data-theme="dark"] .gesit-dash .kpi .top,
 .dark .gesit-dash .kpi .top {
-  color: #a6b0bf !important;
+  color: #777777 !important;
+  font-size: 12px !important;
 }
 
 [data-theme="dark"] .gesit-dash .kpi .num,
 .dark .gesit-dash .kpi .num {
-  color: #f2f4f7 !important;
+  color: #f3f5f7 !important;
 }
 
 [data-theme="dark"] .gesit-dash .kpi .num small,
 .dark .gesit-dash .kpi .num small {
-  color: #a6b0bf !important;
+  color: #777777 !important;
 }
 
 [data-theme="dark"] .gesit-dash .kpi .delta,
 .dark .gesit-dash .kpi .delta,
 [data-theme="dark"] .gesit-dash .kpi .delta .kpi-tail,
 .dark .gesit-dash .kpi .delta .kpi-tail {
-  color: #a6b0bf !important;
+  color: #777777 !important;
 }
 
 [data-theme="dark"] .gesit-dash .kpi .ic,
 .dark .gesit-dash .kpi .ic {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #1e1e1e !important;
 }
 
 [data-theme="dark"] .gesit-dash .mini-select,
 .dark .gesit-dash .mini-select {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  color: #f2f4f7 !important;
+  background: #101010 !important;
+  border: 1px solid #1e1e1e !important;
+  border-radius: 50px !important;
+  color: #f3f5f7 !important;
 }
 
 [data-theme="dark"] .gesit-dash .legend,
