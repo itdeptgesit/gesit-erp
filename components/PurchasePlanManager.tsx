@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    ShoppingCart, RefreshCcw, Check, X,
+    ShoppingCart, RefreshCcw, Check, X, Plus,
     Trash2, Wallet, Pencil,
     Clock, CheckCircle2, XCircle, Search, ChevronLeft, ChevronRight,
     ListFilter, BarChart3, UserCheck, ShieldCheck, Zap, Fingerprint, Eye, FileText
@@ -688,14 +688,14 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             >
                 <div className="flex justify-center mb-2">
                     <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setCurrentPage(1); }} className="w-auto">
-                        <TabsList>
-                            <TabsTrigger value="requisitions">
+                        <TabsList className="bg-slate-100 dark:bg-[#101010] border border-slate-200/80 dark:border-[#1e1e1e] p-1 rounded-[50px]">
+                            <TabsTrigger value="requisitions" className="rounded-[50px] px-4 py-1.5 text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-[#1e1e1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#f3f5f7] data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                                 <FileText size={14} className="mr-2" /> PR REQUISITIONS
                             </TabsTrigger>
-                            <TabsTrigger value="approvals">
+                            <TabsTrigger value="approvals" className="rounded-[50px] px-4 py-1.5 text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-[#1e1e1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#f3f5f7] data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                                 <UserCheck size={14} className="mr-2" /> MY TASKS ({stats.actionsCount})
                             </TabsTrigger>
-                            <TabsTrigger value="analytics">
+                            <TabsTrigger value="analytics" className="rounded-[50px] px-4 py-1.5 text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-[#1e1e1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-[#f3f5f7] data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                                 <BarChart3 size={14} className="mr-2" /> REPORTS
                             </TabsTrigger>
                         </TabsList>
@@ -711,13 +711,13 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                 <StatCard label="Fulfilled" value={stats.approvedCount} icon={CheckCircle2} color="blue" subValue="Completed nodes" />
             </div>
 
-            <div className="bg-card rounded-lg border shadow-sm overflow-hidden flex flex-col min-h-[550px]">
-                <div className="px-6 py-4 border-b flex flex-col md:flex-row justify-between items-center gap-4 bg-card sticky top-0 z-20">
+            <div className="bg-white dark:bg-[#101010] rounded-[16px] border border-slate-200/80 dark:border-[#1e1e1e] shadow-sm overflow-hidden flex flex-col min-h-[550px]">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-[#1e1e1e] flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-[#101010] sticky top-0 z-20">
                     <div className="relative flex-1 w-full md:max-w-md">
-                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#777777]" />
                         <Input
                             placeholder="Search by name or department..."
-                            className="w-full pl-11 bg-muted/20 border-muted-foreground/10 focus-visible:ring-1 focus-visible:ring-primary h-11"
+                            className="w-full pl-11 bg-slate-50/80 dark:bg-[#101010] border-slate-200/80 dark:border-[#1e1e1e] rounded-[8px] text-[13px] font-medium text-slate-900 dark:text-[#f3f5f7] placeholder:text-slate-400 dark:placeholder:text-[#777777] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none h-10"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
@@ -728,27 +728,28 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                 variant="outline"
                                 size="icon"
                                 onClick={handleExportExcel}
-                                className="w-11 border-muted-foreground/10 rounded-xl"
+                                className="w-10 h-10 border-slate-200/80 dark:border-[#1e1e1e] rounded-[8px] bg-white dark:bg-[#101010] text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                 title="Export Excel"
                             >
-                                <FileSpreadsheet size={18} />
+                                <FileSpreadsheet size={16} />
                             </Button>
                             <Button
                                 variant="outline"
                                 size="icon"
                                 onClick={fetchData}
-                                className="w-11 text-muted-foreground hover:text-primary border-muted-foreground/10 rounded-xl"
+                                className="w-10 h-10 border-slate-200/80 dark:border-[#1e1e1e] rounded-[8px] bg-white dark:bg-[#101010] text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                title="Refresh"
                             >
-                                <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
+                                <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
                             </Button>
                         </div>
                         {canManage && (
                             <div className="flex gap-2">
                                 <Button
                                     onClick={() => setIsReqFormOpen(true)}
-                                    className="font-bold uppercase text-[10px] tracking-widest gap-2 rounded-xl"
+                                    className="font-bold text-xs h-10 px-4 gap-2 rounded-[50px] bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                 >
-                                    New Request
+                                    <Plus size={14} /> New Request
                                 </Button>
                             </div>
                         )}
@@ -760,8 +761,8 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                         <div className="p-8 space-y-8">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Status Distribution */}
-                                <div className="bg-muted/20 p-6 rounded-lg border">
-                                    <h3 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <div className="bg-slate-50/50 dark:bg-[#101010] p-6 rounded-[12px] border border-slate-200/80 dark:border-[#1e1e1e]">
+                                    <h3 className="text-xs font-black text-slate-500 dark:text-[#777777] uppercase tracking-wider mb-6 flex items-center gap-2">
                                         <Clock size={14} /> Workflow Distribution
                                     </h3>
                                     <div className="h-64 w-full relative">
@@ -830,10 +831,10 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                             </div>
                         </div>
                     ) : (
-                        /* REQUISITIONS TABLE VIEW */
+                        /* REQUISITIONS TABLE VIEW (Threads Token Driven) */
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-zinc-800/80 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-[0.15em] text-[9px] border-b border-slate-200 dark:border-zinc-700">
+                                <tr className="bg-slate-50 dark:bg-[#101010] text-slate-500 dark:text-[#777777] font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-[#1e1e1e]">
                                     <th className="px-5 py-3.5">PR #</th>
                                     <th className="px-5 py-3.5">Requester</th>
                                     <th className="px-5 py-3.5">Category</th>
@@ -843,10 +844,10 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                     <th className="px-5 py-3.5 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                            <tbody className="divide-y divide-slate-100 dark:divide-[#1e1e1e]">
                                 {loading && !paginatedRequisitions.length ? (
                                     Array.from({ length: 5 }).map((_, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-[#1e1e1e]/40 transition-all">
                                             <td className="px-6 py-5"><Skeleton className="h-4 w-16" /></td>
                                             <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
                                             <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
@@ -856,37 +857,37 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                         </tr>
                                     ))
                                 ) : filteredRequisitions.length === 0 ? (
-                                    <tr><td colSpan={6} className="py-24 text-center text-slate-300 dark:text-slate-700 font-bold text-xs italic">No PR requisitions found.</td></tr>
+                                    <tr><td colSpan={7} className="py-24 text-center text-slate-400 dark:text-[#777777] font-medium text-xs italic">No PR requisitions found.</td></tr>
                                 ) : paginatedRequisitions.map(req => {
                                     const isMyTurn = isMyTurnToApproveRequisition(req);
                                     return (
-                                        <tr key={req.id} className={cn("hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 transition-all group align-middle", isMyTurn && "bg-blue-50/30 dark:bg-blue-900/10 border-l-2 border-l-blue-500")}>
+                                        <tr key={req.id} className={cn("hover:bg-slate-50/70 dark:hover:bg-[#1e1e1e]/50 transition-all group align-middle", isMyTurn && "bg-blue-50/30 dark:bg-blue-900/10 border-l-2 border-l-blue-500")}>
                                             <td className="px-5 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-mono font-black text-xs text-slate-800 dark:text-slate-100">PR-{String(req.id).padStart(4, '0')}</span>
-                                                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium mt-0.5">{req.requestDate}</span>
+                                                    <span className="font-mono font-bold text-xs text-slate-800 dark:text-[#f3f5f7]">PR-{String(req.id).padStart(4, '0')}</span>
+                                                    <span className="text-[11px] text-slate-400 dark:text-[#777777] font-medium mt-0.5">{req.requestDate}</span>
                                                 </div>
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-800 dark:text-slate-100 text-xs">{req.requesterFullname}</span>
-                                                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-mono mt-0.5">{req.department}</span>
+                                                    <span className="font-bold text-slate-800 dark:text-[#f3f5f7] text-[13px]">{req.requesterFullname}</span>
+                                                    <span className="text-[11px] text-slate-400 dark:text-[#777777] font-mono mt-0.5">{req.department}</span>
                                                 </div>
                                             </td>
                                             <td className="px-5 py-4">
                                                 {getCategoryBadge(req.category)}
                                             </td>
                                             <td className="px-5 py-4">
-                                                <span className="text-xs text-slate-600 dark:text-zinc-300 font-medium">{req.paidTo || <span className="text-slate-300 dark:text-zinc-600 italic">—</span>}</span>
+                                                <span className="text-xs text-slate-600 dark:text-[#f3f5f7] font-medium">{req.paidTo || <span className="text-slate-300 dark:text-[#777777] italic">—</span>}</span>
                                             </td>
                                             <td className="px-5 py-4 text-right">
                                                 <div className="flex flex-col items-end">
-                                                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-100">
+                                                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-[#f3f5f7]">
                                                         {String(req.currency || 'IDR').toUpperCase().includes('USD') || String(req.currency || '').toUpperCase() === 'DOLLAR'
                                                             ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(req.grandTotal)
                                                             : formatIDR(req.grandTotal)}
                                                     </span>
-                                                    {req.currency === 'USD' && <span className="text-[9px] text-slate-400 font-mono">USD</span>}
+                                                    {req.currency === 'USD' && <span className="text-[10px] text-slate-400 dark:text-[#777777] font-mono">USD</span>}
                                                 </div>
                                             </td>
                                             <td className="px-5 py-4">
@@ -896,7 +897,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <button
                                                         onClick={() => { setSelectedRequisition(req); setIsReqDetailOpen(true); }}
-                                                        className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all rounded-lg"
+                                                        className="p-1.5 text-slate-400 dark:text-[#777777] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#1e1e1e] transition-all rounded-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                                         title="View PR Details"
                                                     >
                                                         <Eye size={15} />
@@ -906,7 +907,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                             <button
                                                                 onClick={() => handleApproveRequisition(req)}
                                                                 disabled={isActionLoading}
-                                                                className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm active:scale-90"
+                                                                className="p-1.5 bg-emerald-600 text-white rounded-[8px] hover:bg-emerald-700 transition-all shadow-sm active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                                                 title="Approve"
                                                             >
                                                                 <Check size={14} strokeWidth={3} />
@@ -914,7 +915,7 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                                                             <button
                                                                 onClick={() => setRejectRequisitionTarget(req)}
                                                                 disabled={isActionLoading}
-                                                                className="p-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-all shadow-sm active:scale-90"
+                                                                className="p-1.5 bg-rose-600 text-white rounded-[8px] hover:bg-rose-700 transition-all shadow-sm active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                                                                 title="Reject"
                                                             >
                                                                 <X size={14} strokeWidth={3} />
