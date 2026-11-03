@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-    Search, Plus, RefreshCcw, FileSpreadsheet, Trash2, Pencil, Filter,
+    Search, Plus, RefreshCcw, FileSpreadsheet, FileText, Trash2, Pencil, Filter,
     ArrowUpRight, Wallet, CheckCircle2, Clock, Briefcase, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Check, BarChart3, Eye, Tag, PieChart, Calendar, Building2,
-    Save, AlertTriangle, Database, LayoutGrid, TableProperties, SlidersHorizontal, RotateCcw, ExternalLink, Paperclip
+    Save, AlertTriangle, Database, LayoutGrid, TableProperties, SlidersHorizontal, RotateCcw, ExternalLink, Paperclip, X
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ComposedChart, Line, Area
@@ -18,7 +18,9 @@ import { useLanguage } from '../translations';
 import { StatCard } from './StatCard';
 import { FinancialHealthSummary } from './FinancialHealthSummary';
 import { TopVendorsWidget } from './TopVendorsWidget';
+import { PurchaseBreakdownModal, BreakdownType } from './PurchaseBreakdownModal';
 import { exportToExcel } from '../lib/excelExport';
+import { exportPurchaseReportToPdf } from '../lib/purchaseReportPdfExport';
 import { sendToGoogleSheet } from '../lib/googleSheets';
 import { useToast } from './ToastProvider';
 import { Button } from "@/components/ui/button";
@@ -34,26 +36,64 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+        const actualEntry = payload.find((p: any) => p.dataKey === 'total');
+        const budgetEntry = payload.find((p: any) => p.dataKey === 'budget');
+        const actualVal = actualEntry ? Number(actualEntry.value || 0) : 0;
+        const budgetVal = budgetEntry ? Number(budgetEntry.value || 0) : 0;
+        const variance = budgetVal - actualVal;
+        const isOver = budgetVal > 0 && actualVal > budgetVal;
+        const percent = budgetVal > 0 ? Math.round((actualVal / budgetVal) * 100) : 0;
+
         return (
-            <div className="bg-slate-900/95 dark:bg-zinc-950/95 backdrop-blur-md text-white border border-slate-200/10 dark:border-white/10 rounded-2xl p-3.5 shadow-2xl w-[230px] pointer-events-none flex flex-col gap-2">
-                <p className="text-slate-400 dark:text-zinc-500 text-[10px] font-bold uppercase tracking-widest m-0 leading-none">{label}</p>
-                <div className="flex flex-col gap-1.5 divide-y divide-white/10">
-                    {payload.map((pld: any, index: number) => {
-                        const isBudget = pld.dataKey === 'budget';
-                        return (
-                            <div key={index} className="flex justify-between items-center text-xs font-bold pt-1 first:pt-0">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: pld.color || (isBudget ? '#94a3b8' : '#3b82f6') }}></span>
-                                    <span className="text-slate-400 dark:text-zinc-400 uppercase text-[9px] tracking-wider">
-                                        {isBudget ? 'Target Budget' : 'Actual Spent'}
-                                    </span>
-                                </div>
-                                <span className={cn("font-mono text-xs", isBudget ? "text-slate-300" : "text-white font-black")}>
-                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(pld.value)}
-                                </span>
-                            </div>
-                        );
-                    })}
+            <div className="bg-slate-900/95 dark:bg-zinc-950/95 backdrop-blur-md text-white border border-white/10 rounded-2xl p-4 shadow-2xl w-[250px] pointer-events-none flex flex-col gap-2.5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="text-white text-xs font-black uppercase tracking-wider">{label}</span>
+                    <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        budgetVal === 0 ? "bg-slate-800 text-slate-400" :
+                        isOver ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : 
+                        "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    )}>
+                        {budgetVal === 0 ? 'No Budget' : isOver ? `Over ${percent}%` : `${percent}% Budget`}
+                    </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Realisasi
+                        </span>
+                        <span className="font-mono font-bold text-white">
+                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(actualVal)}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                            Target Budget
+                        </span>
+                        <span className="font-mono font-bold text-slate-300">
+                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(budgetVal)}
+                        </span>
+                    </div>
+
+                    {budgetVal > 0 && (
+                        <div className="flex justify-between items-center pt-1 border-t border-white/10 text-[11px]">
+                            <span className="text-slate-400">
+                                {isOver ? 'Defisit' : 'Sisa Budget'}
+                            </span>
+                            <span className={cn("font-mono font-bold", isOver ? "text-rose-400" : "text-emerald-400")}>
+                                {isOver ? '-' : '+'}{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Math.abs(variance))}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="pt-1 text-[10px] text-blue-300 font-semibold text-center border-t border-white/10 flex items-center justify-center gap-1">
+                    <span>Klik grafik untuk lihat rincian</span>
+                    <span>→</span>
                 </div>
             </div>
         );
@@ -79,6 +119,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [projectFilter, setProjectFilter] = useState('All');
+    const [departmentFilter, setDepartmentFilter] = useState('All');
+    const [vendorFilter, setVendorFilter] = useState('All');
 
     // Advanced Filters
     const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
@@ -126,11 +168,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
     const activeMoreFiltersCount = useMemo(() => {
         let count = 0;
+        if (departmentFilter !== 'All') count++;
         if (categoryFilter !== 'All') count++;
-        if (projectFilter !== 'All') count++;
+        if (vendorFilter !== 'All') count++;
         if (statusFilter !== 'All') count++;
+        if (projectFilter !== 'All') count++;
+        if (monthFilter !== 'All') count++;
+        if (quarterFilter !== 'All') count++;
+        if (startDate || endDate) count++;
         return count;
-    }, [categoryFilter, projectFilter, statusFilter]);
+    }, [departmentFilter, categoryFilter, vendorFilter, statusFilter, projectFilter, monthFilter, quarterFilter, startDate, endDate]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState<PurchaseRecord | null>(null);
@@ -138,6 +185,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const [selectedDetail, setSelectedDetail] = useState<PurchaseRecord | null>(null);
     const [expandedRecordIds, setExpandedRecordIds] = useState<Set<number>>(new Set());
     const [isChartOpen, setIsChartOpen] = useState(true);
+    const [chartViewMode, setChartViewMode] = useState<'area' | 'bar'>('area');
 
     const toggleRowExpand = (id: number) => {
         setExpandedRecordIds(prev => {
@@ -150,8 +198,51 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isSyncingAll, setIsSyncingAll] = useState(false);
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
+
+    const analyticsRef = useRef<HTMLDivElement>(null);
+
+    // Drill-down Breakdown Modal State
+    const [breakdownState, setBreakdownState] = useState<{
+        isOpen: boolean;
+        type: BreakdownType;
+        name: string;
+    }>({
+        isOpen: false,
+        type: 'department',
+        name: ''
+    });
+
+    const handleOpenBreakdown = (type: BreakdownType, name: string) => {
+        setBreakdownState({
+            isOpen: true,
+            type,
+            name
+        });
+    };
+
+    const handleChartClick = (data: any) => {
+        if (!data) return;
+        const entry = data.activePayload?.[0]?.payload || data;
+        if (entry && entry.monthFullName) {
+            handleOpenBreakdown('month', entry.monthFullName);
+        }
+    };
+
+    const handleApplyFilterFromBreakdown = (type: BreakdownType, value: string) => {
+        if (type === 'category') {
+            setCategoryFilter(value);
+        } else if (type === 'vendor') {
+            setVendorFilter(value);
+        } else if (type === 'department') {
+            setDepartmentFilter(value);
+        } else if (type === 'month') {
+            setMonthFilter(value);
+        }
+        showToast(`Filter diterapkan: ${value}`, 'info');
+    };
 
     // Budgeting Feature States
     const [viewMode, setViewMode] = useState<'ledger' | 'budgeting'>('ledger');
@@ -466,6 +557,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             const matchesStatus = statusFilter === 'All' ? true : r.status === statusFilter;
             const matchesProject = projectFilter === 'All' ? true : r.projectName === projectFilter;
             const matchesCompany = companyFilter === 'All' ? true : r.company === companyFilter;
+            const matchesDepartment = departmentFilter === 'All' ? true : (r.department || 'Unknown') === departmentFilter;
+            const matchesVendor = vendorFilter === 'All' ? true : (r.vendor || 'Unknown') === vendorFilter;
             const matchesCategory = categoryFilter === 'All' 
                 ? true 
                 : (r.category === categoryFilter || (r.items && Array.isArray(r.items) && r.items.some((it: any) => it.category === categoryFilter)));
@@ -493,9 +586,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 if (endDate && d > new Date(endDate)) matchesDate = false;
             }
 
-            return matchesSearch && matchesStatus && matchesProject && matchesCompany && matchesCategory && matchesDate;
+            return matchesSearch && matchesStatus && matchesProject && matchesCompany && matchesDepartment && matchesVendor && matchesCategory && matchesDate;
         });
-    }, [records, searchTerm, statusFilter, projectFilter, companyFilter, categoryFilter, yearFilter, quarterFilter, monthFilter, startDate, endDate]);
+    }, [records, searchTerm, statusFilter, projectFilter, companyFilter, departmentFilter, vendorFilter, categoryFilter, yearFilter, quarterFilter, monthFilter, startDate, endDate]);
 
     const totals = useMemo(() => {
         const rowTotals: Record<string, { budget: number; actual: number; variance: number }> = {};
@@ -575,6 +668,43 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
         });
 
         exportToExcel(dataToExport, `GESIT-PURCHASE-${new Date().toISOString().split('T')[0]}`);
+    };
+
+    const handleExportPdf = async () => {
+        if (filteredRecords.length === 0) {
+            showToast('Tidak ada data transaksi untuk diekspor', 'warning');
+            return;
+        }
+        setIsExportingPdf(true);
+        try {
+            const periodStr = yearFilter !== 'All' ? `Tahun ${yearFilter}` : `Tahun ${budgetYear}`;
+            const totalBudget = totals.grandBudget || 0;
+            const totalActual = filteredRecords.reduce((sum, r) => sum + (r.subtotal || 0), 0);
+            const variance = totalBudget - totalActual;
+
+            await exportPurchaseReportToPdf({
+                records: filteredRecords,
+                chartsElement: analyticsRef.current,
+                periodLabel: periodStr,
+                filters: {
+                    company: companyFilter !== 'All' ? companyFilter : undefined,
+                    category: categoryFilter !== 'All' ? categoryFilter : undefined,
+                    status: statusFilter !== 'All' ? statusFilter : undefined
+                },
+                totals: {
+                    actual: totalActual,
+                    budget: totalBudget,
+                    variance: variance,
+                    totalCount: filteredRecords.length
+                }
+            });
+            showToast('Laporan PDF dengan grafik berhasil di-download!', 'success');
+        } catch (err: any) {
+            console.error('PDF export failed:', err);
+            showToast('Gagal mengekspor PDF: ' + (err?.message || ''), 'error');
+        } finally {
+            setIsExportingPdf(false);
+        }
     };
 
     const handleSyncAllToSheet = async () => {
@@ -669,6 +799,22 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             }
         });
         return Array.from(set).filter(Boolean).sort();
+    }, [records]);
+
+    const availableDepartments = useMemo(() => {
+        const set = new Set<string>();
+        records.forEach(r => {
+            if (r.department && r.department.trim()) set.add(r.department.trim());
+        });
+        return Array.from(set).sort();
+    }, [records]);
+
+    const availableVendors = useMemo(() => {
+        const set = new Set<string>();
+        records.forEach(r => {
+            if (r.vendor && r.vendor.trim()) set.add(r.vendor.trim());
+        });
+        return Array.from(set).sort();
     }, [records]);
 
     const financialHealth = useMemo(() => {
@@ -869,8 +1015,11 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             }
         });
 
+        const monthsFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         return monthShorts.map((name, idx) => ({
             name,
+            monthIndex: idx,
+            monthFullName: monthsFull[idx],
             total: spentPerMonth[idx],
             budget: budgetPerMonth[idx],
             variance: budgetPerMonth[idx] - spentPerMonth[idx],
@@ -935,6 +1084,37 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             .sort((a, b) => b.total - a.total);
     }, [filteredRecords]);
 
+    const breakdownRecords = useMemo(() => {
+        if (!breakdownState.isOpen || !breakdownState.name) return [];
+        const targetName = breakdownState.name;
+
+        if (breakdownState.type === 'department') {
+            return filteredRecords.filter(r => (r.department || 'Unknown') === targetName);
+        }
+        if (breakdownState.type === 'vendor') {
+            return filteredRecords.filter(r => (r.vendor || 'Unknown') === targetName);
+        }
+        if (breakdownState.type === 'category') {
+            return filteredRecords.filter(r => {
+                if (r.category === targetName) return true;
+                let items = r.items;
+                if (typeof items === 'string') {
+                    try { items = JSON.parse(items); } catch { items = []; }
+                }
+                return Array.isArray(items) && items.some((it: any) => it.category === targetName);
+            });
+        }
+        if (breakdownState.type === 'month') {
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            return filteredRecords.filter(r => {
+                if (!r.purchaseDate) return false;
+                const d = new Date(r.purchaseDate);
+                if (isNaN(d.getTime())) return false;
+                return months[d.getMonth()] === targetName;
+            });
+        }
+        return [];
+    }, [filteredRecords, breakdownState]);
 
     const formatIDR = (num: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
@@ -1026,6 +1206,20 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         >
                             <FileSpreadsheet className="mr-1.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Export Excel
                         </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleExportPdf}
+                            disabled={isExportingPdf || filteredRecords.length === 0}
+                            className="text-xs font-bold h-9 px-3.5 rounded-xl bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-xs text-slate-700 dark:text-zinc-200"
+                        >
+                            {isExportingPdf ? (
+                                <RefreshCcw className="mr-1.5 h-4 w-4 animate-spin text-rose-500" />
+                            ) : (
+                                <FileText className="mr-1.5 h-4 w-4 text-rose-600 dark:text-rose-400" />
+                            )}
+                            {isExportingPdf ? 'Exporting...' : 'Export PDF'}
+                        </Button>
                         <Button
                             variant="outline"
                             size="sm"
@@ -1052,7 +1246,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
             {/* Sleek Executive Filter Toolbar */}
             <div className="space-y-3">
-                <Card className="rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-xs bg-white dark:bg-zinc-900 overflow-visible">
+                <Card className="rounded-[24px] overflow-visible">
                     <CardContent className="p-3 sm:p-3.5 space-y-3">
                         {/* Main Single-Line Filter Row */}
                         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
@@ -1342,7 +1536,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                         setQuarterFilter('All');
                                         setMonthFilter('All');
                                         setCompanyFilter('All');
+                                        setDepartmentFilter('All');
                                         setCategoryFilter('All');
+                                        setVendorFilter('All');
                                         setProjectFilter('All');
                                         setStatusFilter('All');
                                         setStartDate('');
@@ -1356,165 +1552,330 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             </div>
                         </div>
 
+                        {/* Active Filter Chips */}
+                        {(searchTerm || companyFilter !== 'All' || departmentFilter !== 'All' || categoryFilter !== 'All' || vendorFilter !== 'All' || statusFilter !== 'All' || monthFilter !== 'All' || quarterFilter !== 'All' || projectFilter !== 'All' || startDate || endDate) && (
+                            <div className="pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mr-1">
+                                    Filter Aktif:
+                                </span>
+
+                                {searchTerm && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80">
+                                        Cari: "{searchTerm}"
+                                        <button onClick={() => setSearchTerm('')} className="hover:text-blue-900 dark:hover:text-blue-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {companyFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80">
+                                        Entitas: {companyFilter}
+                                        <button onClick={() => setCompanyFilter('All')} className="hover:text-indigo-900 dark:hover:text-indigo-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {departmentFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80">
+                                        Dept: {departmentFilter}
+                                        <button onClick={() => setDepartmentFilter('All')} className="hover:text-sky-900 dark:hover:text-sky-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {categoryFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80">
+                                        Kategori: {categoryFilter}
+                                        <button onClick={() => setCategoryFilter('All')} className="hover:text-purple-900 dark:hover:text-purple-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {vendorFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/80">
+                                        Vendor: {vendorFilter}
+                                        <button onClick={() => setVendorFilter('All')} className="hover:text-teal-900 dark:hover:text-teal-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {statusFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
+                                        Status: {statusFilter}
+                                        <button onClick={() => setStatusFilter('All')} className="hover:text-emerald-900 dark:hover:text-emerald-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {monthFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80">
+                                        Bulan: {monthFilter}
+                                        <button onClick={() => setMonthFilter('All')} className="hover:text-amber-900 dark:hover:text-amber-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {quarterFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800/80">
+                                        Kuartal: {quarterFilter}
+                                        <button onClick={() => setQuarterFilter('All')} className="hover:text-orange-900 dark:hover:text-orange-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {projectFilter !== 'All' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/80">
+                                        Proyek: {projectFilter}
+                                        <button onClick={() => setProjectFilter('All')} className="hover:text-rose-900 dark:hover:text-rose-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                {(startDate || endDate) && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80">
+                                        Tanggal: {startDate || '...'} s/d {endDate || '...'}
+                                        <button onClick={() => { setStartDate(''); setEndDate(''); }} className="hover:text-blue-900 dark:hover:text-blue-100 ml-0.5">
+                                            <X size={11} />
+                                        </button>
+                                    </span>
+                                )}
+
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setYearFilter(new Date().getFullYear().toString());
+                                        setQuarterFilter('All');
+                                        setMonthFilter('All');
+                                        setCompanyFilter('All');
+                                        setDepartmentFilter('All');
+                                        setCategoryFilter('All');
+                                        setVendorFilter('All');
+                                        setProjectFilter('All');
+                                        setStatusFilter('All');
+                                        setStartDate('');
+                                        setEndDate('');
+                                    }}
+                                    className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline ml-1 cursor-pointer"
+                                >
+                                    Hapus Semua Filter
+                                </button>
+                            </div>
+                        )}
+
                         {/* Expandable Subrow: More Filters */}
                         {showMoreFilters && (
-                            <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center gap-2.5 animate-in slide-in-from-top-2 duration-200">
-                                {/* Status Filter */}
-                                <div className="flex-1 min-w-[130px]">
-                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger className={cn(
-                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
-                                            statusFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
-                                        )}>
-                                            <div className="flex items-center gap-1.5 truncate">
-                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Status:</span>
-                                                <span className="font-semibold">{statusFilter === 'All' ? 'All Status' : statusFilter}</span>
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
-                                            <SelectItem value="All">All Status</SelectItem>
-                                            <SelectItem value="Paid">Paid</SelectItem>
-                                            <SelectItem value="Pending">Pending</SelectItem>
-                                            <SelectItem value="Rejected">Rejected</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Month Filter */}
-                                <div className="flex-1 min-w-[135px]">
-                                    <Select value={monthFilter} onValueChange={setMonthFilter}>
-                                        <SelectTrigger className={cn(
-                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
-                                            monthFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
-                                        )}>
-                                            <div className="flex items-center gap-1.5 truncate">
-                                                <Clock size={12} className="text-slate-400 dark:text-zinc-500" />
-                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Month:</span>
-                                                <span className="font-semibold">{monthFilter === 'All' ? 'All Months' : monthFilter}</span>
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
-                                            <SelectItem value="All">All Months</SelectItem>
-                                            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                                <SelectItem key={m} value={m}>{m}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Quarter Filter */}
-                                <div className="flex-1 min-w-[130px]">
-                                    <Select value={quarterFilter} onValueChange={setQuarterFilter}>
-                                        <SelectTrigger className={cn(
-                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
-                                            quarterFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
-                                        )}>
-                                            <div className="flex items-center gap-1.5 truncate">
-                                                <PieChart size={12} className="text-slate-400 dark:text-zinc-500" />
-                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Quarter:</span>
-                                                <span className="font-semibold">{quarterFilter === 'All' ? 'All Quarters' : quarterFilter}</span>
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
-                                            <SelectItem value="All">All Quarters</SelectItem>
-                                            <SelectItem value="Q1">Q1 (Jan - Mar)</SelectItem>
-                                            <SelectItem value="Q2">Q2 (Apr - Jun)</SelectItem>
-                                            <SelectItem value="Q3">Q3 (Jul - Sep)</SelectItem>
-                                            <SelectItem value="Q4">Q4 (Oct - Dec)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Category Filter */}
-                                <div className="flex-1 min-w-[140px]">
-                                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                        <SelectTrigger className={cn(
-                                            "w-full h-8.5 rounded-xl text-xs font-semibold",
-                                            categoryFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
-                                        )}>
-                                            <div className="flex items-center gap-1.5 truncate">
-                                                <Tag size={12} className="text-slate-400 dark:text-zinc-500" />
-                                                <span className="text-slate-400 dark:text-zinc-500 font-normal">Category:</span>
-                                                <span className="font-semibold">{categoryFilter === 'All' ? 'All Categories' : categoryFilter}</span>
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
-                                            <SelectItem value="All">All Categories</SelectItem>
-                                            {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Project Filter */}
-                                {projects.length > 0 && (
-                                    <div className="flex-1 min-w-[135px]">
-                                        <Select value={projectFilter} onValueChange={setProjectFilter}>
+                            <div className="pt-4 mt-3 border-t border-slate-100 dark:border-zinc-800 space-y-3.5 animate-in slide-in-from-top-2 duration-200">
+                                {/* Filter Dropdowns Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    {/* 1. Departemen */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <Building2 size={11} className="text-blue-500" /> Departemen
+                                        </label>
+                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                                             <SelectTrigger className={cn(
                                                 "w-full h-8.5 rounded-xl text-xs font-semibold",
-                                                projectFilter !== 'All' ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70" : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                departmentFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
                                             )}>
-                                                <div className="flex items-center gap-1.5 truncate">
-                                                    <Briefcase size={12} className="text-slate-400 dark:text-zinc-500" />
-                                                    <span className="text-slate-400 dark:text-zinc-500 font-normal">Project:</span>
-                                                    <span className="font-semibold">{projectFilter === 'All' ? 'All Projects' : projectFilter}</span>
-                                                </div>
+                                                <span className="truncate">{departmentFilter === 'All' ? 'Semua Departemen' : departmentFilter}</span>
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
-                                                <SelectItem value="All">All Projects</SelectItem>
-                                                {projects.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                                <SelectItem value="All">Semua Departemen</SelectItem>
+                                                {availableDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                )}
 
-                                {/* Date Range Button */}
-                                <Button
-                                    variant={showDatePicker ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setShowDatePicker(!showDatePicker)}
-                                    className={cn(
-                                        "h-8.5 px-3 text-xs font-semibold gap-1.5 rounded-xl border",
-                                        (startDate || endDate) 
-                                            ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 font-bold" 
-                                            : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200"
+                                    {/* 2. Kategori */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <Tag size={11} className="text-indigo-500" /> Kategori Pengeluaran
+                                        </label>
+                                        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                categoryFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <span className="truncate">{categoryFilter === 'All' ? 'Semua Kategori' : categoryFilter}</span>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                                <SelectItem value="All">Semua Kategori</SelectItem>
+                                                {availableCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* 3. Vendor / Supplier */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <Briefcase size={11} className="text-violet-500" /> Vendor / Supplier
+                                        </label>
+                                        <Select value={vendorFilter} onValueChange={setVendorFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                vendorFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <span className="truncate">{vendorFilter === 'All' ? 'Semua Vendor' : vendorFilter}</span>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                                <SelectItem value="All">Semua Vendor</SelectItem>
+                                                {availableVendors.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* 4. Status Pembayaran */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <CheckCircle2 size={11} className="text-emerald-500" /> Status Pembayaran
+                                        </label>
+                                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                statusFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <span className="truncate">{statusFilter === 'All' ? 'Semua Status' : statusFilter}</span>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                                <SelectItem value="All">Semua Status</SelectItem>
+                                                <SelectItem value="Paid">Paid (Lunas)</SelectItem>
+                                                <SelectItem value="Pending">Pending (Menunggu)</SelectItem>
+                                                <SelectItem value="Rejected">Rejected (Ditolak)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* 5. Bulan Transaksi */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <Clock size={11} className="text-amber-500" /> Bulan Transaksi
+                                        </label>
+                                        <Select value={monthFilter} onValueChange={setMonthFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                monthFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <span className="truncate">{monthFilter === 'All' ? 'Semua Bulan' : monthFilter}</span>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl max-h-[250px]">
+                                                <SelectItem value="All">Semua Bulan</SelectItem>
+                                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* 6. Kuartal */}
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                            <PieChart size={11} className="text-sky-500" /> Kuartal
+                                        </label>
+                                        <Select value={quarterFilter} onValueChange={setQuarterFilter}>
+                                            <SelectTrigger className={cn(
+                                                "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                quarterFilter !== 'All' 
+                                                    ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                    : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                            )}>
+                                                <span className="truncate">{quarterFilter === 'All' ? 'Semua Kuartal' : quarterFilter}</span>
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                                <SelectItem value="All">Semua Kuartal</SelectItem>
+                                                <SelectItem value="Q1">Q1 (Jan - Mar)</SelectItem>
+                                                <SelectItem value="Q2">Q2 (Apr - Jun)</SelectItem>
+                                                <SelectItem value="Q3">Q3 (Jul - Sep)</SelectItem>
+                                                <SelectItem value="Q4">Q4 (Oct - Dec)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* 7. Proyek (jika ada) */}
+                                    {projects.length > 0 && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                                                <Briefcase size={11} className="text-teal-500" /> Proyek
+                                            </label>
+                                            <Select value={projectFilter} onValueChange={setProjectFilter}>
+                                                <SelectTrigger className={cn(
+                                                    "w-full h-8.5 rounded-xl text-xs font-semibold",
+                                                    projectFilter !== 'All' 
+                                                        ? "border-blue-300 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/70" 
+                                                        : "bg-slate-50 dark:bg-zinc-800/80 border-slate-200 dark:border-zinc-700"
+                                                )}>
+                                                    <span className="truncate">{projectFilter === 'All' ? 'Semua Proyek' : projectFilter}</span>
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-xl">
+                                                    <SelectItem value="All">Semua Proyek</SelectItem>
+                                                    {projects.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     )}
-                                >
-                                    <Calendar size={12} className={(startDate || endDate) ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-zinc-500"} />
-                                    <span>{startDate || endDate ? `${startDate} s/d ${endDate}` : 'Custom Dates'}</span>
-                                </Button>
+                                </div>
+
+                                {/* Integrated Date Range Picker */}
+                                <div className="p-3 bg-slate-50/90 dark:bg-zinc-800/60 rounded-xl border border-slate-200/80 dark:border-zinc-700/80 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-zinc-300">
+                                        <Calendar size={13} className="text-blue-600 dark:text-blue-400" />
+                                        <span>Rentang Tanggal Kustom</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400">Dari:</span>
+                                            <Input
+                                                type="date"
+                                                className="w-[145px] h-8 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-lg text-xs"
+                                                value={startDate}
+                                                onChange={e => setStartDate(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400">Sampai:</span>
+                                            <Input
+                                                type="date"
+                                                className="w-[145px] h-8 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-lg text-xs"
+                                                value={endDate}
+                                                onChange={e => setEndDate(e.target.value)}
+                                            />
+                                        </div>
+                                        {(startDate || endDate) && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                                className="h-8 px-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                            >
+                                                <X size={12} className="mr-1" /> Hapus Tanggal
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </div>
-
-            {showDatePicker && (
-                <Card className="border border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/30 rounded-2xl animate-in slide-in-from-top-2 duration-300">
-                    <CardContent className="p-4 flex flex-wrap gap-5 items-end">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300">Rentang Tanggal Awal</label>
-                            <Input
-                                type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-zinc-100"
-                                value={startDate}
-                                onChange={e => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-zinc-300">Rentang Tanggal Akhir</label>
-                            <Input
-                                type="date"
-                                className="w-[180px] h-9 bg-white dark:bg-zinc-900 font-semibold border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-zinc-100"
-                                value={endDate}
-                                onChange={e => setEndDate(e.target.value)}
-                            />
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => { setStartDate(''); setEndDate(''); }} className="text-xs font-bold text-slate-500 dark:text-zinc-400 h-9 hover:bg-white/50 dark:hover:bg-zinc-800/50">
-                            Reset Tanggal
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
 
             {/* Stat Cards Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -1537,9 +1898,9 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}
-            <div className="grid grid-cols-1 gap-6">
+            <div ref={analyticsRef} className="grid grid-cols-1 gap-6 p-2 rounded-[28px]">
                 {/* Main Chart Card */}
-                <Card className="rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-900">
+                <Card className="rounded-[24px] overflow-hidden">
                     <CardContent className="p-5">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -1558,17 +1919,46 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex items-center gap-3 text-[10px] font-bold">
-                                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400">
-                                        <span className="w-2.5 h-2.5 rounded-sm bg-slate-200 dark:bg-zinc-700"></span>
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <div className="hidden md:flex items-center gap-3 text-[10px] font-bold">
+                                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/80 px-2 py-1 rounded-lg border border-slate-200/60 dark:border-zinc-700/60">
+                                        <span className="w-3 h-0.5 border-t-2 border-dashed border-slate-400"></span>
                                         <span>Target Budget</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-                                        <span className="w-2.5 h-2.5 rounded-sm bg-blue-600"></span>
-                                        <span>Actual Spent</span>
+                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/40 px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-900/40">
+                                        <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                                        <span>Actual Realisasi</span>
                                     </div>
                                 </div>
+
+                                {/* Chart View Toggle */}
+                                <div className="flex items-center p-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg border border-slate-200/80 dark:border-zinc-700/80 text-[10px] font-bold">
+                                    <button
+                                        type="button"
+                                        onClick={() => setChartViewMode('area')}
+                                        className={cn(
+                                            "px-2.5 py-1 rounded-md transition-all cursor-pointer",
+                                            chartViewMode === 'area'
+                                                ? "bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-xs"
+                                                : "text-slate-500 hover:text-slate-900 dark:hover:text-zinc-200"
+                                        )}
+                                    >
+                                        Kurva Area
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setChartViewMode('bar')}
+                                        className={cn(
+                                            "px-2.5 py-1 rounded-md transition-all cursor-pointer",
+                                            chartViewMode === 'bar'
+                                                ? "bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-xs"
+                                                : "text-slate-500 hover:text-slate-900 dark:hover:text-zinc-200"
+                                        )}
+                                    >
+                                        Batang (Bar)
+                                    </button>
+                                </div>
+
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -1582,24 +1972,100 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         </div>
 
                         {isChartOpen && (
-                            <div className="h-[180px] w-full pt-2">
+                            <div className="h-[250px] w-full pt-3">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(226, 232, 240, 0.4)" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={8} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)} />
+                                    <ComposedChart
+                                        data={chartData}
+                                        margin={{ top: 12, right: 12, left: -8, bottom: 0 }}
+                                        onClick={handleChartClick}
+                                        className="cursor-pointer"
+                                    >
+                                        <defs>
+                                            <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.38} />
+                                                <stop offset="60%" stopColor="#4f46e5" stopOpacity={0.10} />
+                                                <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.0} />
+                                            </linearGradient>
+                                            <linearGradient id="barActual" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#3b82f6" />
+                                                <stop offset="100%" stopColor="#1d4ed8" />
+                                            </linearGradient>
+                                            <linearGradient id="barOver" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#fb7185" />
+                                                <stop offset="100%" stopColor="#e11d48" />
+                                            </linearGradient>
+                                        </defs>
+
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(226, 232, 240, 0.45)" />
+
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }}
+                                            dy={8}
+                                        />
+
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                                            tickFormatter={(val) => new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(val)}
+                                        />
+
                                         <Tooltip
                                             isAnimationActive={false}
-                                            cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }}
+                                            cursor={{ stroke: '#3b82f6', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                                             content={<CustomTooltip />}
                                         />
-                                        <Bar dataKey="budget" name="Target Budget" barSize={16} radius={[4, 4, 0, 0]} fill="#cbd5e1" opacity={0.65} />
-                                        <Bar dataKey="total" name="Actual Spent" barSize={16} radius={[4, 4, 0, 0]}>
-                                            {chartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.isOver ? '#f43f5e' : '#3b82f6'} />
-                                            ))}
-                                        </Bar>
-                                        <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3, fill: '#2563eb' }} />
+
+                                        {chartViewMode === 'area' ? (
+                                            <>
+                                                {/* Target Budget as minimalist reference line */}
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="budget"
+                                                    name="Target Budget"
+                                                    stroke="#94a3b8"
+                                                    strokeWidth={2}
+                                                    strokeDasharray="4 4"
+                                                    dot={false}
+                                                    activeDot={{ r: 4, stroke: '#94a3b8', strokeWidth: 2, fill: '#ffffff' }}
+                                                />
+                                                {/* Actual Spent as fluid gradient area */}
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="total"
+                                                    name="Actual Spent"
+                                                    stroke="#2563eb"
+                                                    strokeWidth={2.8}
+                                                    fill="url(#actualGradient)"
+                                                    activeDot={{ r: 6, stroke: '#2563eb', strokeWidth: 2.5, fill: '#ffffff' }}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Modern Paired Bars */}
+                                                <Bar
+                                                    dataKey="budget"
+                                                    name="Target Budget"
+                                                    barSize={14}
+                                                    radius={[5, 5, 0, 0]}
+                                                    fill="#cbd5e1"
+                                                    opacity={0.7}
+                                                />
+                                                <Bar
+                                                    dataKey="total"
+                                                    name="Actual Spent"
+                                                    barSize={14}
+                                                    radius={[5, 5, 0, 0]}
+                                                >
+                                                    {chartData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.isOver ? 'url(#barOver)' : 'url(#barActual)'} />
+                                                    ))}
+                                                </Bar>
+                                            </>
+                                        )}
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             </div>
@@ -1609,16 +2075,22 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
                 {/* Row 3.2: 3-Column Bento Details */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    <TopVendorsWidget vendors={vendorData} />
+                    <TopVendorsWidget 
+                        vendors={vendorData} 
+                        onSelectVendor={(vendorName) => handleOpenBreakdown('vendor', vendorName)} 
+                    />
 
                     {/* Department Allocation */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white/60 dark:bg-white/[0.06] backdrop-blur-xl rounded-[24px] border border-white/70 dark:border-white/[0.10] shadow-[0_14px_34px_rgba(16,24,40,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.25)] p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
                                 <Briefcase size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Departmental</h2>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Departmental</h2>
+                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100/70 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400">Klik baris</span>
+                                </div>
                                 <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Alokasi per Departemen</p>
                             </div>
                         </div>
@@ -1626,11 +2098,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             {deptData.length === 0 ? (
                                 <p className="text-center py-5 text-slate-300 dark:text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Tidak ada data</p>
                             ) : deptData.slice(0, 5).map((dept, idx) => (
-                                <div key={dept.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 group">
+                                <div 
+                                    key={dept.name} 
+                                    onClick={() => handleOpenBreakdown('department', dept.name)}
+                                    title={`Klik untuk melihat rincian pembelian ${dept.name}`}
+                                    className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 cursor-pointer border border-transparent hover:border-emerald-200/70 dark:hover:border-emerald-800/50 group hover:translate-x-1"
+                                >
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
                                             <div className={cn("w-1.5 h-1.5 rounded-full", idx === 0 ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-600')}></div>
-                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px]">{dept.name}</span>
+                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px] group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors flex items-center gap-1">
+                                                <span>{dept.name}</span>
+                                                <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600" />
+                                            </span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
                                             <span className="text-slate-900 dark:text-zinc-100 font-mono font-bold">{formatIDR(dept.total)}</span>
@@ -1649,13 +2129,16 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                     </div>
 
                     {/* Category Distribution */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-sm p-5 flex flex-col">
+                    <div className="bg-white/60 dark:bg-white/[0.06] backdrop-blur-xl rounded-[24px] border border-white/70 dark:border-white/[0.10] shadow-[0_14px_34px_rgba(16,24,40,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.25)] p-5 flex flex-col">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
                                 <Tag size={16} />
                             </div>
                             <div className="space-y-0.5">
-                                <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Classified</h2>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight text-xs uppercase">Classified</h2>
+                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-100/70 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-400">Klik baris</span>
+                                </div>
                                 <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest">Distribusi Kategori</p>
                             </div>
                         </div>
@@ -1663,11 +2146,19 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                             {categoryData.length === 0 ? (
                                 <p className="text-center py-5 text-slate-300 dark:text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Tidak ada data</p>
                             ) : categoryData.slice(0, 5).map((cat, idx) => (
-                                <div key={cat.name} className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 group">
+                                <div 
+                                    key={cat.name} 
+                                    onClick={() => handleOpenBreakdown('category', cat.name)}
+                                    title={`Klik untuk melihat rincian pembelian kategori ${cat.name}`}
+                                    className="space-y-1.5 p-2 -mx-2 rounded-xl transition-all duration-200 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/30 cursor-pointer border border-transparent hover:border-indigo-200/70 dark:hover:border-indigo-800/50 group hover:translate-x-1"
+                                >
                                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
                                             <div className={cn("w-1.5 h-1.5 rounded-full", idx === 0 ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-zinc-600')}></div>
-                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px]">{cat.name}</span>
+                                            <span className="text-slate-600 dark:text-zinc-300 truncate max-w-[130px] group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors flex items-center gap-1">
+                                                <span>{cat.name}</span>
+                                                <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity text-indigo-600" />
+                                            </span>
                                         </div>
                                         <div className="text-right flex items-center gap-1.5">
                                             <span className="text-slate-900 dark:text-zinc-100 font-mono font-bold">{formatIDR(cat.total)}</span>
@@ -1688,8 +2179,8 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
             </div>
 
             {/* General Transaction Ledger Container */}
-            <Card className="shadow-lg rounded-2xl overflow-hidden border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                <CardHeader className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex flex-row items-center justify-between bg-slate-50/60 dark:bg-zinc-900/90">
+            <Card className="rounded-[24px] overflow-hidden">
+                <CardHeader className="px-5 sm:px-6 py-4 border-b border-[#e8eaee] dark:border-white/[0.09] flex flex-row items-center justify-between bg-transparent">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2.5">
                             <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-zinc-100">General Transaction Ledger</h2>
@@ -2300,7 +2791,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                                     : 0;
                                 
                                 return (
-                                    <Card key={cat} className="rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 overflow-hidden flex flex-col justify-between">
+                                    <Card key={cat} className="rounded-[24px] overflow-hidden flex flex-col justify-between">
                                         <CardContent className="p-5 flex flex-col gap-4">
                                             {/* Header */}
                                             <div className="flex justify-between items-start gap-2">
@@ -2437,7 +2928,7 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                         </div>
                     ) : (
                         /* Grid Card */
-                        <Card className="shadow-sm rounded-xl overflow-hidden border-none bg-background/50 backdrop-blur-sm">
+                        <Card className="rounded-[24px] overflow-hidden">
                             <CardContent className="p-0 overflow-x-auto relative">
                                 <Table className="min-w-[1500px]">
                                     <TableHeader>
@@ -2622,6 +3113,18 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
                 </div>
             )}
 
+            <PurchaseBreakdownModal
+                isOpen={breakdownState.isOpen}
+                onClose={() => setBreakdownState(prev => ({ ...prev, isOpen: false }))}
+                type={breakdownState.type}
+                name={breakdownState.name}
+                records={breakdownRecords}
+                onSelectRecord={(rec) => {
+                    setSelectedDetail(rec);
+                    setIsDetailOpen(true);
+                }}
+                onApplyFilter={handleApplyFilterFromBreakdown}
+            />
             <PurchaseRecordFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleFormSubmit} initialData={editingRecord} />
             <PurchaseRecordDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} record={selectedDetail} />
             <DangerConfirmModal

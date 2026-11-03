@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store, ArrowRight, ExternalLink } from 'lucide-react';
+import { Store, ArrowRight, ExternalLink, ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface VendorData {
@@ -10,15 +10,16 @@ interface VendorData {
 
 interface TopVendorsWidgetProps {
     vendors: VendorData[];
+    onSelectVendor?: (vendorName: string) => void;
 }
 
-export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) => {
+export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors, onSelectVendor }) => {
     const formatIDR = (num: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
     };
 
     return (
-        <div className="bg-white dark:bg-zinc-900/60 backdrop-blur-xl rounded-xl border border-slate-200/50 dark:border-zinc-800/50 shadow-sm p-5 flex flex-col h-full relative overflow-hidden group">
+        <div className="bg-white/60 dark:bg-white/[0.06] backdrop-blur-xl rounded-[24px] border border-white/70 dark:border-white/[0.10] shadow-[0_14px_34px_rgba(16,24,40,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.25)] p-5 flex flex-col h-full relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
                 <Store size={120} />
             </div>
@@ -48,7 +49,11 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                             transition={{ delay: idx * 0.1 }}
                             className="relative group/item"
                         >
-                            <div className="flex justify-between items-center z-10 relative p-2 -mx-1 rounded-xl hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-all duration-300 hover:translate-x-1.5 cursor-pointer border border-transparent hover:border-slate-100/50 dark:hover:border-zinc-800/50 group/row">
+                            <div 
+                                onClick={() => onSelectVendor?.(vendor.name)}
+                                title={`Klik untuk melihat rincian pembelian dari ${vendor.name}`}
+                                className="flex justify-between items-center z-10 relative p-2 -mx-1 rounded-xl hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 transition-all duration-300 hover:translate-x-1.5 cursor-pointer border border-transparent hover:border-rose-200/60 dark:hover:border-rose-500/30 group/row"
+                            >
                                 <div className="flex items-center gap-4">
                                     <div className={`
                                         w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-sm border transition-transform duration-300 group-hover/row:scale-110
@@ -60,12 +65,16 @@ export const TopVendorsWidget: React.FC<TopVendorsWidgetProps> = ({ vendors }) =
                                         {idx + 1}
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[140px] group-hover/row:text-primary transition-colors duration-200">
-                                            {vendor.name === 'Unknown' || !vendor.name ? 'General Supplier' : vendor.name}
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[140px] group-hover/row:text-rose-600 dark:group-hover/row:text-rose-400 transition-colors duration-200 flex items-center gap-1">
+                                            <span>{vendor.name === 'Unknown' || !vendor.name ? 'General Supplier' : vendor.name}</span>
+                                            <ArrowUpRight size={11} className="opacity-0 group-hover/row:opacity-100 transition-opacity text-rose-500 shrink-0" />
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100/50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                                                 {vendor.transactionCount} Txns
+                                            </span>
+                                            <span className="text-[9px] font-semibold text-rose-500 dark:text-rose-400 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                                Lihat rincian →
                                             </span>
                                         </div>
                                     </div>
