@@ -405,40 +405,40 @@ export const ExpenseApprovalExportModal: React.FC<ExpenseApprovalExportModalProp
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                {/* Header */}
-                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-white dark:bg-[#101010] rounded-[16px] border border-slate-200 dark:border-[#1e1e1e] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Header (Threads Design Tokens) */}
+                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-[#1e1e1e] bg-white dark:bg-[#101010]">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg">
+                        <div className="p-2 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-[8px]">
                             <Calculator size={18} />
                         </div>
                         <div>
-                            <h2 className="font-bold text-slate-800 dark:text-zinc-100">Export Expenses Approval</h2>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Penyelesaian Cash Advance & Riwayat</p>
+                            <h2 className="font-bold text-slate-800 dark:text-[#f3f5f7] tracking-tight">Export Expenses Approval</h2>
+                            <p className="text-[11px] text-slate-500 dark:text-[#777777] font-semibold uppercase tracking-wider">Penyelesaian Cash Advance & Riwayat</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         {historyList.length > 0 && (
-                            <div className="flex bg-slate-100 dark:bg-zinc-800 p-0.5 rounded-lg text-xs font-bold">
+                            <div className="flex bg-slate-100 dark:bg-[#1e1e1e] p-1 rounded-[50px] text-xs font-semibold">
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('form')}
-                                    className={`px-3 py-1 rounded-md transition-all ${activeTab === 'form' ? 'bg-white dark:bg-zinc-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+                                    className={`px-3 py-1 rounded-[50px] transition-all ${activeTab === 'form' ? 'bg-white dark:bg-[#101010] shadow-sm text-slate-900 dark:text-[#f3f5f7]' : 'text-slate-500 dark:text-[#777777]'}`}
                                 >
                                     Formulir
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('history')}
-                                    className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'history' ? 'bg-white dark:bg-zinc-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+                                    className={`px-3 py-1 rounded-[50px] transition-all flex items-center gap-1.5 ${activeTab === 'history' ? 'bg-white dark:bg-[#101010] shadow-sm text-slate-900 dark:text-[#f3f5f7]' : 'text-slate-500 dark:text-[#777777]'}`}
                                 >
                                     <History size={12} />
                                     Riwayat ({historyList.length})
                                 </button>
                             </div>
                         )}
-                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-[#f3f5f7] p-1.5 rounded-[8px] hover:bg-slate-100 dark:hover:bg-[#1e1e1e] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             <X size={20} />
                         </button>
                     </div>

@@ -48,26 +48,26 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[480px] p-6 bg-white dark:bg-zinc-950 rounded-lg border border-slate-200 dark:border-zinc-800 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex flex-col space-y-2 text-left">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-50 leading-tight">
+      <DialogContent showCloseButton={false} className="sm:max-w-[480px] p-6 bg-white dark:bg-[#101010] rounded-[16px] border border-slate-200 dark:border-[#1e1e1e] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex flex-col space-y-1.5 text-left">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#f3f5f7] leading-tight tracking-tight">
             {title}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-zinc-400 leading-normal font-normal">
+          <p className="text-xs text-slate-500 dark:text-[#777777] leading-normal font-medium">
             {message}
           </p>
         </div>
 
         {entityName && (
-          <div className="space-y-2 my-4">
-            <div className="text-xs font-medium text-slate-500 dark:text-zinc-400">
-              Please type <span className="font-bold text-slate-900 dark:text-zinc-50">{entityName}</span> to confirm.
+          <div className="space-y-1.5 my-4">
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#777777]">
+              Please type <span className="font-bold text-slate-900 dark:text-[#f3f5f7]">{entityName}</span> to confirm.
             </div>
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={entityName}
-              className="h-9 border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-sm focus-visible:ring-1 focus-visible:ring-zinc-400 focus-visible:border-zinc-400"
+              className="h-10 border-slate-200 dark:border-[#1e1e1e] rounded-[8px] bg-slate-50/50 dark:bg-[#1e1e1e] text-xs font-medium text-slate-800 dark:text-[#f3f5f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
               autoFocus
             />
           </div>
@@ -82,7 +82,7 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
               onClose();
             }}
             disabled={isLoading}
-            className="text-xs font-semibold h-9 px-4 rounded-md text-slate-700 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 transition-colors"
+            className="text-xs font-semibold h-9 px-4 rounded-[8px] text-slate-700 hover:bg-slate-100 dark:text-[#f3f5f7] dark:hover:bg-[#1e1e1e] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Cancel
           </Button>
@@ -90,10 +90,10 @@ export const DangerConfirmModal: React.FC<DangerConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isConfirmDisabled}
-            className={`text-xs font-semibold h-9 px-4 rounded-md transition-colors flex items-center justify-center gap-2 ${
+            className={`text-xs font-semibold h-9 px-4 rounded-[8px] transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 ${
               variant === 'logout'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 border border-blue-600 dark:border-blue-500'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 border border-zinc-900 dark:border-zinc-50'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white focus-visible:ring-blue-500'
+                : 'bg-rose-600 hover:bg-rose-700 text-white focus-visible:ring-rose-500'
             }`}
           >
             {isLoading && <Loader2 size={14} className="animate-spin" />}

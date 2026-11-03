@@ -265,44 +265,44 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg w-full max-w-4xl animate-in fade-in zoom-in duration-300 flex flex-col max-h-[95vh] border border-slate-200 dark:border-zinc-800">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white dark:bg-[#101010] rounded-[16px] shadow-2xl w-full max-w-4xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] border border-slate-200/90 dark:border-[#1e1e1e] overflow-hidden">
 
-                {/* Header */}
-                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                {/* Header (Threads Design System Tokens) */}
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-[#1e1e1e] shrink-0 bg-white dark:bg-[#101010]">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-600 text-white rounded-md shadow-lg">
+                        <div className="p-2.5 bg-blue-600 text-white rounded-[8px] shadow-sm">
                             <FileText size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Requisition ID: PR-{String(requisition.id).padStart(4, '0')}</h2>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Formal Procurement Requisition Terminal</p>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-[#f3f5f7] tracking-tight">Requisition ID: PR-{String(requisition.id).padStart(4, '0')}</h2>
+                            <p className="text-[11px] text-slate-500 dark:text-[#777777] font-semibold uppercase tracking-wider mt-0.5">Formal Procurement Requisition Terminal</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="relative group">
-                            <Button variant="outline" size="sm" className="text-xs h-9 font-bold uppercase tracking-wider flex items-center gap-2 border-slate-200 hover:bg-slate-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                            <Button variant="outline" size="sm" className="text-xs h-9 font-semibold rounded-[8px] flex items-center gap-2 border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#1e1e1e] text-slate-800 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#252525] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                                 <Download size={14} /> Export Forms
                             </Button>
 
-                            <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                            <div className="absolute right-0 top-full mt-1.5 w-56 bg-white dark:bg-[#101010] border border-slate-200 dark:border-[#1e1e1e] rounded-[10px] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden p-1">
                                 <button
                                     onClick={handleDownload}
-                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                    className="w-full text-left px-3.5 py-2 rounded-[6px] text-xs font-semibold text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] flex items-center gap-2"
                                 >
                                     <FileText size={14} className="text-blue-500" />
                                     Purchase Requisition
                                 </button>
                                 <button
                                     onClick={() => setFinanceModalType('cash_advance')}
-                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                    className="w-full text-left px-3.5 py-2 rounded-[6px] text-xs font-semibold text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] flex items-center gap-2"
                                 >
                                     <DollarSign size={14} className="text-amber-500" />
                                     Cash Advance
                                 </button>
                                 <button
                                     onClick={() => setFinanceModalType('payment_requisition')}
-                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 flex items-center gap-2"
+                                    className="w-full text-left px-3.5 py-2 rounded-[6px] text-xs font-semibold text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e] flex items-center gap-2"
                                 >
                                     <FileText size={14} className="text-emerald-500" />
                                     Payment Requisition
@@ -315,9 +315,9 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                         }
                                         setShowExpenseApproval(true);
                                     }}
-                                    className={`w-full text-left px-4 py-2.5 text-xs font-bold flex items-center justify-between transition-colors ${requisition.status === 'Approved'
-                                        ? 'text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50'
-                                        : 'text-slate-400 dark:text-zinc-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/20'
+                                    className={`w-full text-left px-3.5 py-2 rounded-[6px] text-xs font-semibold flex items-center justify-between transition-colors ${requisition.status === 'Approved'
+                                        ? 'text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#1e1e1e]'
+                                        : 'text-slate-400 dark:text-[#777777] hover:bg-amber-50/50 dark:hover:bg-amber-950/20'
                                         }`}
                                     title={requisition.status !== 'Approved' ? "Hanya dapat dibuat setelah PR berstatus Approved" : "Penyelesaian Cash Advance & Pengembalian Dana"}
                                 >
@@ -326,7 +326,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                         <span>Expense Approval</span>
                                     </div>
                                     {requisition.status !== 'Approved' && (
-                                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded">
+                                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-[50px]">
                                             Needs Approval
                                         </span>
                                     )}
@@ -334,7 +334,7 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                             </div>
                         </div>
 
-                        <button onClick={onClose} className="p-2 ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
+                        <button onClick={onClose} className="p-2 ml-1 hover:bg-slate-100 dark:hover:bg-[#1e1e1e] rounded-[8px] transition-all text-slate-400 hover:text-slate-700 dark:hover:text-[#f3f5f7] border border-transparent hover:border-slate-200 dark:hover:border-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             <X size={20} />
                         </button>
                     </div>
@@ -744,8 +744,8 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
 
                 </div>
 
-                {/* Footer Controls */}
-                <div className="px-8 py-5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-between items-center shrink-0">
+                {/* Footer Controls (Threads Token Driven) */}
+                <div className="px-8 py-4 border-t border-slate-100 dark:border-[#1e1e1e] bg-slate-50/50 dark:bg-[#101010] flex justify-between items-center shrink-0">
                     <div>
                         {isMyTurn && (
                             <div className="flex items-center gap-2">
@@ -753,22 +753,22 @@ export const PurchaseRequisitionDetailModal: React.FC<PurchaseRequisitionDetailM
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
                                 </span>
-                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Awaiting Your Decision</span>
+                                <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Awaiting Your Decision</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                    <div className="flex gap-2.5">
+                        <Button type="button" variant="outline" onClick={onClose} className="rounded-[8px] border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#1e1e1e] text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#252525] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             Close
                         </Button>
                         {isMyTurn && onReject && (
-                            <Button type="button" variant="outline" onClick={() => onReject(requisition)} className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30 font-bold uppercase tracking-wider text-xs">
+                            <Button type="button" variant="outline" onClick={() => onReject(requisition)} className="rounded-[8px] text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30 font-bold text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">
                                 Reject Requisition
                             </Button>
                         )}
                         {isMyTurn && onApprove && (
-                            <Button type="button" onClick={() => onApprove(requisition)} className="bg-emerald-600 hover:bg-emerald-700 font-bold uppercase tracking-wider text-xs min-w-[150px]">
+                            <Button type="button" onClick={() => onApprove(requisition)} className="rounded-[8px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs min-w-[150px] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
                                 Approve & Sign
                             </Button>
                         )}

@@ -362,28 +362,28 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
         onSubmit(payload);
     };
 
-    const labelClass = "block text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5";
-    const inputClass = "w-full bg-slate-50/50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-primary/20 text-xs";
+    const labelClass = "block text-[11px] font-semibold text-slate-500 dark:text-[#777777] uppercase tracking-wider mb-1.5";
+    const inputClass = "w-full bg-slate-50/50 dark:bg-[#1e1e1e] border-slate-200 dark:border-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-xs rounded-[8px] text-slate-800 dark:text-[#f3f5f7]";
 
     return (
-      <ModalWrapper isOpen={isOpen} onClose={onClose} className="border border-slate-200 dark:border-zinc-800">
+      <ModalWrapper isOpen={isOpen} onClose={onClose} className="border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#101010] rounded-[16px] shadow-2xl overflow-hidden">
                 
-                {/* Header */}
-                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                {/* Header (Threads Design Tokens) */}
+                <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 dark:border-[#1e1e1e] shrink-0 bg-white dark:bg-[#101010]">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-600 text-white rounded-md shadow-lg">
+                        <div className="p-2.5 bg-blue-600 text-white rounded-[8px] shadow-sm">
                             <FileText size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-[#f3f5f7] tracking-tight">
                                 {initialData ? 'Edit Purchase Requisition' : 'Formulir PR Material Support IT'}
                             </h2>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            <p className="text-[11px] text-slate-500 dark:text-[#777777] font-semibold uppercase tracking-wider mt-0.5">
                                 {initialData ? `Editing PR-${String(initialData.id).padStart(4, '0')}` : 'Create Purchase Requisition Document'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-[#1e1e1e] rounded-[8px] transition-all text-slate-400 hover:text-slate-700 dark:hover:text-[#f3f5f7] border border-transparent hover:border-slate-200 dark:hover:border-[#1e1e1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                         <X size={20} />
                     </button>
                 </div>
@@ -873,12 +873,12 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     </form>
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="px-8 py-5 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/50 flex justify-between items-center shrink-0">
+                {/* Footer Buttons (Threads Token Driven) */}
+                <div className="px-8 py-4 border-t border-slate-100 dark:border-[#1e1e1e] bg-slate-50/50 dark:bg-[#101010] flex justify-between items-center shrink-0">
                     <Button 
                         type="button" 
                         variant="ghost" 
-                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-[10px] font-black uppercase tracking-widest" 
+                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-semibold rounded-[8px]" 
                         onClick={() => {
                             if (window.confirm("Are you sure you want to clear this draft and reset the form?")) {
                                 try {
@@ -890,11 +890,11 @@ export const PurchaseRequisitionFormModal: React.FC<PurchaseRequisitionFormModal
                     >
                         Reset Form
                     </Button>
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                    <div className="flex gap-2.5">
+                        <Button type="button" variant="outline" onClick={onClose} className="rounded-[8px] border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#1e1e1e] text-slate-700 dark:text-[#f3f5f7] hover:bg-slate-50 dark:hover:bg-[#252525] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             Cancel
                         </Button>
-                        <Button type="submit" form="prFormSubmit" className="min-w-[150px]">
+                        <Button type="submit" form="prFormSubmit" className="rounded-[8px] bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs min-w-[150px] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                             Submit Request
                         </Button>
                     </div>
