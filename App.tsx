@@ -73,6 +73,7 @@ const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({
 const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
 const TaskplusDashboard = React.lazy(() => import('./components/TaskplusDashboard').then(m => ({ default: m.TaskplusDashboard })));
+const HomeDashboard = React.lazy(() => import('./components/HomeDashboard').then(m => ({ default: m.HomeDashboard })));
 const WorknestDashboard = React.lazy(() => import('./components/WorknestDashboard').then(m => ({ default: m.default })));
 const EcommerceDashboard = React.lazy(() => import('./components/AnalyticsDashboard').then(m => ({ default: m.default })));
 const PrivacyPolicy = React.lazy(() => import('./components/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
@@ -684,7 +685,9 @@ const InternalApp: React.FC = () => {
                           onShare={handleGlobalShare}
                         >
                           <Routes>
-                            <Route index element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
+                            <Route index element={<HomeDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
+                            <Route path="csl-dashboard" element={<HomeDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
+                            <Route path="taskplus" element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
                             <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
                             <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
                             <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
