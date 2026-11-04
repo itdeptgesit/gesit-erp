@@ -17,6 +17,7 @@ import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isUserAdmin, isUserStaff, canUserManage, canUserDelete } from '../lib/rbac';
 import {
     signInWithGoogle, signOutGoogle, isGoogleConnected,
     fetchEventsForMonth, GCalEvent, gcalStartDate, gcalEndDate, gcalStartTime, gcalEndTime,
@@ -165,10 +166,10 @@ export const WeeklyPlanManager = ({ currentUser }: WeeklyPlanManagerProps): Reac
     const [selectedGcalEvent, setSelectedGcalEvent] = useState<GCalEvent | null>(null);
     const [selectedDayEvents, setSelectedDayEvents] = useState<Date | null>(null);
 
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canManage = isAdmin || isStaff;
-    const canDelete = isAdmin;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canManage = canUserManage(currentUser);
+    const canDelete = canUserDelete(currentUser);
 
     const fetchTasks = async () => {
         setLoading(true);

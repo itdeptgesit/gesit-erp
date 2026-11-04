@@ -8,6 +8,7 @@ import { DangerConfirmModal } from './DangerConfirmModal';
 import { supabase } from '../lib/supabaseClient';
 import { StatCard } from './StatCard';
 import { UserAccount } from '../types';
+import { isUserAdmin, isUserStaff, canUserManage, canUserDelete } from '../lib/rbac';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +32,10 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
     const itemsPerPage = 12;
 
     // RBAC Logic
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canManage = isAdmin || isStaff;
-    const canDelete = isAdmin;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canManage = canUserManage(currentUser);
+    const canDelete = canUserDelete(currentUser);
 
     const fetchFiles = async () => {
         setIsLoading(true);
@@ -103,9 +104,61 @@ export const FileManager: React.FC<FileManagerProps> = ({ currentUser }) => {
                 </div>
             </PageHeader>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard label="CLOUD REPOSITORY" value={files.length} subValue="Total entries" icon={Cloud} color="blue" />
-                <StatCard label="DOCUMENTS" value={files.filter(f => f.type === 'pdf' || f.type === 'doc').length} subValue="Guides & Manuals" icon={FileType} color="rose" />
-                <StatCard label="RESOURCES" value={files.filter(f => f.type === 'sheet' || f.type === 'image').length} subValue="Sheets & Diagrams" icon={FileSpreadsheet} color="emerald" />
+                <StatCard 
+                    label="CLOUD REPOSITORY" 
+                    value={files.length} 
+                    unit="File"
+                    subValue="Total entries" 
+                    note2="terindeks di cloud"
+                    icon={Cloud} 
+                    color="blue" 
+                    drilldownData={files}
+                    drilldownTitle="Rincian Seluruh File Cloud Repository"
+                    drilldownDescription="Katalog seluruh berkas dan dokumentasi resmi yang terhubung ke cloud."
+                    drilldownColumns={[
+                        { header: 'Nama File', accessor: 'name', className: 'font-semibold' },
+                        { header: 'Tipe', accessor: 'type' },
+                        { header: 'Kategori', render: (f: any) => f.category || 'General' },
+                        { header: 'Diperbarui', render: (f: any) => f.updatedAt ? new Date(f.updatedAt).toLocaleDateString('id-ID') : '-' },
+                        { header: 'Tautan GDrive', render: (f: any) => f.gdriveUrl ? <a href={f.gdriveUrl} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-semibold">Buka Drive</a> : '-' }
+                    ]}
+                />
+                <StatCard 
+                    label="DOCUMENTS" 
+                    value={files.filter(f => f.type === 'pdf' || f.type === 'doc').length} 
+                    unit="Dokumen"
+                    subValue="Guides & Manuals" 
+                    note2="PDF & Word"
+                    icon={FileType} 
+                    color="rose" 
+                    drilldownData={files.filter(f => f.type === 'pdf' || f.type === 'doc')}
+                    drilldownTitle="Rincian Dokumen & Manual Book"
+                    drilldownDescription="Daftar panduan SOP, kebijakan, formulir, dan manual teknis format PDF/Word."
+                    drilldownColumns={[
+                        { header: 'Nama Dokumen', accessor: 'name', className: 'font-semibold' },
+                        { header: 'Format', accessor: 'type' },
+                        { header: 'Kategori', render: (f: any) => f.category || 'Documentation' },
+                        { header: 'Akses', render: (f: any) => f.gdriveUrl ? <a href={f.gdriveUrl} target="_blank" rel="noreferrer" className="text-rose-600 dark:text-rose-400 hover:underline inline-flex items-center gap-1 font-semibold">Unduh / Baca</a> : '-' }
+                    ]}
+                />
+                <StatCard 
+                    label="RESOURCES" 
+                    value={files.filter(f => f.type === 'sheet' || f.type === 'image').length} 
+                    unit="Berkas"
+                    subValue="Sheets & Diagrams" 
+                    note2="Spreadsheet & Gambar"
+                    icon={FileSpreadsheet} 
+                    color="emerald" 
+                    drilldownData={files.filter(f => f.type === 'sheet' || f.type === 'image')}
+                    drilldownTitle="Rincian Berkas Sheets & Diagram"
+                    drilldownDescription="Daftar spreadsheet data, laporan kalkulasi, dan arsip visual/diagram arsitektur."
+                    drilldownColumns={[
+                        { header: 'Nama Berkas', accessor: 'name', className: 'font-semibold' },
+                        { header: 'Jenis', accessor: 'type' },
+                        { header: 'Kategori', render: (f: any) => f.category || 'Worksheet' },
+                        { header: 'Akses', render: (f: any) => f.gdriveUrl ? <a href={f.gdriveUrl} target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-semibold">Buka File</a> : '-' }
+                    ]}
+                />
             </div>
             <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row items-center gap-4 transition-all">
                 <div className="relative flex-1 w-full"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" />

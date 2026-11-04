@@ -69,6 +69,7 @@ const CredentialManager = React.lazy(() => import('./components/CredentialManage
 const OfficeLayoutManager = React.lazy(() => import('./components/OfficeLayoutManager').then(m => ({ default: m.OfficeLayoutManager })));
 
 const HelpdeskManager = React.lazy(() => import('./components/HelpdeskManager').then(m => ({ default: m.HelpdeskManager })));
+const TicketingManager = React.lazy(() => import('./components/TicketingManager').then(m => ({ default: m.TicketingManager })));
 const LoginPage = React.lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
 const AssetPublicDetail = React.lazy(() => import('./components/AssetPublicDetail').then(m => ({ default: m.AssetPublicDetail })));
 const DangerConfirmModal = React.lazy(() => import('./components/DangerConfirmModal').then(m => ({ default: m.DangerConfirmModal })));
@@ -158,7 +159,7 @@ const PublicLayout: React.FC<{
 
         <main className="flex-1 overflow-y-auto flex flex-col custom-scrollbar">
           <div className="flex-1 p-4 md:p-8">
-            <div className="max-w-7xl mx-auto h-full text-slate-900 dark:text-slate-100">
+            <div className="max-w-7xl mx-auto h-full text-foreground">
               {children}
             </div>
           </div>
@@ -257,11 +258,26 @@ const InternalApp: React.FC = () => {
         const { data: { session } } = await supabase.auth.getSession();
         console.log("App.tsx: Session check result:", !!session);
         if (session?.user?.email) {
+          const providerToken = (session as any)?.provider_token;
+          if (providerToken) {
+            const expiresIn = session?.expires_in || 3600;
+            const expiryTime = String(Date.now() + expiresIn * 1000);
+            localStorage.setItem('gcal_access_token', providerToken);
+            localStorage.setItem('gcal_token_expiry', expiryTime);
+            localStorage.setItem('google_connected_flag', 'true');
+
+            // Simpan ke database user_accounts
+            supabase.from('user_accounts').update({
+              google_access_token: providerToken,
+              google_token_expiry: expiryTime,
+              google_connected_flag: true
+            }).eq('email', session.user.email).then();
+          }
           await handleLogin(session.user.email);
           return;
         }
 
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.pathname !== '/login') {
           const bypassEmail = localStorage.getItem('bypass_email') || 'admin@gesit.co.id';
           console.log(`App.tsx: Localhost detected without session, checking bypass login as ${bypassEmail}`);
           await handleLogin(bypassEmail);
@@ -288,15 +304,22 @@ const InternalApp: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("App.tsx: Auth state changed:", _event, !!session);
       if (session?.user?.email) {
-        /* 
-        // Domain restriction removed per user request to allow Gmail/external logins
-        if (!session.user.email.endsWith('@gesit.co.id')) {
-          console.warn("App.tsx: Access denied for non-internal email:", session.user.email);
-          await supabase.auth.signOut();
-          showToast(t('accessRestricted'), 'error');
-          return;
+        // Otomatis sinkronkan Google OAuth provider token jika tersedia dari session login
+        const providerToken = (session as any)?.provider_token;
+        if (providerToken) {
+          const expiresIn = session?.expires_in || 3600;
+          const expiryTime = String(Date.now() + expiresIn * 1000);
+          localStorage.setItem('gcal_access_token', providerToken);
+          localStorage.setItem('gcal_token_expiry', expiryTime);
+          localStorage.setItem('google_connected_flag', 'true');
+
+          // Update ke database user_accounts agar persist across devices
+          supabase.from('user_accounts').update({
+            google_access_token: providerToken,
+            google_token_expiry: expiryTime,
+            google_connected_flag: true
+          }).eq('email', session.user.email).then();
         }
-        */
         handleLogin(session.user.email);
       } else if (_event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
@@ -435,14 +458,13 @@ const InternalApp: React.FC = () => {
         };
 
         // Load Google connection from Supabase safely
-        if (data['google_access_token']) {
-          localStorage.setItem('gcal_access_token', data['google_access_token']);
-        }
-        if (data['google_token_expiry']) {
-          localStorage.setItem('gcal_token_expiry', data['google_token_expiry']);
-        }
-        if (data['google_connected_flag'] !== undefined && data['google_connected_flag'] !== null) {
-          localStorage.setItem('google_connected_flag', String(data['google_connected_flag']));
+        if (data['google_access_token'] && data['google_token_expiry']) {
+          const isStillValid = Date.now() < parseInt(data['google_token_expiry']);
+          if (isStillValid) {
+            localStorage.setItem('gcal_access_token', data['google_access_token']);
+            localStorage.setItem('gcal_token_expiry', data['google_token_expiry']);
+            localStorage.setItem('google_connected_flag', 'true');
+          }
         }
 
         setCurrentUser(userProfile);
@@ -689,7 +711,7 @@ const InternalApp: React.FC = () => {
                             <Route path="csl-dashboard" element={<HomeDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
                             <Route path="taskplus" element={<TaskplusDashboard onNavigate={(v) => navigate(`/${v}`)} userName={currentUser?.fullName} userRole={currentUser?.role} currentUser={currentUser} />} />
                             <Route path="profile" element={<ProfileView onLogout={() => setIsLogoutModalOpen(true)} user={currentUser} onUpdateSuccess={refreshUserProfile} />} />
-                            <Route path="helpdesk" element={<HelpdeskManager currentUser={currentUser} />} />
+                            <Route path="helpdesk" element={<TicketingManager currentUser={currentUser} onNavigate={(v: string) => navigate(`/${v}`)} />} />
                             <Route path="activity" element={<ActivityLogManager currentUser={currentUser} />} />
                             <Route path="weekly" element={<WeeklyPlanManager currentUser={currentUser} />} />
                             <Route path="purchase" element={<PurchasePlanManager currentUser={currentUser} />} />

@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { isUserAdmin, isUserStaff, canUserManage, canUserDelete } from '../lib/rbac';
 
 interface NetworkDashboardProps {
     onBack: () => void;
@@ -65,10 +66,10 @@ export const NetworkDashboard: React.FC<NetworkDashboardProps> = ({ onBack, curr
     const [isPending, startTransition] = useTransition();
 
     // RBAC Logic
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canManage = isAdmin || isStaff;
-    const canDelete = isAdmin;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canManage = canUserManage(currentUser);
+    const canDelete = canUserDelete(currentUser);
 
     const fetchNetworkData = async () => {
         setIsLoading(true);

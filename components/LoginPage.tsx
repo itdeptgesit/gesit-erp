@@ -1,19 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-    AlertCircle, ShieldCheck, CheckCircle2, ArrowRight, Loader2,
+    AlertCircle, CheckCircle2, Loader2,
     Mail, Lock, Eye, EyeOff, Sun, Moon 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { useGesitTheme } from '../lib/useGesitTheme';
 import { sendPasswordResetNotificationEmail } from '../utils/EmailSystemUtils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginPageProps {
     onLogin: (email: string) => void;
@@ -25,12 +26,11 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
     onLogin,
-    userGroups = [],
     appName = 'GESIT PORTAL',
     logoUrl = '/image/logo.png',
-    primaryColor = '#0a2558'
 }) => {
     const { t } = useLanguage();
+    const { isDark, toggleTheme } = useGesitTheme();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -38,28 +38,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     const [error, setError] = useState('');
     const [isResetMode, setIsResetMode] = useState(false);
     const [resetSent, setResetSent] = useState(false);
-    const [isDark, setIsDark] = useState(false);
-
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            setIsDark(true);
-            document.documentElement.classList.add('dark');
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        const newTheme = !isDark;
-        setIsDark(newTheme);
-        if (newTheme) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -126,8 +104,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 provider: 'google',
                 options: {
                     redirectTo: window.location.origin + '/login',
+                    scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
                     queryParams: {
-                        prompt: 'select_account' // Forces Google to show the account picker
+                        prompt: 'select_account',
+                        access_type: 'offline'
                     }
                 }
             });
@@ -139,303 +119,201 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     };
 
     return (
-        <div className="h-screen w-full bg-background text-foreground flex flex-col font-sans selection:bg-blue-100 transition-colors duration-300 overflow-hidden">
-            <style>{`
-                @keyframes pulse-slow {
-                    0%, 100% { opacity: 0.35; transform: scale(1.05); }
-                    50% { opacity: 0.5; transform: scale(1); }
-                }
-                .animate-pulse-slow {
-                    animation: pulse-slow 8s ease-in-out infinite;
-                }
-                @keyframes shimmer {
-                    0% { background-position: -200% 0; }
-                    100% { background-position: 200% 0; }
-                }
-                .text-shimmer {
-                    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-                    background-size: 200% 100%;
-                    animation: shimmer 3s infinite;
-                    -webkit-background-clip: padding-box;
-                    background-clip: padding-box;
-                }
-            `}</style>
-            <main className="flex-1 flex items-stretch overflow-hidden">
-                {/* Left Hero Side - Background Image */}
-                <div className="hidden lg:flex w-[45%] relative overflow-hidden flex-col justify-between p-24">
-                    {/* Background Layer */}
-                    <div className="absolute inset-0" style={{ backgroundColor: primaryColor }}>
-                        <motion.img
-                            initial={{ scale: 1.1, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 0.6 }}
-                            transition={{ duration: 2, ease: "easeOut" }}
-                            src="/image/bg.jpeg"
-                            alt="Background"
-                            fetchPriority="high"
-                            loading="eager"
-                            className="w-full h-full object-cover mix-blend-multiply"
-                        />
-                        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${primaryColor}66, ${primaryColor}E6)` }}></div>
+        <div className="min-h-screen w-full bg-zinc-50 dark:bg-[#08090a] text-zinc-900 dark:text-[#ffffff] flex flex-col font-sans transition-colors duration-200 overflow-hidden select-none">
+            <main className="flex-1 flex items-stretch min-h-screen overflow-hidden">
+                {/* Left Hero Side - Linear Precision Instrument (Light & Dark) */}
+                <div className="hidden lg:flex w-[46%] relative overflow-hidden flex-col justify-between p-16 xl:p-20 bg-zinc-100/70 dark:bg-[#08090a] border-r border-zinc-200 dark:border-[#23252a]">
+                    {/* Subtle Linear Grid Pattern */}
+                    <div 
+                        className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-20"
+                        style={{
+                            backgroundImage: isDark
+                                ? `linear-gradient(to right, #23252a 1px, transparent 1px), linear-gradient(to bottom, #23252a 1px, transparent 1px)`
+                                : `linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)`,
+                            backgroundSize: '40px 40px',
+                            maskImage: 'radial-gradient(ellipse 80% 80% at 30% 40%, #000 60%, transparent 100%)'
+                        }}
+                    />
 
-                        {/* Glass Overlay for depth */}
-                        <div className="absolute inset-0 backdrop-blur-[2px] pointer-events-none"></div>
-
-                        {/* Dynamic Light Orbs */}
-                        <motion.div
-                            animate={{
-                                opacity: [0.1, 0.2, 0.1],
-                                scale: [1, 1.1, 1],
-                            }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-white/5 rounded-full blur-[120px] transform-gpu"
-                        ></motion.div>
-                        <motion.div
-                            animate={{
-                                opacity: [0.1, 0.3, 0.1],
-                                scale: [1, 1.2, 1],
-                            }}
-                            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                            className="absolute bottom-[5%] left-[-5%] w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] transform-gpu"
-                        ></motion.div>
-                    </div>
-
-                    <div className="relative z-10 h-full flex flex-col justify-between">
-                        <div>
-                            {/* Logo Section */}
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                className="mb-16"
-                            >
-                                <div className="w-28 h-28 flex items-center justify-center hover:scale-110 transition-transform duration-500 group relative">
-                                    <div className="absolute inset-0 bg-white/5 rounded-xl blur-2xl group-hover:bg-white/10 transition-colors"></div>
-                                    <img src={logoUrl} alt="Logo" fetchPriority="high" loading="eager" className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:brightness-110 transition-all z-10" />
-                                </div>
-                            </motion.div>
-
-                            <div className="space-y-12 max-w-full">
-                                <div>
-                                    <motion.h1
-                                        initial={{ opacity: 0, y: 30 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-                                        className="text-4xl lg:text-6xl font-black text-white leading-tight tracking-tighter mb-4"
-                                    >
-                                        <span className="block opacity-40 text-xl tracking-widest font-medium mb-1 uppercase">Welcome to</span>
-                                        <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/60 drop-shadow-2xl uppercase">
-                                            {appName}
-                                        </span>
-                                    </motion.h1>
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ duration: 0.6, delay: 0.5 }}
-                                        className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-3xl rounded-full border border-white/10 shadow-2xl"
-                                    >
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                                        <span className="text-[10px] font-medium text-white/80 tracking-wide">
-                                            Integrated business ecosystem
-                                        </span>
-                                    </motion.div>
-                                </div>
-
-                                <motion.p
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 0.8 }}
-                                    transition={{ duration: 1, delay: 0.7 }}
-                                    className="text-white text-base leading-relaxed font-medium max-w-lg drop-shadow-lg"
-                                >
-                                    Empowering your professional workflow with integrated management tools — designed for growth and operational excellence.
-                                </motion.p>
-
-                                <div className="flex gap-6">
-                                    {[
-                                        { emoji: '⚡', label: 'Performance', value: 'High Speed' },
-                                        { emoji: '🛡️', label: 'Protection', value: 'Deep Security' }
-                                    ].map((badge, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.6, delay: 0.8 + (i * 0.1) }}
-                                            className="bg-white/[0.03] backdrop-blur-3xl px-5 py-4 rounded-xl border border-white/10 flex items-center gap-3 hover:bg-white/[0.08] transition-all group"
-                                        >
-                                            <span className="text-2xl group-hover:scale-110 transition-transform">{badge.emoji}</span>
-                                            <div>
-                                                <div className="text-[9px] font-medium text-white/40 mb-0.5">{badge.label}</div>
-                                                <div className="text-[11px] font-bold text-white tracking-tight">{badge.value}</div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
+                    {/* Top Branding */}
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3.5 mb-16">
+                            <div className="w-10 h-10 rounded-[8px] bg-white dark:bg-[#0f1011] border border-zinc-200 dark:border-[#23252a] flex items-center justify-center p-2 shrink-0 shadow-xs dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+                                <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <span className="text-sm font-semibold tracking-[-0.022em] text-zinc-900 dark:text-[#ffffff] block">{appName}</span>
+                                <span className="text-[11px] font-mono text-zinc-500 dark:text-[#8a8f98] tracking-tight">ENTERPRISE WORKSPACE</span>
                             </div>
                         </div>
 
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 1, delay: 1.2 }}
-                            className="flex flex-col gap-6"
-                        >
-                            <div className="flex gap-3 items-center">
-                                <div className="h-px w-10 bg-white/20"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/10"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/10"></div>
+                        <div className="space-y-6 max-w-lg">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#161718] text-[11px] font-medium text-zinc-600 dark:text-[#8a8f98] tracking-[-0.011em]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#27a644]" />
+                                Sistem Operasional Aktif · SLA 99.9%
                             </div>
-                            <div className="space-y-1 opacity-20">
-                                <p className="text-[9px] font-medium text-white tracking-wide">
-                                    © 2026 Gesit Portal Ecosystem
-                                </p>
-                                <p className="text-[9px] font-medium text-white">
-                                    <span className="uppercase">{appName}</span> v3.0.1 — Create IT Dev Gesit
-                                </p>
+
+                            <h1 className="text-3xl xl:text-4xl font-medium tracking-[-0.022em] text-zinc-900 dark:text-[#ffffff] leading-tight">
+                                Platform Kerja Digital &amp; Manajemen Terintegrasi
+                            </h1>
+
+                            <p className="text-sm leading-relaxed text-zinc-600 dark:text-[#8a8f98] font-normal tracking-[-0.011em]">
+                                Dirancang dengan presisi instrumen untuk keandalan infrastruktur IT, pemantauan status real-time, dan tata kelola aset korporat.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <div className="p-4 rounded-[8px] border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#0f1011] shadow-xs dark:shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                                    <div className="text-xs font-medium text-zinc-900 dark:text-[#ffffff] mb-1 tracking-[-0.011em]">Infrastruktur Aman</div>
+                                    <div className="text-[11px] text-zinc-500 dark:text-[#8a8f98] leading-normal tracking-[-0.011em]">Proteksi akses berbasis role &amp; audit log real-time</div>
+                                </div>
+                                <div className="p-4 rounded-[8px] border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#0f1011] shadow-xs dark:shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                                    <div className="text-xs font-medium text-zinc-900 dark:text-[#ffffff] mb-1 tracking-[-0.011em]">Performa Tinggi</div>
+                                    <div className="text-[11px] text-zinc-500 dark:text-[#8a8f98] leading-normal tracking-[-0.011em]">Arsitektur database cloud tersinkronisasi instan</div>
+                                </div>
                             </div>
-                        </motion.div>
+                        </div>
+                    </div>
+
+                    {/* Left Bottom Footer */}
+                    <div className="relative z-10 pt-10 border-t border-zinc-200 dark:border-[#23252a] flex items-center justify-between text-xs text-zinc-500 dark:text-[#8a8f98] tracking-[-0.011em]">
+                        <span>© 2026 Gesit Portal Ecosystem</span>
+                        <span className="font-mono text-[11px] text-zinc-400 dark:text-[#62666d]">v3.0.1</span>
                     </div>
                 </div>
 
-                {/* Right Login Side */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-background/50 relative overflow-hidden transition-all duration-500">
-                    {/* Animated Background Orbs */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <motion.div
-                            animate={{
-                                x: [0, 50, 0],
-                                y: [0, 30, 0],
-                            }}
-                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                            className="absolute top-20 -right-20 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] transform-gpu"
-                        />
-                        <motion.div
-                            animate={{
-                                x: [0, -50, 0],
-                                y: [0, -30, 0],
-                            }}
-                            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                            className="absolute -bottom-20 -left-20 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] transform-gpu"
-                        />
-                    </div>
-
+                {/* Right Login Side - Linear Card Container (Light & Dark) */}
+                <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 lg:p-16 relative bg-zinc-50 dark:bg-[#08090a]">
                     {/* Theme Toggle Button */}
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={toggleTheme}
-                        className="absolute top-8 right-8 w-12 /80 dark: backdrop-blur-xl border border-slate-200/50 dark:border-white/10 z-50 dark: transition-all duration-300"
+                        className="absolute top-6 right-6 w-8 h-8 rounded-[6px] border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#0f1011] hover:bg-zinc-100 dark:hover:bg-[#161718] text-zinc-600 hover:text-zinc-900 dark:text-[#8a8f98] dark:hover:text-[#ffffff] transition-all shadow-xs"
+                        title={isDark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
                     >
-                        {isDark ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+                        {isDark ? <Sun size={15} strokeWidth={1.8} /> : <Moon size={15} strokeWidth={1.8} />}
                     </Button>
 
-                    <div className="w-full max-w-[460px] relative z-10 mx-auto">
+                    <div className="w-full max-w-[400px] mx-auto">
                         <AnimatePresence mode="wait">
                             {resetSent ? (
                                 <motion.div
                                     key="reset-success"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.15 }}
                                 >
-                                    <Card className="border-none bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
-                                        <CardContent className="pt-12 pb-12 px-10 text-center space-y-8">
-                                            <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner ring-8 ring-emerald-500/5">
-                                                <CheckCircle2 size={48} className="animate-in zoom-in duration-500" />
-                                            </div>
-                                            <div className="space-y-4">
-                                                <h4 className="text-3xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">Email Sent</h4>
-                                                <p className="text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
-                                                    A recovery link has been sent to your inbox. Please check your email and follow the instructions.
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={() => { setResetSent(false); setIsResetMode(false); }}
-                                                className="w-full dark: font-black text-[11px] uppercase tracking-[0.2em] transition-all"
-                                            >
-                                                Return to Login Page
-                                            </Button>
-                                        </CardContent>
+                                    <Card className="rounded-[12px] border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#0f1011] p-8 text-center space-y-6 shadow-xs dark:shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                                        <div className="w-12 h-12 rounded-[8px] bg-[rgba(39,166,68,0.1)] border border-[rgba(39,166,68,0.25)] text-[#27a644] flex items-center justify-center mx-auto">
+                                            <CheckCircle2 size={24} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-lg font-medium tracking-[-0.022em] text-zinc-900 dark:text-[#ffffff]">Email Terkirim</h3>
+                                            <p className="text-xs text-zinc-500 dark:text-[#8a8f98] leading-relaxed tracking-[-0.011em]">
+                                                Instruksi pemulihan kata sandi telah dikirim ke email Anda. Silakan periksa inbox atau folder spam.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={() => { setResetSent(false); setIsResetMode(false); }}
+                                            className="w-full h-9 rounded-[6px] bg-[#08090a] hover:bg-[#222326] text-white dark:bg-[#e4f222] dark:hover:bg-[#d9e620] dark:text-[#08090a] font-medium text-xs tracking-[-0.011em] shadow-xs dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all"
+                                        >
+                                            Kembali ke Halaman Masuk
+                                        </Button>
                                     </Card>
                                 </motion.div>
                             ) : (
                                 <motion.div
                                     key={isResetMode ? "reset-mode" : "login-mode"}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ duration: 0.4, ease: "easeOut" }}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.15 }}
                                 >
-                                    <Card className="border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-xl overflow-hidden">
-                                        <CardHeader className="pt-8 px-10 pb-6">
-                                            {/* Mobile/Tablet Logo */}
-                                            <div className="lg:hidden mb-8 flex flex-col items-center text-center gap-4">
-                                                <div className="w-20 h-20 p-2 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center">
+                                    <Card className="rounded-[12px] border border-zinc-200 dark:border-[#23252a] bg-white dark:bg-[#0f1011] shadow-xs dark:shadow-[0_2px_4px_rgba(0,0,0,0.4)] overflow-hidden">
+                                        <CardHeader className="pt-8 px-8 pb-4">
+                                            {/* Mobile Logo Branding */}
+                                            <div className="lg:hidden mb-6 flex flex-col items-center text-center gap-2.5">
+                                                <div className="w-12 h-12 p-2 bg-zinc-100 dark:bg-[#161718] rounded-[8px] border border-zinc-200 dark:border-[#23252a] flex items-center justify-center shadow-xs">
                                                     <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                                                 </div>
                                                 <div>
-                                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{appName}</h2>
-                                                    <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em] mt-1">Infrastructure Access</p>
+                                                    <h2 className="text-base font-semibold text-zinc-900 dark:text-[#ffffff] tracking-[-0.022em] uppercase">{appName}</h2>
+                                                    <p className="text-[11px] font-mono text-zinc-500 dark:text-[#8a8f98]">PORTAL AKSES KARYAWAN &amp; IT</p>
                                                 </div>
                                             </div>
-                                            
-                                            <CardTitle className="text-3xl font-black tracking-tighter mb-2">
-                                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 dark:from-white dark:via-white dark:to-slate-400">
-                                                    {isResetMode ? 'Recovery' : 'Sign In'}
-                                                </span>
+
+                                            <CardTitle className="text-xl font-medium tracking-[-0.022em] text-zinc-900 dark:text-[#ffffff]">
+                                                {isResetMode ? 'Pulihkan Kata Sandi' : 'Selamat Datang'}
                                             </CardTitle>
-                                            <CardDescription className="text-slate-500 dark:text-zinc-400 text-xs font-medium leading-relaxed">
+                                            <CardDescription className="text-xs text-zinc-500 dark:text-[#8a8f98] mt-1 tracking-[-0.011em]">
                                                 {isResetMode 
-                                                    ? 'Identity verification required for restoration.' 
-                                                    : 'Welcome back! Enter credentials to access ecosystem.'}
+                                                    ? 'Masukkan username atau email terdaftar untuk verifikasi.' 
+                                                    : 'Masuk dengan kredensial akun portal atau Google.'}
                                             </CardDescription>
                                         </CardHeader>
-                                        
-                                        <CardContent className="px-10 pb-6">
+
+                                        <CardContent className="px-8 pb-6">
                                             {error && (
-                                                <Alert variant="destructive" className="mb-6 bg-rose-500/10 border-rose-500/20 rounded-xl p-3">
-                                                    <AlertCircle className="h-4 w-4" />
-                                                    <AlertDescription className="text-[10px] font-bold leading-relaxed ml-1">{error}</AlertDescription>
+                                                <Alert variant="destructive" className="mb-5 rounded-[6px] border border-[rgba(235,87,87,0.25)] bg-[rgba(235,87,87,0.08)] p-3 flex items-start gap-2.5 text-[#eb5757]">
+                                                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-[#eb5757]" />
+                                                    <AlertDescription className="text-xs font-medium text-[#eb5757] leading-normal tracking-[-0.011em]">
+                                                        {error}
+                                                    </AlertDescription>
                                                 </Alert>
                                             )}
 
-                                            <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-5">
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 ml-1">Identity identifier</Label>
-                                                    <div className="relative group">
-                                                        <Mail size={18} strokeWidth={1.5} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
+                                            <form onSubmit={isResetMode ? handleResetPassword : handleLogin} className="space-y-4">
+                                                <div className="space-y-1.5">
+                                                    <Label className="text-xs font-medium text-zinc-700 dark:text-[#d0d6e0] tracking-[-0.011em]">
+                                                        Email atau Username
+                                                    </Label>
+                                                    <div className="relative">
+                                                        <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-[#62666d] pointer-events-none" />
                                                         <Input
-                                                            className="h-12 pl-12 pr-4 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] focus:ring-2 focus:ring-primary/5 font-bold text-xs"
-                                                            placeholder="Email or username"
+                                                            placeholder="contoh: rudi atau rudi@gesit.co.id"
                                                             type="text"
                                                             value={identifier}
                                                             onChange={(e) => setIdentifier(e.target.value)}
                                                             required
+                                                            className="pl-9 pr-3 text-xs"
                                                         />
                                                     </div>
                                                 </div>
 
                                                 {!isResetMode && (
-                                                    <div className="space-y-2">
-                                                        <Label className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 ml-1">Key authority</Label>
-                                                        <div className="relative group">
-                                                            <Lock size={18} strokeWidth={1.5} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-950 dark:group-focus-within:text-white transition-all z-10" />
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <Label className="text-xs font-medium text-zinc-700 dark:text-[#d0d6e0] tracking-[-0.011em]">
+                                                                Kata Sandi
+                                                            </Label>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setIsResetMode(true)}
+                                                                className="text-[11px] font-medium text-zinc-500 hover:text-zinc-900 dark:text-[#8a8f98] dark:hover:text-[#ffffff] transition-colors tracking-[-0.011em]"
+                                                            >
+                                                                Lupa kata sandi?
+                                                            </button>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-[#62666d] pointer-events-none" />
                                                             <Input
-                                                                className="h-12 pl-12 pr-12 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] focus:ring-2 focus:ring-primary/5 font-bold text-xs"
-                                                                placeholder="Password"
+                                                                placeholder="Masukkan kata sandi"
                                                                 type={showPassword ? "text" : "password"}
                                                                 value={password}
                                                                 onChange={(e) => setPassword(e.target.value)}
                                                                 required
+                                                                className="pl-9 pr-9 text-xs"
                                                             />
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
+                                                            <button
                                                                 type="button"
-                                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 dark:hover:"
+                                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:text-[#62666d] dark:hover:text-[#d0d6e0] p-1 transition-colors"
                                                                 onClick={() => setShowPassword(!showPassword)}
+                                                                tabIndex={-1}
+                                                                aria-label={showPassword ? "Sembunyikan password" : "Lihat password"}
                                                             >
-                                                                {showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
-                                                            </Button>
+                                                                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -443,60 +321,64 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                                 <Button
                                                     type="submit"
                                                     disabled={isLoading}
-                                                    className="w-full font-bold text-[13px] tracking-tight transition-all hover:translate-y-[-1px]"
-                                                    style={{ backgroundColor: primaryColor }}
+                                                    className="w-full h-9 rounded-[6px] bg-[#08090a] hover:bg-[#222326] text-white dark:bg-[#e4f222] dark:hover:bg-[#d9e620] dark:text-[#08090a] font-medium text-xs tracking-[-0.011em] shadow-xs dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all mt-2"
                                                 >
-                                                    {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Sign in now'}
+                                                    {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : (isResetMode ? 'Kirim Link Pemulihan' : 'Masuk Sekarang')}
                                                 </Button>
                                             </form>
 
-                                            <div className="mt-8 flex flex-col items-center gap-6">
-                                                <Button
-                                                    variant="link"
-                                                    onClick={() => setIsResetMode(!isResetMode)}
-                                                    className="h-auto text-[10px] font-bold tracking-tight"
-                                                    style={{ color: primaryColor }}
-                                                >
-                                                    {isResetMode ? 'Return to login' : 'Forgot your password?'}
-                                                </Button>
-
-                                                <div className="w-full flex items-center gap-4">
-                                                    <div className="h-px flex-1 bg-slate-100 dark:bg-white/5" />
-                                                    <span className="text-[8px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-widest">Connect</span>
-                                                    <div className="h-px flex-1 bg-slate-100 dark:bg-white/5" />
+                                            {isResetMode && (
+                                                <div className="mt-4 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsResetMode(false)}
+                                                        className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:text-[#8a8f98] dark:hover:text-[#ffffff] transition-colors tracking-[-0.011em]"
+                                                    >
+                                                        ← Kembali ke Halaman Masuk
+                                                    </button>
                                                 </div>
+                                            )}
 
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={handleGoogleLogin}
-                                                    disabled={isLoading}
-                                                    className="w-full dark: border-slate-200 dark:border-white/10 gap-2 text-[10px] font-bold uppercase tracking-widest"
-                                                >
-                                                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                                        <path d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" fill="#FBBC05" />
-                                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 6.18l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                                    </svg>
-                                                    Google Account
-                                                </Button>
-                                            </div>
+                                            {!isResetMode && (
+                                                <div className="mt-5 space-y-3.5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-px flex-1 bg-zinc-200 dark:bg-[#23252a]" />
+                                                        <span className="text-[10px] font-mono text-zinc-400 dark:text-[#62666d] uppercase tracking-wider">Atau masuk dengan</span>
+                                                        <div className="h-px flex-1 bg-zinc-200 dark:bg-[#23252a]" />
+                                                    </div>
+
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={handleGoogleLogin}
+                                                        disabled={isLoading}
+                                                        className="w-full h-9 rounded-[6px] border border-zinc-200 dark:border-[#23252a] bg-white hover:bg-zinc-50 text-zinc-900 dark:bg-[#161718] dark:hover:bg-[#23252a] dark:text-[#ffffff] text-xs font-medium tracking-[-0.011em] flex items-center justify-center gap-2.5 transition-colors shadow-xs"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+                                                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                                            <path d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" fill="#FBBC05" />
+                                                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 6.18l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                                        </svg>
+                                                        Akun Google
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </CardContent>
 
-                                        <CardFooter className="px-10 pb-10 pt-0 flex flex-col gap-4">
-                                            <div className="w-full h-px bg-slate-100 dark:bg-white/5" />
-                                            <div className="flex flex-col items-center gap-2">
+                                        <CardFooter className="px-8 pb-6 pt-0 flex flex-col gap-3">
+                                            <div className="w-full h-px bg-zinc-200 dark:bg-[#23252a]" />
+                                            <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 dark:text-[#8a8f98] tracking-[-0.011em]">
                                                 <button
                                                     type="button"
                                                     onClick={() => window.location.href = 'mailto:it@gesit.co.id'}
-                                                    className="text-[9px] font-bold text-slate-400 hover:text-slate-900 dark:hover:text-white uppercase tracking-widest transition-all"
+                                                    className="font-medium hover:text-zinc-900 dark:hover:text-[#ffffff] transition-colors"
                                                 >
-                                                    Support Division
+                                                    Bantuan IT Support
                                                 </button>
-                                                <div className="flex items-center gap-4 text-slate-400/50">
-                                                    <a href="/privacy" className="text-[8px] font-bold hover:text-primary transition-all uppercase tracking-widest">Privacy</a>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-zinc-800" />
-                                                    <a href="/terms" className="text-[8px] font-bold hover:text-primary transition-all uppercase tracking-widest">Terms</a>
+                                                <div className="flex items-center gap-2.5 text-zinc-400 dark:text-[#62666d]">
+                                                    <a href="/privacy" className="hover:text-zinc-600 dark:hover:text-[#8a8f98] transition-colors">Privacy</a>
+                                                    <span>·</span>
+                                                    <a href="/terms" className="hover:text-zinc-600 dark:hover:text-[#8a8f98] transition-colors">Terms</a>
                                                 </div>
                                             </div>
                                         </CardFooter>

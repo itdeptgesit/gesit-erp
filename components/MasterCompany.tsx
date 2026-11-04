@@ -83,21 +83,32 @@ export const MasterCompany: React.FC<MasterCompanyProps> = ({ currentUser }) => 
     };
 
     const handleSubmit = async (data: Partial<Company>) => {
-        if (editingCompany) {
-            await supabase.from('companies').update(data).eq('id', editingCompany.id);
-        } else {
-            await supabase.from('companies').insert([data]);
+        setIsProcessing(true);
+        try {
+            if (editingCompany) {
+                const { error } = await supabase.from('companies').update(data).eq('id', editingCompany.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('companies').insert([data]);
+                if (error) throw error;
+            }
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                editingCompany ? 'Update Company' : 'Create Company',
+                'Master',
+                `${editingCompany ? 'Updated' : 'Created'} company ${data.name} (${data.code})`
+            );
+
+            await fetchCompanies();
+            setIsModalOpen(false);
+            showToast(editingCompany ? 'Company updated successfully' : 'Company created successfully', 'success');
+        } catch (err: any) {
+            showToast("Failed to save company: " + err.message, 'error');
+        } finally {
+            setIsProcessing(false);
         }
-
-        await trackActivity(
-            currentUser?.fullName || 'User',
-            currentUser?.role || 'User',
-            editingCompany ? 'Update Company' : 'Create Company',
-            'Master',
-            `${editingCompany ? 'Updated' : 'Created'} company ${data.name} (${data.code})`
-        );
-
-        fetchCompanies();
     };
 
     return (

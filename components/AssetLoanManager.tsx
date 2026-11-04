@@ -9,6 +9,7 @@ import { ITAssetLoan, UserAccount, ITAsset } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { sendNotificationToAdmins } from '../utils/NotificationSystemUtils';
 import { useLanguage } from '../translations';
+import { isUserAdmin, isUserStaff, canUserManage } from '../lib/rbac';
 import { StatCard } from './StatCard';
 import { DangerConfirmModal } from './DangerConfirmModal';
 import { LoanFormModal } from './LoanFormModal';
@@ -53,9 +54,9 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
     const [historyPage, setHistoryPage] = useState(1);
     const HISTORY_PER_PAGE = 5;
 
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canManage = isAdmin || isStaff;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canManage = canUserManage(currentUser);
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -334,13 +335,81 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
                         <StatCard
                             label={t('pendingRequests')}
                             value={loans.filter(l => l.status === 'Pending').length}
+                            unit="Antrean"
                             subValue={t('needsApproval')}
+                            note2="menunggu persetujuan"
                             icon={Clock}
                             color="amber"
+                            drilldownData={loans.filter(l => l.status === 'Pending')}
+                            drilldownTitle="Rincian Permintaan Peminjaman Pending"
+                            drilldownDescription="Daftar pengajuan peminjaman aset yang menunggu review dan persetujuan IT."
+                            drilldownColumns={[
+                                { header: 'No Pinjam', render: (l: any) => <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{l.loanId || `#LN-${l.id}`}</span> },
+                                { header: 'Nama Peminjam', render: (l: any) => <span className="font-semibold">{l.borrowerName}</span> },
+                                { header: 'Departemen', accessor: 'borrowerDept' },
+                                { header: 'Aset', render: (l: any) => l.assetName || l.assetTag || 'Aset IT' },
+                                { header: 'Rencana Pinjam', render: (l: any) => l.loanDate ? new Date(l.loanDate).toLocaleDateString('id-ID') : '-' },
+                                { header: 'Jatuh Tempo', render: (l: any) => l.expectedReturnDate ? new Date(l.expectedReturnDate).toLocaleDateString('id-ID') : '-' }
+                            ]}
                         />
-                        <StatCard label={t('activeLoans')} value={loans.filter(l => l.status === 'Active').length} subValue={t('currentlyBorrowed')} icon={ArrowUpRight} color="blue" />
-                        <StatCard label={t('overdueLabel')} value={loans.filter(l => l.status === 'Overdue').length} subValue={t('pastDueDate')} icon={AlertCircle} color="rose" />
-                        <StatCard label={t('returnedTotal')} value={loans.filter(l => l.status === 'Returned').length} subValue={t('lifetimeCompletions')} icon={CheckCircle2} color="emerald" />
+                        <StatCard 
+                            label={t('activeLoans')} 
+                            value={loans.filter(l => l.status === 'Active').length} 
+                            unit="Unit"
+                            subValue={t('currentlyBorrowed')} 
+                            note2="sedang dipinjam"
+                            icon={ArrowUpRight} 
+                            color="blue" 
+                            drilldownData={loans.filter(l => l.status === 'Active')}
+                            drilldownTitle="Rincian Peminjaman Aktif"
+                            drilldownDescription="Aset yang saat ini sedang dibawa dan digunakan oleh peminjam."
+                            drilldownColumns={[
+                                { header: 'No Pinjam', render: (l: any) => <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{l.loanId || `#LN-${l.id}`}</span> },
+                                { header: 'Nama Peminjam', render: (l: any) => <span className="font-semibold">{l.borrowerName}</span> },
+                                { header: 'Departemen', accessor: 'borrowerDept' },
+                                { header: 'Aset Dipinjam', render: (l: any) => l.assetName || l.assetTag || 'Aset IT' },
+                                { header: 'Tgl Pinjam', render: (l: any) => l.loanDate ? new Date(l.loanDate).toLocaleDateString('id-ID') : '-' },
+                                { header: 'Batas Kembali', render: (l: any) => l.expectedReturnDate ? new Date(l.expectedReturnDate).toLocaleDateString('id-ID') : '-' }
+                            ]}
+                        />
+                        <StatCard 
+                            label={t('overdueLabel')} 
+                            value={loans.filter(l => l.status === 'Overdue').length} 
+                            unit="Overdue"
+                            subValue={t('pastDueDate')} 
+                            note2="lewat batas tempo"
+                            icon={AlertCircle} 
+                            color="rose" 
+                            drilldownData={loans.filter(l => l.status === 'Overdue')}
+                            drilldownTitle="Rincian Peminjaman Lewat Jatuh Tempo"
+                            drilldownDescription="Aset yang belum dikembalikan melewati tanggal batas kembali yang disetujui."
+                            drilldownColumns={[
+                                { header: 'No Pinjam', render: (l: any) => <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">{l.loanId || `#LN-${l.id}`}</span> },
+                                { header: 'Nama Peminjam', render: (l: any) => <span className="font-semibold text-rose-600">{l.borrowerName}</span> },
+                                { header: 'Kontak / Dept', render: (l: any) => `${l.borrowerDept || '-'} ${l.borrowerPhone ? `(${l.borrowerPhone})` : ''}` },
+                                { header: 'Aset', render: (l: any) => l.assetName || l.assetTag || '-' },
+                                { header: 'Harus Kembali', render: (l: any) => <span className="text-rose-600 font-bold">{l.expectedReturnDate ? new Date(l.expectedReturnDate).toLocaleDateString('id-ID') : '-'}</span> }
+                            ]}
+                        />
+                        <StatCard 
+                            label={t('returnedTotal')} 
+                            value={loans.filter(l => l.status === 'Returned').length} 
+                            unit="Selesai"
+                            subValue={t('lifetimeCompletions')} 
+                            note2="sudah dikembalikan"
+                            icon={CheckCircle2} 
+                            color="emerald" 
+                            drilldownData={loans.filter(l => l.status === 'Returned')}
+                            drilldownTitle="Rincian Peminjaman Selesai Dikembalikan"
+                            drilldownDescription="Riwayat peminjaman aset yang telah aman dikembalikan ke inventaris IT."
+                            drilldownColumns={[
+                                { header: 'No Pinjam', render: (l: any) => <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{l.loanId || `#LN-${l.id}`}</span> },
+                                { header: 'Peminjam', accessor: 'borrowerName' },
+                                { header: 'Departemen', accessor: 'borrowerDept' },
+                                { header: 'Aset', render: (l: any) => l.assetName || l.assetTag || '-' },
+                                { header: 'Tgl Pengembalian', render: (l: any) => l.actualReturnDate ? new Date(l.actualReturnDate).toLocaleDateString('id-ID') : '-' }
+                            ]}
+                        />
                     </div>
                 )}
 

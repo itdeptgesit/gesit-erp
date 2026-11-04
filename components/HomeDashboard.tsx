@@ -13,7 +13,12 @@ interface HomeDashboardProps {
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({ currentUser, userName, userRole, onNavigate }) => {
   const userGroups = (currentUser?.groups || []).map(g => g.toLowerCase());
   const role = (userRole || currentUser?.role || '').toLowerCase();
-  const isIT = userGroups.includes('it') || userGroups.includes('it_staff') || userGroups.includes('it_management') || role.includes('it') || role === 'super admin' || role === 'super_admin' || role === 'admin';
+  const isIT =
+    userGroups.some(g => g.startsWith('it') || g.includes('it_') || g.includes('it-') || g === 'support') ||
+    role.includes('it') ||
+    role === 'super admin' ||
+    role === 'super_admin' ||
+    role === 'admin';
 
   if (isIT) {
     return <DashboardIT onNavigate={onNavigate} currentUser={currentUser} />;

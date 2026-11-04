@@ -89,6 +89,52 @@ export const isGoogleConnected = (): boolean => {
     return localStorage.getItem('google_connected_flag') === 'true' && getStoredToken() !== null;
 };
 
+// ── Sinkronisasi otomatis token dari akun aktif / Supabase ─────────────────
+export const ensureGoogleConnected = async (userEmail?: string): Promise<boolean> => {
+    // 1. Cek jika sudah terhubung aktif di localStorage
+    if (isGoogleConnected()) return true;
+
+    // 2. Cek token dari sesi aktif Supabase Auth (misal login via Google)
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const providerToken = (session as any)?.provider_token;
+        if (providerToken) {
+            const expiresIn = session?.expires_in || 3600;
+            storeToken(providerToken, expiresIn);
+            return true;
+        }
+    } catch {
+        // Abaikan
+    }
+
+    // 3. Cek database user_accounts jika ada token tersimpan untuk email akun
+    const emailToLookup = userEmail || localStorage.getItem('user_email');
+    if (emailToLookup) {
+        try {
+            const { data } = await supabase
+                .from('user_accounts')
+                .select('google_access_token, google_token_expiry, google_connected_flag')
+                .eq('email', emailToLookup)
+                .maybeSingle();
+
+            if (data?.google_access_token && data.google_token_expiry) {
+                if (Date.now() < parseInt(data.google_token_expiry)) {
+                    localStorage.setItem(TOKEN_STORAGE_KEY, data.google_access_token);
+                    localStorage.setItem(TOKEN_EXPIRY_KEY, data.google_token_expiry);
+                    localStorage.setItem('google_connected_flag', 'true');
+                    return true;
+                }
+            }
+        } catch {
+            // Abaikan
+        }
+    }
+
+    // 4. Catatan: Tidak memanggil silentRefresh() secara otomatis di background
+    // agar Google Identity Services tidak memunculkan popup pemilihan akun ke pengguna
+    return false;
+};
+
 // ── OAuth ──────────────────────────────────────────────────────────────────
 declare const google: any;
 
@@ -116,16 +162,24 @@ const getTokenClient = (
     return tokenClientInstance;
 };
 
-export const signInWithGoogle = (): Promise<string> =>
+export const signInWithGoogle = (userEmail?: string): Promise<string> =>
     new Promise((resolve, reject) => {
         const client = getTokenClient(resolve, reject);
-        client.requestAccessToken({ prompt: 'consent' });
+        const options: any = { prompt: 'consent' };
+        if (userEmail) {
+            options.hint = userEmail;
+        }
+        client.requestAccessToken(options);
     });
 
-export const silentRefresh = (): Promise<string> =>
+export const silentRefresh = (userEmail?: string): Promise<string> =>
     new Promise((resolve, reject) => {
         const client = getTokenClient(resolve, reject);
-        client.requestAccessToken({ prompt: '' });
+        const options: any = { prompt: '' };
+        if (userEmail) {
+            options.hint = userEmail;
+        }
+        client.requestAccessToken(options);
     });
 
 export const signOutGoogle = () => {
@@ -141,12 +195,8 @@ export const signOutGoogle = () => {
 const gFetch = async (url: string, options: RequestInit = {}): Promise<any> => {
     let token = getStoredToken();
     if (!token) {
-        try {
-            token = await silentRefresh();
-        } catch (refreshErr) {
-            clearToken();
-            throw new Error('Google connection expired. Please reconnect.');
-        }
+        clearToken();
+        throw new Error('Google connection expired or not connected.');
     }
 
     try {

@@ -1879,22 +1879,80 @@ export const PurchaseRecordManager = ({ currentUser }: { currentUser: UserAccoun
 
             {/* Stat Cards Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                <StatCard label="Disbursed Funds" value={formatIDR(financialHealth.totalDisbursed)} subValue="Verified & Settled" icon={CheckCircle2} color="emerald" />
+                <StatCard 
+                    label="Disbursed Funds" 
+                    value={formatIDR(financialHealth.totalDisbursed)} 
+                    subValue="Verified & Settled" 
+                    note2="dana tersalurkan"
+                    icon={CheckCircle2} 
+                    color="emerald" 
+                    drilldownData={records.filter(r => r.status === 'Paid')}
+                    drilldownTitle="Rincian Dana Terealisasi (Disbursed Funds)"
+                    drilldownDescription="Transaksi pembelian yang telah lunas dibayarkan dan diverifikasi."
+                    drilldownColumns={[
+                        { header: 'Vendor', render: (r: any) => <span className="font-semibold">{r.vendor || '-'}</span> },
+                        { header: 'Kategori', accessor: 'category' },
+                        { header: 'Departemen', accessor: 'department' },
+                        { header: 'Tgl Beli', render: (r: any) => r.purchase_date ? new Date(r.purchase_date).toLocaleDateString('id-ID') : '-' },
+                        { header: 'Jumlah Dibayar', render: (r: any) => <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatIDR(r.subtotal || r.total_va || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
                 <StatCard
                     label="Liability Exposure"
                     value={formatIDR(financialHealth.liability)}
                     subValue={`${financialHealth.pendingCount} Pending Approval`}
+                    note2="kewajiban berjalan"
                     icon={Clock}
                     color={financialHealth.riskLevel === 'High' ? 'rose' : financialHealth.riskLevel === 'Medium' ? 'amber' : 'blue'}
+                    drilldownData={records.filter(r => r.status === 'Pending')}
+                    drilldownTitle="Rincian Kewajiban Berjalan (Liability Exposure)"
+                    drilldownDescription="Transaksi yang masih menunggu persetujuan dan pembayaran."
+                    drilldownColumns={[
+                        { header: 'Vendor', render: (r: any) => <span className="font-semibold text-rose-600 dark:text-rose-400">{r.vendor || '-'}</span> },
+                        { header: 'Departemen', accessor: 'department' },
+                        { header: 'Keperluan', render: (r: any) => r.description || r.item || '-' },
+                        { header: 'Nilai Kewajiban', render: (r: any) => <span className="font-bold text-foreground">{formatIDR(r.subtotal || r.total_va || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
                 />
                 <StatCard
                     label="Budget Efficiency"
                     value={`${financialHealth.budgetEfficiency}%`}
                     subValue={financialHealth.efficiencySubValue}
+                    note2="rasio efisiensi"
                     icon={PieChart}
                     color="violet"
+                    drilldownData={records}
+                    drilldownTitle="Rincian Efisiensi Anggaran per Transaksi"
+                    drilldownDescription="Seluruh arsip transaksi pembelian terhadap alokasi anggaran."
+                    drilldownColumns={[
+                        { header: 'Vendor', accessor: 'vendor' },
+                        { header: 'Kategori', accessor: 'category' },
+                        { header: 'Departemen', accessor: 'department' },
+                        { header: 'Nominal', render: (r: any) => formatIDR(r.subtotal || 0) },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
                 />
-                <StatCard label="Fiscal Volume" value={formatIDR(financialHealth.fiscalVolume)} subValue="Gross Transaction Value" icon={Wallet} color="indigo" />
+                <StatCard 
+                    label="Fiscal Volume" 
+                    value={formatIDR(financialHealth.fiscalVolume)} 
+                    subValue="Gross Transaction Value" 
+                    note2="seluruh transaksi"
+                    icon={Wallet} 
+                    color="indigo" 
+                    drilldownData={records}
+                    drilldownTitle="Rincian Seluruh Transaksi Fiskal (Fiscal Volume)"
+                    drilldownDescription="Total nilai kotor seluruh rekaman transaksi pembelian di dalam sistem."
+                    drilldownColumns={[
+                        { header: 'ID', render: (r: any) => `#${r.id}` },
+                        { header: 'Vendor', render: (r: any) => <span className="font-semibold">{r.vendor}</span> },
+                        { header: 'Departemen', accessor: 'department' },
+                        { header: 'Tgl Transaksi', render: (r: any) => r.purchase_date ? new Date(r.purchase_date).toLocaleDateString('id-ID') : '-' },
+                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold">{formatIDR(r.subtotal || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
             </div>
 
             {/* Optimized Layout: Fiscal Trend & Breakdown Grid */}

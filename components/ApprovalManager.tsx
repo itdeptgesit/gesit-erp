@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useToast } from './ToastProvider';
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
+import { isUserAdmin } from '../lib/rbac';
 
 interface ApprovalManagerProps {
     currentUser?: UserAccount | null;
@@ -113,7 +114,7 @@ export const ApprovalManager: React.FC<ApprovalManagerProps> = ({ currentUser })
 
                     let showForMe = false;
 
-                    if (currentUser.role === 'Admin' && plan.status === 'Pending Approval') {
+                    if (isUserAdmin(currentUser) && plan.status === 'Pending Approval') {
                         showForMe = true;
                     }
 

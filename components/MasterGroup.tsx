@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { isUserAdmin } from "../lib/rbac";
 
 interface MasterGroupProps {
     currentUser: UserAccount | null;
@@ -21,6 +22,7 @@ interface MasterGroupProps {
 
 export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
     const { showToast } = useToast();
+    const isAdmin = isUserAdmin(currentUser);
     const [groups, setGroups] = useState<UserGroup[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,6 +64,11 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
 
     const executeDelete = async () => {
         if (!deleteGroup) return;
+        if (!isAdmin) {
+            showToast("Hanya administrator yang diizinkan menghapus group akses.", "error");
+            setDeleteGroup(null);
+            return;
+        }
         setIsProcessing(true);
         try {
             const { error } = await supabase.from('user_groups').delete().eq('id', deleteGroup.id);
@@ -85,6 +92,11 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
     };
 
     const handleSubmit = async (data: UserGroup) => {
+        if (!isAdmin) {
+            showToast("Hanya administrator yang diizinkan mengubah group akses.", "error");
+            return;
+        }
+        setIsProcessing(true);
         const payload = {
             id: data.id,
             name: data.name,
@@ -92,21 +104,31 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
             allowed_menus: data.allowedMenus
         };
 
-        if (editingGroup) {
-            await supabase.from('user_groups').update(payload).eq('id', editingGroup.id);
-        } else {
-            await supabase.from('user_groups').insert([payload]);
+        try {
+            if (editingGroup) {
+                const { error } = await supabase.from('user_groups').update(payload).eq('id', editingGroup.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('user_groups').insert([payload]);
+                if (error) throw error;
+            }
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                editingGroup ? 'Update Group' : 'Create Group',
+                'Security',
+                `${editingGroup ? 'Updated' : 'Created'} group ${data.name}`
+            );
+
+            fetchGroups();
+            setIsModalOpen(false);
+            showToast(editingGroup ? 'Group updated' : 'Group created', 'success');
+        } catch (err: any) {
+            showToast(`Failed: ${err.message}`, 'error');
+        } finally {
+            setIsProcessing(false);
         }
-
-        await trackActivity(
-            currentUser?.fullName || 'User',
-            currentUser?.role || 'User',
-            editingGroup ? 'Update Group' : 'Create Group',
-            'Security',
-            `${editingGroup ? 'Updated' : 'Created'} group ${data.name}`
-        );
-
-        fetchGroups();
     };
 
     return (
@@ -124,12 +146,14 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
                     >
                         <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
                     </Button>
-                    <Button
-                        onClick={handleAdd}
-                        className="dark: dark: font-bold text-[10px] uppercase tracking-widest /10"
-                    >
-                        <Plus size={14} className="mr-2" /> Add Group
-                    </Button>
+                    {isAdmin && (
+                        <Button
+                            onClick={handleAdd}
+                            className="font-bold text-[10px] uppercase tracking-widest"
+                        >
+                            <Plus size={14} className="mr-2" /> Add Group
+                        </Button>
+                    )}
                 </div>
             </PageHeader>
 
@@ -192,8 +216,14 @@ export const MasterGroup: React.FC<MasterGroupProps> = ({ currentUser }) => {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(group)} className="w-8"><ShieldCheck size={14} /></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteGroup(group)} className="w-8"><Trash2 size={14} /></Button>
+                                            {isAdmin ? (
+                                                <>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(group)} className="w-8"><ShieldCheck size={14} /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => setDeleteGroup(group)} className="w-8"><Trash2 size={14} /></Button>
+                                                </>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-wider">Read Only</span>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -82,21 +82,32 @@ export const MasterCategory: React.FC<MasterCategoryProps> = ({ currentUser }) =
     };
 
     const handleSubmit = async (data: Partial<AssetCategory>) => {
-        if (editingCategory) {
-            await supabase.from('asset_categories').update(data).eq('id', editingCategory.id);
-        } else {
-            await supabase.from('asset_categories').insert([data]);
+        setIsProcessing(true);
+        try {
+            if (editingCategory) {
+                const { error } = await supabase.from('asset_categories').update(data).eq('id', editingCategory.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('asset_categories').insert([data]);
+                if (error) throw error;
+            }
+
+            await trackActivity(
+                currentUser?.fullName || 'User',
+                currentUser?.role || 'User',
+                editingCategory ? 'Update Category' : 'Create Category',
+                'Master',
+                `${editingCategory ? 'Updated' : 'Created'} category ${data.name} (${data.code})`
+            );
+
+            await fetchCategories();
+            setIsModalOpen(false);
+            showToast(editingCategory ? 'Category updated successfully' : 'Category created successfully', 'success');
+        } catch (err: any) {
+            showToast("Failed to save category: " + err.message, 'error');
+        } finally {
+            setIsProcessing(false);
         }
-
-        await trackActivity(
-            currentUser?.fullName || 'User',
-            currentUser?.role || 'User',
-            editingCategory ? 'Update Category' : 'Create Category',
-            'Master',
-            `${editingCategory ? 'Updated' : 'Created'} category ${data.name} (${data.code})`
-        );
-
-        fetchCategories();
     };
 
     return (

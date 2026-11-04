@@ -215,6 +215,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, o
                             <div>
                                 <label className={labelClass}>Access Role</label>
                                 <select className={inputClass} value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value as any })}>
+                                    <option value="Super Admin">Super Administrator</option>
                                     <option value="Admin">Administrator</option>
                                     <option value="Staff">Operations Staff</option>
                                     <option value="User">Standard User</option>

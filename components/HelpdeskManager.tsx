@@ -1664,10 +1664,92 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
                         {managementTab === 'queue' && (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-                                <StatCard label={t('totalRequests')} value={stats.total} icon={MessageSquare} percentageChange={8} subValue={t('vsLastMonth')} color="slate" />
-                                <StatCard label={t('awaitingAction')} value={stats.open} icon={CircleDot} percentageChange={-2} subValue={t('vsLastMonth')} color="rose" status="at-risk" />
-                                <StatCard label={t('activeSessions')} value={stats.inProgress} icon={Clock} percentageChange={15} subValue={t('vsLastMonth')} color="blue" />
-                                <StatCard label={t('resolvedIncidents')} value={stats.resolved} icon={CheckCircle2} percentageChange={5} subValue={t('vsLastMonth')} color="emerald" status="on-track" />
+                                <StatCard 
+                                    label={t('totalRequests')} 
+                                    value={stats.total} 
+                                    unit="Tiket"
+                                    icon={MessageSquare} 
+                                    percentageChange={8} 
+                                    subValue={t('vsLastMonth')} 
+                                    note2="semua antrean"
+                                    color="slate" 
+                                    drilldownData={tickets}
+                                    drilldownTitle="Rincian Seluruh Antrean Tiket"
+                                    drilldownDescription="Daftar lengkap seluruh tiket helpdesk IT yang masuk ke sistem."
+                                    drilldownColumns={[
+                                        { header: 'No Tiket', render: (t: any) => <span className="font-mono font-semibold">{t.ticketId || t.ticket_id || `#TKT-${t.id}`}</span> },
+                                        { header: 'Subjek Masalah', render: (t: any) => <span className="font-semibold">{t.subject || '-'}</span> },
+                                        { header: 'Pemohon', render: (t: any) => t.requesterName || t.requester_name || t.requester || '-' },
+                                        { header: 'Teknisi', render: (t: any) => t.assignedTo || t.assigned_to || <span className="text-amber-500 font-medium">Unassigned</span> },
+                                        { header: 'Prioritas', accessor: 'priority' },
+                                        { header: 'Status', accessor: 'status' }
+                                    ]}
+                                />
+                                <StatCard 
+                                    label={t('awaitingAction')} 
+                                    value={stats.open} 
+                                    unit="Open"
+                                    icon={CircleDot} 
+                                    percentageChange={-2} 
+                                    subValue="Menunggu respon" 
+                                    note2={t('vsLastMonth')}
+                                    color="rose" 
+                                    status="at-risk" 
+                                    drilldownData={tickets.filter(t => t.status === 'Open')}
+                                    drilldownTitle="Rincian Tiket Menunggu Tindakan (Open)"
+                                    drilldownDescription="Tiket aktif yang baru masuk dan butuh penanganan segera dari teknisi IT."
+                                    drilldownColumns={[
+                                        { header: 'No Tiket', render: (t: any) => <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">{t.ticketId || t.ticket_id || `#TKT-${t.id}`}</span> },
+                                        { header: 'Subjek Masalah', render: (t: any) => <span className="font-semibold">{t.subject || '-'}</span> },
+                                        { header: 'Pemohon', render: (t: any) => t.requesterName || t.requester_name || '-' },
+                                        { header: 'Teknisi Ditugaskan', render: (t: any) => t.assignedTo || t.assigned_to || <span className="text-rose-500 font-semibold">Belum Ditugaskan</span> },
+                                        { header: 'Prioritas', accessor: 'priority' },
+                                        { header: 'Status', accessor: 'status' }
+                                    ]}
+                                />
+                                <StatCard 
+                                    label={t('activeSessions')} 
+                                    value={stats.inProgress} 
+                                    unit="Proses"
+                                    icon={Clock} 
+                                    percentageChange={15} 
+                                    subValue="Sedang dikerjakan" 
+                                    note2={t('vsLastMonth')}
+                                    color="blue" 
+                                    drilldownData={tickets.filter(t => t.status === 'In Progress')}
+                                    drilldownTitle="Rincian Tiket Dalam Pengerjaan (In Progress)"
+                                    drilldownDescription="Tiket yang sedang dalam proses penanganan aktif oleh tim IT."
+                                    drilldownColumns={[
+                                        { header: 'No Tiket', render: (t: any) => <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{t.ticketId || t.ticket_id || `#TKT-${t.id}`}</span> },
+                                        { header: 'Subjek Masalah', render: (t: any) => <span className="font-semibold">{t.subject || '-'}</span> },
+                                        { header: 'Pemohon', render: (t: any) => t.requesterName || t.requester_name || '-' },
+                                        { header: 'Teknisi Handler', render: (t: any) => <span className="font-semibold text-foreground">{t.assignedTo || t.assigned_to || '-'}</span> },
+                                        { header: 'Prioritas', accessor: 'priority' },
+                                        { header: 'Status', accessor: 'status' }
+                                    ]}
+                                />
+                                <StatCard 
+                                    label={t('resolvedIncidents')} 
+                                    value={stats.resolved} 
+                                    unit="Selesai"
+                                    icon={CheckCircle2} 
+                                    percentageChange={5} 
+                                    subValue="Tuntas diselesaikan" 
+                                    note2={t('vsLastMonth')}
+                                    color="emerald" 
+                                    status="on-track" 
+                                    drilldownData={tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed')}
+                                    drilldownTitle="Rincian Tiket Berhasil Diselesaikan"
+                                    drilldownDescription="Tiket insiden dan permintaan layanan yang telah tuntas diselesaikan teknisi."
+                                    drilldownColumns={[
+                                        { header: 'No Tiket', render: (t: any) => <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{t.ticketId || t.ticket_id || `#TKT-${t.id}`}</span> },
+                                        { header: 'Subjek Masalah', render: (t: any) => <span className="font-semibold">{t.subject || '-'}</span> },
+                                        { header: 'Pemohon', render: (t: any) => t.requesterName || t.requester_name || '-' },
+                                        { header: 'Diselesaikan Oleh', render: (t: any) => t.resolvedBy || t.resolved_by || t.assignedTo || t.assigned_to || '-' },
+                                        { header: 'Rating CSAT', render: (t: any) => t.rating ? `⭐ ${t.rating}/5` : 'Belum di-rate' },
+                                        { header: 'Status', accessor: 'status' }
+                                    ]}
+                                />
                             </div>
                         )}
                     </>

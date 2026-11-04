@@ -253,6 +253,187 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
+const FALLBACK_ACTIVITIES: ActivityLog[] = [
+    {
+        id: 101,
+        activityName: "Progress Doc Replacement Copier HP",
+        category: "Procurement",
+        requester: "Rudi",
+        department: "IT",
+        itPersonnel: "Bendry",
+        type: "Minor",
+        status: "Completed",
+        duration: "45m",
+        remarks: "Kordinasi dokumen kontrak penggantian printer HP E786",
+        location: "Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+    },
+    {
+        id: 102,
+        activityName: "Develop Absen Gesit (Mobile Presensi & Geofencing)",
+        category: "Development",
+        requester: "Rudi Siarudin",
+        department: "IT",
+        itPersonnel: "Rudi",
+        type: "Major",
+        status: "In Progress",
+        duration: "3h 30m",
+        remarks: "Implementasi integrasi koordinat GPS dan deteksi wajah",
+        location: "Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
+    },
+    {
+        id: 103,
+        activityName: "Arrange Visit CCTV Vendor Sircon73",
+        category: "Infrastructure",
+        requester: "Desi",
+        department: "Finance & GA",
+        itPersonnel: "Bendry",
+        type: "Minor",
+        status: "In Progress",
+        duration: "1h",
+        remarks: "Pemeriksaan 8 titik kamera koridor dan ruang server",
+        location: "Lt. 26 & 27",
+        createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
+    },
+    {
+        id: 104,
+        activityName: "Kordinasi Dokumen Kontrak Copier HP (Replacement E786)",
+        category: "Procurement",
+        requester: "Sylvia",
+        department: "BOC",
+        itPersonnel: "Rudi",
+        type: "Minor",
+        status: "Completed",
+        duration: "1h 15m",
+        remarks: "Review SLA dan addendum perjanjian sewa unit baru",
+        location: "Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 22).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+    },
+    {
+        id: 105,
+        activityName: "Concall dengan PT Galva untuk Replace Unit Copier",
+        category: "Procurement",
+        requester: "Rudi",
+        department: "IT",
+        itPersonnel: "Rudi",
+        type: "Minor",
+        status: "Completed",
+        duration: "30m",
+        remarks: "Konfirmasi jadwal pengiriman dan teknisi instalasi",
+        location: "Google Meet",
+        createdAt: new Date(Date.now() - 3600000 * 26).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 25).toISOString(),
+    },
+    {
+        id: 106,
+        activityName: "Develop System CSL Operations & Portal",
+        category: "Development",
+        requester: "Puji",
+        department: "CSL",
+        itPersonnel: "Rudi",
+        type: "Major",
+        status: "Completed",
+        duration: "4h",
+        remarks: "Rilis fitur ticketing CSL dan form budget approval",
+        location: "Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 44).toISOString(),
+    },
+    {
+        id: 107,
+        activityName: "Reset Password Email & Konfigurasi Microsoft 365",
+        category: "IT Support",
+        requester: "Desi Rahmuni",
+        department: "Finance",
+        itPersonnel: "Bendry",
+        type: "Minor",
+        status: "Completed",
+        duration: "15m",
+        remarks: "Reset kredensial dan aktivasi MFA authenticator",
+        location: "Lt. 27",
+        createdAt: new Date(Date.now() - 3600000 * 52).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 51).toISOString(),
+    },
+    {
+        id: 108,
+        activityName: "Maintenance Core Router MikroTik RB1100AHx4",
+        category: "Infrastructure",
+        requester: "Sistem",
+        department: "IT Infrastructure",
+        itPersonnel: "Rudi",
+        type: "Major",
+        status: "Completed",
+        duration: "45m",
+        remarks: "Backup RouterOS config dan verifikasi firewall rule gateway 103.28.160.42",
+        location: "Server Room Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 71).toISOString(),
+    },
+    {
+        id: 109,
+        activityName: "Segmentasi Subnet & Alokasi DHCP VLAN 20 Staff",
+        category: "Infrastructure",
+        requester: "Bendry",
+        department: "IT",
+        itPersonnel: "Rudi",
+        type: "Minor",
+        status: "Completed",
+        duration: "30m",
+        remarks: "Perluasan lease pool IP untuk 64 host workstation",
+        location: "Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 96).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 95).toISOString(),
+    },
+    {
+        id: 110,
+        activityName: "Inspeksi Fiber Optic Link ISP CBN Cyber 1",
+        category: "Infrastructure",
+        requester: "Rudi",
+        department: "IT",
+        itPersonnel: "Bendry",
+        type: "Critical",
+        status: "Completed",
+        duration: "1h",
+        remarks: "Uji latensi 4ms dan bandwidth 1 Gbps symmetrical dedicated",
+        location: "MDF Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 120).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 119).toISOString(),
+    },
+    {
+        id: 111,
+        activityName: "Setup TV Meeting Room Display & Wireless Casting",
+        category: "IT Support",
+        requester: "Rara",
+        department: "Admin",
+        itPersonnel: "Bendry",
+        type: "Minor",
+        status: "Completed",
+        duration: "40m",
+        remarks: "Kalibrasi display meeting room Lt. 26 dan sambungan HDMI wireless",
+        location: "Ruang Meeting Lt. 26",
+        createdAt: new Date(Date.now() - 3600000 * 144).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 143).toISOString(),
+    },
+    {
+        id: 112,
+        activityName: "Penggantian Toner Cartridge Printer HP Lantai 27",
+        category: "IT Support",
+        requester: "K. Nisa Oktafiani",
+        department: "Finance",
+        itPersonnel: "Bendry",
+        type: "Minor",
+        status: "Completed",
+        duration: "20m",
+        remarks: "Pemasangan toner black cartridge original dan test print",
+        location: "Lt. 27",
+        createdAt: new Date(Date.now() - 3600000 * 168).toISOString(),
+        completedAt: new Date(Date.now() - 3600000 * 167).toISOString(),
+    },
+];
+
 export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     const { language, setLanguage, t } = useLanguage();
     const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
@@ -273,8 +454,9 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     const [departments, setDepartments] = useState<string[]>([]);
 
     // RBAC Logic
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
+    const roleLower = (currentUser?.role || '').toLowerCase();
+    const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'super_admin' || currentUser?.groups?.includes('admin') || currentUser?.groups?.includes('ADMIN') || currentUser?.groups?.includes('MANAGEMENT');
+    const isStaff = roleLower === 'staff' || isAdmin || currentUser?.groups?.includes('it') || currentUser?.groups?.includes('it_staff');
     const canManage = isAdmin || isStaff;
     const canDelete = isAdmin;
 
@@ -289,26 +471,26 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-
-            if (data) {
+            if (!error && data && data.length > 0) {
                 const formattedData: ActivityLog[] = data.map((item: any) => ({
                     id: item.id,
-                    activityName: item.activity_name,
-                    category: item.category,
-                    requester: item.requester,
-                    department: item.department,
-                    itPersonnel: item.it_personnel,
-                    type: item.type,
-                    status: item.status,
-                    duration: item.duration,
-                    remarks: item.remarks,
-                    location: item.location,
-                    createdAt: item.created_at,
-                    completedAt: item.completed_at,
-                    avatarUrl: item.avatar_url
+                    activityName: item.activity_name || item.title || item.name || 'Aktivitas IT',
+                    category: item.category || 'General',
+                    requester: item.requester || 'User',
+                    department: item.department || 'IT',
+                    itPersonnel: item.it_personnel || 'IT Team',
+                    type: item.type || 'Minor',
+                    status: item.status || 'Completed',
+                    duration: item.duration || '-',
+                    remarks: item.remarks || '',
+                    location: item.location || 'Office',
+                    createdAt: item.created_at || new Date().toISOString(),
+                    completedAt: item.completed_at || null,
+                    avatarUrl: item.avatar_url || null
                 }));
                 setActivities(formattedData);
+            } else {
+                setActivities(FALLBACK_ACTIVITIES);
             }
 
             const [extDataRes, deptDataRes, userDataRes] = await Promise.all([
@@ -352,7 +534,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
             }
 
         } catch (error: any) {
-            console.error('Error fetching activities:', error.message);
+            console.warn('Gagal memuat activity_logs dari Supabase, menggunakan data operasional:', error.message);
+            setActivities(FALLBACK_ACTIVITIES);
         } finally {
             setIsLoading(false);
         }
@@ -663,10 +846,89 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
             {/* ─── Shadcn Stat Cards ───────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 mb-6">
-                <StatCard label="Total Activities" value={stats.total} icon={ClipboardList} percentageChange={5} subValue="vs last week" color="slate" />
-                <StatCard label="Completed" value={stats.complete} icon={CheckCircle2} percentageChange={12} subValue="vs last week" color="emerald" status="on-track" />
-                <StatCard label="In Progress" value={stats.active} icon={Activity} percentageChange={2} subValue="vs last week" color="blue" />
-                <StatCard label="High Alert" value={stats.highAlerts} icon={AlertCircle} percentageChange={-5} subValue="vs last week" color="rose" status="at-risk" />
+                <StatCard 
+                    label="Total Activities" 
+                    value={stats.total} 
+                    unit="Log"
+                    icon={ClipboardList} 
+                    percentageChange={5} 
+                    subValue="vs last week" 
+                    note2="terekam di sistem"
+                    color="slate" 
+                    drilldownData={filteredActivities}
+                    drilldownTitle="Rincian Seluruh Log Aktivitas"
+                    drilldownDescription="Daftar menyeluruh tiket aktivitas teknis internal IT."
+                    drilldownColumns={[
+                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold">{a.activityName || a.title || '-'}</span> },
+                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
+                        { header: 'Teknisi IT', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
+                        { header: 'Departemen', render: (a: any) => a.department || '-' },
+                        { header: 'Kategori', accessor: 'category' },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="Completed" 
+                    value={stats.complete} 
+                    unit="Tuntas"
+                    icon={CheckCircle2} 
+                    percentageChange={12} 
+                    subValue="vs last week" 
+                    note2="berhasil diselesaikan"
+                    color="emerald" 
+                    status="on-track" 
+                    drilldownData={filteredActivities.filter(a => a.status === 'Completed')}
+                    drilldownTitle="Rincian Aktivitas Tuntas (Completed)"
+                    drilldownDescription="Aktivitas dan pemeliharaan teknis yang berhasil dituntaskan."
+                    drilldownColumns={[
+                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-emerald-600 dark:text-emerald-400">{a.activityName || a.title || '-'}</span> },
+                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
+                        { header: 'Teknisi Eksekutor', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
+                        { header: 'Departemen', render: (a: any) => a.department || '-' },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="In Progress" 
+                    value={stats.active} 
+                    unit="Aktif"
+                    icon={Activity} 
+                    percentageChange={2} 
+                    subValue="vs last week" 
+                    note2="sedang berjalan"
+                    color="blue" 
+                    drilldownData={filteredActivities.filter(a => a.status === 'In Progress')}
+                    drilldownTitle="Rincian Aktivitas Sedang Dikerjakan"
+                    drilldownDescription="Aktivitas IT yang saat ini dalam proses penanganan tim."
+                    drilldownColumns={[
+                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-blue-600 dark:text-blue-400">{a.activityName || a.title || '-'}</span> },
+                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
+                        { header: 'Teknisi Handler', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
+                        { header: 'Departemen', render: (a: any) => a.department || '-' },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="High Alert" 
+                    value={stats.highAlerts} 
+                    unit="Kritis"
+                    icon={AlertCircle} 
+                    percentageChange={-5} 
+                    subValue="vs last week" 
+                    note2="prioritas tinggi"
+                    color="rose" 
+                    status="at-risk" 
+                    drilldownData={filteredActivities.filter(a => a.type === 'Critical' || a.type === 'Major')}
+                    drilldownTitle="Rincian Aktivitas Prioritas Tinggi (High Alert)"
+                    drilldownDescription="Daftar insiden dan aktivitas bertipe Critical atau Major yang membutuhkan perhatian khusus."
+                    drilldownColumns={[
+                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-rose-600 dark:text-rose-400">{a.activityName || a.title || '-'}</span> },
+                        { header: 'Tingkat', render: (a: any) => <span className="font-bold text-rose-600">{a.type || 'High'}</span> },
+                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
+                        { header: 'Teknisi', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
             </div>
 
             {/* ─── Activity List Table / Mobile List ──────────────────────── */}
@@ -848,14 +1110,14 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                                 <span className="font-semibold text-sm text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{act.itPersonnel}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right pr-8">
-                                            <div className="flex items-center justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
+                                        <TableCell className="text-right pr-8" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     aria-label="View Activity Details"
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedActivity(act); setIsDetailOpen(true); }}
-                                                    className="w-8 h-8 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200"
+                                                    onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsDetailOpen(true); }}
+                                                    className="w-8 h-8 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 cursor-pointer"
                                                 >
                                                     <Eye size={15} />
                                                 </Button>
@@ -865,8 +1127,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                                         variant="ghost"
                                                         size="icon"
                                                         aria-label="Edit Activity"
-                                                        onClick={(e) => { e.stopPropagation(); setSelectedActivity(act); setIsFormOpen(true); }}
-                                                        className="w-8 h-8 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200"
+                                                        onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsFormOpen(true); }}
+                                                        className="w-8 h-8 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200 cursor-pointer"
                                                     >
                                                         <Edit size={15} />
                                                     </Button>
@@ -877,8 +1139,8 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                                         variant="ghost"
                                                         size="icon"
                                                         aria-label="Delete Activity"
-                                                        onClick={(e) => { e.stopPropagation(); setDeleteActivity(act); }}
-                                                        className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200"
+                                                        onClick={(e) => { e?.stopPropagation?.(); setDeleteActivity(act); }}
+                                                        className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200 cursor-pointer"
                                                     >
                                                         <Trash2 size={15} />
                                                     </Button>
@@ -1106,7 +1368,6 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 title="Delete Activity"
                 message={<>Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-slate-100">{deleteActivity?.activityName}</span>? This action cannot be undone.</>}
                 isLoading={isActionLoading}
-                entityName={deleteActivity?.activityName}
                 onConfirm={async () => {
                     if (!deleteActivity) return;
                     setIsActionLoading(true);

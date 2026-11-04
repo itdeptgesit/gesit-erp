@@ -342,13 +342,15 @@ export interface PhoneExtension {
   photo_url?: string;
 }
 export interface AuditLog {
-  id: number;
+  id: number | string;
   userName: string;
   userRole: string;
   action: string;
   module: string;
   details?: string;
   ipAddress?: string;
+  userAgent?: string;
+  status?: string;
   createdAt: string;
 }
 

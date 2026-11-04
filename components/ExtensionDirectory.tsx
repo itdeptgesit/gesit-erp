@@ -52,6 +52,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/input";
 import { ModalWrapper } from "@/components/ui/ModalWrapper";
+import { isUserAdmin, isUserStaff, canUserManage } from "../lib/rbac";
 
 
 const capitalizeWords = (str: string) => {
@@ -483,7 +484,7 @@ export const ExtensionDirectory = ({
     const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
         // Integrated variant (public) always uses grid, standalone uses table for admin
         if (variant === 'integrated') return 'grid';
-        return currentUser?.role === 'Admin' ? 'table' : 'grid';
+        return isUserAdmin(currentUser) ? 'table' : 'grid';
     });
 
     // Pagination State
@@ -507,9 +508,9 @@ export const ExtensionDirectory = ({
         photo_url: ''
     });
 
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canEdit = isAdmin || isStaff;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canEdit = canUserManage(currentUser);
     const isPublic = !currentUser;
 
     // Use external search term if provided, otherwise use local state
@@ -912,27 +913,61 @@ export const ExtensionDirectory = ({
                         <StatCard
                             label="Total Extensions"
                             value={stats.total}
+                            unit="Line"
                             icon={Users}
                             percentageChange={10}
                             subValue="Active Nodes"
+                            note2="seluruh lantai"
                             color="slate"
+                            drilldownData={extensions}
+                            drilldownTitle="Daftar Seluruh Ekstensi Telepon"
+                            drilldownDescription="Direktori nomor ekstensi telepon internal Gesit Group."
+                            drilldownColumns={[
+                                { header: 'Ext', accessor: 'extension', className: 'font-mono font-bold text-primary text-sm' },
+                                { header: 'Nama / Jabatan', render: (e: any) => <span className="font-semibold">{e.name}</span> },
+                                { header: 'Departemen', accessor: 'department' },
+                                { header: 'Lantai', render: (e: any) => `Lt. ${e.floor}` },
+                                { header: 'Perusahaan', accessor: 'company' }
+                            ]}
                         />
                         <StatCard
                             label="The Gesit Companies"
                             value={stats.floor27}
+                            unit="Line"
                             icon="/image/logo.png"
                             percentageChange={2}
                             subValue="Floor 27"
+                            note2="City Tower"
                             color="blue"
+                            drilldownData={extensions.filter(e => Number(e.floor) === 27)}
+                            drilldownTitle="Rincian Ekstensi Lantai 27 (The Gesit Companies)"
+                            drilldownDescription="Daftar nomor kontak internal pada area perkantoran Lantai 27."
+                            drilldownColumns={[
+                                { header: 'Ext', accessor: 'extension', className: 'font-mono font-bold text-blue-600 dark:text-blue-400 text-sm' },
+                                { header: 'Nama Pemegang', render: (e: any) => <span className="font-semibold">{e.name}</span> },
+                                { header: 'Departemen', accessor: 'department' },
+                                { header: 'Lokasi Meja', render: (e: any) => e.location || 'Floor 27' }
+                            ]}
                         />
                         <StatCard
                             label="Gesit Natural Resources"
                             value={stats.floor26}
+                            unit="Line"
                             icon="/image/logo.png"
                             percentageChange={5}
                             subValue="Floor 26"
+                            note2="Sumber Daya Alam"
                             color="emerald"
                             status="on-track"
+                            drilldownData={extensions.filter(e => Number(e.floor) === 26)}
+                            drilldownTitle="Rincian Ekstensi Lantai 26 (Gesit Natural Resources)"
+                            drilldownDescription="Daftar nomor kontak internal pada area perkantoran Lantai 26."
+                            drilldownColumns={[
+                                { header: 'Ext', accessor: 'extension', className: 'font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm' },
+                                { header: 'Nama Pemegang', render: (e: any) => <span className="font-semibold">{e.name}</span> },
+                                { header: 'Departemen', accessor: 'department' },
+                                { header: 'Lokasi Meja', render: (e: any) => e.location || 'Floor 26' }
+                            ]}
                         />
                     </div>
                 </div>

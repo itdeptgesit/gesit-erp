@@ -1,0 +1,2842 @@
+/* =====================================================================
+   Ticketing Manager — GESIT PORTAL (CSS)
+   Semua selector di-scope ke .gesit-ticketing agar CSS tidak bocor.
+   Patokan visual: DESIGN.md & DashboardIT.css
+   ===================================================================== */
+
+.gesit-ticketing {
+  --bg: transparent;
+  --card: #ffffff;
+  --ink: #101828;
+  --navy: #0a2540;
+  --muted: #667085;
+  --faint: #98a2b3;
+  --line: #e8eaee;
+  --blue: #2f6bff;
+  --blue-soft: #eef4ff;
+  --gold: #c9a227;
+  --green: #12805c;
+  --green2: #12b76a;
+  --green-soft: #ecfdf3;
+  --amber: #b54708;
+  --amber-soft: #fffaeb;
+  --orange: #f79009;
+  --red: #dc2626;
+  --red-soft: #fef3f2;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(16,24,40,.03), 0 10px 30px rgba(16,24,40,.045);
+
+  font-family: var(--font-sans);
+  color: var(--ink);
+  min-height: 100%;
+  position: relative;
+  background: transparent !important;
+}
+
+.gesit-ticketing * {
+  box-sizing: border-box;
+}
+
+.gesit-ticketing h1,
+.gesit-ticketing h2,
+.gesit-ticketing h3,
+.gesit-ticketing h4,
+.gesit-ticketing p {
+  margin: 0;
+}
+
+.gesit-ticketing a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gesit-ticketing svg {
+  display: block;
+}
+
+/* ===== FIXED TOPBAR ===== */
+.gesit-ticketing .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 12px 26px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+.gesit-ticketing .brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,.55) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: 99px;
+  padding: 9px 18px 9px 13px;
+  font-weight: 800;
+  font-size: 14.5px;
+  box-shadow: 0 8px 24px rgba(16,24,40,.06);
+  cursor: pointer;
+}
+
+.gesit-ticketing nav.main {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,.55) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: 99px;
+  padding: 5px;
+  margin: 0 auto;
+  box-shadow: 0 8px 24px rgba(16,24,40,.06);
+}
+
+.gesit-ticketing nav.main a {
+  font-size: 13px;
+  color: #344054;
+  padding: 8px 15px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-weight: 500;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing nav.main a.on {
+  background: #101828;
+  color: #fff;
+  font-weight: 700;
+}
+
+.gesit-ticketing .nav-item-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.gesit-ticketing .nav-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  min-width: 220px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 6px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: navFade 0.15s ease-out;
+}
+
+@keyframes navFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gesit-ticketing .nav-dropdown-item {
+  padding: 9px 13px !important;
+  border-radius: 10px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #344054 !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+.gesit-ticketing .nav-dropdown-item:hover {
+  background: #eef4ff !important;
+  color: #2f6bff !important;
+}
+
+.gesit-ticketing .top-ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.55) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(16,24,40,.06);
+  cursor: pointer;
+}
+
+.gesit-ticketing .top-ic .dot {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.gesit-ticketing .lang {
+  background: rgba(255,255,255,.55) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(16,24,40,.06);
+}
+
+.gesit-ticketing .avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #0a2540 !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  border: 2px solid #c9a227 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 38px !important;
+  opacity: 1 !important;
+  box-shadow: 0 1px 2px rgba(10,37,64,.2) !important;
+  cursor: pointer;
+}
+
+/* ===== MAIN WRAPPER ===== */
+.gesit-ticketing .wrap {
+  max-width: none;
+  margin: 0 auto;
+  padding: 16px 20px 26px;
+}
+
+/* ===== KEPALA HALAMAN ===== */
+.gesit-ticketing .page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.gesit-ticketing .page-title h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--ink);
+}
+
+.gesit-ticketing .page-title p {
+  color: #667085 !important;
+  font-size: 13.5px !important;
+  margin-top: 4px;
+  opacity: 1 !important;
+}
+
+.gesit-ticketing .page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gesit-ticketing .btn-pill-white {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 9px 18px;
+  box-shadow: var(--shadow);
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .btn-pill-white:hover {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.gesit-ticketing .btn-pill-black {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #101828 !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 9px 20px;
+  border: 1px solid #101828;
+  box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 16px rgba(16,24,40,.12);
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .btn-pill-black:hover {
+  background: #1d2939 !important;
+}
+
+/* Segment Pill */
+.gesit-ticketing .seg-row {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.gesit-ticketing .seg {
+  display: inline-flex;
+  background: rgba(255,255,255,.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 99px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
+.gesit-ticketing .seg button {
+  border: 0;
+  background: transparent;
+  font-size: 12.5px;
+  font-family: inherit;
+  padding: 7px 18px;
+  border-radius: 99px;
+  color: #667085;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .seg button.on {
+  background: #101828;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* ===== KPI 4 KARTU ===== */
+.gesit-ticketing .kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.gesit-ticketing .kpi {
+  background: rgba(255,255,255,.58) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: 24px !important;
+  padding: 18px 20px;
+  box-shadow: 0 14px 34px rgba(16,24,40,.08), inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.gesit-ticketing .kpi .top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #344054;
+}
+
+.gesit-ticketing .kpi .ic {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 32px !important;
+  opacity: 1 !important;
+}
+
+.gesit-ticketing .kpi .ic svg {
+  display: block;
+  opacity: 1 !important;
+}
+
+.gesit-ticketing .kpi .chev {
+  margin-left: auto;
+  color: var(--faint);
+}
+
+.gesit-ticketing .kpi .num {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  margin-top: 10px;
+  color: var(--ink);
+}
+
+.gesit-ticketing .kpi .delta {
+  font-size: 12px !important;
+  color: #667085 !important;
+  margin-top: 4px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  opacity: 1 !important;
+}
+
+/* ===== STRIP ALERT ===== */
+.gesit-ticketing .alert-strip {
+  margin-top: 16px;
+  background: #fffaeb;
+  border: 1px solid #fed7aa;
+  color: #b54708;
+  border-radius: 16px;
+  padding: 13px 18px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.02);
+}
+
+.gesit-ticketing .alert-strip b {
+  font-weight: 800;
+}
+
+.gesit-ticketing .alert-strip svg {
+  color: #f79009;
+  flex: 0 0 17px;
+}
+
+/* ===== KARTU ANTREAN (IT SUPPORT QUEUE) ===== */
+.gesit-ticketing .queue-card {
+  margin-top: 16px;
+  background: rgba(255,255,255,.58) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: 24px !important;
+  padding: 22px 24px;
+  box-shadow: 0 14px 34px rgba(16,24,40,.08), inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.gesit-ticketing .queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.gesit-ticketing .queue-title h3 {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.gesit-ticketing .queue-title .sub {
+  font-size: 12.5px !important;
+  color: #667085 !important;
+  margin-top: 2px;
+  opacity: 1 !important;
+}
+
+.gesit-ticketing .queue-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gesit-ticketing .btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid #e8eaee;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 7px 14px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.03);
+  transition: all .15s ease;
+  cursor: pointer;
+}
+
+.gesit-ticketing .btn-tool:hover {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+/* Search bar */
+.gesit-ticketing .search-box {
+  margin-top: 16px;
+  position: relative;
+  width: 100%;
+}
+
+.gesit-ticketing .search-box svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #98a2b3;
+  pointer-events: none;
+}
+
+.gesit-ticketing .search-input {
+  width: 100%;
+  height: 40px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 0 16px 0 40px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .search-input:focus {
+  background: #ffffff;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(47,107,255,.12);
+}
+
+.gesit-ticketing .search-input::placeholder {
+  color: #98a2b3;
+}
+
+/* ===== TABEL TIKET ===== */
+.gesit-ticketing .tbl-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.gesit-ticketing table.tix-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.gesit-ticketing table.tix-table th {
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #98a2b3;
+  white-space: nowrap;
+}
+
+.gesit-ticketing table.tix-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f1f4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.gesit-ticketing table.tix-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.gesit-ticketing table.tix-table tr:hover td {
+  background: rgba(238,244,255,.3);
+}
+
+/* Kolom Tiket */
+.gesit-ticketing .td-ticket {
+  font-weight: 800;
+  color: #101828;
+  letter-spacing: -0.2px;
+}
+
+/* Kolom Subjek */
+.gesit-ticketing .td-subject {
+  font-weight: 600;
+  color: #1d2939;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Kolom Peminta */
+.gesit-ticketing .td-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gesit-ticketing .user-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex: 0 0 30px;
+}
+
+.gesit-ticketing .user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.gesit-ticketing .user-name {
+  font-weight: 700;
+  color: #101828;
+  line-height: 1.3;
+}
+
+.gesit-ticketing .user-email {
+  font-size: 11.5px;
+  color: #667085 !important;
+  opacity: 1 !important;
+  line-height: 1.2;
+}
+
+/* Kolom Departemen */
+.gesit-ticketing .td-dept {
+  color: #344054;
+  font-weight: 600;
+}
+
+/* Prioritas pill */
+.gesit-ticketing .pill-priority {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  background: #f2f4f7;
+  color: #344054;
+  text-transform: uppercase;
+}
+
+/* Status pill */
+.gesit-ticketing .pill-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.gesit-ticketing .pill-status.open {
+  background: #fef3f2;
+  color: #dc2626;
+}
+
+.gesit-ticketing .pill-status.resolved {
+  background: #ecfdf3;
+  color: #12805c;
+}
+
+/* Handler */
+.gesit-ticketing .td-handler {
+  font-weight: 700;
+  color: #101828;
+}
+
+.gesit-ticketing .td-handler.unassigned {
+  font-style: italic;
+  font-weight: 500;
+  color: #98a2b3;
+}
+
+/* Aktivitas Terakhir */
+.gesit-ticketing .td-time {
+  font-size: 12px;
+  color: #667085 !important;
+  opacity: 1 !important;
+}
+
+/* Rating */
+.gesit-ticketing .td-rating {
+  font-weight: 700;
+  color: #98a2b3;
+  text-align: center;
+}
+
+/* ===== TABLE FOOTER ===== */
+.gesit-ticketing .tbl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 6px;
+  font-size: 12.5px;
+  color: #667085;
+}
+
+.gesit-ticketing .tbl-foot b {
+  color: var(--ink);
+}
+
+.gesit-ticketing .pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gesit-ticketing .btn-page {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #344054;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .btn-page:hover {
+  background: #f4f4f6;
+  color: var(--ink);
+}
+
+.gesit-ticketing .btn-page.disabled {
+  opacity: .5;
+  pointer-events: none;
+}
+
+/* ===== FOOTER HALAMAN ===== */
+.gesit-ticketing .foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--faint);
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Cursor pointer pada baris antrean */
+.gesit-ticketing table.tix-table tbody tr {
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.gesit-ticketing .alert-strip {
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.gesit-ticketing .alert-strip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(181, 71, 8, 0.1);
+}
+
+.gesit-ticketing .td-ticket {
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: -0.2px;
+}
+
+.gesit-ticketing .td-ticket:hover {
+  text-decoration: underline;
+}
+
+/* ===== MODAL DETAIL TIKET (LIQUID GLASS) ===== */
+.gesit-ticketing .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(16, 24, 40, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gesit-ticketing .modal-dialog {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(16, 24, 40, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  animation: modalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.96) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.gesit-ticketing .modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gesit-ticketing .modal-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gesit-ticketing .modal-tix-code {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--blue);
+}
+
+.gesit-ticketing .modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f2f4f7;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667085;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .modal-close:hover {
+  background: #e4e7ec;
+  color: var(--ink);
+}
+
+.gesit-ticketing .modal-subject {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.gesit-ticketing .modal-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: rgba(244, 244, 246, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.gesit-ticketing .meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gesit-ticketing .meta-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.gesit-ticketing .meta-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d2939;
+}
+
+.gesit-ticketing .modal-desc-box {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.gesit-ticketing .modal-desc-head {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+
+.gesit-ticketing .modal-desc-text {
+  font-size: 13.5px;
+  color: #344054;
+  line-height: 1.6;
+}
+
+.gesit-ticketing .modal-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gesit-ticketing .timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.gesit-ticketing .timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  margin-top: 5px;
+  flex: 0 0 8px;
+}
+
+.gesit-ticketing .timeline-dot.done {
+  background: var(--green2);
+}
+
+.gesit-ticketing .timeline-text {
+  color: #344054;
+}
+
+.gesit-ticketing .timeline-time {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.gesit-ticketing .modal-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.gesit-ticketing .modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: all .15s ease;
+  font-family: inherit;
+  border: 1px solid transparent;
+}
+
+.gesit-ticketing .modal-btn-white {
+  background: #ffffff;
+  border-color: #d0d5dd;
+  color: #344054;
+}
+
+.gesit-ticketing .modal-btn-white:hover {
+  background: #f9fafb;
+  color: var(--ink);
+}
+
+.gesit-ticketing .modal-btn-black {
+  background: #101828;
+  color: #ffffff;
+}
+
+.gesit-ticketing .modal-btn-black:hover {
+  background: #1d2939;
+}
+
+.gesit-ticketing .modal-btn-blue {
+  background: #2f6bff;
+  color: #ffffff;
+}
+
+.gesit-ticketing .modal-btn-blue:hover {
+  background: #2558d4;
+}
+
+.gesit-ticketing .modal-btn-green {
+  background: #12805c;
+  color: #ffffff;
+}
+
+.gesit-ticketing .modal-btn-green:hover {
+  background: #0e6b4d;
+}
+
+/* Modal Form Styles */
+.gesit-ticketing .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gesit-ticketing .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gesit-ticketing .form-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.gesit-ticketing .form-input,
+.gesit-ticketing .form-select,
+.gesit-ticketing .form-textarea {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .form-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.gesit-ticketing .form-input:focus,
+.gesit-ticketing .form-select:focus,
+.gesit-ticketing .form-textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
+}
+
+/* ===== TOPBAR BADGE RED ===== */
+.gesit-ticketing .nav-badge-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 99px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  margin-left: 6px;
+  line-height: 1;
+}
+
+/* ===== TAB 1: CHAT 3-PANEL VIEW ===== */
+.gesit-ticketing .chat-layout {
+  margin-top: 18px;
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 200px);
+  min-height: 650px;
+}
+
+/* Left Rail: Percakapan */
+.gesit-ticketing .chat-left-rail {
+  width: 320px;
+  flex: 0 0 320px;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gesit-ticketing .chat-left-head {
+  padding: 18px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gesit-ticketing .chat-left-head h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.gesit-ticketing .chat-left-search {
+  padding: 0 14px 12px;
+}
+
+.gesit-ticketing .chat-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.gesit-ticketing .chat-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #98a2b3;
+}
+
+.gesit-ticketing .chat-search-input {
+  width: 100%;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 0 14px 0 36px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+}
+
+.gesit-ticketing .chat-search-input:focus {
+  border-color: var(--blue);
+}
+
+.gesit-ticketing .chat-list-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gesit-ticketing .chat-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #344054;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gesit-ticketing .chat-empty-hint {
+  font-size: 11.5px;
+  color: #98a2b3;
+  padding: 4px 10px 10px;
+  line-height: 1.4;
+}
+
+.gesit-ticketing .chat-item-card {
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  transition: all .15s ease;
+  display: flex;
+  gap: 10px;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.gesit-ticketing .chat-item-card:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.gesit-ticketing .chat-item-card.active {
+  background: #ffffff;
+  border-color: rgba(47, 107, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.05);
+}
+
+.gesit-ticketing .chat-item-av-wrap {
+  position: relative;
+  flex: 0 0 36px;
+}
+
+.gesit-ticketing .chat-item-av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.gesit-ticketing .chat-unread-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  background: #dc2626;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.gesit-ticketing .chat-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.gesit-ticketing .chat-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gesit-ticketing .chat-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gesit-ticketing .chat-item-time {
+  font-size: 11px;
+  font-weight: 600;
+  color: #98a2b3;
+}
+
+.gesit-ticketing .chat-item-time.urgent {
+  color: #dc2626;
+}
+
+.gesit-ticketing .chat-item-snippet {
+  font-size: 12px;
+  color: #667085;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.gesit-ticketing .chat-item-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 10.5px;
+}
+
+.gesit-ticketing .chat-code {
+  font-weight: 800;
+  color: var(--blue);
+}
+
+.gesit-ticketing .chat-handler-tag {
+  color: #667085;
+  font-size: 11px;
+}
+
+.gesit-ticketing .chat-left-foot {
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #344054;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.gesit-ticketing .chat-foot-badge {
+  background: #f2f4f7;
+  color: #344054;
+  border-radius: 99px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* Center Panel: Active Chat */
+.gesit-ticketing .chat-center-panel {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gesit-ticketing .chat-center-head {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.gesit-ticketing .chat-head-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gesit-ticketing .chat-head-name {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.gesit-ticketing .chat-head-sub {
+  font-size: 12px;
+  color: #667085;
+  margin-top: 2px;
+}
+
+.gesit-ticketing .chat-head-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gesit-ticketing .pill-priority-outline {
+  padding: 4px 10px;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #344054;
+  text-transform: uppercase;
+}
+
+.gesit-ticketing .chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background:
+    radial-gradient(#d0d5dd 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-color: #fafbfd;
+}
+
+.gesit-ticketing .chat-date-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin: 6px 0;
+}
+
+.gesit-ticketing .chat-date-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #667085;
+}
+
+.gesit-ticketing .chat-date-sub {
+  font-size: 11.5px;
+  color: #98a2b3;
+  font-style: italic;
+}
+
+.gesit-ticketing .chat-msg-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 75%;
+}
+
+.gesit-ticketing .chat-msg-row.out {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.gesit-ticketing .chat-msg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gesit-ticketing .chat-msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.gesit-ticketing .chat-msg-sender {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gesit-ticketing .chat-msg-time {
+  color: #98a2b3;
+}
+
+.gesit-ticketing .chat-bubble {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #1d2939;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.gesit-ticketing .chat-msg-row.out .chat-bubble {
+  background: #101828;
+  color: #ffffff;
+  border-color: #101828;
+}
+
+.gesit-ticketing .chat-system-box {
+  align-self: center;
+  max-width: 85%;
+  background: #ffffff;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-size: 12.5px;
+  color: #667085;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.03);
+}
+
+.gesit-ticketing .chat-input-bar {
+  padding: 14px 20px;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gesit-ticketing .chat-input-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f9fafb;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 4px 6px 4px 16px;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .chat-input-pill:focus-within {
+  background: #ffffff;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.1);
+}
+
+.gesit-ticketing .chat-text-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.gesit-ticketing .chat-ic-btn {
+  background: transparent;
+  border: 0;
+  color: #98a2b3;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .15s ease;
+}
+
+.gesit-ticketing .chat-ic-btn:hover {
+  color: var(--ink);
+}
+
+.gesit-ticketing .chat-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.gesit-ticketing .chat-send-btn:hover {
+  background: #2558d4;
+}
+
+/* Right Rail: Ticket Details & Settings */
+.gesit-ticketing .chat-right-rail {
+  width: 310px;
+  flex: 0 0 310px;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.04);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.gesit-ticketing .chat-right-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  gap: 16px;
+}
+
+.gesit-ticketing .right-tab-btn {
+  background: transparent;
+  border: 0;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 700;
+  color: #667085;
+  cursor: pointer;
+  padding-bottom: 6px;
+  position: relative;
+}
+
+.gesit-ticketing .right-tab-btn.active {
+  color: var(--blue);
+}
+
+.gesit-ticketing .right-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--blue);
+  border-radius: 2px;
+}
+
+.gesit-ticketing .right-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #667085;
+  margin-top: 4px;
+}
+
+.gesit-ticketing .right-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gesit-ticketing .right-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #344054;
+}
+
+.gesit-ticketing .right-meta-row svg {
+  color: #98a2b3;
+  flex: 0 0 14px;
+}
+
+.gesit-ticketing .right-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gesit-ticketing .right-form-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #98a2b3;
+}
+
+.gesit-ticketing .right-select {
+  width: 100%;
+  height: 38px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .right-select:focus {
+  border-color: var(--blue);
+}
+
+.gesit-ticketing .btn-right-action-black {
+  width: 100%;
+  background: #101828;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 10px;
+  border: 0;
+  cursor: pointer;
+  transition: background .15s ease;
+  margin-top: 4px;
+}
+
+.gesit-ticketing .btn-right-action-black:hover {
+  background: #1d2939;
+}
+
+.gesit-ticketing .btn-right-action-white {
+  width: 100%;
+  background: #ffffff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .btn-right-action-white:hover {
+  background: #f9fafb;
+  color: var(--ink);
+}
+
+/* ===== TAB 2: TABEL SUB-FILTERS & QUICK ACTIONS ===== */
+.gesit-ticketing .sub-filters-row {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.gesit-ticketing .pill-subfilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475467;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .pill-subfilter:hover {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.gesit-ticketing .pill-subfilter.active {
+  background: #101828;
+  border-color: #101828;
+  color: #ffffff;
+}
+
+.gesit-ticketing .subfilter-badge {
+  background: #dc2626;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gesit-ticketing .pill-sla-overdue {
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  border-radius: 99px;
+  padding: 4px 10px;
+  display: inline-block;
+  text-align: center;
+}
+
+.gesit-ticketing .tbl-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gesit-ticketing .btn-quick-black {
+  background: #101828;
+  color: #ffffff;
+  border: 0;
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.gesit-ticketing .btn-quick-black:hover {
+  background: #1d2939;
+}
+
+.gesit-ticketing .btn-quick-white {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: #344054;
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.gesit-ticketing .btn-quick-white:hover {
+  background: #f9fafb;
+  color: var(--ink);
+}
+
+/* ===== TAB 3: ANALYTICS LAYOUT ===== */
+.gesit-ticketing .analytics-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.gesit-ticketing .analytics-card {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 24px !important;
+  padding: 22px 24px;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.04);
+}
+
+.gesit-ticketing .analytics-card-head {
+  margin-bottom: 16px;
+}
+
+.gesit-ticketing .analytics-card-head h4 {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.gesit-ticketing .analytics-card-head .sub {
+  font-size: 12px;
+  color: #667085;
+  margin-top: 2px;
+}
+
+/* Focus Visible Accessibility (WCAG 2.2 AA) */
+.gesit-ticketing a:focus-visible,
+.gesit-ticketing button:focus-visible,
+.gesit-ticketing input:focus-visible,
+.gesit-ticketing textarea:focus-visible,
+.gesit-ticketing select:focus-visible,
+.gesit-ticketing .seg-btn:focus-visible,
+.gesit-ticketing .sub-filter-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+}
+
+/* Donut chart */
+.gesit-ticketing .donut-chart-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.gesit-ticketing .donut-chart-svg {
+  flex: 0 0 160px;
+  height: 160px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gesit-ticketing .donut-center-text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gesit-ticketing .donut-center-num {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.gesit-ticketing .donut-center-sub {
+  font-size: 11px;
+  color: #667085;
+  margin-top: 2px;
+}
+
+.gesit-ticketing .donut-legend-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gesit-ticketing .donut-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+
+.gesit-ticketing .donut-legend-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #344054;
+  font-weight: 600;
+}
+
+.gesit-ticketing .donut-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.gesit-ticketing .donut-legend-val {
+  font-weight: 700;
+  color: #101828;
+}
+
+/* Monthly bar chart */
+.gesit-ticketing .monthly-bars-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 170px;
+  padding-top: 20px;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.gesit-ticketing .month-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  height: 100%;
+}
+
+.gesit-ticketing .month-bar {
+  width: 100%;
+  max-width: 28px;
+  background: #2f6bff;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  transition: height .3s ease;
+}
+
+.gesit-ticketing .month-bar-val {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 800;
+  color: #2f6bff;
+}
+
+.gesit-ticketing .month-name {
+  font-size: 11px;
+  color: #98a2b3;
+  margin-top: 6px;
+}
+
+/* Per handler table */
+.gesit-ticketing .handler-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.gesit-ticketing .handler-table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: #98a2b3;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+}
+
+.gesit-ticketing .handler-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f2f4f7;
+  color: #344054;
+}
+
+.gesit-ticketing .handler-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Per category progress */
+.gesit-ticketing .cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gesit-ticketing .cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.gesit-ticketing .cat-label {
+  font-size: 12.5px;
+  color: #344054;
+  font-weight: 600;
+  width: 130px;
+  flex: 0 0 130px;
+}
+
+.gesit-ticketing .cat-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: #f2f4f7;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.gesit-ticketing .cat-bar-fill {
+  height: 100%;
+  background: #2f6bff;
+  border-radius: 99px;
+}
+
+.gesit-ticketing .cat-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  width: 20px;
+  text-align: right;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+  .gesit-ticketing .kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gesit-ticketing .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .gesit-ticketing .chat-layout {
+    flex-direction: column;
+    height: auto;
+  }
+  .gesit-ticketing .chat-left-rail,
+  .gesit-ticketing .chat-right-rail {
+    width: 100%;
+    flex: none;
+  }
+  .gesit-ticketing nav.main {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .gesit-ticketing .kpis {
+    grid-template-columns: 1fr;
+  }
+  .gesit-ticketing .page-head {
+    flex-direction: column;
+  }
+  .gesit-ticketing .modal-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== THEME TOGGLE BUTTON ===== */
+.gesit-ticketing .theme-toggle-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  outline: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #344054 !important;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06) !important;
+  cursor: pointer;
+  flex: 0 0 38px !important;
+}
+
+.gesit-ticketing .theme-toggle-btn:hover {
+  transform: scale(1.04);
+}
+
+.gesit-ticketing,
+.gesit-ticketing *,
+.gesit-dash,
+.gesit-dash * {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* =====================================================================
+   DARK MODE OVERRIDES — [data-theme="dark"] & .dark
+   Patokan token DESIGN.md:
+   - Latar halaman: #101214 (netral, BUKAN navy)
+   - Kartu kaca: rgba(255,255,255,.06) dengan border rgba(255,255,255,.10)
+   - Teks utama: #f2f4f7
+   - Teks sekunder: #a6b0bf
+   - Garis/hairline: rgba(255,255,255,.09)
+   - Bubble chat peminta: #23282f
+   - Thread pola titik: rgba(255,255,255,.08)
+   - Aksen biru, status pill, alert amber: TETAP sama
+   - Logo & aksen emas: TIDAK berubah
+   ===================================================================== */
+[data-theme="dark"] .gesit-ticketing,
+.dark .gesit-ticketing {
+  --bg: #08090a;
+  --card: #0f1011;
+  --line: #23252a;
+  --ink: #ffffff;
+  --muted: #8a8f98;
+  --faint: #62666d;
+  --donut-track: #161718;
+  --donut-dark: #e4f222;
+  --month-bar-empty: #161718;
+
+  background: #08090a !important;
+  color: #ffffff;
+}
+
+/* TopBar Pills di Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .brand,
+.dark .gesit-ticketing .brand,
+[data-theme="dark"] .gesit-ticketing nav.main,
+.dark .gesit-ticketing nav.main,
+[data-theme="dark"] .gesit-ticketing .top-ic,
+.dark .gesit-ticketing .top-ic,
+[data-theme="dark"] .gesit-ticketing .theme-toggle-btn,
+.dark .gesit-ticketing .theme-toggle-btn,
+[data-theme="dark"] .gesit-ticketing .lang,
+.dark .gesit-ticketing .lang {
+  background: #0f1011 !important;
+  border: 1px solid #23252a !important;
+  color: #d0d6e0 !important;
+  border-radius: 6px !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px 0px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing nav.main a,
+.dark .gesit-ticketing nav.main a {
+  color: #8a8f98 !important;
+  border-radius: 6px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing nav.main a.on,
+.dark .gesit-ticketing nav.main a.on {
+  background: #161718 !important;
+  color: #ffffff !important;
+  border: 1px solid #23252a !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .nav-dropdown,
+.dark .gesit-ticketing .nav-dropdown {
+  background: #0f1011 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 8px !important;
+  box-shadow: rgba(8, 9, 10, 0.6) 0px 4px 32px 0px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .nav-dropdown-item,
+.dark .gesit-ticketing .nav-dropdown-item {
+  color: #d0d6e0 !important;
+  border-radius: 4px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .nav-dropdown-item:hover,
+.dark .gesit-ticketing .nav-dropdown-item:hover {
+  background: #161718 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .page-title h1,
+.dark .gesit-ticketing .page-title h1 {
+  color: #ffffff !important;
+  letter-spacing: -0.022em !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .page-title p,
+.dark .gesit-ticketing .page-title p {
+  color: #8a8f98 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-center-view,
+.dark .gesit-ticketing .btn-center-view {
+  background: #161718 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 6px !important;
+  color: #d0d6e0 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-new-ticket,
+.dark .gesit-ticketing .btn-new-ticket {
+  background: #e4f222 !important;
+  border: 1px solid #e4f222 !important;
+  border-radius: 6px !important;
+  color: #08090a !important;
+  font-weight: 510 !important;
+  letter-spacing: -0.011em !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .seg-pill,
+.dark .gesit-ticketing .seg-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .seg-btn,
+.dark .gesit-ticketing .seg-btn {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .seg-btn.on,
+.dark .gesit-ticketing .seg-btn.on {
+  background: #23282f !important;
+  color: #ffffff !important;
+}
+
+/* Kartu KPI Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .kpi,
+.dark .gesit-ticketing .kpi {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi .top,
+.dark .gesit-ticketing .kpi .top {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi .num,
+.dark .gesit-ticketing .kpi .num {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi .num span,
+.dark .gesit-ticketing .kpi .num span {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi .delta,
+.dark .gesit-ticketing .kpi .delta,
+[data-theme="dark"] .gesit-ticketing .kpi .delta *,
+.dark .gesit-ticketing .kpi .delta * {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi .ic,
+.dark .gesit-ticketing .kpi .ic {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Kartu Antrean (Queue Card) & Filter Bar */
+[data-theme="dark"] .gesit-ticketing .queue-card,
+.dark .gesit-ticketing .queue-card {
+  background: #0f1011 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 12px !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px 0px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .queue-card-head h3,
+.dark .gesit-ticketing .queue-card-head h3 {
+  color: #ffffff !important;
+  letter-spacing: -0.011em !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .queue-card-head .sub,
+.dark .gesit-ticketing .queue-card-head .sub {
+  color: #8a8f98 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .table-search-input,
+.dark .gesit-ticketing .table-search-input {
+  background: #161718 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .sub-filter-btn,
+.dark .gesit-ticketing .sub-filter-btn {
+  background: #161718 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 6px !important;
+  color: #8a8f98 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .sub-filter-btn.on,
+.dark .gesit-ticketing .sub-filter-btn.on {
+  background: #23252a !important;
+  border: 1px solid #383b3f !important;
+  color: #ffffff !important;
+}
+
+/* Chat panels di Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .chat-left-rail,
+.dark .gesit-ticketing .chat-left-rail,
+[data-theme="dark"] .gesit-ticketing .chat-center-panel,
+.dark .gesit-ticketing .chat-center-panel,
+[data-theme="dark"] .gesit-ticketing .chat-right-rail,
+.dark .gesit-ticketing .chat-right-rail {
+  background: #0f1011 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 12px !important;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px 0px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .kpi,
+.dark .gesit-ticketing .kpi {
+  background: #0f1011 !important;
+  border: 1px solid #23252a !important;
+  border-radius: 12px !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .sub-filter-btn,
+.dark .gesit-ticketing .sub-filter-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .sub-filter-btn.on,
+.dark .gesit-ticketing .sub-filter-btn.on {
+  background: #23282f !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Tabel Antrean Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .queue-table th,
+.dark .gesit-ticketing .queue-table th {
+  color: #a6b0bf !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .queue-table td,
+.dark .gesit-ticketing .queue-table td {
+  color: #f2f4f7 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .table-row:hover,
+.dark .gesit-ticketing .table-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .cell-user .name,
+.dark .gesit-ticketing .cell-user .name {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .cell-user .email,
+.dark .gesit-ticketing .cell-user .email {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-quick-white,
+.dark .gesit-ticketing .btn-quick-white {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-quick-black,
+.dark .gesit-ticketing .btn-quick-black {
+  background: #23282f !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+/* ===== TAB 1: CHAT 3-PANEL MODE GELAP ===== */
+[data-theme="dark"] .gesit-ticketing .chat-left-rail,
+.dark .gesit-ticketing .chat-left-rail,
+[data-theme="dark"] .gesit-ticketing .chat-center-panel,
+.dark .gesit-ticketing .chat-center-panel,
+[data-theme="dark"] .gesit-ticketing .chat-right-rail,
+.dark .gesit-ticketing .chat-right-rail {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-left-head h3,
+.dark .gesit-ticketing .chat-left-head h3 {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-search-input,
+.dark .gesit-ticketing .chat-search-input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-group-title,
+.dark .gesit-ticketing .chat-group-title {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-item-card:hover,
+.dark .gesit-ticketing .chat-item-card:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-item-card.active,
+.dark .gesit-ticketing .chat-item-card.active {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(47, 107, 255, 0.4) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-item-name,
+.dark .gesit-ticketing .chat-item-name {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-item-snippet,
+.dark .gesit-ticketing .chat-item-snippet {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-handler-tag,
+.dark .gesit-ticketing .chat-handler-tag {
+  color: #8490a0 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-left-foot,
+.dark .gesit-ticketing .chat-left-foot {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-foot-badge,
+.dark .gesit-ticketing .chat-foot-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f2f4f7 !important;
+}
+
+/* Chat Center Panel */
+[data-theme="dark"] .gesit-ticketing .chat-center-head,
+.dark .gesit-ticketing .chat-center-head {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-head-name,
+.dark .gesit-ticketing .chat-head-name {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-head-sub,
+.dark .gesit-ticketing .chat-head-sub {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-priority-outline,
+.dark .gesit-ticketing .pill-priority-outline {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f2f4f7 !important;
+}
+
+/* Chat Body (Dotted pattern spesifikasi: rgba(255,255,255,.08)) */
+[data-theme="dark"] .gesit-ticketing .chat-body,
+.dark .gesit-ticketing .chat-body {
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px) !important;
+  background-size: 16px 16px !important;
+  background-color: #0c0e10 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-date-label,
+.dark .gesit-ticketing .chat-date-label {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-date-sub,
+.dark .gesit-ticketing .chat-date-sub {
+  color: #8490a0 !important;
+}
+
+/* Bubble chat peminta spesifikasi: #23282f */
+[data-theme="dark"] .gesit-ticketing .chat-bubble,
+.dark .gesit-ticketing .chat-bubble {
+  background: #23282f !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-msg-row.out .chat-bubble,
+.dark .gesit-ticketing .chat-msg-row.out .chat-bubble {
+  background: #2f6bff !important;
+  border-color: #2f6bff !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-msg-sender,
+.dark .gesit-ticketing .chat-msg-sender {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-msg-time,
+.dark .gesit-ticketing .chat-msg-time {
+  color: #8490a0 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-system-box,
+.dark .gesit-ticketing .chat-system-box {
+  background: #1a1e24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-input-bar,
+.dark .gesit-ticketing .chat-input-bar {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-input-pill,
+.dark .gesit-ticketing .chat-input-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .chat-text-input,
+.dark .gesit-ticketing .chat-text-input {
+  color: #f2f4f7 !important;
+}
+
+/* Chat Right Rail */
+[data-theme="dark"] .gesit-ticketing .chat-right-tabs,
+.dark .gesit-ticketing .chat-right-tabs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-tab-btn,
+.dark .gesit-ticketing .right-tab-btn {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-tab-btn.active,
+.dark .gesit-ticketing .right-tab-btn.active {
+  color: #2f6bff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-section-title,
+.dark .gesit-ticketing .right-section-title {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-meta-row,
+.dark .gesit-ticketing .right-meta-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-meta-label,
+.dark .gesit-ticketing .right-meta-label {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-meta-val,
+.dark .gesit-ticketing .right-meta-val {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-select,
+.dark .gesit-ticketing .right-select {
+  background: #1c2026 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+/* Modals Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .modal-card,
+.dark .gesit-ticketing .modal-card {
+  background: #16191e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .modal-title,
+.dark .gesit-ticketing .modal-title {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .modal-sub,
+.dark .gesit-ticketing .modal-sub {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .modal-meta-box,
+.dark .gesit-ticketing .modal-meta-box {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .form-label,
+.dark .gesit-ticketing .form-label {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .form-input,
+.dark .gesit-ticketing .form-input,
+[data-theme="dark"] .gesit-ticketing .form-select,
+.dark .gesit-ticketing .form-select,
+[data-theme="dark"] .gesit-ticketing .form-textarea,
+.dark .gesit-ticketing .form-textarea {
+  background: #1c2026 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .modal-btn-white,
+.dark .gesit-ticketing .modal-btn-white {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+/* Analytics Cards Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .analytics-card,
+.dark .gesit-ticketing .analytics-card {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .analytics-card-head h4,
+.dark .gesit-ticketing .analytics-card-head h4 {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .analytics-card-head .sub,
+.dark .gesit-ticketing .analytics-card-head .sub {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .donut-center-num,
+.dark .gesit-ticketing .donut-center-num {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .donut-center-sub,
+.dark .gesit-ticketing .donut-center-sub {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .donut-legend-label,
+.dark .gesit-ticketing .donut-legend-label {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .donut-legend-val,
+.dark .gesit-ticketing .donut-legend-val {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .month-name,
+.dark .gesit-ticketing .month-name {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .monthly-bars-wrap,
+.dark .gesit-ticketing .monthly-bars-wrap {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .cat-label,
+.dark .gesit-ticketing .cat-label {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .cat-bar-bg,
+.dark .gesit-ticketing .cat-bar-bg {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .cat-count,
+.dark .gesit-ticketing .cat-count {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .handler-table th,
+.dark .gesit-ticketing .handler-table th {
+  color: #a6b0bf !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .handler-table td,
+.dark .gesit-ticketing .handler-table td {
+  color: #f2f4f7 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Sinkronisasi selector riil TicketingManager.tsx di Mode Gelap */
+[data-theme="dark"] .gesit-ticketing .seg,
+.dark .gesit-ticketing .seg {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .seg button,
+.dark .gesit-ticketing .seg button {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .seg button.on,
+.dark .gesit-ticketing .seg button.on {
+  background: #23282f !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-tool,
+.dark .gesit-ticketing .btn-tool {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-tool:hover,
+.dark .gesit-ticketing .btn-tool:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .right-meta-row,
+.dark .gesit-ticketing .right-meta-row,
+[data-theme="dark"] .gesit-ticketing .right-meta-row span,
+.dark .gesit-ticketing .right-meta-row span {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-right-action-white,
+.dark .gesit-ticketing .btn-right-action-white {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-right-action-black,
+.dark .gesit-ticketing .btn-right-action-black {
+  background: #23282f !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .alert-strip,
+.dark .gesit-ticketing .alert-strip {
+  background: rgba(247, 144, 9, 0.12) !important;
+  border: 1px solid rgba(247, 144, 9, 0.28) !important;
+  color: #fdb022 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-subfilter,
+.dark .gesit-ticketing .pill-subfilter {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-subfilter.active,
+.dark .gesit-ticketing .pill-subfilter.active {
+  background: #23282f !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .queue-title h3,
+.dark .gesit-ticketing .queue-title h3 {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .queue-title .sub,
+.dark .gesit-ticketing .queue-title .sub {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .search-input,
+.dark .gesit-ticketing .search-input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .tbl-wrap,
+.dark .gesit-ticketing .tbl-wrap {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing table.tix-table th,
+.dark .gesit-ticketing table.tix-table th {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #a6b0bf !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing table.tix-table td,
+.dark .gesit-ticketing table.tix-table td {
+  color: #f2f4f7 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing table.tix-table tr:hover td,
+.dark .gesit-ticketing table.tix-table tr:hover td {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .td-subject,
+.dark .gesit-ticketing .td-subject,
+[data-theme="dark"] .gesit-ticketing .user-name,
+.dark .gesit-ticketing .user-name,
+[data-theme="dark"] .gesit-ticketing .td-handler,
+.dark .gesit-ticketing .td-handler {
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .td-dept,
+.dark .gesit-ticketing .td-dept,
+[data-theme="dark"] .gesit-ticketing .user-email,
+.dark .gesit-ticketing .user-email,
+[data-theme="dark"] .gesit-ticketing .tbl-foot,
+.dark .gesit-ticketing .tbl-foot {
+  color: #a6b0bf !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-priority,
+.dark .gesit-ticketing .pill-priority {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f2f4f7 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-status.open,
+.dark .gesit-ticketing .pill-status.open {
+  background: rgba(220, 38, 38, 0.16) !important;
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .pill-status.resolved,
+.dark .gesit-ticketing .pill-status.resolved {
+  background: rgba(18, 183, 106, 0.16) !important;
+  color: #32d583 !important;
+}
+
+[data-theme="dark"] .gesit-ticketing .btn-page,
+.dark .gesit-ticketing .btn-page {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #f2f4f7 !important;
+}
+

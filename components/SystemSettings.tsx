@@ -44,9 +44,10 @@ const colorPresets = [
 ];
 
 const fontPresets = [
+    { name: 'Threads System (Default)', value: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' },
     { name: 'Inter', value: 'Inter' },
-    { name: 'Outfit', value: 'Outfit' },
     { name: 'Jakarta Sans', value: 'Plus Jakarta Sans' },
+    { name: 'Outfit', value: 'Outfit' },
     { name: 'Poppins', value: 'Poppins' },
     { name: 'Montserrat', value: 'Montserrat' },
     { name: 'Urbanist', value: 'Urbanist' },
@@ -119,7 +120,9 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
         fetchSettings();
 
         // Preload preview weights for all presets so the selection cards render correctly
-        const families = fontPresets.map(f => `family=${f.value.replace(/ /g, '+')}:wght@400;500`).join('&');
+        const families = fontPresets
+            .filter(f => !f.value.includes(','))
+            .map(f => `family=${f.value.replace(/ /g, '+')}:wght@400;500`).join('&');
         const presetsUrl = `https://fonts.googleapis.com/css2?${families}&display=swap`;
 
         let link = document.getElementById('google-fonts-presets') as HTMLLinkElement;
@@ -140,17 +143,21 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({ currentUser }) =
             document.documentElement.style.setProperty('--primary', settings.primaryColor);
             document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
         }
-        document.documentElement.style.setProperty('--font-sans', `"${settings.fontFamily}", sans-serif`);
 
-        const fontUrl = `https://fonts.googleapis.com/css2?family=${settings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
-        let link = document.getElementById('google-fonts') as HTMLLinkElement;
-        if (!link) {
-            link = document.createElement('link');
-            link.id = 'google-fonts';
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
+        if (settings.fontFamily.includes(',') || settings.fontFamily.startsWith('-apple')) {
+            document.documentElement.style.setProperty('--font-sans', settings.fontFamily);
+        } else {
+            document.documentElement.style.setProperty('--font-sans', `"${settings.fontFamily}", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`);
+            const fontUrl = `https://fonts.googleapis.com/css2?family=${settings.fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+            let link = document.getElementById('google-fonts') as HTMLLinkElement;
+            if (!link) {
+                link = document.createElement('link');
+                link.id = 'google-fonts';
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+            link.href = fontUrl;
         }
-        link.href = fontUrl;
     }, [settings.primaryColor, settings.fontFamily]);
 
     const handleSave = async () => {

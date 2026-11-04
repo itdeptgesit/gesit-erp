@@ -41,12 +41,8 @@ export interface EmailNotificationPayload {
 const googleApiFetch = async (url: string, options: RequestInit = {}): Promise<any> => {
   let token = getStoredToken();
   if (!token) {
-    try {
-      token = await silentRefresh();
-    } catch (refreshErr) {
-      clearToken();
-      throw new Error('Google connection expired. Please reconnect.');
-    }
+    clearToken();
+    throw new Error('Google connection expired or not connected.');
   }
 
   try {

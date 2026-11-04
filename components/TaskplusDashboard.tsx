@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isUserAdmin } from '../lib/rbac';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AIAssistant } from './AIAssistant';
@@ -668,7 +669,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
     const [isLoading, setIsLoading] = useState(true);
     const [projectSearch, setProjectSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [activeMode, setActiveMode] = useState<'PERSONAL' | 'ORGANIZATION'>(currentUser?.role === 'Admin' ? 'ORGANIZATION' : 'PERSONAL');
+    const [activeMode, setActiveMode] = useState<'PERSONAL' | 'ORGANIZATION'>(isUserAdmin(currentUser) ? 'ORGANIZATION' : 'PERSONAL');
     const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [dismissedAnnouncements, setDismissedAnnouncements] = useState<number[]>(() => {

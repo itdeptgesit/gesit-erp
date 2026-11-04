@@ -14,6 +14,7 @@ import { ITAsset, UserAccount } from '../types';
 import { AssetHandoverModal } from './AssetHandoverModal';
 import { supabase } from '../lib/supabaseClient';
 import { useLanguage } from '../translations';
+import { isUserAdmin, isUserStaff, canUserManage, canUserDelete } from '../lib/rbac';
 import { trackActivity } from '../lib/auditLogger';
 import * as XLSX from 'xlsx';
 import { StatCard } from './StatCard';
@@ -56,10 +57,10 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
 
   // RBAC Logic
-  const isAdmin = currentUser?.role === 'Admin';
-  const isStaff = currentUser?.role === 'Staff';
-  const canManage = isAdmin || isStaff;
-  const canDelete = isAdmin;
+  const isAdmin = isUserAdmin(currentUser);
+  const isStaff = isUserStaff(currentUser);
+  const canManage = canUserManage(currentUser);
+  const canDelete = canUserDelete(currentUser);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -368,9 +369,64 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total assets" value={assets.length} subValue="Total entries" icon={Package} color="blue" />
-        <StatCard label="In production" value={assets.filter(a => a.status === 'Used' || a.status === 'Active').length} icon={CheckCircle2} color="emerald" />
-        <StatCard label="Standby stock" value={assets.filter(a => a.status === 'Idle').length} icon={History} color="indigo" />
+        <StatCard 
+          label="Total assets" 
+          value={assets.length} 
+          unit="Unit"
+          subValue="Total entries" 
+          note2="seluruh inventaris"
+          icon={Package} 
+          color="blue" 
+          drilldownData={assets}
+          drilldownTitle="Daftar Seluruh Aset IT"
+          drilldownDescription="Total keseluruhan entri aset yang tercatat di sistem Gesit ERP."
+          drilldownColumns={[
+            { header: 'No Aset', accessor: 'assetId', className: 'font-mono font-semibold' },
+            { header: 'Nama Item', accessor: 'item' },
+            { header: 'Kategori', accessor: 'category' },
+            { header: 'Status', accessor: 'status' },
+            { header: 'Pengguna', render: (a: any) => a.user_assigned || a.assigned_to || '-' },
+            { header: 'Lokasi', render: (a: any) => a.location || a.department || '-' }
+          ]}
+        />
+        <StatCard 
+          label="In production" 
+          value={assets.filter(a => a.status === 'Used' || a.status === 'Active').length} 
+          unit="Aktif"
+          subValue={`${Math.round(((assets.filter(a => a.status === 'Used' || a.status === 'Active').length) / (assets.length || 1)) * 100)}% teralokasi`}
+          note2="sedang beroperasi"
+          icon={CheckCircle2} 
+          color="emerald" 
+          drilldownData={assets.filter(a => a.status === 'Used' || a.status === 'Active')}
+          drilldownTitle="Rincian Aset Aktif (In Production)"
+          drilldownDescription="Aset yang saat ini aktif beroperasi dan ditugaskan ke staf atau operasional."
+          drilldownColumns={[
+            { header: 'No Aset', accessor: 'assetId', className: 'font-mono font-semibold' },
+            { header: 'Nama Item', accessor: 'item' },
+            { header: 'Pengguna', render: (a: any) => a.user_assigned || a.assigned_to || '-' },
+            { header: 'Departemen', render: (a: any) => a.department || '-' },
+            { header: 'Status', accessor: 'status' }
+          ]}
+        />
+        <StatCard 
+          label="Standby stock" 
+          value={assets.filter(a => a.status === 'Idle').length} 
+          unit="Unit"
+          subValue="Siap digunakan" 
+          note2="di storage IT"
+          icon={History} 
+          color="indigo" 
+          drilldownData={assets.filter(a => a.status === 'Idle')}
+          drilldownTitle="Rincian Stok Standby (Idle Stock)"
+          drilldownDescription="Aset yang berada di ruang penyimpanan IT dan siap ditugaskan kapan saja."
+          drilldownColumns={[
+            { header: 'No Aset', accessor: 'assetId', className: 'font-mono font-semibold' },
+            { header: 'Nama Item', accessor: 'item' },
+            { header: 'Kategori', accessor: 'category' },
+            { header: 'Brand / Model', render: (a: any) => a.brand || a.specs || '-' },
+            { header: 'Lokasi Simpan', render: (a: any) => a.location || 'IT Storage' }
+          ]}
+        />
       </div>
 
       <div className="bg-card p-4 rounded-xl border shadow-sm flex flex-col md:flex-row items-stretch md:items-center gap-3 transition-all">

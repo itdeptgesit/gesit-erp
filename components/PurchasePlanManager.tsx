@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { isUserAdmin, isUserStaff, canUserManage, canUserDelete } from '../lib/rbac';
 
 interface PurchasePlanManagerProps {
     currentUser: UserAccount | null;
@@ -71,10 +72,10 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     const itemsPerPage = 10;
 
     // RBAC Logic
-    const isAdmin = currentUser?.role === 'Admin';
-    const isStaff = currentUser?.role === 'Staff';
-    const canManage = isAdmin || isStaff;
-    const canDelete = isAdmin;
+    const isAdmin = isUserAdmin(currentUser);
+    const isStaff = isUserStaff(currentUser);
+    const canManage = canUserManage(currentUser);
+    const canDelete = canUserDelete(currentUser);
 
     const mapRequisition = (p: any): PurchaseRequisition => ({
         id: p.id,
@@ -704,11 +705,99 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
             </PageHeader>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
-                <StatCard label="Approved budget" value={formatIDR(stats.totalSpend)} icon={Wallet} color="emerald" subValue="Total verified" />
-                <StatCard label="Pending budget" value={formatIDR(stats.unapprovedSpend)} icon={Wallet} color="amber" subValue="Total unapproved" />
-                <StatCard label="Tasks" value={stats.actionsCount} icon={ShieldCheck} color={stats.actionsCount > 0 ? "rose" : "blue"} subValue="Awaiting your ID" />
-                <StatCard label="Global queue" value={stats.pendingCount} icon={Clock} color="amber" subValue="Requests in cycle" />
-                <StatCard label="Fulfilled" value={stats.approvedCount} icon={CheckCircle2} color="blue" subValue="Completed nodes" />
+                <StatCard 
+                    label="Approved budget" 
+                    value={formatIDR(stats.totalSpend)} 
+                    icon={Wallet} 
+                    color="emerald" 
+                    subValue="Total verified" 
+                    note2="anggaran disetujui"
+                    drilldownData={requisitions.filter(r => r.status === 'Approved')}
+                    drilldownTitle="Rincian Pengadaan Disetujui (Approved)"
+                    drilldownDescription="Pengajuan pembelian yang telah tuntas diverifikasi dan disetujui."
+                    drilldownColumns={[
+                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{r.reqNumber}</span> },
+                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
+                        { header: 'Keperluan', render: (r: any) => <span className="font-semibold">{r.purpose || '-'}</span> },
+                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold text-foreground">{formatIDR(r.grandTotal || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="Pending budget" 
+                    value={formatIDR(stats.unapprovedSpend)} 
+                    icon={Wallet} 
+                    color="amber" 
+                    subValue="Total unapproved" 
+                    note2="menunggu persetujuan"
+                    drilldownData={requisitions.filter(r => r.status.includes('Pending'))}
+                    drilldownTitle="Rincian Pengadaan Menunggu Approval"
+                    drilldownDescription="Pengajuan pengadaan dalam tahap approval berjenjang."
+                    drilldownColumns={[
+                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{r.reqNumber}</span> },
+                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
+                        { header: 'Keperluan', render: (r: any) => <span className="font-semibold">{r.purpose || '-'}</span> },
+                        { header: 'Estimasi Nilai', render: (r: any) => <span className="font-bold text-foreground">{formatIDR(r.grandTotal || 0)}</span> },
+                        { header: 'Status Saat Ini', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="Tasks" 
+                    value={stats.actionsCount} 
+                    unit="PR"
+                    icon={ShieldCheck} 
+                    color={stats.actionsCount > 0 ? "rose" : "blue"} 
+                    subValue="Awaiting your ID" 
+                    note2="perlu approval Anda"
+                    drilldownData={requisitions.filter(r => isMyTurnToApproveRequisition(r))}
+                    drilldownTitle="Rincian Pengadaan Menunggu Approval Anda"
+                    drilldownDescription="Daftar pengajuan PR yang saat ini membutuhkan tindakan persetujuan dari akun Anda."
+                    drilldownColumns={[
+                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">{r.reqNumber}</span> },
+                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
+                        { header: 'Tgl Butuh', render: (r: any) => r.requiredDate ? new Date(r.requiredDate).toLocaleDateString('id-ID') : '-' },
+                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold">{formatIDR(r.grandTotal || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="Global queue" 
+                    value={stats.pendingCount} 
+                    unit="Permintaan"
+                    icon={Clock} 
+                    color="amber" 
+                    subValue="Requests in cycle" 
+                    note2="dalam antrean berjalan"
+                    drilldownData={requisitions.filter(r => r.status.includes('Pending'))}
+                    drilldownTitle="Rincian Antrean Pengadaan Berjalan (Global Queue)"
+                    drilldownDescription="Semua purchase requisition yang sedang berproses pada alur persetujuan."
+                    drilldownColumns={[
+                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold">{r.reqNumber}</span> },
+                        { header: 'Pemohon', accessor: 'requesterName' },
+                        { header: 'Departemen', accessor: 'department' },
+                        { header: 'Total', render: (r: any) => formatIDR(r.grandTotal || 0) },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
+                <StatCard 
+                    label="Fulfilled" 
+                    value={stats.approvedCount} 
+                    unit="Tuntas"
+                    icon={CheckCircle2} 
+                    color="blue" 
+                    subValue="Completed nodes" 
+                    note2="telah disetujui"
+                    drilldownData={requisitions.filter(r => r.status === 'Approved')}
+                    drilldownTitle="Rincian Pengadaan Tuntas Disetujui (Fulfilled)"
+                    drilldownDescription="Pengajuan pembelian yang telah melewati seluruh level approval."
+                    drilldownColumns={[
+                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{r.reqNumber}</span> },
+                        { header: 'Pemohon', accessor: 'requesterName' },
+                        { header: 'Keperluan', accessor: 'purpose' },
+                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold">{formatIDR(r.grandTotal || 0)}</span> },
+                        { header: 'Status', accessor: 'status' }
+                    ]}
+                />
             </div>
 
             <div className="bg-white dark:bg-[#101010] rounded-[16px] border border-slate-200/80 dark:border-[#1e1e1e] shadow-sm overflow-hidden flex flex-col min-h-[550px]">

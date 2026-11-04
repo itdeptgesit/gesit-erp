@@ -142,8 +142,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
   const handleAddUser = () => { setEditingUser(null); setIsModalOpen(true); };
   const handleEditUser = (user: UserAccount) => { setEditingUser(user); setIsModalOpen(true); };
 
-  // Assuming isAdmin is derived from currentUser or another context
-  const isAdmin = currentUser?.role === 'Admin';
+  // RBAC check: allow Admin, Super Admin, and Management
+  const roleLower = (currentUser?.role || '').toLowerCase();
+  const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'super_admin' || currentUser?.groups?.includes('admin') || currentUser?.groups?.includes('ADMIN') || currentUser?.groups?.includes('MANAGEMENT');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -162,7 +163,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           {isAdmin && (
             <Button
               onClick={() => { setEditingUser(null); setIsModalOpen(true); }}
-              className="text-xs font-bold /20 whitespace-nowrap"
+              className="text-xs font-bold whitespace-nowrap"
             >
               <Plus className="mr-2 h-3.5 w-3.5" /> Register Identity
             </Button>
@@ -175,9 +176,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           <Input placeholder="Search user identity..." className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-zinc-800 border-none rounded-xl font-semibold placeholder:text-slate-400 dark:text-slate-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600" size={16} />
         </div>
-        <div className="flex bg-slate-50 dark:bg-zinc-800 p-1 rounded-xl">
-          {['', 'Admin', 'Staff', 'User'].map(r => (
-            <button key={r} onClick={() => setRoleFilter(r)} className={`px-5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${roleFilter === r ? 'bg-white dark:bg-slate-700 text-zinc-950 dark:text-zinc-50 shadow-sm font-extrabold' : 'text-slate-400 hover:text-slate-600'}`}>{r || 'All'}</button>
+        <div className="flex bg-slate-50 dark:bg-zinc-800 p-1 rounded-xl overflow-x-auto">
+          {['', 'Super Admin', 'Admin', 'Staff', 'User'].map(r => (
+            <button key={r} onClick={() => setRoleFilter(r)} className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap ${roleFilter === r ? 'bg-white dark:bg-slate-700 text-zinc-950 dark:text-zinc-50 shadow-sm font-extrabold' : 'text-slate-400 hover:text-slate-600'}`}>{r || 'All'}</button>
           ))}
         </div>
       </div>
@@ -256,7 +257,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                       <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{user.department || 'Global'}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4"><span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${user.role === 'Admin' ? 'bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 border-zinc-900 dark:border-zinc-50 shadow' : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'}`}>{user.role}</span></TableCell>
+                  <TableCell className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border ${
+                      user.role === 'Super Admin'
+                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                        : user.role === 'Admin'
+                        ? 'bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 border-zinc-900 dark:border-zinc-50 shadow'
+                        : user.role === 'Staff'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                        : 'bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400 text-[10px] font-bold">
@@ -269,9 +282,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
                     </div>
                   </TableCell>
                   <TableCell className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
-                      <button onClick={() => handleEditUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"><Pencil size={14} /></button>
-                      <button onClick={() => setDeleteUser(user)} className="p-2 text-slate-400 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"><Trash2 size={14} /></button>
+                    <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-all">
+                      {isAdmin ? (
+                        <>
+                          <button onClick={() => handleEditUser(user)} title="Edit User" className="p-2 text-slate-400 dark:text-slate-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer"><Pencil size={14} /></button>
+                          <button onClick={() => setDeleteUser(user)} title="Delete User" className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-all cursor-pointer"><Trash2 size={14} /></button>
+                        </>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-wider">Read Only</span>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -293,6 +312,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={async (userData) => {
+          if (!isAdmin) {
+            showToast("Hanya administrator yang diizinkan mengubah akun user.", "error");
+            return;
+          }
           const payload = {
             username: userData.username,
             full_name: userData.fullName,
@@ -313,9 +336,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           };
           try {
             if (editingUser) {
-              await supabase.from('user_accounts').update(payload).eq('id', editingUser.id);
+              const { error } = await supabase.from('user_accounts').update(payload).eq('id', editingUser.id);
+              if (error) throw error;
             } else {
-              await supabase.from('user_accounts').insert([payload]);
+              const { error } = await supabase.from('user_accounts').insert([payload]);
+              if (error) throw error;
             }
             if (onUpdateSuccess) onUpdateSuccess();
 
@@ -343,7 +368,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ onUpdateSuccess,
           if (!deleteUser) return;
           setIsProcessing(true);
           try {
-            await supabase.from('user_accounts').delete().eq('id', deleteUser.id);
+            const { error } = await supabase.from('user_accounts').delete().eq('id', deleteUser.id);
+            if (error) throw error;
 
             await trackActivity(
               currentUser?.fullName || 'User',

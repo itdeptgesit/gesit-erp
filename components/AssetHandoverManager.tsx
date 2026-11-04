@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import { ITAsset, UserAccount } from '../types';
 import { exportAssetTransferForm, AssetTransferInfo } from '../lib/handoverPdfExport';
 import { useLanguage } from '../translations';
+import { isUserAdmin } from '../lib/rbac';
 import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -626,7 +627,7 @@ export const AssetHandoverManager: React.FC<AssetHandoverManagerProps> = ({ curr
     }
   };
 
-  const isAdmin = currentUser?.role === 'Admin';
+  const isAdmin = isUserAdmin(currentUser);
 
   return (
     <div className="space-y-6">

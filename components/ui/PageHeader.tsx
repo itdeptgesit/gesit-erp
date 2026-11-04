@@ -11,12 +11,12 @@ export const PageHeader = ({ title, description, subtitle, children }: PageHeade
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-7 animate-in fade-in slide-in-from-left-4 duration-500">
             <div className="flex flex-col">
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-1">{title}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#000000] dark:text-[#f3f5f7] mb-1">{title}</h1>
                 {subtitle && (
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">{subtitle}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#6B7280] dark:text-[#777777]">{subtitle}</p>
                 )}
                 {description && !subtitle && (
-                    <p className="text-muted-foreground mt-1 text-[14px] font-medium">{description}</p>
+                    <p className="text-sm text-[#6B7280] dark:text-[#777777] mt-1">{description}</p>
                 )}
             </div>
             {children && (
