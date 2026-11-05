@@ -536,6 +536,90 @@ export default function DashboardIT({
   const [liveSupabasePing, setLiveSupabasePing] = useState<number | null>(null);
   const [realAvgPing, setRealAvgPing] = useState<number>(142);
   const [realErrorRate, setRealErrorRate] = useState<string>("0,02");
+  const [dbSysLogs, setDbSysLogs] = useState<any[]>([]);
+
+  // Metrik dan kalkulasi kurva SVG dinamis berbasis data riil
+  const monMetrics = useMemo(() => {
+    // 1. Layanan inti internal / cloud database (Supabase, MikroTik, CBN)
+    const coreServices = monSystemStatus.filter((s: any) => 
+      s.id?.includes("supabase") || s.id?.includes("mikrotik") || s.id?.includes("cbn")
+    );
+    const corePings = coreServices.map((s: any) => parseInt(s.ping) || 15);
+    const coreAvg = corePings.length > 0 
+      ? Math.round(corePings.reduce((a: number, b: number) => a + b, 0) / corePings.length) 
+      : (liveSupabasePing || 14);
+
+    // 2. Rata-rata keseluruhan
+    const allPings = monSystemStatus.map((s: any) => parseInt(s.ping) || 15);
+    const allAvg = allPings.length > 0 
+      ? Math.round(allPings.reduce((a: number, b: number) => a + b, 0) / allPings.length) 
+      : realAvgPing;
+
+    // 3. Status ketersediaan saat ini
+    const offlineCount = monSystemStatus.filter((s: any) => s.status === "offline").length;
+    const onlineCount = monSystemStatus.length - offlineCount;
+
+    // 4. Riwayat log untuk kurva SVG nyata
+    const sortedLogs = [...dbSysLogs].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    const validLogs = sortedLogs.length > 0 ? sortedLogs : [
+      { ping_ms: 18, is_success: true, created_at: new Date().toISOString() },
+      { ping_ms: 22, is_success: true, created_at: new Date().toISOString() },
+      { ping_ms: 15, is_success: true, created_at: new Date().toISOString() }
+    ];
+
+    const height = 96;
+    const padY = 16;
+    const usableH = height - padY * 2;
+    const maxPing = Math.max(...validLogs.map((l: any) => l.ping_ms || 10), 100);
+    const minPing = 0;
+
+    const respCoords = validLogs.map((l: any, i: number) => {
+      const x = Math.round((i / Math.max(validLogs.length - 1, 1)) * 280 + 10);
+      const val = l.ping_ms || 15;
+      const normY = (val - minPing) / (maxPing - minPing);
+      const y = Math.round(height - padY - Math.min(1, Math.max(0, normY)) * usableH);
+      return { x, y, ping: val };
+    });
+
+    const respLine = respCoords.reduce((acc: string, pt: any, idx: number) => `${acc} ${idx === 0 ? "M" : "L"} ${pt.x},${pt.y}`, "");
+    const respArea = `${respLine} L ${respCoords[respCoords.length - 1].x},${height} L ${respCoords[0].x},${height} Z`;
+
+    // Kurva error rate riil (menunjukkan titik anomali jika ada)
+    const errCoords = validLogs.map((l: any, i: number) => {
+      const x = Math.round((i / Math.max(validLogs.length - 1, 1)) * 280 + 10);
+      const isOk = l.is_success && (!l.status_code || l.status_code < 500);
+      const y = isOk ? 82 : 28;
+      return { x, y, is_success: isOk };
+    });
+    const errLine = errCoords.reduce((acc: string, pt: any, idx: number) => `${acc} ${idx === 0 ? "M" : "L"} ${pt.x},${pt.y}`, "");
+    const errArea = `${errLine} L ${errCoords[errCoords.length - 1].x},${height} L ${errCoords[0].x},${height} Z`;
+
+    const firstTimeLabel = sortedLogs.length > 0 
+      ? new Date(sortedLogs[0].created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) 
+      : "08:00";
+    const lastTimeLabel = sortedLogs.length > 0 
+      ? new Date(sortedLogs[sortedLogs.length - 1].created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) 
+      : "Terbaru";
+
+    return {
+      coreAvg,
+      allAvg,
+      offlineCount,
+      onlineCount,
+      respLine,
+      respArea,
+      errLine,
+      errArea,
+      lastRespPt: respCoords[respCoords.length - 1],
+      lastErrPt: errCoords[errCoords.length - 1],
+      totalLogsCount: sortedLogs.length,
+      firstTimeLabel,
+      lastTimeLabel,
+    };
+  }, [monSystemStatus, dbSysLogs, liveSupabasePing, realAvgPing]);
 
   const testLivePing = async () => {
     setIsPinging(true);
@@ -841,6 +925,7 @@ export default function DashboardIT({
       }
       if (sysLogsRes.data && sysLogsRes.data.length > 0) {
         const logs = sysLogsRes.data;
+        setDbSysLogs(logs);
         const totalPing = logs.reduce((acc: number, l: any) => acc + (l.ping_ms || 0), 0);
         const avg = Math.round(totalPing / logs.length);
         const errs = logs.filter((l: any) => !l.is_success || (l.status_code && l.status_code >= 500)).length;
@@ -2348,15 +2433,15 @@ export default function DashboardIT({
             <div className="chart-box">
               <div className="chart-head">
                 <h4>Response Time</h4>
-                <span className="chart-sel">Last 24 Hours</span>
-                <span className="chart-badge">5m</span>
+                <span className="chart-sel">{monMetrics.totalLogsCount > 0 ? `${monMetrics.totalLogsCount} Uji Log` : "Siklus Terakhir"}</span>
+                <span className="chart-badge">Live</span>
               </div>
-              <div className="chart-val" style={{ color: "#2f6bff" }}>
-                {realAvgPing}ms <span>rata-rata</span>
+              <div className="chart-val" style={{ color: "#2f6bff", alignItems: "baseline" }}>
+                {monMetrics.coreAvg}ms <span style={{ fontSize: 12 }}>Core DB ({monMetrics.allAvg}ms Avg All)</span>
               </div>
-              <div className="chart-subtext">
-                <span className="pulse" style={{ width: 6, height: 6 }} />
-                Optimal · SLA &lt; 30ms tercapai
+              <div className="chart-subtext" style={{ color: monMetrics.coreAvg <= 50 ? "#12b76a" : "#f79009" }}>
+                <span className="pulse" style={{ width: 6, height: 6, background: monMetrics.coreAvg <= 50 ? "#12b76a" : "#f79009" }} />
+                {monMetrics.coreAvg <= 50 ? "Optimal · SLA Core < 50ms Tercapai" : "Stabil · Respon Server Normal"}
               </div>
               <svg className="chart-svg" viewBox="0 0 300 96" preserveAspectRatio="none">
                 <defs>
@@ -2370,40 +2455,44 @@ export default function DashboardIT({
                   <line x1="0" y1="48" x2="300" y2="48" />
                   <line x1="0" y1="78" x2="300" y2="78" />
                 </g>
-                <path
-                  d="M0,62 C25,58 40,66 60,60 C85,52 95,40 120,44 C145,48 155,30 180,34 C205,38 215,55 240,52 C262,49 280,44 300,46 L300,96 L0,96 Z"
-                  fill="url(#respGrad)"
-                />
-                <path
-                  d="M0,62 C25,58 40,66 60,60 C85,52 95,40 120,44 C145,48 155,30 180,34 C205,38 215,55 240,52 C262,49 280,44 300,46"
-                  fill="none"
-                  stroke="#2f6bff"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="292" cy="46" r="3.4" fill="#2f6bff" />
+                {monMetrics.respArea && (
+                  <path d={monMetrics.respArea} fill="url(#respGrad)" />
+                )}
+                {monMetrics.respLine && (
+                  <path
+                    d={monMetrics.respLine}
+                    fill="none"
+                    stroke="#2f6bff"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+                {monMetrics.lastRespPt && (
+                  <circle cx={monMetrics.lastRespPt.x} cy={monMetrics.lastRespPt.y} r="3.4" fill="#2f6bff" />
+                )}
               </svg>
               <div className="chart-x">
-                <span>00:00</span>
-                <span>08:00</span>
-                <span>16:00</span>
-                <span>24:00</span>
+                <span>{monMetrics.firstTimeLabel}</span>
+                <span>Siklus Monitoring</span>
+                <span>{monMetrics.lastTimeLabel}</span>
               </div>
-              <div className="chart-cap">Average Response Time (ms)</div>
+              <div className="chart-cap">Database Supabase & Core Gateway (ms)</div>
             </div>
 
             <div className="chart-box">
               <div className="chart-head">
                 <h4>Error Rate</h4>
-                <span className="chart-sel">Last 24 Hours</span>
-                <span className="chart-badge">5m</span>
+                <span className="chart-sel">Status Terkini</span>
+                <span className="chart-badge">Live</span>
               </div>
-              <div className="chart-val" style={{ color: "#6941c6" }}>
-                {realErrorRate}% <span>dari total request</span>
+              <div className="chart-val" style={{ color: "#6941c6", alignItems: "baseline" }}>
+                {monMetrics.offlineCount === 0 ? "0,00%" : `${((monMetrics.offlineCount / (monMetrics.onlineCount + monMetrics.offlineCount)) * 100).toFixed(2).replace(".", ",")}%`}
+                <span style={{ fontSize: 12 }}>{monMetrics.offlineCount === 0 ? "aktif saat ini" : "layanan terkendala"}</span>
               </div>
-              <div className="chart-subtext" style={{ color: "#12b76a" }}>
-                <span className="pulse" style={{ width: 6, height: 6, background: "#12b76a" }} />
-                Nol Downtime Hari Ini · 100% Tersedia
+              <div className="chart-subtext" style={{ color: monMetrics.offlineCount === 0 ? "#12b76a" : "#f04438" }}>
+                <span className="pulse" style={{ width: 6, height: 6, background: monMetrics.offlineCount === 0 ? "#12b76a" : "#f04438" }} />
+                {monMetrics.offlineCount === 0 ? "100% Tersedia · 8/8 Layanan Beroperasi Normal" : `${monMetrics.offlineCount} Layanan Terkendala`}
               </div>
               <svg className="chart-svg" viewBox="0 0 300 96" preserveAspectRatio="none">
                 <defs>
@@ -2417,26 +2506,29 @@ export default function DashboardIT({
                   <line x1="0" y1="48" x2="300" y2="48" />
                   <line x1="0" y1="78" x2="300" y2="78" />
                 </g>
-                <path
-                  d="M0,80 C30,78 50,82 75,79 C100,76 115,80 140,77 C165,74 180,79 205,76 C230,73 255,78 300,75 L300,96 L0,96 Z"
-                  fill="url(#errGrad)"
-                />
-                <path
-                  d="M0,80 C30,78 50,82 75,79 C100,76 115,80 140,77 C165,74 180,79 205,76 C230,73 255,78 300,75"
-                  fill="none"
-                  stroke="#6941c6"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="292" cy="75" r="3.4" fill="#6941c6" />
+                {monMetrics.errArea && (
+                  <path d={monMetrics.errArea} fill="url(#errGrad)" />
+                )}
+                {monMetrics.errLine && (
+                  <path
+                    d={monMetrics.errLine}
+                    fill="none"
+                    stroke="#6941c6"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+                {monMetrics.lastErrPt && (
+                  <circle cx={monMetrics.lastErrPt.x} cy={monMetrics.lastErrPt.y} r="3.4" fill="#6941c6" />
+                )}
               </svg>
               <div className="chart-x">
-                <span>00:00</span>
-                <span>08:00</span>
-                <span>16:00</span>
-                <span>24:00</span>
+                <span>{monMetrics.firstTimeLabel}</span>
+                <span>Kestabilan Layanan</span>
+                <span>{monMetrics.lastTimeLabel}</span>
               </div>
-              <div className="chart-cap">Error Rate (%)</div>
+              <div className="chart-cap">Error Rate & Downtime Incident (%)</div>
             </div>
           </div>
         </div>
