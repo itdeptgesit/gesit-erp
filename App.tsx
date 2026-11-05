@@ -277,12 +277,7 @@ const InternalApp: React.FC = () => {
           return;
         }
 
-        if ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.pathname !== '/login') {
-          const bypassEmail = localStorage.getItem('bypass_email') || 'admin@gesit.co.id';
-          console.log(`App.tsx: Localhost detected without session, checking bypass login as ${bypassEmail}`);
-          await handleLogin(bypassEmail);
-          return;
-        }
+        // Auto bypass localhost dimatikan agar alur login/logout normal & session Supabase Auth valid
       } catch (err: any) {
         console.error("LoginPage: Login error:", err);
       } finally {
@@ -521,11 +516,13 @@ const InternalApp: React.FC = () => {
   };
 
   const executeLogout = async () => {
+    localStorage.removeItem('bypass_email');
+    localStorage.removeItem('device_session_token');
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setCurrentUser(null);
     setIsLogoutModalOpen(false);
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const refreshUserProfile = async () => {

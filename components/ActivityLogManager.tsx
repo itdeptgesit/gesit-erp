@@ -856,15 +856,22 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     note2="terekam di sistem"
                     color="slate" 
                     drilldownData={filteredActivities}
-                    drilldownTitle="Rincian Seluruh Log Aktivitas"
-                    drilldownDescription="Daftar menyeluruh tiket aktivitas teknis internal IT."
+                    drilldownTitle="Ringkasan Total Aktivitas"
+                    drilldownDescription="Ringkasan komposisi dan rincian log aktivitas IT."
                     drilldownColumns={[
-                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold">{a.activityName || a.title || '-'}</span> },
-                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
-                        { header: 'Teknisi IT', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
-                        { header: 'Departemen', render: (a: any) => a.department || '-' },
-                        { header: 'Kategori', accessor: 'category' },
-                        { header: 'Status', accessor: 'status' }
+                        { 
+                            header: 'Aktivitas & Pemohon', 
+                            render: (a: any) => (
+                                <div>
+                                    <div className="font-semibold text-foreground">{a.activityName || a.title || '-'}</div>
+                                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                    </div>
+                                </div>
+                            ) 
+                        },
+                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
+                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
                     ]}
                 />
                 <StatCard 
@@ -878,14 +885,22 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     color="emerald" 
                     status="on-track" 
                     drilldownData={filteredActivities.filter(a => a.status === 'Completed')}
-                    drilldownTitle="Rincian Aktivitas Tuntas (Completed)"
-                    drilldownDescription="Aktivitas dan pemeliharaan teknis yang berhasil dituntaskan."
+                    drilldownTitle="Ringkasan Aktivitas Tuntas"
+                    drilldownDescription="Komposisi aktivitas IT yang berhasil diselesaikan."
                     drilldownColumns={[
-                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-emerald-600 dark:text-emerald-400">{a.activityName || a.title || '-'}</span> },
-                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
-                        { header: 'Teknisi Eksekutor', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
-                        { header: 'Departemen', render: (a: any) => a.department || '-' },
-                        { header: 'Status', accessor: 'status' }
+                        { 
+                            header: 'Aktivitas & Pemohon', 
+                            render: (a: any) => (
+                                <div>
+                                    <div className="font-semibold text-emerald-600 dark:text-emerald-400">{a.activityName || a.title || '-'}</div>
+                                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                    </div>
+                                </div>
+                            ) 
+                        },
+                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
+                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
                     ]}
                 />
                 <StatCard 
@@ -898,14 +913,22 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     note2="sedang berjalan"
                     color="blue" 
                     drilldownData={filteredActivities.filter(a => a.status === 'In Progress')}
-                    drilldownTitle="Rincian Aktivitas Sedang Dikerjakan"
-                    drilldownDescription="Aktivitas IT yang saat ini dalam proses penanganan tim."
+                    drilldownTitle="Ringkasan Aktivitas Aktif"
+                    drilldownDescription="Komposisi aktivitas IT yang sedang berjalan dan ditangani."
                     drilldownColumns={[
-                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-blue-600 dark:text-blue-400">{a.activityName || a.title || '-'}</span> },
-                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
-                        { header: 'Teknisi Handler', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
-                        { header: 'Departemen', render: (a: any) => a.department || '-' },
-                        { header: 'Status', accessor: 'status' }
+                        { 
+                            header: 'Aktivitas & Pemohon', 
+                            render: (a: any) => (
+                                <div>
+                                    <div className="font-semibold text-blue-600 dark:text-blue-400">{a.activityName || a.title || '-'}</div>
+                                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                    </div>
+                                </div>
+                            ) 
+                        },
+                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
+                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
                     ]}
                 />
                 <StatCard 
@@ -919,14 +942,22 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     color="rose" 
                     status="at-risk" 
                     drilldownData={filteredActivities.filter(a => a.type === 'Critical' || a.type === 'Major')}
-                    drilldownTitle="Rincian Aktivitas Prioritas Tinggi (High Alert)"
-                    drilldownDescription="Daftar insiden dan aktivitas bertipe Critical atau Major yang membutuhkan perhatian khusus."
+                    drilldownTitle="Ringkasan Aktivitas Kritis (High Alert)"
+                    drilldownDescription="Aktivitas atau insiden bertipe Critical / Major."
                     drilldownColumns={[
-                        { header: 'Nama Aktivitas', render: (a: any) => <span className="font-semibold text-rose-600 dark:text-rose-400">{a.activityName || a.title || '-'}</span> },
-                        { header: 'Tingkat', render: (a: any) => <span className="font-bold text-rose-600">{a.type || 'High'}</span> },
-                        { header: 'Pemohon', render: (a: any) => a.requester || '-' },
-                        { header: 'Teknisi', render: (a: any) => a.itPersonnel || a.assigned_to || '-' },
-                        { header: 'Status', accessor: 'status' }
+                        { 
+                            header: 'Aktivitas & Pemohon', 
+                            render: (a: any) => (
+                                <div>
+                                    <div className="font-semibold text-rose-600 dark:text-rose-400">{a.activityName || a.title || '-'}</div>
+                                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                    </div>
+                                </div>
+                            ) 
+                        },
+                        { header: 'Tingkat', render: (a: any) => <span className="font-bold text-rose-600">{a.type || 'High'}</span>, className: 'w-24' },
+                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
                     ]}
                 />
             </div>

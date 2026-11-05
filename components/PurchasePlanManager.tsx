@@ -79,21 +79,21 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
 
     const mapRequisition = (p: any): PurchaseRequisition => ({
         id: p.id,
-        requesterUsername: p.requester_username,
-        requesterFullname: p.requester_fullname,
-        department: p.department,
-        requestDate: p.request_date,
-        paidTo: p.paid_to,
-        bankAccount: p.bank_account,
+        requesterUsername: p.requester_username || '',
+        requesterFullname: p.requester_fullname || p.requester_name || p.created_by_name || 'User',
+        department: p.department || p.created_by_dept || '',
+        requestDate: p.request_date || '',
+        paidTo: p.paid_to || '',
+        bankAccount: p.bank_account || '',
         requestedItems: p.requested_items || [],
         itRecommendations: p.it_recommendations || [],
-        notes: p.notes,
+        notes: p.notes || '',
         grandTotal: Number(p.grand_total) || 0,
         discount: Number(p.discount) || 0,
         deliveryFee: Number(p.delivery_fee) || 0,
         currency: (p.currency as 'IDR' | 'USD') || 'IDR',
-        status: p.status,
-        category: p.category,
+        status: p.status || 'Pending',
+        category: p.category || '',
         supervisorId: p.supervisor_id,
         supervisorName: p.supervisor_name,
         supervisorApprovedAt: p.supervisor_approved_at,
@@ -117,24 +117,33 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
         setLoading(true);
         try {
             // Fetch users mapping
-            const { data: userData } = await supabase.from('user_accounts').select('*');
-            if (userData) {
-                setAllUsers(userData.map((u: any) => ({
-                    id: u.id, email: u.email, fullName: u.full_name, role: u.role, company: u.company, jobTitle: u.job_title,
-                    supervisorId: u.supervisor_id?.toString(), managerId: u.manager_id?.toString(), vpId: u.vp_id?.toString(), department: u.department,
-                    status: u.status, username: u.username, groups: u.groups || []
-                })));
+            try {
+                const { data: userData, error: userError } = await supabase.from('user_accounts').select('*');
+                if (userError) console.warn("Error fetching user_accounts:", userError);
+                if (userData) {
+                    setAllUsers(userData.map((u: any) => ({
+                        id: u.id, email: u.email, fullName: u.full_name, role: u.role, company: u.company, jobTitle: u.job_title,
+                        supervisorId: u.supervisor_id?.toString(), managerId: u.manager_id?.toString(), vpId: u.vp_id?.toString(), department: u.department,
+                        status: u.status, username: u.username, groups: u.groups || []
+                    })));
+                }
+            } catch (uErr) {
+                console.warn("Failed to load user_accounts:", uErr);
             }
 
             // Fetch legacy plans
-            const { data: planData, error } = await supabase.from('purchase_plans').select('*').order('id', { ascending: false });
-            if (error) throw error;
-            if (planData) {
-                setPlans(planData.map(p => ({
-                    id: p.id, item: p.item, specs: p.specs, quantity: p.quantity, unitPrice: p.unit_price,
-                    totalPrice: p.total_price, vendor: p.vendor, status: p.status, requester: p.requester,
-                    requestDate: p.request_date, justification: p.justification
-                })));
+            try {
+                const { data: planData, error: planError } = await supabase.from('purchase_plans').select('*').order('id', { ascending: false });
+                if (planError) console.warn("Error fetching purchase_plans:", planError);
+                if (planData) {
+                    setPlans(planData.map(p => ({
+                        id: p.id, item: p.item, specs: p.specs, quantity: p.quantity, unitPrice: p.unit_price,
+                        totalPrice: p.total_price, vendor: p.vendor, status: p.status, requester: p.requester,
+                        requestDate: p.request_date, justification: p.justification
+                    })));
+                }
+            } catch (pErr) {
+                console.warn("Failed to load legacy purchase_plans:", pErr);
             }
 
             // Fetch PR Requisitions (with graceful fallback if table not created yet)
@@ -144,10 +153,11 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     if (reqError.code === '42P01') {
                         console.warn("purchase_requisitions table not found. Please execute migration_pr_requisitions.sql.");
                     } else {
-                        throw reqError;
+                        console.warn("purchase_requisitions fetch returned error:", reqError);
                     }
                 }
                 if (reqData) {
+                    console.log("PurchasePlanManager: Loaded requisitions:", reqData.length);
                     setRequisitions(reqData.map(mapRequisition));
                 }
             } catch (innerErr) {
@@ -236,18 +246,19 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
     }, [requisitions, allUsers, currentUser, usdRate]);
 
     const filteredRequisitions = useMemo(() => {
+        const q = (searchTerm || '').toLowerCase();
         if (activeTab === 'approvals') {
             return requisitions.filter(isMyTurnToApproveRequisition).filter(r =>
-                r.requesterFullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                r.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (r.paidTo || '').toLowerCase().includes(searchTerm.toLowerCase())
+                (r.requesterFullname || '').toLowerCase().includes(q) ||
+                (r.department || '').toLowerCase().includes(q) ||
+                (r.paidTo || '').toLowerCase().includes(q)
             );
         }
         if (activeTab !== 'requisitions') return [];
         return requisitions.filter(r =>
-            r.requesterFullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            r.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (r.paidTo || '').toLowerCase().includes(searchTerm.toLowerCase())
+            (r.requesterFullname || '').toLowerCase().includes(q) ||
+            (r.department || '').toLowerCase().includes(q) ||
+            (r.paidTo || '').toLowerCase().includes(q)
         );
     }, [requisitions, searchTerm, activeTab, currentUser]);
 
@@ -716,10 +727,54 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     drilldownTitle="Rincian Pengadaan Disetujui (Approved)"
                     drilldownDescription="Pengajuan pembelian yang telah tuntas diverifikasi dan disetujui."
                     drilldownColumns={[
-                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{r.reqNumber}</span> },
-                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
-                        { header: 'Keperluan', render: (r: any) => <span className="font-semibold">{r.purpose || '-'}</span> },
-                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold text-foreground">{formatIDR(r.grandTotal || 0)}</span> },
+                        { 
+                            header: 'No PR', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    PR-{String(r.id).padStart(4, '0')}
+                                </span>
+                            ) 
+                        },
+                        { 
+                            header: 'Pemohon', 
+                            render: (r: any) => {
+                                const name = r.requesterFullname || r.requesterUsername || 'User';
+                                const dept = r.department ? r.department.trim() : '';
+                                return (
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-foreground">{name}</span>
+                                        {dept && <span className="text-[10px] text-muted-foreground font-mono">{dept}</span>}
+                                    </div>
+                                );
+                            }
+                        },
+                        { 
+                            header: 'Keperluan', 
+                            render: (r: any) => {
+                                const itemsText = Array.isArray(r.requestedItems) && r.requestedItems.length > 0
+                                    ? r.requestedItems.map((i: any) => i.description || '').filter(Boolean).join(', ')
+                                    : '';
+                                const desc = r.notes || itemsText || r.paidTo || '-';
+                                return (
+                                    <span className="font-medium line-clamp-1 max-w-[220px]" title={desc}>
+                                        {desc}
+                                    </span>
+                                );
+                            }
+                        },
+                        { 
+                            header: 'Total Nilai', 
+                            render: (r: any) => {
+                                const isUSD = String(r.currency || 'IDR').toUpperCase().includes('USD') || String(r.currency || '').toUpperCase() === 'DOLLAR';
+                                return (
+                                    <span className="font-mono font-bold text-foreground">
+                                        {isUSD 
+                                            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(r.grandTotal || 0)
+                                            : formatIDR(r.grandTotal || 0)}
+                                    </span>
+                                );
+                            }
+                        },
                         { header: 'Status', accessor: 'status' }
                     ]}
                 />
@@ -734,10 +789,54 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     drilldownTitle="Rincian Pengadaan Menunggu Approval"
                     drilldownDescription="Pengajuan pengadaan dalam tahap approval berjenjang."
                     drilldownColumns={[
-                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{r.reqNumber}</span> },
-                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
-                        { header: 'Keperluan', render: (r: any) => <span className="font-semibold">{r.purpose || '-'}</span> },
-                        { header: 'Estimasi Nilai', render: (r: any) => <span className="font-bold text-foreground">{formatIDR(r.grandTotal || 0)}</span> },
+                        { 
+                            header: 'No PR', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+                                    PR-{String(r.id).padStart(4, '0')}
+                                </span>
+                            ) 
+                        },
+                        { 
+                            header: 'Pemohon', 
+                            render: (r: any) => {
+                                const name = r.requesterFullname || r.requesterUsername || 'User';
+                                const dept = r.department ? r.department.trim() : '';
+                                return (
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-foreground">{name}</span>
+                                        {dept && <span className="text-[10px] text-muted-foreground font-mono">{dept}</span>}
+                                    </div>
+                                );
+                            }
+                        },
+                        { 
+                            header: 'Keperluan', 
+                            render: (r: any) => {
+                                const itemsText = Array.isArray(r.requestedItems) && r.requestedItems.length > 0
+                                    ? r.requestedItems.map((i: any) => i.description || '').filter(Boolean).join(', ')
+                                    : '';
+                                const desc = r.notes || itemsText || r.paidTo || '-';
+                                return (
+                                    <span className="font-medium line-clamp-1 max-w-[220px]" title={desc}>
+                                        {desc}
+                                    </span>
+                                );
+                            }
+                        },
+                        { 
+                            header: 'Estimasi Nilai', 
+                            render: (r: any) => {
+                                const isUSD = String(r.currency || 'IDR').toUpperCase().includes('USD') || String(r.currency || '').toUpperCase() === 'DOLLAR';
+                                return (
+                                    <span className="font-mono font-bold text-foreground">
+                                        {isUSD 
+                                            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(r.grandTotal || 0)
+                                            : formatIDR(r.grandTotal || 0)}
+                                    </span>
+                                );
+                            }
+                        },
                         { header: 'Status Saat Ini', accessor: 'status' }
                     ]}
                 />
@@ -753,10 +852,39 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     drilldownTitle="Rincian Pengadaan Menunggu Approval Anda"
                     drilldownDescription="Daftar pengajuan PR yang saat ini membutuhkan tindakan persetujuan dari akun Anda."
                     drilldownColumns={[
-                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">{r.reqNumber}</span> },
-                        { header: 'Pemohon', render: (r: any) => `${r.requesterName} (${r.department || '-'})` },
-                        { header: 'Tgl Butuh', render: (r: any) => r.requiredDate ? new Date(r.requiredDate).toLocaleDateString('id-ID') : '-' },
-                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold">{formatIDR(r.grandTotal || 0)}</span> },
+                        { 
+                            header: 'No PR', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                                    PR-{String(r.id).padStart(4, '0')}
+                                </span>
+                            ) 
+                        },
+                        { 
+                            header: 'Pemohon', 
+                            render: (r: any) => {
+                                const name = r.requesterFullname || r.requesterUsername || 'User';
+                                const dept = r.department ? r.department.trim() : '';
+                                return (
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-foreground">{name}</span>
+                                        {dept && <span className="text-[10px] text-muted-foreground font-mono">{dept}</span>}
+                                    </div>
+                                );
+                            }
+                        },
+                        { 
+                            header: 'Tgl Pengajuan', 
+                            render: (r: any) => r.requestDate ? new Date(r.requestDate).toLocaleDateString('id-ID') : '-' 
+                        },
+                        { 
+                            header: 'Total Nilai', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-foreground">
+                                    {formatIDR(r.grandTotal || 0)}
+                                </span>
+                            ) 
+                        },
                         { header: 'Status', accessor: 'status' }
                     ]}
                 />
@@ -772,10 +900,30 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     drilldownTitle="Rincian Antrean Pengadaan Berjalan (Global Queue)"
                     drilldownDescription="Semua purchase requisition yang sedang berproses pada alur persetujuan."
                     drilldownColumns={[
-                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold">{r.reqNumber}</span> },
-                        { header: 'Pemohon', accessor: 'requesterName' },
-                        { header: 'Departemen', accessor: 'department' },
-                        { header: 'Total', render: (r: any) => formatIDR(r.grandTotal || 0) },
+                        { 
+                            header: 'No PR', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-foreground">
+                                    PR-{String(r.id).padStart(4, '0')}
+                                </span>
+                            ) 
+                        },
+                        { 
+                            header: 'Pemohon', 
+                            render: (r: any) => {
+                                const name = r.requesterFullname || r.requesterUsername || 'User';
+                                const dept = r.department ? r.department.trim() : '';
+                                return `${name} ${dept ? `(${dept})` : ''}`;
+                            }
+                        },
+                        { 
+                            header: 'Total Nilai', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-foreground">
+                                    {formatIDR(r.grandTotal || 0)}
+                                </span>
+                            ) 
+                        },
                         { header: 'Status', accessor: 'status' }
                     ]}
                 />
@@ -791,10 +939,39 @@ export const PurchasePlanManager: React.FC<PurchasePlanManagerProps> = ({ curren
                     drilldownTitle="Rincian Pengadaan Tuntas Disetujui (Fulfilled)"
                     drilldownDescription="Pengajuan pembelian yang telah melewati seluruh level approval."
                     drilldownColumns={[
-                        { header: 'No PR', render: (r: any) => <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{r.reqNumber}</span> },
-                        { header: 'Pemohon', accessor: 'requesterName' },
-                        { header: 'Keperluan', accessor: 'purpose' },
-                        { header: 'Total Nilai', render: (r: any) => <span className="font-bold">{formatIDR(r.grandTotal || 0)}</span> },
+                        { 
+                            header: 'No PR', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                                    PR-{String(r.id).padStart(4, '0')}
+                                </span>
+                            ) 
+                        },
+                        { 
+                            header: 'Pemohon', 
+                            render: (r: any) => {
+                                const name = r.requesterFullname || r.requesterUsername || 'User';
+                                const dept = r.department ? r.department.trim() : '';
+                                return `${name} ${dept ? `(${dept})` : ''}`;
+                            }
+                        },
+                        { 
+                            header: 'Keperluan', 
+                            render: (r: any) => {
+                                const itemsText = Array.isArray(r.requestedItems) && r.requestedItems.length > 0
+                                    ? r.requestedItems.map((i: any) => i.description || '').filter(Boolean).join(', ')
+                                    : '';
+                                return r.notes || itemsText || r.paidTo || '-';
+                            }
+                        },
+                        { 
+                            header: 'Total Nilai', 
+                            render: (r: any) => (
+                                <span className="font-mono font-bold text-foreground">
+                                    {formatIDR(r.grandTotal || 0)}
+                                </span>
+                            ) 
+                        },
                         { header: 'Status', accessor: 'status' }
                     ]}
                 />
