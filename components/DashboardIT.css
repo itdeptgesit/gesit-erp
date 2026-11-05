@@ -1739,5 +1739,149 @@
   color: #f2f4f7 !important;
 }
 
+/* Spektrum Latensi & Diagnosis Modern Styling */
+.gesit-dash .spec-box {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+[data-theme="dark"] .gesit-dash .spec-box,
+.dark .gesit-dash .spec-box {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.gesit-dash .spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0 10px 0;
+}
+.gesit-dash .spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.gesit-dash .spec-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.gesit-dash .spec-label {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+.gesit-dash .spec-val {
+  font-weight: 700;
+  font-size: 11.5px;
+  font-family: monospace;
+}
+.gesit-dash .spec-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.gesit-dash .spec-bar-progress {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gesit-dash .spec-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Health & Uptime Card */
+.gesit-dash .uptime-big-val {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: #12b76a;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 8px 0 2px 0;
+}
+.gesit-dash .uptime-big-val span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.gesit-dash .uptime-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #12b76a;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.gesit-dash .health-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 12px;
+  background: var(--card-subtle, rgba(0,0,0,0.02));
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+[data-theme="dark"] .gesit-dash .health-checklist,
+.dark .gesit-dash .health-checklist {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.gesit-dash .health-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+.gesit-dash .health-check-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.gesit-dash .health-btn-ping {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+.gesit-dash .health-btn-ping:hover {
+  background: rgba(47, 107, 255, 0.08);
+  border-color: #2f6bff;
+  color: #2f6bff;
+}
+
 
 
