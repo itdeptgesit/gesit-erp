@@ -105,7 +105,30 @@
 .gesit-dash .chart-val{font-size:22px;font-weight:800;margin:10px 0 2px 0;letter-spacing:-0.4px;display:flex;align-items:baseline;gap:6px}
 .gesit-dash .chart-val span{font-size:12px;font-weight:500;color:var(--muted)}
 .gesit-dash .chart-subtext{font-size:11px;font-weight:600;color:var(--green);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.gesit-dash .chart-svg{width:100%;height:92px;margin:8px 0 4px 0}
+.gesit-dash .chart-svg{width:100%;height:92px;margin:8px 0 4px 0;overflow:visible}
+.gesit-dash .chart-svg path[stroke]{
+  stroke-dasharray:600;
+  stroke-dashoffset:600;
+  animation:chartLineDraw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.gesit-dash .chart-svg path[fill]{
+  animation:chartAreaFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.gesit-dash .chart-svg circle{
+  animation:chartDotPulse 2s ease-in-out infinite;
+  transform-origin:center;
+}
+@keyframes chartLineDraw{
+  to{stroke-dashoffset:0}
+}
+@keyframes chartAreaFade{
+  0%{opacity:0;transform:translateY(6px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes chartDotPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.4);opacity:0.75}
+}
 .gesit-dash .chart-x{display:flex;justify-content:space-between;font-size:10.5px;font-family:monospace;color:var(--faint);margin-top:6px;padding:0 2px}
 .gesit-dash .chart-cap{font-size:11px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
 
@@ -280,6 +303,15 @@
 .gesit-dash .card .fineprint{font-size:12px;color:var(--muted);line-height:1.55;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
 .gesit-dash .donut-flex{display:flex;align-items:center;gap:22px;margin-top:14px}
 .gesit-dash .donut-box{position:relative;width:172px;height:172px;flex:0 0 172px;margin:0 auto}
+.gesit-dash .donut-box svg circle,
+.gesit-dash .donut svg circle{
+  transition:stroke-dasharray 1s cubic-bezier(0.16, 1, 0.3, 1), stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+  animation:donutDraw 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes donutDraw{
+  0%{stroke-dashoffset:415;opacity:0.2}
+  100%{opacity:1}
+}
 .gesit-dash .donut-box .pct-lab{position:absolute;font-size:13px;font-weight:800}
 .gesit-dash .dleg{display:grid;gap:10px;font-size:12.5px;flex:1}
 .gesit-dash .dleg i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:7px}
@@ -377,10 +409,43 @@
 .gesit-dash .wk-chart{display:flex;align-items:flex-end;gap:10px;height:185px;margin-top:14px;border-bottom:1px solid var(--line);padding:0 2px}
 .gesit-dash .wk{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
 .gesit-dash .wk-bars{flex:1;display:flex;align-items:flex-end;gap:5px}
-.gesit-dash .wk-bar{width:16px;border-radius:5px 5px 0 0;position:relative}
+.gesit-dash .wk-bar{
+  width:16px;
+  border-radius:5px 5px 0 0;
+  position:relative;
+  transform-origin:bottom;
+  transition:height 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+  animation:wkBarGrow 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 .gesit-dash .wk-bar.in{background:#a9c2f5}
 .gesit-dash .wk-bar.done{background:#101828}
-.gesit-dash .wk-bar:hover::after{content:attr(data-v);position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:var(--ink)}
+.gesit-dash .wk-bar:hover{
+  transform:scaleY(1.04) translateY(-2px);
+  filter:brightness(1.15);
+  cursor:pointer;
+  z-index:10;
+}
+.gesit-dash .wk-bar:hover::after{
+  content:attr(data-v);
+  position:absolute;
+  top:-22px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:10.5px;
+  font-weight:800;
+  color:var(--ink);
+  background:var(--card);
+  padding:1px 6px;
+  border-radius:4px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  border:1px solid var(--line);
+  white-space:nowrap;
+  pointer-events:none;
+}
+@keyframes wkBarGrow{
+  0%{transform:scaleY(0);opacity:0}
+  100%{transform:scaleY(1);opacity:1}
+}
 .gesit-dash .wk span{font-size:11px;color:var(--faint)}
 .gesit-dash .axis-note{font-size:11px;color:var(--faint);margin-top:9px}
 .gesit-dash .tix-panel{background:#fbfbfc;border:1px solid var(--line);border-radius:18px;padding:17px 18px;align-self:start;margin-top:14px}

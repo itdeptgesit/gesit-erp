@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Calendar, Star, Check as CheckIcon, AlertCircle } from "lucide-react";
 import { useGesitTheme } from "../lib/useGesitTheme";
 import { supabase } from "../lib/supabaseClient";
 import { isGoogleConnected, ensureGoogleConnected, fetchEventsForMonth, signInWithGoogle } from "../lib/googleCalendar";
@@ -1494,7 +1495,15 @@ export default function DashboardIT({
                   </div>
                 ) 
               },
-              { header: 'Rating', render: (t: any) => t.rating ? `⭐ ${t.rating}/5` : 'Selesai', className: 'w-24' },
+              { 
+                header: 'Rating', 
+                render: (t: any) => t.rating ? (
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-500">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {t.rating}/5
+                  </span>
+                ) : 'Selesai', 
+                className: 'w-24' 
+              },
               { header: 'Status', accessor: 'status', className: 'w-24 text-right' }
             ]}
           />
@@ -1596,7 +1605,7 @@ export default function DashboardIT({
               <div className="flow-split">
                 <div>
                   <div className="wk-chart">
-                    {dynamicWeekData.map((w) => (
+                    {dynamicWeekData.map((w, idx) => (
                       <div className="wk" key={w.d + (w.date || '')}>
                         <div className="wk-bars">
                           <div 
@@ -1604,7 +1613,8 @@ export default function DashboardIT({
                             data-v={w.masuk} 
                             style={{ 
                               height: w.masuk > 0 ? `${Math.max(14, Math.round((w.masuk / dynamicMaxWeek) * 100))}%` : "4px",
-                              opacity: w.masuk > 0 ? 1 : 0.25 
+                              opacity: w.masuk > 0 ? 1 : 0.25,
+                              animationDelay: `${idx * 60}ms`
                             }} 
                             title={`${w.d} (${w.date}): ${w.masuk} aktivitas & tiket masuk`}
                           />
@@ -1613,7 +1623,8 @@ export default function DashboardIT({
                             data-v={w.selesai} 
                             style={{ 
                               height: w.selesai > 0 ? `${Math.max(14, Math.round((w.selesai / dynamicMaxWeek) * 100))}%` : "4px",
-                              opacity: w.selesai > 0 ? 1 : 0.25 
+                              opacity: w.selesai > 0 ? 1 : 0.25,
+                              animationDelay: `${idx * 60 + 30}ms`
                             }} 
                             title={`${w.d} (${w.date}): ${w.selesai} tuntas diselesaikan`}
                           />
@@ -1691,8 +1702,14 @@ export default function DashboardIT({
                 <div className="rowline"><span>Kategori Terbanyak</span><b>{topCategoryLabel}</b></div>
                 <div className="rowline">
                   <span>Kepuasan (CSAT)</span>
-                  <b style={{ color: Number(avgRating) > 0 ? "#12b76a" : "inherit" }}>
-                    {Number(avgRating) > 0 ? `⭐ ${avgRating}/5` : "100% SLA Tercapai"}
+                  <b>
+                    {Number(avgRating) > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-amber-500 font-bold">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {avgRating}/5
+                      </span>
+                    ) : (
+                      "100% SLA Tercapai"
+                    )}
                   </b>
                 </div>
               </div>
@@ -1946,8 +1963,8 @@ export default function DashboardIT({
             <div className="card">
               <div className="rail-head"><h3>Perlu Perhatian</h3><a href="#" onClick={(e) => { e.preventDefault(); handleNav('/helpdesk'); }}>Pengingat</a></div>
               <div className="rem-item">
-                <span className="ric" style={{ background: firstOpenTicket ? "#f04438" : "#12b76a" }}>
-                  {firstOpenTicket ? "!" : "✓"}
+                <span className="ric" style={{ background: firstOpenTicket ? "#f04438" : "#12b76a", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  {firstOpenTicket ? "!" : <CheckIcon style={{ width: 12, height: 12, strokeWidth: 3 }} />}
                 </span>
                 {firstOpenTicket ? (
                   <div>
@@ -2599,8 +2616,10 @@ export default function DashboardIT({
                     );
                   })
                 ) : (
-                  <div style={{ padding: "48px 16px", textAlign: "center", color: "#888", fontSize: 13, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, height: "100%" }}>
-                    <div style={{ fontSize: 24 }}>📅</div>
+                  <div style={{ padding: "48px 16px", textAlign: "center", color: "#888", fontSize: 13, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, height: "100%" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--card-subtle, rgba(0,0,0,0.05))", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
+                      <Calendar style={{ width: 22, height: 22 }} />
+                    </div>
                     <div style={{ fontWeight: 500, color: "var(--foreground, #333)" }}>
                       Tidak ada agenda meeting {isSelectedDateToday ? "hari ini" : "pada tanggal yang dipilih"}.
                     </div>
