@@ -15,7 +15,9 @@ import {
   ArrowUpRight, 
   Zap, 
   Cpu,
-  Database as DatabaseIcon
+  Database as DatabaseIcon,
+  Ticket,
+  CheckCircle2
 } from "lucide-react";
 import { useGesitTheme } from "../lib/useGesitTheme";
 import { supabase } from "../lib/supabaseClient";
@@ -831,6 +833,8 @@ export default function DashboardIT({
   const [dbPurchaseRecords, setDbPurchaseRecords] = useState<any[]>([]);
   const [dbAssets, setDbAssets] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [trendRangeDays, setTrendRangeDays] = useState<7 | 14>(7);
 
   // Jadwal Meeting & Google Calendar state
   const [isGCalConnected, setIsGCalConnected] = useState(() => isGoogleConnected());
@@ -1160,15 +1164,15 @@ export default function DashboardIT({
     return result;
   })();
 
-  // Hitungan grafik aktivitas mingguan (7 hari terakhir) dinamis dari activity_logs & helpdesk_tickets
+  // Hitungan grafik aktivitas mingguan (7 atau 14 hari terakhir) dinamis dari activity_logs & helpdesk_tickets
   const dynamicWeekData = (() => {
     const daysLabel = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
     const now = new Date();
     const result = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = trendRangeDays - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const dayName = daysLabel[d.getDay()];
+      const dayName = trendRangeDays === 14 ? `${d.getDate()}/${d.getMonth() + 1}` : daysLabel[d.getDay()];
       const dateStr = d.toISOString().slice(0, 10);
       
       const dayLogs = dbActivities.filter((act) => act.created_at && act.created_at.startsWith(dateStr));
@@ -1475,24 +1479,68 @@ export default function DashboardIT({
       )}
 
       <main className="wrap">
-        {/* ================= HEADER SAPAAN & AKSI ================= */}
+        {/* ================= HEADER SAPAAN & AKSI EKSEKUTIF ================= */}
         <div className="head">
           <div className="head-row">
             <div>
+              <div className="head-meta">
+                <span className="live-pill">
+                  <span className="live-pill-dot" />
+                  Sistem Normal · SLA 100%
+                </span>
+                <span className="date-pill">
+                  <Calendar style={{ width: 12, height: 12 }} />
+                  {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                <span className="date-pill">
+                  Minggu Ini: {getWeekRangeLabel()}
+                </span>
+              </div>
               <h1>{getGreeting()}, {displayName}</h1>
-              <p>Monitoring operasional IT — tiket, aktivitas tim, infrastruktur, dan layanan online dalam satu layar.</p>
+              <p>Pusat komando operasional IT — pantau antrean tiket, rekapitulasi weekly meeting, dan infrastruktur jaringan secara real-time.</p>
             </div>
-            <a
-              className="btn-filter"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                fetchLiveMetrics();
-              }}
-              title="Segarkan data metrik dashboard"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>Refresh
-            </a>
+            <div className="head-actions">
+              <button
+                type="button"
+                className="btn-quick-primary"
+                onClick={() => handleNav('/activity')}
+                title="Buka Mode Review Weekly Meeting & Activity Logs"
+              >
+                <Calendar style={{ width: 14, height: 14 }} />
+                Review Weekly Meeting
+              </button>
+              <button
+                type="button"
+                className="btn-quick"
+                onClick={() => handleNav('/helpdesk')}
+                title="Buka Helpdesk & Ticketing"
+              >
+                <Ticket style={{ width: 14, height: 14 }} />
+                Helpdesk ({openTickets})
+              </button>
+              <button
+                type="button"
+                className="btn-quick"
+                onClick={() => handleNav('/weekly')}
+                title="Buka Weekly Planner"
+              >
+                <CheckCircle2 style={{ width: 14, height: 14 }} />
+                Planner
+              </button>
+              <button
+                type="button"
+                className="btn-filter"
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  await fetchLiveMetrics();
+                  setTimeout(() => setIsRefreshing(false), 400);
+                }}
+                title="Segarkan data metrik dashboard"
+              >
+                <RefreshCw style={{ width: 13.5, height: 13.5 }} className={isRefreshing ? "animate-spin" : ""} />
+                {isRefreshing ? "Memuat..." : "Refresh"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1660,11 +1708,36 @@ export default function DashboardIT({
                 <div>
                   <h3>Aktivitas IT — Tren Mingguan</h3>
                   <div className="legend">
-                    <span><i style={{ background: "var(--blue)" }} />Aktivitas Masuk</span>
-                    <span><i style={{ background: "var(--bar-done, #101828)" }} />Aktivitas Selesai</span>
+                    <span><i style={{ background: "var(--wk-in, #93c5fd)" }} />Aktivitas Masuk</span>
+                    <span><i style={{ background: "var(--blue)" }} />Aktivitas Selesai</span>
                   </div>
                 </div>
-                <span className="mini-select">7 Hari Terakhir <Chev /></span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div className="seg-tabs">
+                    <button
+                      type="button"
+                      className={`seg-tab ${trendRangeDays === 7 ? "active" : ""}`}
+                      onClick={() => setTrendRangeDays(7)}
+                    >
+                      7 Hari
+                    </button>
+                    <button
+                      type="button"
+                      className={`seg-tab ${trendRangeDays === 14 ? "active" : ""}`}
+                      onClick={() => setTrendRangeDays(14)}
+                    >
+                      14 Hari
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="mini-select"
+                    onClick={() => handleNav('/activity')}
+                    title="Buka halaman Activity Logs lengkap"
+                  >
+                    Buka Log
+                  </button>
+                </div>
               </div>
               <div className="flow-split">
                 <div>
@@ -1678,7 +1751,7 @@ export default function DashboardIT({
                             style={{ 
                               height: w.masuk > 0 ? `${Math.max(14, Math.round((w.masuk / dynamicMaxWeek) * 100))}%` : "4px",
                               opacity: w.masuk > 0 ? 1 : 0.25,
-                              animationDelay: `${idx * 60}ms`
+                              animationDelay: `${idx * 45}ms`
                             }} 
                             title={`${w.d} (${w.date}): ${w.masuk} aktivitas & tiket masuk`}
                           />
@@ -1688,7 +1761,7 @@ export default function DashboardIT({
                             style={{ 
                               height: w.selesai > 0 ? `${Math.max(14, Math.round((w.selesai / dynamicMaxWeek) * 100))}%` : "4px",
                               opacity: w.selesai > 0 ? 1 : 0.25,
-                              animationDelay: `${idx * 60 + 30}ms`
+                              animationDelay: `${idx * 45 + 25}ms`
                             }} 
                             title={`${w.d} (${w.date}): ${w.selesai} tuntas diselesaikan`}
                           />
@@ -1697,7 +1770,16 @@ export default function DashboardIT({
                       </div>
                     ))}
                   </div>
-                  <div className="axis-note">Data aktual aktivitas & tiket per hari dalam 7 hari terakhir.</div>
+                  <div className="axis-note">
+                    <span>Data aktual aktivitas &amp; tiket per hari dalam {trendRangeDays} hari terakhir.</span>
+                    <a
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); handleNav('/activity'); }}
+                      style={{ color: "var(--blue)", fontWeight: 600 }}
+                    >
+                      Review Weekly Meeting →
+                    </a>
+                  </div>
                 </div>
                 <div className="tix-panel">
                   <div className="tix-title">Tiket Sekilas</div>
@@ -1742,7 +1824,14 @@ export default function DashboardIT({
               <div className="card">
                 <div className="head2">
                   <div><h3>Status Tiket</h3><div className="sub">Distribusi tiket bantuan teknis</div></div>
-                  <span className="mini-select">Semua <Chev /></span>
+                  <button
+                    type="button"
+                    className="mini-select"
+                    onClick={() => handleNav('/helpdesk')}
+                    title="Kelola semua tiket di Helpdesk"
+                  >
+                    Kelola Tiket
+                  </button>
                 </div>
                 <div className="donut-flex">
                   <div className="donut-box">
@@ -2073,28 +2162,30 @@ export default function DashboardIT({
 
             <div className="card">
               <div className="rail-head">
-                <h3>Aktivitas Terakhir</h3>
-                <a href="#" onClick={(e) => { e.preventDefault(); handleNav('/activity'); }}>Lihat Semua</a>
+                <div>
+                  <h3>Aktivitas Terakhir</h3>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>Ringkasan Weekly Meeting</div>
+                </div>
+                <a href="#" onClick={(e) => { e.preventDefault(); handleNav('/activity'); }}>Review Mingguan →</a>
               </div>
-              <div style={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 8 }}>
                 {dbActivities.length > 0 ? (
                   dbActivities.slice(0, 4).map((act, i) => {
                     const title = act.activity_name || act.activityName || act.action || act.activity || act.description || "Aktivitas Sistem";
-                    const isDone = act.status === "Completed" || act.status === "Done";
+                    const handler = act.it_personnel || act.itPersonnel || act.handler || "Tim IT";
+                    const remark = act.remarks || act.remark || act.notes || "";
+                    const isDone = act.status === "Completed" || act.status === "Done" || act.status === "Closed";
                     const timeStr = act.created_at ? new Date(act.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "Baru";
                     return (
                       <div 
                         key={act.id || i}
-                        style={{ 
-                          padding: "8px 0", 
-                          borderBottom: i < 3 ? "1px dashed var(--line, #e7ecf3)" : "none",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 3
-                        }}
+                        className="act-feed-item"
+                        onClick={() => handleNav('/activity')}
+                        style={{ cursor: "pointer" }}
+                        title="Klik untuk membuka di Activity Logs"
                       >
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--foreground, #101828)" }} className="truncate" title={title}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }} className="truncate">
                             {title}
                           </span>
                           <span 
@@ -2102,17 +2193,24 @@ export default function DashboardIT({
                               fontSize: 10, 
                               fontWeight: 700, 
                               padding: "1px 6px", 
-                              borderRadius: 4, 
+                              borderRadius: 5, 
                               flexShrink: 0,
-                              background: isDone ? "rgba(18, 183, 106, 0.12)" : "rgba(247, 144, 9, 0.12)",
-                              color: isDone ? "#12b76a" : "#f79009"
+                              background: isDone ? "var(--green-soft)" : "var(--amber-soft)",
+                              color: isDone ? "#059669" : "#d97706"
                             }}
                           >
-                            {isDone ? "Selesai" : "Proses"}
+                            {isDone ? "Tuntas" : "Proses"}
                           </span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "var(--muted, #667085)" }}>
-                          <span>{act.requester || "IT"} {act.category ? `· ${act.category}` : ""}</span>
+                        {remark && (
+                          <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.35 }} className="line-clamp-1">
+                            {remark}
+                          </div>
+                        )}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, color: "var(--blue)" }}>
+                            PIC: {handler}
+                          </span>
                           <span>{timeStr}</span>
                         </div>
                       </div>
@@ -2120,10 +2218,10 @@ export default function DashboardIT({
                   })
                 ) : (
                   <>
-                    <div className="log-item">Progress replacement copier HP</div>
-                    <div className="log-item">Pengembangan Absen Gesit</div>
-                    <div className="log-item">Koordinasi vendor CCTV Sircon73</div>
-                    <div className="log-item">Pengembangan Sistem CSL</div>
+                    <div className="act-feed-item">Progress replacement copier HP</div>
+                    <div className="act-feed-item">Pengembangan Absen Gesit</div>
+                    <div className="act-feed-item">Koordinasi vendor CCTV Sircon73</div>
+                    <div className="act-feed-item">Pengembangan Sistem CSL</div>
                   </>
                 )}
               </div>
@@ -2800,12 +2898,12 @@ export default function DashboardIT({
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleNav('/purchases');
+                  handleNav('/purchase-record');
                 }}
                 className="mini-select"
                 style={{ textDecoration: "none", color: "inherit" }}
               >
-                Semua Waktu
+                Kelola Purchase
               </a>
             </div>
             <div className="fin-kpis">

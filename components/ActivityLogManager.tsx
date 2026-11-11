@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
     Search, Filter, Plus, FileText, CheckCircle2, Clock,
-    AlertTriangle, X, ChevronLeft, ChevronRight, MoreHorizontal,
+    AlertTriangle, X, ChevronLeft, ChevronRight, ChevronDown, Check, MoreHorizontal,
     Download, Trash2, Edit, Eye, User, Calendar,
     Presentation, XCircle, Play, Maximize2, Minimize2,
     Zap, RefreshCcw, BarChart3, Sun, Moon, ArrowUpRight,
     TrendingUp, Activity, LayoutDashboard, Globe, Database,
     FileSpreadsheet, SlidersHorizontal, ChevronsLeft, ChevronsRight,
-    ClipboardList, AlertCircle, Loader2, Mic, Bell, Info, FilterX
+    ClipboardList, AlertCircle, Loader2, Mic, Bell, Info, FilterX, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../translations';
@@ -31,7 +31,6 @@ import { ModalWrapper } from './ui/ModalWrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { NativeSelect } from '@/components/ui/native-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -114,45 +113,502 @@ const CategoryBadge = ({ category }: { category: string }) => {
     );
 };
 
-// ─── Priority Badge ────────────────────────────────────────────────────────────
+// ─── Clean Enterprise Filter Dropdown (Replaces NativeSelect) ─────────────────
 
-const PriorityBadge = ({ type }: { type: string }) => {
-    switch (type) {
-        case 'Critical':
-            return (
-                <Badge variant="outline" className="text-rose-600 dark:text-rose-400 border-none bg-rose-500/10 dark:bg-rose-500/15 font-bold uppercase tracking-wider text-[9px] px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-full shadow-sm relative overflow-visible">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping absolute" style={{ width: '6px', height: '6px', left: '10px' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600 relative" />
-                    {type}
-                </Badge>
-            );
-        case 'Major':
-            return (
-                <Badge variant="outline" className="text-orange-600 dark:text-orange-400 border-none bg-orange-500/10 dark:bg-orange-500/15 font-bold uppercase tracking-wider text-[9px] px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-full shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                    {type}
-                </Badge>
-            );
-        case 'Minor':
-            return (
-                <Badge variant="outline" className="text-blue-600 dark:text-blue-400 border-none bg-blue-500/10 dark:bg-blue-500/15 font-bold uppercase tracking-wider text-[9px] px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-full shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    {type}
-                </Badge>
-            );
-        default:
-            return (
-                <Badge variant="outline" className="text-slate-600 dark:text-slate-400 border-none bg-slate-500/10 dark:bg-slate-500/15 font-bold uppercase tracking-wider text-[9px] px-2.5 py-1 flex items-center gap-1.5 w-fit rounded-full shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                    {type}
-                </Badge>
-            );
-    }
+const FilterDropdown = ({
+    value,
+    onChange,
+    options,
+    icon,
+    className
+}: {
+    value: string;
+    onChange: (val: string) => void;
+    options: { value: string; label: string }[];
+    icon?: React.ReactNode;
+    className?: string;
+}) => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const onClickOutside = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpen(false);
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClickOutside);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [open]);
+
+    const currentLabel = options.find(o => o.value === value)?.label || value;
+
+    return (
+        <div ref={ref} className={cn("relative", className)}>
+            <button
+                type="button"
+                onClick={() => setOpen(v => !v)}
+                className={cn(
+                    "h-9 w-full px-3 rounded-lg border text-xs font-medium flex items-center justify-between gap-2 transition-all cursor-pointer select-none",
+                    open
+                        ? "border-slate-400 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 ring-2 ring-slate-900/5 dark:ring-white/10"
+                        : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/70 text-slate-700 dark:text-zinc-200"
+                )}
+            >
+                <span className="flex items-center gap-1.5 truncate">
+                    {icon && <span className="text-slate-400 dark:text-zinc-500 shrink-0">{icon}</span>}
+                    <span className="truncate">{currentLabel}</span>
+                </span>
+                <ChevronDown size={14} className={cn("text-slate-400 dark:text-zinc-500 shrink-0 transition-transform duration-150", open && "rotate-180")} />
+            </button>
+
+            {open && (
+                <div className="absolute right-0 top-full mt-1.5 min-w-[190px] w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-0.5">
+                        {options.map(opt => {
+                            const isSelected = opt.value === value;
+                            return (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(opt.value);
+                                        setOpen(false);
+                                    }}
+                                    className={cn(
+                                        "w-full px-2.5 py-1.5 rounded-lg text-xs text-left flex items-center justify-between gap-2 transition-colors cursor-pointer",
+                                        isSelected
+                                            ? "bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-semibold"
+                                            : "text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60"
+                                    )}
+                                >
+                                    <span className="truncate">{opt.label}</span>
+                                    {isSelected && <Check size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─── Interactive Date Range Calendar Picker ───────────────────────────────────
+
+const MONTH_NAMES_ID = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+const DAY_HEADERS_ID = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+const toYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
+
+const DateRangeCalendarPicker = ({
+    startDate,
+    endDate,
+    dateFilterType,
+    onSelectPreset,
+    onSelectCustomRange,
+    onShiftDays,
+    formatShortRange,
+}: {
+    startDate: string;
+    endDate: string;
+    dateFilterType: string;
+    onSelectPreset: (preset: string) => void;
+    onSelectCustomRange: (start: string, end: string) => void;
+    onShiftDays: (days: number) => void;
+    formatShortRange: (s: string, e: string) => string;
+}) => {
+    const [open, setOpen] = useState(false);
+    const [selectingStart, setSelectingStart] = useState<string | null>(null);
+    const [hoverDate, setHoverDate] = useState<string | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Base month shown on the left calendar (right calendar shows baseMonth + 1)
+    const [baseMonth, setBaseMonth] = useState<Date>(() => {
+        if (endDate) {
+            const d = new Date(endDate + 'T00:00:00');
+            return new Date(d.getFullYear(), d.getMonth() - 1, 1);
+        }
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    });
+
+    useEffect(() => {
+        if (!open) {
+            setSelectingStart(null);
+            setHoverDate(null);
+            return;
+        }
+        const onClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpen(false);
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClickOutside);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [open]);
+
+    const todayStr = useMemo(() => toYMD(new Date()), []);
+
+    const presets = [
+        { key: 'Last7Days', label: '7 Hari Terakhir', desc: '1 minggu ke belakang' },
+        { key: 'LastWeek', label: 'Minggu Lalu', desc: 'Senin s/d Minggu lalu' },
+        { key: 'Week', label: 'Minggu Ini', desc: 'Senin s/d Minggu ini' },
+        { key: 'Today', label: 'Hari Ini', desc: 'Aktivitas hari ini' },
+        { key: 'Month', label: 'Bulan Ini', desc: '1 bulan berjalan' },
+        { key: 'All', label: 'Semua Waktu', desc: 'Tampilkan seluruh log' },
+    ];
+
+    const presetBadgeLabel: Record<string, string> = {
+        Last7Days: '7 Hari',
+        LastWeek: 'Minggu Lalu',
+        Week: 'Minggu Ini',
+        Today: 'Hari Ini',
+        Month: 'Bulan Ini',
+        All: 'Semua',
+        Custom: 'Custom',
+    };
+
+    const handleDayClick = (dateStr: string) => {
+        if (!selectingStart) {
+            setSelectingStart(dateStr);
+            onSelectCustomRange(dateStr, dateStr);
+        } else {
+            const s = dateStr < selectingStart ? dateStr : selectingStart;
+            const e = dateStr < selectingStart ? selectingStart : dateStr;
+            onSelectCustomRange(s, e);
+            setSelectingStart(null);
+            setHoverDate(null);
+        }
+    };
+
+    const effectiveRange = useMemo(() => {
+        if (selectingStart && hoverDate) {
+            return {
+                start: hoverDate < selectingStart ? hoverDate : selectingStart,
+                end: hoverDate < selectingStart ? selectingStart : hoverDate,
+            };
+        }
+        return { start: startDate, end: endDate };
+    }, [selectingStart, hoverDate, startDate, endDate]);
+
+    const dayCount = useMemo(() => {
+        if (!effectiveRange.start || !effectiveRange.end) return 0;
+        const s = new Date(effectiveRange.start + 'T00:00:00');
+        const e = new Date(effectiveRange.end + 'T00:00:00');
+        return Math.max(Math.round((e.getTime() - s.getTime()) / 86400000) + 1, 1);
+    }, [effectiveRange]);
+
+    const buildMonthCells = (year: number, month: number) => {
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        // Monday-based index (0 = Mon ... 6 = Sun)
+        const startOffset = (firstDay.getDay() + 6) % 7;
+
+        const cells: { dateStr: string; dayNum: number; isCurrentMonth: boolean }[] = [];
+
+        // Previous month trailing days
+        const prevMonthLast = new Date(year, month, 0).getDate();
+        for (let i = startOffset - 1; i >= 0; i--) {
+            const d = new Date(year, month - 1, prevMonthLast - i);
+            cells.push({ dateStr: toYMD(d), dayNum: d.getDate(), isCurrentMonth: false });
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month, d);
+            cells.push({ dateStr: toYMD(dateObj), dayNum: d, isCurrentMonth: true });
+        }
+
+        // Next month leading days to fill 42 cells (6 rows)
+        const remaining = 42 - cells.length;
+        for (let d = 1; d <= remaining; d++) {
+            const dateObj = new Date(year, month + 1, d);
+            cells.push({ dateStr: toYMD(dateObj), dayNum: d, isCurrentMonth: false });
+        }
+
+        return cells;
+    };
+
+    const leftYear = baseMonth.getFullYear();
+    const leftMonth = baseMonth.getMonth();
+    const rightDate = new Date(leftYear, leftMonth + 1, 1);
+    const rightYear = rightDate.getFullYear();
+    const rightMonth = rightDate.getMonth();
+
+    const monthsToRender = [
+        { year: leftYear, month: leftMonth, cells: buildMonthCells(leftYear, leftMonth) },
+        { year: rightYear, month: rightMonth, cells: buildMonthCells(rightYear, rightMonth) },
+    ];
+
+    return (
+        <div ref={containerRef} className="relative inline-flex items-center">
+            {/* Connected Control Group: [ < ] [ Calendar Range Trigger ] [ > ] */}
+            <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+                <button
+                    type="button"
+                    onClick={() => onShiftDays(-7)}
+                    title="Mundur 1 minggu"
+                    aria-label="Mundur 1 minggu"
+                    className="h-9 w-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-l-lg border-r border-slate-200 dark:border-zinc-800 transition-colors cursor-pointer"
+                >
+                    <ChevronLeft size={14} />
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setOpen(v => !v)}
+                    className={cn(
+                        "h-9 px-3 flex items-center gap-2 text-xs font-medium transition-colors cursor-pointer select-none",
+                        open
+                            ? "bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-white"
+                            : "text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800/70"
+                    )}
+                >
+                    <Calendar size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="font-semibold tracking-tight whitespace-nowrap">
+                        {formatShortRange(startDate, endDate)}
+                    </span>
+                    <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                        {presetBadgeLabel[dateFilterType] || 'Periode'}
+                    </span>
+                    <ChevronDown size={13} className={cn("text-slate-400 transition-transform duration-150", open && "rotate-180")} />
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => onShiftDays(7)}
+                    title="Maju 1 minggu"
+                    aria-label="Maju 1 minggu"
+                    className="h-9 w-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-r-lg border-l border-slate-200 dark:border-zinc-800 transition-colors cursor-pointer"
+                >
+                    <ChevronRight size={14} />
+                </button>
+            </div>
+
+            {/* Floating Calendar Popover */}
+            {open && (
+                <div className="absolute right-0 top-full mt-2 z-50 w-[calc(100vw-2rem)] sm:w-[680px] rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex flex-col sm:flex-row">
+                        {/* Left Sidebar: Quick Presets */}
+                        <div className="sm:w-44 border-b sm:border-b-0 sm:border-r border-slate-100 dark:border-zinc-800 p-2.5 bg-slate-50/60 dark:bg-zinc-950/40 flex flex-row sm:flex-col gap-1 overflow-x-auto">
+                            <div className="hidden sm:block px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                Preset Periode
+                            </div>
+                            {presets.map(p => {
+                                const active = dateFilterType === p.key;
+                                return (
+                                    <button
+                                        key={p.key}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectingStart(null);
+                                            onSelectPreset(p.key);
+                                            const now = new Date();
+                                            setBaseMonth(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+                                        }}
+                                        className={cn(
+                                            "px-2.5 py-2 rounded-lg text-left transition-all shrink-0 sm:w-full cursor-pointer",
+                                            active
+                                                ? "bg-slate-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
+                                                : "text-slate-700 dark:text-zinc-300 hover:bg-slate-200/60 dark:hover:bg-zinc-800/70"
+                                        )}
+                                    >
+                                        <div className="text-xs font-semibold leading-tight">{p.label}</div>
+                                        <div className={cn("hidden sm:block text-[10px] mt-0.5", active ? "text-slate-300 dark:text-zinc-600" : "text-slate-400 dark:text-zinc-500")}>
+                                            {p.desc}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Right Area: 2-Month Interactive Calendar */}
+                        <div className="flex-1 p-4 flex flex-col justify-between">
+                            <div>
+                                {/* Calendar Navigation Header */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBaseMonth(new Date(leftYear, leftMonth - 1, 1))}
+                                        className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                        aria-label="Bulan sebelumnya"
+                                    >
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <div className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                                        {selectingStart ? (
+                                            <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                                                Pilih tanggal akhir pada kalender...
+                                            </span>
+                                        ) : (
+                                            <span>Klik tanggal di kalender untuk pilih rentang custom</span>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBaseMonth(new Date(leftYear, leftMonth + 1, 1))}
+                                        className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                        aria-label="Bulan berikutnya"
+                                    >
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+
+                                {/* Two Month Grids */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    {monthsToRender.map((m, idx) => (
+                                        <div key={`${m.year}-${m.month}`} className={cn(idx === 0 && "hidden sm:block")}>
+                                            <div className="text-center text-xs font-bold text-slate-800 dark:text-zinc-100 mb-2.5">
+                                                {MONTH_NAMES_ID[m.month]} {m.year}
+                                            </div>
+                                            <div className="grid grid-cols-7 mb-1">
+                                                {DAY_HEADERS_ID.map(d => (
+                                                    <div key={d} className="text-center text-[10px] font-semibold text-slate-400 dark:text-zinc-500 py-1">
+                                                        {d}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-y-0.5">
+                                                {m.cells.map((cell, cIdx) => {
+                                                    const isStart = effectiveRange.start === cell.dateStr;
+                                                    const isEnd = effectiveRange.end === cell.dateStr;
+                                                    const isSelectedEdge = isStart || isEnd;
+                                                    const isInRange =
+                                                        effectiveRange.start &&
+                                                        effectiveRange.end &&
+                                                        cell.dateStr > effectiveRange.start &&
+                                                        cell.dateStr < effectiveRange.end;
+                                                    const isToday = cell.dateStr === todayStr;
+
+                                                    return (
+                                                        <button
+                                                            key={`${cell.dateStr}-${cIdx}`}
+                                                            type="button"
+                                                            onClick={() => handleDayClick(cell.dateStr)}
+                                                            onMouseEnter={() => {
+                                                                if (selectingStart) setHoverDate(cell.dateStr);
+                                                            }}
+                                                            className={cn(
+                                                                "h-8 w-full text-xs relative flex items-center justify-center transition-colors select-none cursor-pointer",
+                                                                !cell.isCurrentMonth && !isSelectedEdge && !isInRange && "text-slate-300 dark:text-zinc-700",
+                                                                cell.isCurrentMonth && !isSelectedEdge && !isInRange && "text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg",
+                                                                isInRange && "bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 font-semibold",
+                                                                isStart && effectiveRange.end && effectiveRange.start !== effectiveRange.end && "rounded-l-lg bg-slate-900 text-white dark:bg-white dark:text-zinc-900 font-bold shadow-xs",
+                                                                isEnd && effectiveRange.start && effectiveRange.start !== effectiveRange.end && "rounded-r-lg bg-slate-900 text-white dark:bg-white dark:text-zinc-900 font-bold shadow-xs",
+                                                                isSelectedEdge && effectiveRange.start === effectiveRange.end && "rounded-lg bg-slate-900 text-white dark:bg-white dark:text-zinc-900 font-bold shadow-xs"
+                                                            )}
+                                                        >
+                                                            <span>{cell.dayNum}</span>
+                                                            {isToday && !isSelectedEdge && (
+                                                                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400" />
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Popover Footer: Direct Inputs + Summary + Apply */}
+                            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <div className="flex items-center gap-1.5 text-xs">
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={e => onSelectCustomRange(e.target.value, endDate || e.target.value)}
+                                        aria-label="Tanggal mulai"
+                                        className="h-7 px-2 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-[11px] font-medium text-slate-700 dark:text-zinc-200 outline-none focus:border-blue-500"
+                                    />
+                                    <span className="text-slate-400 text-[11px]">s/d</span>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={e => onSelectCustomRange(startDate || e.target.value, e.target.value)}
+                                        aria-label="Tanggal akhir"
+                                        className="h-7 px-2 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/70 text-[11px] font-medium text-slate-700 dark:text-zinc-200 outline-none focus:border-blue-500"
+                                    />
+                                    {dayCount > 0 && (
+                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                                            {dayCount} hari
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setSelectingStart(null);
+                                            onSelectPreset('Last7Days');
+                                        }}
+                                        className="h-7 px-2.5 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                        Reset 7 Hari
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setOpen(false)}
+                                        className="h-7 px-3 text-xs font-semibold"
+                                    >
+                                        Selesai
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 };
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
-const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpen: boolean; onClose: () => void; activity: ActivityLog | null; userAvatars: any }) => {
+const ActivityDetailModal = ({
+    isOpen,
+    onClose,
+    activity,
+    userAvatars,
+    canEdit,
+    canDelete,
+    onEdit,
+    onDelete
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    activity: ActivityLog | null;
+    userAvatars: any;
+    canEdit?: boolean;
+    canDelete?: boolean;
+    onEdit?: (act: ActivityLog) => void;
+    onDelete?: (act: ActivityLog) => void;
+}) => {
     const { language, t } = useLanguage();
 
     return (
@@ -163,7 +619,6 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
                     <div className="p-5 sm:p-9 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-start bg-slate-50/50 dark:bg-zinc-900/50">
                         <div>
                             <div className="flex flex-wrap items-center gap-2 mb-3">
-                                <PriorityBadge type={activity.type} />
                                 <StatusBadge status={activity.status} />
                             </div>
                             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight uppercase">{activity.activityName}</h2>
@@ -234,7 +689,19 @@ const ActivityDetailModal = ({ isOpen, onClose, activity, userAvatars }: { isOpe
                     </div>
 
                     {/* Modal Footer */}
-                    <div className="px-5 sm:px-9 py-4 sm:py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex justify-end shrink-0">
+                    <div className="px-5 sm:px-9 py-4 sm:py-6 bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between gap-3 shrink-0">
+                        <div className="flex items-center gap-2">
+                            {canEdit && onEdit && (
+                                <Button variant="outline" size="sm" onClick={() => { onClose(); onEdit(activity); }} className="rounded-xl font-bold text-xs">
+                                    <Edit size={14} className="mr-1.5" /> Edit
+                                </Button>
+                            )}
+                            {canDelete && onDelete && (
+                                <Button variant="outline" size="sm" onClick={() => { onClose(); onDelete(activity); }} className="rounded-xl font-bold text-xs text-rose-500 hover:text-rose-600">
+                                    <Trash2 size={14} className="mr-1.5" /> Delete
+                                </Button>
+                            )}
+                        </div>
                         <button
                             onClick={onClose}
                             className="px-6 sm:px-8 py-2.5 sm:py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-xl"
@@ -541,9 +1008,27 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         }
     };
 
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [dateFilterType, setDateFilterType] = useState('All');
+    const toLocalDateStr = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
+    const getLast7DaysRange = () => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        return { start: toLocalDateStr(start), end: toLocalDateStr(end) };
+    };
+
+    const [startDate, setStartDate] = useState(() => getLast7DaysRange().start);
+    const [endDate, setEndDate] = useState(() => getLast7DaysRange().end);
+    const [dateFilterType, setDateFilterType] = useState('Last7Days');
+    const [isWeeklyMeetingMode, setIsWeeklyMeetingMode] = useState(true);
+    const [picFilter, setPicFilter] = useState('All');
+    const [priorityFocusOnly, setPriorityFocusOnly] = useState(false);
+    const [sortOngoingFirst, setSortOngoingFirst] = useState(true);
 
     useEffect(() => {
         fetchActivities();
@@ -556,27 +1041,57 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         return () => { subscription.unsubscribe(); };
     }, []);
 
-    const filteredActivities = activities.filter(activity => {
-        const term = searchTerm.toLowerCase();
-        const matchesSearch =
-            activity.activityName?.toLowerCase().includes(term) ||
-            activity.requester?.toLowerCase().includes(term) ||
-            activity.itPersonnel?.toLowerCase().includes(term) ||
-            activity.department?.toLowerCase().includes(term) ||
-            activity.category?.toLowerCase().includes(term) ||
-            activity.location?.toLowerCase().includes(term) ||
-            activity.remarks?.toLowerCase().includes(term);
-        const matchesStatus = statusFilter === 'All' || activity.status === statusFilter;
-        const matchesCategory = categoryFilter === 'All' || activity.category === categoryFilter;
+    // Base activities matching date range (for Weekly Meeting Summary breakdown)
+    const dateFilteredActivities = useMemo(() => {
+        return activities.filter(activity => {
+            if (!startDate || !endDate) return true;
+            const activityDate = toLocalDateStr(new Date(activity.createdAt));
+            return activityDate >= startDate && activityDate <= endDate;
+        });
+    }, [activities, startDate, endDate]);
 
-        let matchesDate = true;
-        if (startDate && endDate) {
-            const activityDate = new Date(activity.createdAt).toISOString().split('T')[0];
-            matchesDate = activityDate >= startDate && activityDate <= endDate;
+    const filteredActivities = useMemo(() => {
+        const list = dateFilteredActivities.filter(activity => {
+            const term = searchTerm.toLowerCase();
+            const matchesSearch =
+                activity.activityName?.toLowerCase().includes(term) ||
+                activity.requester?.toLowerCase().includes(term) ||
+                activity.itPersonnel?.toLowerCase().includes(term) ||
+                activity.department?.toLowerCase().includes(term) ||
+                activity.category?.toLowerCase().includes(term) ||
+                activity.location?.toLowerCase().includes(term) ||
+                activity.remarks?.toLowerCase().includes(term);
+
+            const matchesStatus =
+                statusFilter === 'All'
+                    ? true
+                    : statusFilter === 'Ongoing'
+                        ? (activity.status === 'In Progress' || activity.status === 'Pending')
+                        : activity.status === statusFilter;
+
+            const matchesCategory = categoryFilter === 'All' || activity.category === categoryFilter;
+            const matchesPic = picFilter === 'All' || activity.itPersonnel === picFilter;
+            const matchesPriority = !priorityFocusOnly || (activity.type === 'Critical' || activity.type === 'Major');
+
+            return matchesSearch && matchesStatus && matchesCategory && matchesPic && matchesPriority;
+        });
+
+        if (isWeeklyMeetingMode && sortOngoingFirst) {
+            const statusOrder: Record<string, number> = { 'In Progress': 0, 'Pending': 1, 'Completed': 2 };
+            const priorityOrder: Record<string, number> = { 'Critical': 0, 'Major': 1, 'Minor': 2 };
+            return [...list].sort((a, b) => {
+                const sA = statusOrder[a.status] ?? 3;
+                const sB = statusOrder[b.status] ?? 3;
+                if (sA !== sB) return sA - sB;
+                const pA = priorityOrder[a.type] ?? 3;
+                const pB = priorityOrder[b.type] ?? 3;
+                if (pA !== pB) return pA - pB;
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
         }
 
-        return matchesSearch && matchesStatus && matchesCategory && matchesDate;
-    });
+        return list;
+    }, [dateFilteredActivities, searchTerm, statusFilter, categoryFilter, picFilter, priorityFocusOnly, isWeeklyMeetingMode, sortOngoingFirst]);
 
     const handleExportExcel = () => {
         if (filteredActivities.length === 0) return;
@@ -596,7 +1111,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                 "Location": act.location,
                 "Remarks": act.remarks || "-"
             }));
-        exportToExcel(dataToExport, `GESIT-ACTIVITY-${new Date().toISOString().split('T')[0]}`);
+        exportToExcel(dataToExport, `GESIT-ACTIVITY-${toLocalDateStr(new Date())}`);
     };
 
     const [isPresenting, setIsPresenting] = useState(false);
@@ -606,25 +1121,113 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
     const stats = useMemo(() => {
         const total = filteredActivities.length;
         const complete = filteredActivities.filter(a => a.status === 'Completed').length;
-        const active = filteredActivities.filter(a => a.status === 'In Progress').length;
+        const active = filteredActivities.filter(a => a.status === 'In Progress' || a.status === 'Pending').length;
         const highAlerts = filteredActivities.filter(a => a.type === 'Critical' || a.type === 'Major').length;
-        return { total, complete, active, highAlerts };
-    }, [filteredActivities]);
+
+        // Calculate real week-over-week comparison (previous 7-day window)
+        let prevTotal = 0, prevComplete = 0, prevActive = 0, prevHigh = 0;
+        if (startDate && endDate) {
+            const s = new Date(startDate + 'T00:00:00');
+            const e = new Date(endDate + 'T23:59:59');
+            const diffDays = Math.max(Math.round((e.getTime() - s.getTime()) / 86400000), 1);
+            const prevEnd = new Date(s.getTime() - 86400000);
+            const prevStart = new Date(prevEnd.getTime() - (diffDays - 1) * 86400000);
+            const pStartStr = toLocalDateStr(prevStart);
+            const pEndStr = toLocalDateStr(prevEnd);
+            const prevList = activities.filter(a => {
+                const d = toLocalDateStr(new Date(a.createdAt));
+                return d >= pStartStr && d <= pEndStr;
+            });
+            prevTotal = prevList.length;
+            prevComplete = prevList.filter(a => a.status === 'Completed').length;
+            prevActive = prevList.filter(a => a.status === 'In Progress' || a.status === 'Pending').length;
+            prevHigh = prevList.filter(a => a.type === 'Critical' || a.type === 'Major').length;
+        }
+
+        const calcPct = (curr: number, prev: number) => {
+            if (prev === 0) return curr > 0 ? 100 : 0;
+            return Math.round(((curr - prev) / prev) * 100);
+        };
+
+        return {
+            total,
+            complete,
+            active,
+            highAlerts,
+            totalPct: calcPct(total, prevTotal),
+            completePct: calcPct(complete, prevComplete),
+            activePct: calcPct(active, prevActive),
+            highPct: calcPct(highAlerts, prevHigh),
+        };
+    }, [filteredActivities, activities, startDate, endDate]);
+
+    const weeklyDigest = useMemo(() => {
+        const total = dateFilteredActivities.length;
+        const completed = dateFilteredActivities.filter(a => a.status === 'Completed').length;
+        const ongoing = dateFilteredActivities.filter(a => a.status === 'In Progress' || a.status === 'Pending').length;
+        const criticalMajor = dateFilteredActivities.filter(a => a.type === 'Critical' || a.type === 'Major').length;
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        const byCategory: Record<string, number> = {};
+        const byPic: Record<string, { total: number; completed: number; ongoing: number }> = {};
+
+        dateFilteredActivities.forEach(a => {
+            const cat = a.category || 'General';
+            byCategory[cat] = (byCategory[cat] || 0) + 1;
+
+            const pic = a.itPersonnel || 'IT Team';
+            if (!byPic[pic]) byPic[pic] = { total: 0, completed: 0, ongoing: 0 };
+            byPic[pic].total += 1;
+            if (a.status === 'Completed') byPic[pic].completed += 1;
+            else byPic[pic].ongoing += 1;
+        });
+
+        return {
+            total,
+            completed,
+            ongoing,
+            criticalMajor,
+            completionRate,
+            categories: Object.entries(byCategory).sort((a, b) => b[1] - a[1]),
+            pics: Object.entries(byPic).sort((a, b) => b[1].total - a[1].total),
+        };
+    }, [dateFilteredActivities]);
 
     const uniqueCategories = useMemo(() => {
         const cats = [...new Set(activities.map(a => a.category).filter(Boolean))];
         return cats.sort();
     }, [activities]);
 
-    const hasActiveFilters = searchTerm || statusFilter !== 'All' || categoryFilter !== 'All' || (startDate && endDate);
+    const hasActiveFilters = searchTerm || statusFilter !== 'All' || categoryFilter !== 'All' || picFilter !== 'All' || priorityFocusOnly || dateFilterType !== 'All';
 
     const resetAllFilters = () => {
         setSearchTerm('');
         setStatusFilter('All');
         setCategoryFilter('All');
+        setPicFilter('All');
+        setPriorityFocusOnly(false);
         setDateFilterType('All');
         setStartDate('');
         setEndDate('');
+        setCurrentPage(1);
+    };
+
+    const shiftDateWindow = (days: number) => {
+        const baseStart = startDate ? new Date(startDate + 'T00:00:00') : new Date(Date.now() - 6 * 86400000);
+        const baseEnd = endDate ? new Date(endDate + 'T00:00:00') : new Date();
+        baseStart.setDate(baseStart.getDate() + days);
+        baseEnd.setDate(baseEnd.getDate() + days);
+        setStartDate(toLocalDateStr(baseStart));
+        setEndDate(toLocalDateStr(baseEnd));
+        setDateFilterType('Custom');
+        setCurrentPage(1);
+    };
+
+    const applyLast7DaysPreset = () => {
+        const range = getLast7DaysRange();
+        setStartDate(range.start);
+        setEndDate(range.end);
+        setDateFilterType('Last7Days');
         setCurrentPage(1);
     };
 
@@ -651,6 +1254,25 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
         };
     }, [isPresenting]);
 
+    // Keyboard navigation for Live Presentation
+    useEffect(() => {
+        if (!isPresenting) return;
+        const totalSlides = filteredActivities.length + 1; // Slide 0 = Executive Summary
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                setCurrentSlideIndex(p => (p + 1) % totalSlides);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setCurrentSlideIndex(p => (p - 1 + totalSlides) % totalSlides);
+            } else if (e.key === 'Escape') {
+                setIsPresenting(false);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isPresenting, filteredActivities.length]);
+
     const totalPages = Math.max(Math.ceil(filteredActivities.length / rowsPerPage), 1);
     const paginatedActivities = filteredActivities.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
     const startItem = (currentPage - 1) * rowsPerPage + 1;
@@ -658,52 +1280,82 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
     const handleDateFilterTypeChange = (type: string) => {
         setDateFilterType(type);
+        setCurrentPage(1);
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
         const day = now.getDate();
-        const dayOfWeek = now.getDay();
-        if (type === 'All') { setStartDate(''); setEndDate(''); }
-        else if (type === 'Today') {
-            const todayStr = new Date(year, month, day).toISOString().split('T')[0];
-            setStartDate(todayStr); setEndDate(todayStr);
-        }
-        else if (type === 'Week') {
-            const first = new Date(year, month, day - dayOfWeek);
-            const last = new Date(year, month, day - dayOfWeek + 6);
-            setStartDate(first.toISOString().split('T')[0]); setEndDate(last.toISOString().split('T')[0]);
+        const dayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon ...
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+        if (type === 'All') {
+            setStartDate('');
+            setEndDate('');
+        } else if (type === 'Today') {
+            const todayStr = toLocalDateStr(new Date(year, month, day));
+            setStartDate(todayStr);
+            setEndDate(todayStr);
+        } else if (type === 'Last7Days') {
+            const range = getLast7DaysRange();
+            setStartDate(range.start);
+            setEndDate(range.end);
+        } else if (type === 'Week') {
+            const first = new Date(year, month, day + mondayOffset);
+            const last = new Date(year, month, day + mondayOffset + 6);
+            setStartDate(toLocalDateStr(first));
+            setEndDate(toLocalDateStr(last));
+        } else if (type === 'LastWeek') {
+            const first = new Date(year, month, day + mondayOffset - 7);
+            const last = new Date(year, month, day + mondayOffset - 1);
+            setStartDate(toLocalDateStr(first));
+            setEndDate(toLocalDateStr(last));
         } else if (type === 'Month') {
-            setStartDate(new Date(year, month, 1).toISOString().split('T')[0]);
-            setEndDate(new Date(year, month + 1, 0).toISOString().split('T')[0]);
+            setStartDate(toLocalDateStr(new Date(year, month, 1)));
+            setEndDate(toLocalDateStr(new Date(year, month + 1, 0)));
         }
     };
 
-    const formatDate = (date: string) => new Date(date).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+    const formatDate = (date: string) => new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    const formatShortRange = (s: string, e: string) => {
+        if (!s || !e) return 'Semua Waktu';
+        const d1 = new Date(s + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        const d2 = new Date(e + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        return `${d1} – ${d2}`;
+    };
 
     // ─── Presenter Overlay ────────────────────────────────────────────────────
 
     const renderSlideshowOverlay = () => {
         if (!isPresenting) return null;
-        const presentationActivities = [...filteredActivities].reverse();
-        const currentActivity = presentationActivities[currentSlideIndex];
+        const presentationActivities = [...filteredActivities];
+        const totalSlides = presentationActivities.length + 1; // Slide 0 = Executive Weekly Summary
+        const isSummarySlide = currentSlideIndex === 0;
+        const currentActivity = !isSummarySlide ? presentationActivities[currentSlideIndex - 1] : null;
+        const ongoingItems = presentationActivities.filter(a => a.status === 'In Progress' || a.status === 'Pending');
+
         return (
-            <div className={`fixed inset-0 w-full h-full z-[5000] ${isDarkTheme ? 'bg-[#0f0f17]' : 'bg-[#f8fafc]'} flex flex-col items-center justify-center overflow-hidden m-0 p-0`}>
+            <div className={`fixed inset-0 w-full h-full z-[5000] ${isDarkTheme ? 'bg-[#0f0f17] dark' : 'bg-[#f8fafc]'} flex flex-col items-center justify-center overflow-hidden m-0 p-0`}>
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-blue-600/10 rounded-full blur-[160px]" />
                     <div className="absolute bottom-[-20%] right-[-10%] w-[70vw] h-[70vw] bg-emerald-600/5 rounded-full blur-[160px]" />
                 </div>
 
-                <div className="absolute top-0 left-0 right-0 p-10 flex justify-between items-center z-50">
+                <div className="absolute top-0 left-0 right-0 p-8 sm:p-10 flex justify-between items-center z-50">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                             <Activity className="text-white" size={24} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <span className="block text-2xl font-black text-slate-900 dark:text-white leading-none">Activity Report</span>
-                            <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Live Presentation Engine</span>
+                            <span className="block text-2xl font-black text-slate-900 dark:text-white leading-none">Weekly IT Activity Review</span>
+                            <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1 block">
+                                Periode: {formatShortRange(startDate, endDate)} · {isSummarySlide ? 'Executive Summary' : `Item ${currentSlideIndex} dari ${presentationActivities.length}`}
+                            </span>
                         </div>
                     </div>
                     <div className="flex gap-3">
+                        <button onClick={() => setCurrentSlideIndex(0)} className={`px-4 py-3 rounded-xl font-black text-xs uppercase tracking-wider border transition-all ${isSummarySlide ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-blue-500'}`}>
+                            Ringkasan Mingguan
+                        </button>
                         <button onClick={() => setIsDarkTheme(!isDarkTheme)} aria-label="Toggle Theme" className="p-4 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
                             {isDarkTheme ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
                         </button>
@@ -716,67 +1368,123 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     </div>
                 </div>
 
-                {currentActivity && (
+                {isSummarySlide ? (
+                    <motion.div key="summary-slide" initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="relative z-40 w-full max-w-6xl px-6 sm:px-10">
+                        <div className="bg-white dark:bg-[#1a1d23] rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-2xl p-8 sm:p-10 overflow-hidden relative flex flex-col max-h-[76vh]">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+                                <div>
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-widest mb-2">
+                                        <Calendar size={13} /> Rekap Weekly Meeting IT ({presentationActivities.length} Aktivitas)
+                                    </span>
+                                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        {formatShortRange(startDate, endDate)}
+                                    </h2>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block">Tuntas</span>
+                                        <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{presentationActivities.filter(a => a.status === 'Completed').length}</span>
+                                    </div>
+                                    <div className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block">Ongoing</span>
+                                        <span className="text-xl font-black text-amber-600 dark:text-amber-400">{ongoingItems.length}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Table of Judul Activity, Handling Personnel, and Remark */}
+                            <div className="mt-4 flex-1 overflow-y-auto custom-scrollbar rounded-xl border border-slate-200/70 dark:border-zinc-800">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="sticky top-0 bg-slate-100 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 z-10">
+                                        <tr>
+                                            <th className="py-3 pl-4 pr-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-10">#</th>
+                                            <th className="py-3 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-[34%]">Judul Activity</th>
+                                            <th className="py-3 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-[18%]">Handling Personnel</th>
+                                            <th className="py-3 px-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-[36%]">Remark / Progress</th>
+                                            <th className="py-3 pl-2 pr-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-[12%] text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                                        {presentationActivities.map((item, idx) => (
+                                            <tr
+                                                key={item.id}
+                                                onClick={() => setCurrentSlideIndex(idx + 1)}
+                                                className="hover:bg-blue-50/50 dark:hover:bg-zinc-800/60 cursor-pointer transition-colors"
+                                            >
+                                                <td className="py-3.5 pl-4 pr-2 text-xs font-black text-slate-400 align-top">{idx + 1}</td>
+                                                <td className="py-3.5 px-3 align-top">
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{item.activityName}</p>
+                                                    <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 mt-0.5 block">
+                                                        {formatDate(item.createdAt)} · {item.category}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-3 align-top">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <UserAvatar name={item.itPersonnel} url={userAvatars[item.itPersonnel]} size="xs" />
+                                                        <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">{item.itPersonnel}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3.5 px-3 align-top">
+                                                    <p className="text-xs font-medium text-slate-600 dark:text-zinc-300 leading-relaxed">
+                                                        {item.remarks || <span className="italic text-slate-400">Tidak ada catatan</span>}
+                                                    </p>
+                                                </td>
+                                                <td className="py-3.5 pl-2 pr-4 align-top text-right">
+                                                    <div className="inline-flex justify-end">
+                                                        <StatusBadge status={item.status} />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </motion.div>
+                ) : currentActivity && (
                     <motion.div key={currentActivity.id} initial={{ opacity: 0, scale: 0.9, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="relative z-40 w-full max-w-6xl px-12">
-                        <div className="bg-white dark:bg-[#1a1d23] rounded-xl border border-slate-100 dark:border-zinc-800 shadow-2xl p-20 overflow-hidden relative group">
+                        <div className="bg-white dark:bg-[#1a1d23] rounded-xl border border-slate-100 dark:border-zinc-800 shadow-2xl p-16 overflow-hidden relative group">
                             <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-6 transition-all duration-700">
                                 <Activity size={300} strokeWidth={1} />
                             </div>
 
-                            <div className="grid grid-cols-12 gap-16 items-center relative z-10">
-                                <div className="col-span-4 flex flex-col items-center text-center border-r border-slate-50 dark:border-zinc-800/60 pr-16">
-                                    <div className="relative mb-8">
+                            <div className="grid grid-cols-12 gap-14 items-center relative z-10">
+                                <div className="col-span-4 flex flex-col items-center text-center border-r border-slate-100 dark:border-zinc-800/60 pr-12">
+                                    <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest mb-5">
+                                        Handling Personnel
+                                    </span>
+                                    <div className="relative mb-6">
                                         <div className="absolute inset-0 bg-blue-500 rounded-full blur-2xl opacity-20 animate-pulse" />
-                                        <UserAvatar name={currentActivity.requester} url={userAvatars[currentActivity.requester] || currentActivity.avatarUrl} size="xl" className="w-56 h-56 border-8 border-white dark:border-zinc-800 shadow-xl relative z-10" />
+                                        <UserAvatar name={currentActivity.itPersonnel} url={userAvatars[currentActivity.itPersonnel]} size="xl" className="w-48 h-48 border-8 border-white dark:border-zinc-800 shadow-xl relative z-10" />
                                     </div>
-                                    <div className="text-3xl font-black text-slate-900 dark:text-white mb-2 leading-tight tracking-tight">{currentActivity.requester}</div>
-                                    <span className="text-[13px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em]">{currentActivity.department}</span>
-                                    <div className="mt-8 flex flex-col gap-3 w-full">
-                                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800">
-                                            <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5">Location Anchor</p>
-                                            <p className="text-sm font-black text-slate-700 dark:text-slate-200">{currentActivity.location}</p>
+                                    <div className="text-3xl font-black text-slate-900 dark:text-white mb-1 leading-tight tracking-tight">{currentActivity.itPersonnel}</div>
+                                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">IT Solutions Group</span>
+                                    <div className="mt-6 flex flex-col gap-2.5 w-full">
+                                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal & Lokasi</p>
+                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{formatDate(currentActivity.createdAt)} · {currentActivity.location}</p>
+                                        </div>
+                                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pemohon (Requester)</p>
+                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{currentActivity.requester} ({currentActivity.department})</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="col-span-8">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <PriorityBadge type={currentActivity.type} />
+                                    <div className="flex items-center gap-3 mb-5">
                                         <StatusBadge status={currentActivity.status} />
                                         <CategoryBadge category={currentActivity.category} />
                                     </div>
-                                    <h2 className="text-6xl font-black text-slate-900 dark:text-white mb-10 leading-[1.1] tracking-tighter">{currentActivity.activityName}</h2>
-                                    {currentActivity.remarks && (
-                                        <div className="p-10 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl border border-blue-100/50 dark:border-blue-800/30 mb-12 relative">
-                                            <div className="absolute left-6 top-6 text-blue-200 dark:text-blue-900">
-                                                <FileText size={40} strokeWidth={3} />
-                                            </div>
-                                            <p className="text-2xl font-bold text-slate-600 dark:text-slate-300 italic leading-relaxed pl-14">
-                                                "{currentActivity.remarks}"
-                                            </p>
-                                        </div>
-                                    )}
-                                    <div className="grid grid-cols-3 gap-10 pt-10 border-t border-slate-50 dark:border-zinc-800/60">
-                                        <div>
-                                            <span className="block text-[11px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3">Support Unit</span>
-                                            <div className="flex items-center gap-3">
-                                                <UserAvatar name={currentActivity.itPersonnel} url={userAvatars[currentActivity.itPersonnel]} size="md" className="border-2 border-white dark:border-zinc-700" />
-                                                <span className="text-lg font-black text-slate-900 dark:text-white leading-tight">{currentActivity.itPersonnel}</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span className="block text-[11px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3">Mission Duration</span>
-                                            <div className="flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white">
-                                                <Clock size={24} className="text-blue-500" strokeWidth={2.5} />
-                                                {currentActivity.duration || '-'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span className="block text-[11px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em] mb-3">Logs Timestamp</span>
-                                            <div className="flex items-center gap-3 text-2xl font-black text-emerald-500">
-                                                <Calendar size={24} strokeWidth={2.5} />
-                                                {formatDate(currentActivity.createdAt)}
-                                            </div>
-                                        </div>
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Judul Activity</p>
+                                    <h2 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white mb-8 leading-[1.15] tracking-tight">{currentActivity.activityName}</h2>
+
+                                    <div className="p-8 bg-blue-50/40 dark:bg-blue-950/20 rounded-2xl border border-blue-200/60 dark:border-blue-800/40 relative">
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2">
+                                            <FileText size={15} /> Remark / Keterangan
+                                        </p>
+                                        <p className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-200 leading-relaxed">
+                                            {currentActivity.remarks || "Tidak ada catatan tambahan."}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -784,15 +1492,15 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     </motion.div>
                 )}
 
-                <div className="absolute bottom-16 flex items-center gap-10">
-                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + presentationActivities.length) % presentationActivities.length)} aria-label="Previous Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={36} strokeWidth={2.5} /></button>
-                    <div className="flex items-center gap-3 py-4 px-8 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-zinc-800/50">
-                        {presentationActivities.slice(0, 8).map((_, idx) => (
-                            <div key={idx} onClick={() => setCurrentSlideIndex(idx)} role="button" aria-label={`Go to slide ${idx + 1}`} className={`rounded-full transition-all duration-500 cursor-pointer ${idx === currentSlideIndex ? 'w-10 h-3 bg-blue-600 shadow-lg shadow-blue-500/40' : 'w-3 h-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300'}`} />
+                <div className="absolute bottom-10 flex items-center gap-8">
+                    <button onClick={() => setCurrentSlideIndex(p => (p - 1 + totalSlides) % totalSlides)} aria-label="Previous Slide" className="p-5 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronLeft size={32} strokeWidth={2.5} /></button>
+                    <div className="flex items-center gap-3 py-3.5 px-6 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full border border-slate-200 dark:border-zinc-700">
+                        {Array.from({ length: Math.min(totalSlides, 9) }).map((_, idx) => (
+                            <div key={idx} onClick={() => setCurrentSlideIndex(idx)} role="button" aria-label={`Go to slide ${idx}`} className={`rounded-full transition-all duration-500 cursor-pointer ${idx === currentSlideIndex ? 'w-9 h-3 bg-blue-600 shadow-lg shadow-blue-500/40' : 'w-3 h-3 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'}`} />
                         ))}
-                        {presentationActivities.length > 8 && <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 ml-2 uppercase tracking-widest leading-none">+{presentationActivities.length - 8} MORE</span>}
+                        {totalSlides > 9 && <span className="text-[11px] font-black text-slate-500 dark:text-zinc-400 ml-2 uppercase tracking-widest leading-none">Slide {currentSlideIndex + 1}/{totalSlides}</span>}
                     </div>
-                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % presentationActivities.length)} aria-label="Next Slide" className="p-6 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={36} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentSlideIndex(p => (p + 1) % totalSlides)} aria-label="Next Slide" className="p-5 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50 text-slate-400 hover:text-blue-600 transition-all shadow-xl hover:scale-110 active:scale-95"><ChevronRight size={32} strokeWidth={2.5} /></button>
                 </div>
             </div>
         );
@@ -823,8 +1531,44 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
 
             {/* ─── Shadcn UI Header ─────────── */}
             <PageHeader title="Activity Logs" description="Monitor and manage all system activities.">
-                <Button variant="outline" size="icon" aria-label="Start Live Presentation" onClick={() => { setIsPresenting(true); toggleFullScreen(); }}>
-                    <Presentation className="w-4" />
+                <div className="flex items-center p-1 rounded-xl bg-muted/60 border border-border/60">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsWeeklyMeetingMode(false);
+                            handleDateFilterTypeChange('All');
+                        }}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                            !isWeeklyMeetingMode
+                                ? "bg-background text-foreground shadow-xs"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        Semua Log (Lengkap)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsWeeklyMeetingMode(true);
+                            if (dateFilterType === 'All') {
+                                applyLast7DaysPreset();
+                            }
+                        }}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                            isWeeklyMeetingMode
+                                ? "bg-blue-600 text-white shadow-xs"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Weekly Meeting (7 Hari)</span>
+                    </button>
+                </div>
+                <Button variant="outline" onClick={() => { setCurrentSlideIndex(0); setIsPresenting(true); toggleFullScreen(); }} className="h-9 px-3 shrink-0" title="Presentasi Weekly Meeting">
+                    <Presentation className="w-4 h-4 sm:mr-2 text-blue-600 dark:text-blue-400" />
+                    <span className="hidden sm:inline">Presentasi</span>
                 </Button>
                 <Button variant="outline" onClick={handleExportExcel} className="h-9 px-3 shrink-0">
                     <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
@@ -851,27 +1595,27 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     value={stats.total} 
                     unit="Log"
                     icon={ClipboardList} 
-                    percentageChange={5} 
-                    subValue="vs last week" 
-                    note2="terekam di sistem"
+                    percentageChange={stats.totalPct} 
+                    subValue="vs periode sblm" 
+                    note2={startDate && endDate ? formatShortRange(startDate, endDate) : "seluruh waktu"}
                     color="slate" 
                     drilldownData={filteredActivities}
                     drilldownTitle="Ringkasan Total Aktivitas"
-                    drilldownDescription="Ringkasan komposisi dan rincian log aktivitas IT."
+                    drilldownDescription="Rekap Judul Activity, Handling Personnel, dan Remark."
                     drilldownColumns={[
                         { 
-                            header: 'Aktivitas & Pemohon', 
+                            header: 'Judul Activity', 
                             render: (a: any) => (
                                 <div>
                                     <div className="font-semibold text-foreground">{a.activityName || a.title || '-'}</div>
                                     <div className="text-[11px] text-muted-foreground mt-0.5">
-                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                        {formatDate(a.createdAt)} · {a.category || '-'}
                                     </div>
                                 </div>
                             ) 
                         },
-                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
-                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
+                        { header: 'Handling Personnel', accessor: 'itPersonnel', className: 'w-36 font-semibold' },
+                        { header: 'Remark', render: (a: any) => <span className="text-xs text-muted-foreground">{a.remarks || '-'}</span> }
                     ]}
                 />
                 <StatCard 
@@ -879,56 +1623,56 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     value={stats.complete} 
                     unit="Tuntas"
                     icon={CheckCircle2} 
-                    percentageChange={12} 
-                    subValue="vs last week" 
-                    note2="berhasil diselesaikan"
+                    percentageChange={stats.completePct} 
+                    subValue="vs periode sblm" 
+                    note2={`${weeklyDigest.completionRate}% completion rate`}
                     color="emerald" 
                     status="on-track" 
                     drilldownData={filteredActivities.filter(a => a.status === 'Completed')}
                     drilldownTitle="Ringkasan Aktivitas Tuntas"
-                    drilldownDescription="Komposisi aktivitas IT yang berhasil diselesaikan."
+                    drilldownDescription="Komposisi aktivitas IT yang berhasil diselesaikan beserta remark."
                     drilldownColumns={[
                         { 
-                            header: 'Aktivitas & Pemohon', 
+                            header: 'Judul Activity', 
                             render: (a: any) => (
                                 <div>
                                     <div className="font-semibold text-emerald-600 dark:text-emerald-400">{a.activityName || a.title || '-'}</div>
                                     <div className="text-[11px] text-muted-foreground mt-0.5">
-                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                        {formatDate(a.createdAt)} · {a.category || '-'}
                                     </div>
                                 </div>
                             ) 
                         },
-                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
-                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
+                        { header: 'Handling Personnel', accessor: 'itPersonnel', className: 'w-36 font-semibold' },
+                        { header: 'Remark', render: (a: any) => <span className="text-xs text-muted-foreground">{a.remarks || '-'}</span> }
                     ]}
                 />
                 <StatCard 
-                    label="In Progress" 
+                    label="Ongoing / Carry-Over" 
                     value={stats.active} 
                     unit="Aktif"
                     icon={Activity} 
-                    percentageChange={2} 
-                    subValue="vs last week" 
-                    note2="sedang berjalan"
+                    percentageChange={stats.activePct} 
+                    subValue="vs periode sblm" 
+                    note2="perlu tindak lanjut"
                     color="blue" 
-                    drilldownData={filteredActivities.filter(a => a.status === 'In Progress')}
-                    drilldownTitle="Ringkasan Aktivitas Aktif"
-                    drilldownDescription="Komposisi aktivitas IT yang sedang berjalan dan ditangani."
+                    drilldownData={filteredActivities.filter(a => a.status === 'In Progress' || a.status === 'Pending')}
+                    drilldownTitle="Ringkasan Aktivitas Ongoing / Carry-Over"
+                    drilldownDescription="Aktivitas IT yang sedang berjalan (In Progress / Pending) untuk tindak lanjut meeting."
                     drilldownColumns={[
                         { 
-                            header: 'Aktivitas & Pemohon', 
+                            header: 'Judul Activity', 
                             render: (a: any) => (
                                 <div>
                                     <div className="font-semibold text-blue-600 dark:text-blue-400">{a.activityName || a.title || '-'}</div>
                                     <div className="text-[11px] text-muted-foreground mt-0.5">
-                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                        {formatDate(a.createdAt)} · {a.category || '-'}
                                     </div>
                                 </div>
                             ) 
                         },
-                        { header: 'Kategori', accessor: 'category', className: 'w-32' },
-                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
+                        { header: 'Handling Personnel', accessor: 'itPersonnel', className: 'w-36 font-semibold' },
+                        { header: 'Remark', render: (a: any) => <span className="text-xs text-muted-foreground">{a.remarks || '-'}</span> }
                     ]}
                 />
                 <StatCard 
@@ -936,9 +1680,9 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     value={stats.highAlerts} 
                     unit="Kritis"
                     icon={AlertCircle} 
-                    percentageChange={-5} 
-                    subValue="vs last week" 
-                    note2="prioritas tinggi"
+                    percentageChange={stats.highPct} 
+                    subValue="vs periode sblm" 
+                    note2="Critical & Major"
                     color="rose" 
                     status="at-risk" 
                     drilldownData={filteredActivities.filter(a => a.type === 'Critical' || a.type === 'Major')}
@@ -946,242 +1690,408 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     drilldownDescription="Aktivitas atau insiden bertipe Critical / Major."
                     drilldownColumns={[
                         { 
-                            header: 'Aktivitas & Pemohon', 
+                            header: 'Judul Activity', 
                             render: (a: any) => (
                                 <div>
                                     <div className="font-semibold text-rose-600 dark:text-rose-400">{a.activityName || a.title || '-'}</div>
                                     <div className="text-[11px] text-muted-foreground mt-0.5">
-                                        {a.requester || '-'} · {a.department || '-'} {a.itPersonnel ? `· PIC: ${a.itPersonnel}` : ''}
+                                        {formatDate(a.createdAt)} · {a.category || '-'}
                                     </div>
                                 </div>
                             ) 
                         },
-                        { header: 'Tingkat', render: (a: any) => <span className="font-bold text-rose-600">{a.type || 'High'}</span>, className: 'w-24' },
-                        { header: 'Status', accessor: 'status', className: 'w-28 text-right' }
+                        { header: 'Handling Personnel', accessor: 'itPersonnel', className: 'w-36 font-semibold' },
+                        { header: 'Remark', render: (a: any) => <span className="text-xs text-muted-foreground">{a.remarks || '-'}</span> }
                     ]}
                 />
             </div>
 
-            {/* ─── Activity List Table / Mobile List ──────────────────────── */}
-            <Card className="rounded-xl border-border/40 shadow-xl overflow-hidden bg-white/50 dark:bg-zinc-900/30 backdrop-blur-sm">
-                {/* Table Header / Search & Filters */}
-<CardHeader className="flex flex-col gap-4 border-b p-4 sm:p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full">
-                    <div className="shrink-0">
-                        <CardTitle>Recent Activities</CardTitle>
-                        <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">Comprehensive audit trail of internal activities.</p>
-                    </div>
-
-                    <div className="flex flex-row flex-wrap items-center justify-end gap-2.5 ml-auto">
-                        <div className="relative w-full sm:w-auto sm:min-w-[220px] xl:max-w-xs">
-                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400" />
-                            <Input
-                                type="text"
-                                placeholder="Search name, category, location..."
-                                value={searchTerm}
-                                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                className="pl-10 h-9 bg-muted/30 border-none rounded-xl text-xs font-medium placeholder:text-muted-foreground/40"
-                            />
-                        </div>
-
-                        <NativeSelect
-                            className="min-w-28"
-                            value={statusFilter}
-                            aria-label="Filter by status"
-                            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                        >
-                            <option value="All">All Status</option>
-                            <option value="Completed">Completed</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Pending">Pending</option>
-                        </NativeSelect>
-
-                        <NativeSelect
-                            className="min-w-36"
-                            value={categoryFilter}
-                            aria-label="Filter by category"
-                            onChange={e => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
-                        >
-                            <option value="All">All Categories</option>
-                            {uniqueCategories.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </NativeSelect>
-
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <NativeSelect
-                                className="min-w-28"
-                                value={dateFilterType}
-                                aria-label="Filter by date range"
-                                onChange={e => handleDateFilterTypeChange(e.target.value)}
-                            >
-                                <option value="All">All Time</option>
-                                <option value="Today">Today</option>
-                                <option value="Week">This Week</option>
-                                <option value="Month">This Month</option>
-                                <option value="Custom">Custom Period</option>
-                            </NativeSelect>
-                        </div>
-
-                        {hasActiveFilters && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={resetAllFilters}
-                                className="h-9 px-3 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 shrink-0"
-                            >
-                                <FilterX size={14} className="mr-1.5" />
-                                Reset
-                            </Button>
-                        )}
-                    </div>
-                    </div>
-
-                    {/* Custom Period Panel */}
-                    {dateFilterType === 'Custom' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2.5 sm:gap-3 rounded-xl bg-muted/20 border border-border/40 px-3.5 py-3"
-                        >
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0 flex items-center gap-1.5">
-                                <Calendar size={13} className="text-blue-500" />
-                                Custom Period
-                            </span>
-                            <div className="flex items-center gap-2 flex-1 sm:flex-none">
-                                <Input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={e => setStartDate(e.target.value)}
-                                    aria-label="Start date"
-                                    className="h-9 w-full sm:w-44 text-xs bg-background border border-input rounded-xl"
-                                />
-                                <span className="text-muted-foreground text-xs shrink-0">to</span>
-                                <Input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={e => setEndDate(e.target.value)}
-                                    aria-label="End date"
-                                    className="h-9 w-full sm:w-44 text-xs bg-background border border-input rounded-xl"
-                                />
+            {/* ─── Main Activity Table Card (Unified Enterprise Control Bar) ─── */}
+            <Card className="rounded-xl border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-visible bg-white dark:bg-zinc-900">
+                {/* Primary Toolbar: Title + Search + Interactive Calendar Picker + Category/Status Dropdowns */}
+                <CardHeader className="p-4 sm:p-5 border-b border-slate-200/70 dark:border-zinc-800 space-y-0">
+                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 w-full">
+                        {/* Left: Section Heading & Period Metadata */}
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <CardTitle className="text-base font-bold tracking-tight text-slate-900 dark:text-zinc-100">
+                                        {isWeeklyMeetingMode ? 'Review Weekly Meeting' : 'Semua Activity Logs'}
+                                    </CardTitle>
+                                    <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 tabular-nums">
+                                        {filteredActivities.length} Aktivitas
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                                    {isWeeklyMeetingMode
+                                        ? 'Rekap fokus Judul Activity, Handling Personnel, dan Remark operasional.'
+                                        : 'Daftar lengkap catatan operasional dan histori aktivitas tim IT.'}
+                                </p>
                             </div>
-                            {(startDate || endDate) && (
+                        </div>
+
+                        {/* Right: Precision Controls Row */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Search Input */}
+                            <div className="relative w-full sm:w-60">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari activity, personel, remark..."
+                                    value={searchTerm}
+                                    onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    className="h-9 w-full pl-8 pr-7 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-800/50 text-xs font-medium text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 outline-none focus:border-slate-400 dark:focus:border-zinc-600 focus:bg-white dark:focus:bg-zinc-900 transition-all"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer"
+                                        aria-label="Hapus pencarian"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Interactive Date Range Calendar Picker */}
+                            <DateRangeCalendarPicker
+                                startDate={startDate}
+                                endDate={endDate}
+                                dateFilterType={dateFilterType}
+                                onSelectPreset={handleDateFilterTypeChange}
+                                onSelectCustomRange={(s, e) => {
+                                    setStartDate(s);
+                                    setEndDate(e);
+                                    setDateFilterType('Custom');
+                                    setCurrentPage(1);
+                                }}
+                                onShiftDays={shiftDateWindow}
+                                formatShortRange={formatShortRange}
+                            />
+
+                            {/* Category Custom Dropdown */}
+                            <FilterDropdown
+                                value={categoryFilter}
+                                onChange={val => { setCategoryFilter(val); setCurrentPage(1); }}
+                                className="w-40"
+                                options={[
+                                    { value: 'All', label: 'Semua Kategori' },
+                                    ...uniqueCategories.map(cat => ({ value: cat, label: cat }))
+                                ]}
+                            />
+
+                            {/* Status Custom Dropdown (shown in Semua Log mode; Weekly Meeting uses Agenda bar below) */}
+                            {!isWeeklyMeetingMode && (
+                                <FilterDropdown
+                                    value={statusFilter}
+                                    onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
+                                    className="w-36"
+                                    options={[
+                                        { value: 'All', label: 'Semua Status' },
+                                        { value: 'Ongoing', label: 'Ongoing (Aktif)' },
+                                        { value: 'Completed', label: 'Completed' },
+                                        { value: 'In Progress', label: 'In Progress' },
+                                        { value: 'Pending', label: 'Pending' },
+                                    ]}
+                                />
+                            )}
+
+                            {/* Reset Filter Button */}
+                            {hasActiveFilters && (
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    onClick={() => { setStartDate(''); setEndDate(''); }}
-                                    className="h-9 px-2.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 shrink-0"
+                                    onClick={resetAllFilters}
+                                    className="h-9 px-2.5 rounded-lg text-xs font-medium text-slate-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 border-slate-200 dark:border-zinc-800 shrink-0"
+                                    title="Reset semua filter ke Semua Waktu"
                                 >
-                                    <X size={14} className="mr-1" />
-                                    Clear
+                                    <FilterX size={13} className="mr-1.5" />
+                                    Reset
                                 </Button>
                             )}
-                        </motion.div>
-                    )}
+                        </div>
+                    </div>
                 </CardHeader>
+
+                {/* Secondary Sub-Toolbar: Weekly Meeting Agenda & Personnel Filter Bar */}
+                {isWeeklyMeetingMode && (
+                    <div className="px-4 sm:px-5 py-2.5 bg-slate-50/70 dark:bg-zinc-950/40 border-b border-slate-200/70 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                        {/* Left: Segmented Agenda Status Filter */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 mr-1">
+                                Status:
+                            </span>
+                            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-200/70 dark:bg-zinc-800/80 border border-slate-200/80 dark:border-zinc-800">
+                                <button
+                                    type="button"
+                                    onClick={() => { setStatusFilter('All'); setPriorityFocusOnly(false); setCurrentPage(1); }}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                                        statusFilter === 'All'
+                                            ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-2xs"
+                                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                                    )}
+                                >
+                                    Semua <span className="ml-1 text-[10px] opacity-70 tabular-nums">({weeklyDigest.total})</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setStatusFilter('Ongoing'); setPriorityFocusOnly(false); setCurrentPage(1); }}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                                        statusFilter === 'Ongoing'
+                                            ? "bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 shadow-2xs"
+                                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                                    )}
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    Carry-Over / Ongoing <span className="text-[10px] opacity-75 tabular-nums">({weeklyDigest.ongoing})</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setStatusFilter('Completed'); setPriorityFocusOnly(false); setCurrentPage(1); }}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                                        statusFilter === 'Completed'
+                                            ? "bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 shadow-2xs"
+                                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                                    )}
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    Tuntas <span className="text-[10px] opacity-75 tabular-nums">({weeklyDigest.completed})</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Right: Handling Personnel Chips & Sort Order */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 mr-1">
+                                Personel:
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => { setPicFilter('All'); setCurrentPage(1); }}
+                                className={cn(
+                                    "h-7 px-2.5 rounded-md text-xs font-semibold border transition-all cursor-pointer",
+                                    picFilter === 'All'
+                                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900 dark:border-white"
+                                        : "bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                )}
+                            >
+                                Semua
+                            </button>
+                            {weeklyDigest.pics.map(([pic, info]) => {
+                                const active = picFilter === pic;
+                                return (
+                                    <button
+                                        key={pic}
+                                        type="button"
+                                        onClick={() => { setPicFilter(active ? 'All' : pic); setCurrentPage(1); }}
+                                        className={cn(
+                                            "h-7 px-2.5 rounded-md text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer",
+                                            active
+                                                ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900 dark:border-white font-semibold"
+                                                : "bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                        )}
+                                    >
+                                        <span>{pic}</span>
+                                        <span className={cn(
+                                            "text-[10px] px-1.5 py-0.2 rounded font-bold tabular-nums",
+                                            active ? "bg-white/20 text-white dark:bg-black/15 dark:text-zinc-900" : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                                        )}>
+                                            {info.total}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+
+                            <div className="hidden sm:block h-4 w-px bg-slate-200 dark:bg-zinc-800 mx-1" />
+
+                            <button
+                                type="button"
+                                onClick={() => setSortOngoingFirst(!sortOngoingFirst)}
+                                className={cn(
+                                    "h-7 px-2.5 rounded-md text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer",
+                                    sortOngoingFirst
+                                        ? "bg-blue-50/80 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60"
+                                        : "bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border-slate-200 dark:border-zinc-800"
+                                )}
+                                title="Tampilkan pekerjaan yang belum selesai (In Progress / Pending) di urutan paling atas"
+                            >
+                                <ArrowUpDown size={12} />
+                                <span>{sortOngoingFirst ? 'Ongoing di Atas' : 'Urutan Waktu'}</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Table & Mobile Card List */}
                 <CardContent className="p-0">
                     {/* Desktop View (Table) */}
                     <div className="hidden md:block overflow-x-auto">
-                        <Table className="table-fixed">
-                            <TableHeader className="bg-muted/30 border-b border-border/50">
-                                <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="pl-8 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[27%]">Activity Name</TableHead>
-                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[10%]">Status</TableHead>
-                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[8%]">Priority</TableHead>
-                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[15%]">Requester</TableHead>
-                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[10%]">Date</TableHead>
-                                    <TableHead className="h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[18%]">IT Personnel</TableHead>
-                                    <TableHead className="text-right pr-8 h-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400 w-[12%]">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedActivities.map((act) => (
-                                    <TableRow
-                                        key={act.id}
-                                        className="group hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800/40 transition-all duration-300"
-                                    >
-                                        <TableCell className="pl-8 py-5 cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
-                                            <div className="flex items-center gap-4 min-w-0">
-                                                {(() => {
-                                                    const config = getCategoryConfig(act.category);
-                                                    return (
-                                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shrink-0 shadow-sm border", config.color, "group-hover:scale-105")}>
-                                                            {config.icon}
-                                                        </div>
-                                                    );
-                                                })()}
-                                                <div className="min-w-0 flex-1">
-                                                    <span className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors block truncate max-w-[240px] md:max-w-xs">{act.activityName}</span>
-                                                    <div className="mt-1.5"><CategoryBadge category={act.category} /></div>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}><StatusBadge status={act.status} /></TableCell>
-                                        <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}><PriorityBadge type={act.type} /></TableCell>
-                                        <TableCell className="cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="sm" className="border-2 border-white dark:border-zinc-800 shadow-sm shrink-0" />
-                                                <div className="min-w-0 flex-1">
-                                                    <span className="font-semibold text-sm block leading-none text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{act.requester}</span>
-                                                    <span className="text-[9px] font-bold text-muted-foreground mt-1.5 block truncate max-w-[120px] tracking-wider uppercase">{act.department}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-xs font-semibold text-slate-600 dark:text-zinc-400 cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={13} className="text-slate-400 dark:text-zinc-500 shrink-0" />
-                                                <span>{formatDate(act.createdAt)}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="sm" className="border-2 border-white dark:border-zinc-800 shadow-sm shrink-0" />
-                                                <span className="font-semibold text-sm text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{act.itPersonnel}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right pr-8" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    aria-label="View Activity Details"
-                                                    onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsDetailOpen(true); }}
-                                                    className="w-8 h-8 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 cursor-pointer"
-                                                >
-                                                    <Eye size={15} />
-                                                </Button>
-
-                                                {(isAdmin || (isStaff && act.itPersonnel === (currentUser?.fullName || currentUser?.username))) && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        aria-label="Edit Activity"
-                                                        onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsFormOpen(true); }}
-                                                        className="w-8 h-8 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200 cursor-pointer"
-                                                    >
-                                                        <Edit size={15} />
-                                                    </Button>
-                                                )}
-
-                                                {isAdmin && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        aria-label="Delete Activity"
-                                                        onClick={(e) => { e?.stopPropagation?.(); setDeleteActivity(act); }}
-                                                        className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200 cursor-pointer"
-                                                    >
-                                                        <Trash2 size={15} />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
+                        {isWeeklyMeetingMode ? (
+                            <Table className="table-fixed">
+                                <TableHeader className="bg-slate-50/60 dark:bg-zinc-900/50 border-b border-slate-200/70 dark:border-zinc-800">
+                                    <TableRow className="hover:bg-transparent border-none">
+                                        <TableHead className="pl-6 h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[38%]">Judul Activity</TableHead>
+                                        <TableHead className="h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[22%]">Handling Personnel</TableHead>
+                                        <TableHead className="pr-6 h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[40%]">Remark / Keterangan</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedActivities.map((act) => (
+                                        <TableRow
+                                            key={act.id}
+                                            className="group hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/60 transition-colors"
+                                        >
+                                            <TableCell className="pl-6 py-3.5 cursor-pointer overflow-hidden align-top" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-start gap-3 min-w-0">
+                                                    {(() => {
+                                                        const config = getCategoryConfig(act.category);
+                                                        return (
+                                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5", config.color)}>
+                                                                {config.icon}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                    <div className="min-w-0 flex-1 whitespace-normal">
+                                                        <span className="font-semibold text-[13.5px] text-slate-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block leading-snug">
+                                                            {act.activityName}
+                                                        </span>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                                            <StatusBadge status={act.status} />
+                                                            <CategoryBadge category={act.category} />
+                                                            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                                                                <Calendar size={11} />
+                                                                {formatDate(act.createdAt)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="py-3.5 cursor-pointer overflow-hidden align-top" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="sm" className="border border-slate-200 dark:border-zinc-700 shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <span className="font-semibold text-[13px] text-slate-800 dark:text-zinc-200 block truncate">{act.itPersonnel}</span>
+                                                        {act.location && (
+                                                            <span className="text-[11px] text-slate-400 dark:text-zinc-500 block truncate">{act.location}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="pr-6 py-3.5 cursor-pointer align-top whitespace-normal" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                {act.remarks ? (
+                                                    <p className="text-[13px] text-slate-600 dark:text-zinc-300 leading-relaxed">
+                                                        {act.remarks}
+                                                    </p>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 dark:text-zinc-600">-</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <Table className="table-fixed">
+                                <TableHeader className="bg-slate-50/60 dark:bg-zinc-900/50 border-b border-slate-200/70 dark:border-zinc-800">
+                                    <TableRow className="hover:bg-transparent border-none">
+                                        <TableHead className="pl-6 h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[32%]">Activity Name</TableHead>
+                                        <TableHead className="h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[12%]">Status</TableHead>
+                                        <TableHead className="h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[16%]">Requester</TableHead>
+                                        <TableHead className="h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[11%]">Date</TableHead>
+                                        <TableHead className="h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[17%]">IT Personnel</TableHead>
+                                        <TableHead className="text-right pr-6 h-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[12%]">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedActivities.map((act) => (
+                                        <TableRow
+                                            key={act.id}
+                                            className="group hover:bg-slate-50/70 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/60 transition-colors"
+                                        >
+                                            <TableCell className="pl-6 py-4 cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-center gap-3.5 min-w-0">
+                                                    {(() => {
+                                                        const config = getCategoryConfig(act.category);
+                                                        return (
+                                                            <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border", config.color)}>
+                                                                {config.icon}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                    <div className="min-w-0 flex-1">
+                                                        <span className="font-semibold text-[13.5px] text-slate-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block truncate max-w-[240px] md:max-w-xs">{act.activityName}</span>
+                                                        <div className="mt-1"><CategoryBadge category={act.category} /></div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}><StatusBadge status={act.status} /></TableCell>
+                                            <TableCell className="cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="sm" className="border border-slate-200 dark:border-zinc-700 shrink-0" />
+                                                    <div className="min-w-0 flex-1">
+                                                        <span className="font-semibold text-[13px] block leading-none text-slate-800 dark:text-zinc-200 truncate max-w-[120px]">{act.requester}</span>
+                                                        <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 mt-1 block truncate max-w-[120px]">{act.department}</span>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-xs font-medium text-slate-600 dark:text-zinc-400 cursor-pointer" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar size={12} className="text-slate-400 dark:text-zinc-500 shrink-0" />
+                                                    <span>{formatDate(act.createdAt)}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="cursor-pointer overflow-hidden" onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}>
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="sm" className="border border-slate-200 dark:border-zinc-700 shrink-0" />
+                                                    <span className="font-semibold text-[13px] text-slate-800 dark:text-zinc-200 truncate max-w-[120px]">{act.itPersonnel}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity duration-150">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label="View Activity Details"
+                                                        onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsDetailOpen(true); }}
+                                                        className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                                                    >
+                                                        <Eye size={15} />
+                                                    </Button>
+
+                                                    {(isAdmin || (isStaff && act.itPersonnel === (currentUser?.fullName || currentUser?.username))) && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label="Edit Activity"
+                                                            onClick={(e) => { e?.stopPropagation?.(); setSelectedActivity(act); setIsFormOpen(true); }}
+                                                            className="w-8 h-8 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer"
+                                                        >
+                                                            <Edit size={15} />
+                                                        </Button>
+                                                    )}
+
+                                                    {isAdmin && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label="Delete Activity"
+                                                            onClick={(e) => { e?.stopPropagation?.(); setDeleteActivity(act); }}
+                                                            className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </div>
 
                     {/* Mobile View (Card List) */}
@@ -1192,7 +2102,7 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                 <div
                                     key={act.id}
                                     onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
-                                    className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                    className="p-4 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
                                 >
                                     {/* First Row: Category & Badges */}
                                     <div className="flex items-center justify-between gap-2">
@@ -1205,77 +2115,72 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
-                                            <PriorityBadge type={act.type} />
                                             <StatusBadge status={act.status} />
                                         </div>
                                     </div>
 
-                                    {/* Second Row: Activity Title */}
+                                    {/* Second Row: Activity Title & Remark */}
                                     <div>
-                                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
+                                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors">
                                             {act.activityName}
                                         </h3>
+                                        {isWeeklyMeetingMode && act.remarks && (
+                                            <p className="text-xs text-slate-600 dark:text-zinc-300 mt-1.5 bg-slate-50 dark:bg-zinc-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800 leading-relaxed">
+                                                {act.remarks}
+                                            </p>
+                                        )}
                                     </div>
 
-                                    {/* Third Row: Requester & IT Personnel & Date */}
-                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 dark:border-zinc-800/20 text-[11px]">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <UserAvatar name={act.requester} url={userAvatars[act.requester] || act.avatarUrl} size="xs" className="shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">Req</span>
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{act.requester}</span>
-                                            </div>
-                                        </div>
+                                    {/* Third Row: Handling Personnel */}
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-zinc-800/20 text-[11px]">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <UserAvatar name={act.itPersonnel} url={userAvatars[act.itPersonnel]} size="xs" className="shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">IT Personnel</span>
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300 block truncate mt-0.5">{act.itPersonnel}</span>
+                                            <div className="min-w-0">
+                                                <span className="text-[9px] text-slate-400 dark:text-zinc-500 block uppercase font-bold tracking-wider leading-none">Handling Personnel</span>
+                                                <span className="font-bold text-slate-800 dark:text-slate-200 block truncate mt-0.5">{act.itPersonnel}</span>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Fourth Row: Date & Actions */}
-                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-zinc-800/20">
                                         <div className="flex items-center gap-1 text-[10px] font-medium text-slate-400 dark:text-zinc-500">
                                             <Calendar size={11} />
                                             <span>{formatDate(act.createdAt)}</span>
                                         </div>
-                                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                aria-label="View Activity Details"
-                                                onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
-                                                className="w-7 h-7 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                            >
-                                                <Eye size={14} />
-                                            </Button>
-
-                                            {(isAdmin || (isStaff && act.itPersonnel === (currentUser?.fullName || currentUser?.username))) && (
+                                        {!isWeeklyMeetingMode && (
+                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    aria-label="Edit Activity"
-                                                    onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }}
-                                                    className="w-7 h-7 rounded-lg text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
+                                                    aria-label="View Activity Details"
+                                                    onClick={() => { setSelectedActivity(act); setIsDetailOpen(true); }}
+                                                    className="w-7 h-7 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
                                                 >
-                                                    <Edit size={14} />
+                                                    <Eye size={14} />
                                                 </Button>
-                                            )}
 
-                                            {isAdmin && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    aria-label="Delete Activity"
-                                                    onClick={() => setDeleteActivity(act)}
-                                                    className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </Button>
-                                            )}
-                                        </div>
+                                                {(isAdmin || (isStaff && act.itPersonnel === (currentUser?.fullName || currentUser?.username))) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label="Edit Activity"
+                                                        onClick={() => { setSelectedActivity(act); setIsFormOpen(true); }}
+                                                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-amber-600 dark:hover:text-amber-400"
+                                                    >
+                                                        <Edit size={14} />
+                                                    </Button>
+                                                )}
+
+                                                {isAdmin && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label="Delete Activity"
+                                                        onClick={() => setDeleteActivity(act)}
+                                                        className="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -1305,45 +2210,49 @@ export const ActivityLogManager = ({ currentUser }: { currentUser: any }) => {
                     )}
 
                     {/* Pagination */}
-                    <div className="px-4 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border/40 bg-muted/20">
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400 w-full sm:w-auto">
-                            <span>Showing {filteredActivities.length > 0 ? startItem : 0} to {endItem} of {filteredActivities.length}</span>
+                    <div className="px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-200/70 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-900/40 rounded-b-xl">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs font-medium text-slate-500 dark:text-zinc-400 w-full sm:w-auto">
+                            <span>
+                                Menampilkan <span className="font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{filteredActivities.length > 0 ? startItem : 0}-{endItem}</span> dari <span className="font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{filteredActivities.length}</span>
+                            </span>
 
-                            <div className="flex items-center gap-3 sm:ml-2 sm:pl-6 sm:border-l border-border/40">
-                                <span>Rows</span>
-                                <select
-                                    value={rowsPerPage}
-                                    aria-label="Rows per page"
-                                    onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                                    className="bg-transparent border-none outline-none text-primary font-black cursor-pointer"
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={20}>20</option>
-                                    <option value={50}>50</option>
-                                </select>
-                                <Button variant="ghost" size="icon" aria-label="Refresh" className="w-7 h-7 hover:bg-background/80" onClick={fetchActivities} title="Refresh">
-                                    <RefreshCcw size={12} className="text-muted-foreground/60" />
-                                </Button>
+                            <div className="flex items-center gap-1.5 sm:ml-2 sm:pl-4 sm:border-l border-slate-200 dark:border-zinc-800">
+                                <span className="text-[11px] text-slate-400 dark:text-zinc-500 mr-1">Baris:</span>
+                                {[10, 20, 50].map(size => (
+                                    <button
+                                        key={size}
+                                        type="button"
+                                        onClick={() => { setRowsPerPage(size); setCurrentPage(1); }}
+                                        className={cn(
+                                            "h-6 px-2 rounded text-[11px] font-semibold transition-colors cursor-pointer tabular-nums",
+                                            rowsPerPage === size
+                                                ? "bg-slate-900 text-white dark:bg-white dark:text-zinc-900"
+                                                : "text-slate-500 dark:text-zinc-400 hover:bg-slate-200/60 dark:hover:bg-zinc-800"
+                                        )}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
-                            <Button variant="outline" size="icon" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-9 h-9 border-border/50">
-                                <ChevronsLeft size={16} />
+                        <div className="flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                            <Button variant="outline" size="icon" aria-label="First page" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-lg border-slate-200 dark:border-zinc-800">
+                                <ChevronsLeft size={14} />
                             </Button>
-                            <Button variant="outline" size="icon" aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-9 h-9 border-border/50">
-                                <ChevronLeft size={16} />
+                            <Button variant="outline" size="icon" aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-lg border-slate-200 dark:border-zinc-800">
+                                <ChevronLeft size={14} />
                             </Button>
 
-                            <div className="flex items-center justify-center min-w-[36px] h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-black">
-                                {currentPage}
+                            <div className="flex items-center justify-center min-w-[32px] h-8 px-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold tabular-nums">
+                                {currentPage} / {totalPages}
                             </div>
 
-                            <Button variant="outline" size="icon" aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-9 h-9 border-border/50">
-                                <ChevronRight size={16} />
+                            <Button variant="outline" size="icon" aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-lg border-slate-200 dark:border-zinc-800">
+                                <ChevronRight size={14} />
                             </Button>
-                            <Button variant="outline" size="icon" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-9 h-9 border-border/50">
-                                <ChevronsRight size={16} />
+                            <Button variant="outline" size="icon" aria-label="Last page" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 rounded-lg border-slate-200 dark:border-zinc-800">
+                                <ChevronsRight size={14} />
                             </Button>
                         </div>
                     </div>
