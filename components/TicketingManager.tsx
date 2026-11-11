@@ -261,12 +261,40 @@ export function TicketingManager({
   const location = useLocation();
   const { isDark, toggleTheme } = useGesitTheme();
 
-  // Tab Utama: Chat | Tabel | Analytics (Default ke Chat sesuai screenshot 1)
+  // Deteksi apakah user adalah IT Support / Admin atau User Biasa (Requester)
+  const userGroups = (currentUser?.groups || []).map((g: string) => g.toLowerCase());
+  const userRole = (currentUser?.role || "").toLowerCase();
+  const isITSupport =
+    Boolean(currentUser?.isHelpdeskSupport) ||
+    userRole === "super admin" ||
+    userRole === "super_admin" ||
+    userRole === "admin" ||
+    userRole.includes("it") ||
+    userGroups.some((g: string) => g.startsWith("it") || g.includes("it_") || g.includes("it-") || g === "support");
+
+  // Mode tampilan: "management" (khusus IT Support) | "requester" (Halaman Request User pribadi)
+  const [viewMode, setViewMode] = useState<"management" | "requester">(isITSupport ? "management" : "requester");
+  const [requesterSubTab, setRequesterSubTab] = useState<"my_tickets" | "create">("my_tickets");
+
+  useEffect(() => {
+    setViewMode(isITSupport ? "management" : "requester");
+  }, [isITSupport]);
+
+  // State Form Buat Tiket Baru (Requester)
+  const [newTicketForm, setNewTicketForm] = useState({
+    subject: "",
+    category: "General Support",
+    priority: "Medium" as TicketItem["priority"],
+    description: "",
+  });
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+
+  // Tab Utama (Mode Management IT): Chat | Tabel | Analytics
   const [activeTab, setActiveTab] = useState<"Chat" | "Tabel" | "Analytics">("Chat");
 
-  // State Tiket
-  const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
-  const [selectedTicketId, setSelectedTicketId] = useState<string>("#TKT-4584");
+  // State Tiket (Mulai kosong agar tidak membocorkan dummy tiket milik orang lain)
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [selectedTicketId, setSelectedTicketId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper Initials & Warna Avatar
@@ -288,10 +316,20 @@ export function TicketingManager({
   // Sinkronisasi data dari tabel Supabase `helpdesk_tickets`
   const fetchTicketsFromSupabase = async () => {
     try {
-      const { data: dbTickets, error } = await supabase
-        .from("helpdesk_tickets")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("helpdesk_tickets").select("*");
+
+      // KEAMANAN: Jika bukan IT Support, batasi query hanya ke tiket milik email user sendiri
+      if (!isITSupport) {
+        if (currentUser?.email) {
+          query = query.ilike("requester_email", currentUser.email.trim());
+        } else {
+          setTickets([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const { data: dbTickets, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
         console.warn("Gagal mengambil helpdesk_tickets dari Supabase:", error.message);
@@ -299,10 +337,12 @@ export function TicketingManager({
       }
 
       if (dbTickets && dbTickets.length > 0) {
-        // Ambil pesan tiket jika ada
+        // Ambil pesan tiket hanya untuk tiket yang berhak dilihat user
+        const ticketIds = dbTickets.map((t: any) => t.id);
         const { data: dbMessages } = await supabase
           .from("helpdesk_ticket_messages")
           .select("*")
+          .in("ticket_id", ticketIds)
           .order("created_at", { ascending: true });
 
         const mapped: TicketItem[] = dbTickets.map((t: any) => {
@@ -321,7 +361,7 @@ export function TicketingManager({
               : "DALAM SLA";
 
           const tMessages: Message[] = (dbMessages || [])
-            .filter((m: any) => m.ticket_id === t.id)
+            .filter((m: any) => m.ticket_id === t.id && (isITSupport || !m.is_internal))
             .map((m: any) => ({
               id: m.id,
               sender: m.sender_name || (m.sender_role === "IT" ? "IT Support" : t.requester_name || "User"),
@@ -380,7 +420,12 @@ export function TicketingManager({
         setTickets(mapped);
         if (mapped.length > 0) {
           setSelectedTicketId((prev) => (mapped.some((x) => x.id === prev) ? prev : mapped[0].id));
+        } else {
+          setSelectedTicketId("");
         }
+      } else {
+        setTickets([]);
+        setSelectedTicketId("");
       }
     } catch (err) {
       console.error("Error fetching tickets from Supabase:", err);
@@ -406,7 +451,7 @@ export function TicketingManager({
     return () => {
       supabase.removeChannel(ticketChannel);
     };
-  }, []);
+  }, [currentUser?.email, isITSupport]);
 
   // State Chat
   const [chatSearch, setChatSearch] = useState("");
@@ -445,27 +490,117 @@ export function TicketingManager({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedTicket = tickets.find((t) => t.id === selectedTicketId) || tickets[0];
+  // KEAMANAN ISOLASI DATA:
+  // Jika berada di mode "requester" (Halaman Request User) ATAU user bukan IT Support,
+  // HANYA tampilkan tiket yang dibuat oleh user sendiri (berdasarkan email / nama pemohon).
+  const visibleTickets = tickets.filter((t) => {
+    if (!isITSupport || viewMode === "requester") {
+      const myEmail = (currentUser?.email || "").trim().toLowerCase();
+      const myName = (currentUser?.fullName || "").trim().toLowerCase();
+      const reqEmail = (t.requester.email || "").trim().toLowerCase();
+      const reqName = (t.requester.name || "").trim().toLowerCase();
+
+      if (myEmail && reqEmail && reqEmail !== "-") {
+        return reqEmail === myEmail;
+      }
+      if (myName && reqName) {
+        return reqName === myName;
+      }
+      return false;
+    }
+    return true;
+  });
+
+  const selectedTicket =
+    visibleTickets.find((t) => t.id === selectedTicketId) || visibleTickets[0] || null;
+
+  // Pastikan selectedTicketId selalu merujuk pada tiket yang berhak dilihat user
+  useEffect(() => {
+    if (visibleTickets.length > 0 && !visibleTickets.some((t) => t.id === selectedTicketId)) {
+      setSelectedTicketId(visibleTickets[0].id);
+    } else if (visibleTickets.length === 0 && selectedTicketId !== "") {
+      setSelectedTicketId("");
+    }
+  }, [viewMode, tickets.length, currentUser?.email]);
+
+  // Aksi Buat Tiket Baru (Requester)
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTicketForm.subject.trim() || !newTicketForm.description.trim()) return;
+
+    setIsSubmittingTicket(true);
+    try {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const generatedTicketCode = `TKT-${randomNum}`;
+      const requesterName = currentUser?.fullName || "User Gesit";
+      const requesterEmail = currentUser?.email || "-";
+      const requesterDept = currentUser?.department || "General";
+      const requesterPhone = currentUser?.phone || "-";
+
+      const { data: inserted, error } = await supabase
+        .from("helpdesk_tickets")
+        .insert([
+          {
+            ticket_id: generatedTicketCode,
+            subject: newTicketForm.subject.trim(),
+            description: newTicketForm.description.trim(),
+            category: newTicketForm.category,
+            priority: newTicketForm.priority,
+            status: "Open",
+            requester_name: requesterName,
+            requester_email: requesterEmail,
+            requester_phone: requesterPhone,
+            department: requesterDept,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Gagal membuat tiket baru:", error);
+        alert("Gagal mengirim permintaan tiket: " + error.message);
+        return;
+      }
+
+      setNewTicketForm({
+        subject: "",
+        category: "General Support",
+        priority: "Medium",
+        description: "",
+      });
+      await fetchTicketsFromSupabase();
+      if (inserted?.ticket_id) {
+        const formattedCode = inserted.ticket_id.startsWith("#")
+          ? inserted.ticket_id
+          : `#${inserted.ticket_id}`;
+        setSelectedTicketId(formattedCode);
+      }
+      setRequesterSubTab("my_tickets");
+    } catch (err) {
+      console.error("Error saat membuat tiket:", err);
+    } finally {
+      setIsSubmittingTicket(false);
+    }
+  };
 
   // Aksi Chat: Kirim Pesan
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !selectedTicket) return;
 
-    const user = currentUser?.fullName || "Rudi Si'arudin";
-    const initials = currentUser?.fullName
-      ? currentUser.fullName.slice(0, 2).toUpperCase()
-      : "RS";
+    const user = currentUser?.fullName || "User";
+    const initials = getInitials(user);
     const textToSend = inputMessage.trim();
+    const isSendingAsRequester = !isITSupport || viewMode === "requester";
 
     const newMsg: Message = {
       id: Date.now(),
       sender: user,
       initials: initials,
-      avatarBg: "#0a2540",
+      avatarBg: isSendingAsRequester ? getAvatarBg(user) : "#0a2540",
       time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
       text: textToSend,
-      isRequester: false,
+      isRequester: isSendingAsRequester,
     };
 
     setTickets((prev) =>
@@ -489,7 +624,7 @@ export function TicketingManager({
           {
             ticket_id: selectedTicket.dbId,
             sender_name: user,
-            sender_role: "IT",
+            sender_role: isSendingAsRequester ? "User" : "IT",
             message: textToSend,
           },
         ]);
@@ -590,8 +725,8 @@ export function TicketingManager({
     }
   };
 
-  // Filter Tiket untuk Tabel
-  const filteredTableTickets = tickets.filter((t) => {
+  // Filter Tiket untuk Tabel (menggunakan visibleTickets yang sudah terisolasi)
+  const filteredTableTickets = visibleTickets.filter((t) => {
     const q = tableSearch.toLowerCase();
     const matchesSearch =
       t.id.toLowerCase().includes(q) ||
@@ -612,8 +747,8 @@ export function TicketingManager({
     return true;
   });
 
-  // Filter Tiket untuk Chat Left Rail
-  const filteredChatTickets = tickets.filter((t) => {
+  // Filter Tiket untuk Chat Left Rail (menggunakan visibleTickets yang sudah terisolasi)
+  const filteredChatTickets = visibleTickets.filter((t) => {
     const q = chatSearch.toLowerCase();
     return (
       t.id.toLowerCase().includes(q) ||
@@ -723,51 +858,262 @@ export function TicketingManager({
       {/* ================= KONTEN HALAMAN ================= */}
       <main className="wrap">
         {/* ================= 2. KEPALA HALAMAN ================= */}
-        <div className="page-head">
+        <div
+          className="page-head"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
           <div className="page-title">
-            <h1>Ticketing Manager</h1>
-            <p>Helpdesk IT - antrean, percakapan, dan laporan tiket.</p>
+            <h1>
+              {viewMode === "requester"
+                ? "Helpdesk — Tiket & Permintaan Saya"
+                : "Ticketing Manager"}
+            </h1>
+            <p>
+              {viewMode === "requester"
+                ? `Halaman khusus permintaan pribadi Anda (${currentUser?.fullName || "User"}). Tiket pengguna lain disembunyikan demi privasi.`
+                : "Helpdesk IT - antrean seluruh pengguna, percakapan, dan laporan tiket."}
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            {viewMode === "requester" && (
+              <button
+                type="button"
+                className="btn-right-action-black"
+                style={{ width: "auto", marginTop: 0, padding: "9px 14px" }}
+                onClick={() =>
+                  setRequesterSubTab(requesterSubTab === "create" ? "my_tickets" : "create")
+                }
+              >
+                {requesterSubTab === "create"
+                  ? `Lihat Tiket Saya (${visibleTickets.length})`
+                  : "+ Buat Request Baru"}
+              </button>
+            )}
+
+            {isITSupport && (
+              <button
+                type="button"
+                className="btn-tool"
+                style={{
+                  padding: "9px 14px",
+                  fontWeight: 800,
+                  borderColor: viewMode === "requester" ? "#2f6bff" : undefined,
+                  color: viewMode === "requester" ? "#2f6bff" : undefined,
+                }}
+                onClick={() => {
+                  const next = viewMode === "management" ? "requester" : "management";
+                  setViewMode(next);
+                  setRequesterSubTab("my_tickets");
+                }}
+              >
+                {viewMode === "management"
+                  ? "Mode Request User (Tiket Saya)"
+                  : "Kembali ke Mode Admin IT"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Segmen Pill Chat | Tabel | Analytics (Active: background hitam pekat) */}
-        <div className="seg-row">
-          <div className="seg">
-            <button
-              type="button"
-              className={activeTab === "Chat" ? "on" : ""}
-              onClick={() => setActiveTab("Chat")}
+        {/* Segmen Pill: Menyesuaikan Mode Request User vs Mode Admin IT */}
+        {viewMode === "requester" ? (
+          <div
+            className="seg-row"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px",
+            }}
+          >
+            <div className="seg">
+              <button
+                type="button"
+                className={requesterSubTab === "my_tickets" ? "on" : ""}
+                onClick={() => setRequesterSubTab("my_tickets")}
+              >
+                Tiket Saya ({visibleTickets.length})
+              </button>
+              <button
+                type="button"
+                className={requesterSubTab === "create" ? "on" : ""}
+                onClick={() => setRequesterSubTab("create")}
+              >
+                + Buat Request Baru
+              </button>
+            </div>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#12805c",
+                background: "#ecfdf3",
+                border: "1px solid #abefc6",
+                padding: "5px 12px",
+                borderRadius: "999px",
+              }}
             >
-              Chat
-            </button>
-            <button
-              type="button"
-              className={activeTab === "Tabel" ? "on" : ""}
-              onClick={() => setActiveTab("Tabel")}
-            >
-              Tabel
-            </button>
-            <button
-              type="button"
-              className={activeTab === "Analytics" ? "on" : ""}
-              onClick={() => setActiveTab("Analytics")}
-            >
-              Analytics
-            </button>
+              Privasi Aktif: Hanya menampilkan request milik {currentUser?.email || currentUser?.fullName || "Anda"}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="seg-row">
+            <div className="seg">
+              <button
+                type="button"
+                className={activeTab === "Chat" ? "on" : ""}
+                onClick={() => setActiveTab("Chat")}
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                className={activeTab === "Tabel" ? "on" : ""}
+                onClick={() => setActiveTab("Tabel")}
+              >
+                Tabel
+              </button>
+              <button
+                type="button"
+                className={activeTab === "Analytics" ? "on" : ""}
+                onClick={() => setActiveTab("Analytics")}
+              >
+                Analytics
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* ================= TAB 1: VIEW CHAT (SCREENSHOT 1) ================= */}
-        {activeTab === "Chat" && (
+        {/* ================= FORM BUAT TIKET BARU (KHUSUS REQUESTER) ================= */}
+        {viewMode === "requester" && requesterSubTab === "create" && (
+          <div className="queue-card" style={{ maxWidth: 680, margin: "0 auto", padding: 24 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 4 }}>
+              Buat Permintaan Bantuan IT Baru
+            </h3>
+            <p style={{ fontSize: 13, color: "#667085", marginBottom: 18 }}>
+              Tiket ini bersifat pribadi dan hanya dapat dilihat oleh Anda ({currentUser?.fullName || "User"}) serta tim IT Support.
+            </p>
+            <form
+              onSubmit={handleCreateTicket}
+              style={{ display: "flex", flexDirection: "column", gap: 14 }}
+            >
+              <div className="right-form-group">
+                <label className="right-form-label">Subjek / Judul Kendala *</label>
+                <input
+                  type="text"
+                  required
+                  className="right-select"
+                  placeholder="Contoh: Tidak bisa akses printer lantai 2 / Reset akun ERP..."
+                  value={newTicketForm.subject}
+                  onChange={(e) =>
+                    setNewTicketForm((prev) => ({ ...prev, subject: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="right-form-group">
+                  <label className="right-form-label">Kategori</label>
+                  <select
+                    className="right-select"
+                    value={newTicketForm.category}
+                    onChange={(e) =>
+                      setNewTicketForm((prev) => ({ ...prev, category: e.target.value }))
+                    }
+                  >
+                    <option value="General Support">General Support</option>
+                    <option value="Hardware Issue">Hardware Issue</option>
+                    <option value="Software & Aplikasi">Software &amp; Aplikasi</option>
+                    <option value="Network & Internet">Network &amp; Internet</option>
+                    <option value="Account & Access">Account &amp; Access</option>
+                  </select>
+                </div>
+
+                <div className="right-form-group">
+                  <label className="right-form-label">Prioritas</label>
+                  <select
+                    className="right-select"
+                    value={newTicketForm.priority}
+                    onChange={(e) =>
+                      setNewTicketForm((prev) => ({
+                        ...prev,
+                        priority: e.target.value as TicketItem["priority"],
+                      }))
+                    }
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="right-form-group">
+                <label className="right-form-label">Deskripsi Detail Kendala *</label>
+                <textarea
+                  rows={5}
+                  required
+                  className="form-textarea"
+                  placeholder="Jelaskan kendala atau kebutuhan Anda secara rinci agar tim IT dapat segera menindaklanjuti..."
+                  value={newTicketForm.description}
+                  onChange={(e) =>
+                    setNewTicketForm((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn-right-action-white"
+                  style={{ width: "auto", marginTop: 0, padding: "10px 16px" }}
+                  onClick={() => setRequesterSubTab("my_tickets")}
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingTicket}
+                  className="btn-right-action-black"
+                  style={{ width: "auto", marginTop: 0, padding: "10px 18px" }}
+                >
+                  {isSubmittingTicket ? "Mengirim..." : "Kirim Permintaan Tiket"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ================= TAB 1: VIEW CHAT (ADMIN ATAU TIKET SAYA REQUESTER) ================= */}
+        {((viewMode === "management" && activeTab === "Chat") ||
+          (viewMode === "requester" && requesterSubTab === "my_tickets")) && (
           <div className="chat-layout">
             {/* Left Rail: Percakapan */}
             <div className="chat-left-rail">
               <div className="chat-left-head">
-                <h3>Percakapan</h3>
-                <button type="button" className="btn-tool" onClick={() => alert("Filter percakapan")}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
-                  Filter
-                </button>
+                <h3>{viewMode === "requester" ? "Tiket Saya" : "Percakapan"}</h3>
+                {viewMode === "requester" ? (
+                  <button
+                    type="button"
+                    className="btn-tool"
+                    onClick={() => setRequesterSubTab("create")}
+                  >
+                    + Buat Baru
+                  </button>
+                ) : (
+                  <button type="button" className="btn-tool" onClick={() => alert("Filter percakapan")}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+                    Filter
+                  </button>
+                )}
               </div>
 
               <div className="chat-left-search">
@@ -776,7 +1122,11 @@ export function TicketingManager({
                   <input
                     type="text"
                     className="chat-search-input"
-                    placeholder="Cari percakapan..."
+                    placeholder={
+                      viewMode === "requester"
+                        ? "Cari tiket saya..."
+                        : "Cari percakapan..."
+                    }
                     value={chatSearch}
                     onChange={(e) => setChatSearch(e.target.value)}
                   />
@@ -784,40 +1134,48 @@ export function TicketingManager({
               </div>
 
               <div className="chat-list-scroll">
-                {/* Group 1: Antrean (1) */}
+                {/* Group 1: Antrean */}
                 <div className="chat-group-title" onClick={() => setOpenQueue(!openQueue)}>
-                  <span>Antrean ({antreanTickets.length})</span>
+                  <span>
+                    {viewMode === "requester" ? "Menunggu Respon IT" : "Antrean"} ({antreanTickets.length})
+                  </span>
                   <Chev />
                 </div>
                 {openQueue &&
-                  antreanTickets.map((t) => (
-                    <div
-                      key={t.id}
-                      className={`chat-item-card ${selectedTicket?.id === t.id ? "active" : ""}`}
-                      onClick={() => setSelectedTicketId(t.id)}
-                    >
-                      <div className="chat-item-av-wrap">
-                        <span className="chat-item-av" style={{ background: t.requester.avatarBg }}>
-                          {t.requester.initials}
-                        </span>
-                        {t.unread && <span className="chat-unread-dot" />}
-                      </div>
-                      <div className="chat-item-body">
-                        <div className="chat-item-top">
-                          <span className="chat-item-name">{t.requester.name}</span>
-                          <span className="chat-item-time urgent">{t.date}</span>
+                  (antreanTickets.length === 0 ? (
+                    <div className="chat-empty-hint">Tidak ada tiket dalam antrean.</div>
+                  ) : (
+                    antreanTickets.map((t) => (
+                      <div
+                        key={t.id}
+                        className={`chat-item-card ${selectedTicket?.id === t.id ? "active" : ""}`}
+                        onClick={() => setSelectedTicketId(t.id)}
+                      >
+                        <div className="chat-item-av-wrap">
+                          <span className="chat-item-av" style={{ background: t.requester.avatarBg }}>
+                            {t.requester.initials}
+                          </span>
+                          {t.unread && <span className="chat-unread-dot" />}
                         </div>
-                        <div className="chat-item-snippet">{t.snippet}</div>
-                        <div className="chat-item-badges">
-                          <span className="chat-code">{t.id}</span>
-                          <span className="pill-status open">{t.status.toUpperCase()}</span>
-                          <span className="chat-handler-tag">Belum di-assign</span>
+                        <div className="chat-item-body">
+                          <div className="chat-item-top">
+                            <span className="chat-item-name">
+                              {viewMode === "requester" ? t.subject : t.requester.name}
+                            </span>
+                            <span className="chat-item-time urgent">{t.date}</span>
+                          </div>
+                          <div className="chat-item-snippet">{t.snippet}</div>
+                          <div className="chat-item-badges">
+                            <span className="chat-code">{t.id}</span>
+                            <span className="pill-status open">{t.status.toUpperCase()}</span>
+                            <span className="chat-handler-tag">Belum di-assign</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))
                   ))}
 
-                {/* Group 2: Sedang Ditangani (0) */}
+                {/* Group 2: Sedang Ditangani */}
                 <div className="chat-group-title" onClick={() => setOpenInProgress(!openInProgress)}>
                   <span>Sedang Ditangani ({inProgressTickets.length})</span>
                   <Chev />
@@ -839,7 +1197,9 @@ export function TicketingManager({
                         </div>
                         <div className="chat-item-body">
                           <div className="chat-item-top">
-                            <span className="chat-item-name">{t.requester.name}</span>
+                            <span className="chat-item-name">
+                              {viewMode === "requester" ? t.subject : t.requester.name}
+                            </span>
                             <span className="chat-item-time">{t.date}</span>
                           </div>
                           <div className="chat-item-snippet">{t.snippet}</div>
@@ -854,7 +1214,7 @@ export function TicketingManager({
                   )
                 )}
 
-                {/* Group 3: Selesai (2) */}
+                {/* Group 3: Selesai */}
                 <div className="chat-group-title" onClick={() => setOpenResolved(!openResolved)}>
                   <span>Selesai ({resolvedTickets.length})</span>
                   <Chev />
@@ -873,7 +1233,9 @@ export function TicketingManager({
                       </div>
                       <div className="chat-item-body">
                         <div className="chat-item-top">
-                          <span className="chat-item-name">{t.requester.name}</span>
+                          <span className="chat-item-name">
+                            {viewMode === "requester" ? t.subject : t.requester.name}
+                          </span>
                           <span className="chat-item-time">{t.date}</span>
                         </div>
                         <div className="chat-item-snippet">{t.snippet}</div>
@@ -895,275 +1257,383 @@ export function TicketingManager({
             </div>
 
             {/* Center Panel: Active Chat */}
-            <div className="chat-center-panel">
-              {/* Header Percakapan */}
-              <div className="chat-center-head">
-                <div className="chat-head-user">
-                  <span
-                    className="chat-item-av"
-                    style={{ background: selectedTicket.requester.avatarBg, width: 38, height: 38 }}
-                  >
-                    {selectedTicket.requester.initials}
-                  </span>
-                  <div>
-                    <div className="chat-head-name">{selectedTicket.requester.name}</div>
-                    <div className="chat-head-sub">
-                      {selectedTicket.requester.email} &middot; {selectedTicket.id}
-                    </div>
-                  </div>
+            {!selectedTicket ? (
+              <div
+                className="chat-center-panel"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 32,
+                  textAlign: "center",
+                  gap: 10,
+                }}
+              >
+                <div style={{ fontSize: 16, fontWeight: 800 }}>
+                  {viewMode === "requester"
+                    ? "Anda belum memiliki tiket permintaan"
+                    : "Belum ada tiket yang dipilih"}
                 </div>
-                <div className="chat-head-badges">
-                  <span
-                    className={`pill-status ${
-                      selectedTicket.status === "Open" ? "open" : "resolved"
-                    }`}
-                  >
-                    {selectedTicket.status.toUpperCase()}
-                  </span>
-                  <span className="pill-priority-outline">{selectedTicket.priority}</span>
-                </div>
-              </div>
-
-              {/* Chat Canvas / Dotted Body */}
-              <div className="chat-body">
-                <div className="chat-date-divider">
-                  <span className="chat-date-label">{selectedTicket.dateFull}</span>
-                  <span className="chat-date-sub">Tiket dibuat &middot; Subjek: {selectedTicket.subject}</span>
-                </div>
-
-                {/* Pesan-pesan */}
-                {selectedTicket.messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`chat-msg-row ${m.isRequester ? "" : "out"}`}
-                  >
-                    {m.isRequester && (
-                      <span
-                        className="chat-item-av"
-                        style={{ background: m.avatarBg, width: 32, height: 32, fontSize: 11 }}
-                      >
-                        {m.initials}
-                      </span>
-                    )}
-                    <div className="chat-msg-content">
-                      <div className="chat-msg-meta">
-                        <span className="chat-msg-sender">{m.sender}</span>
-                        <span className="chat-msg-time">{m.time}</span>
-                      </div>
-                      <div className="chat-bubble">{m.text}</div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Alert Box jika belum di-assign */}
-                {selectedTicket.handler === "Unassigned" && (
-                  <div className="chat-system-box">
-                    Belum di-assign dan belum ada balasan sejak {selectedTicket.dateFull}.
-                  </div>
-                )}
-              </div>
-
-              {/* Input Bar */}
-              <form className="chat-input-bar" onSubmit={handleSendMessage}>
-                <div className="chat-input-pill">
-                  <input
-                    type="text"
-                    className="chat-text-input"
-                    placeholder="Tulis pesan..."
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                  />
-                  <button type="button" className="chat-ic-btn" title="Lampirkan file">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                  </button>
-                  <button type="button" className="chat-ic-btn" title="Emoji">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
-                  </button>
-                  <button type="submit" className="chat-send-btn" title="Kirim">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Right Rail: Detail Tiket & Catatan */}
-            <div className="chat-right-rail">
-              <div className="chat-right-tabs">
-                <button
-                  type="button"
-                  className={`right-tab-btn ${rightActiveTab === "detail" ? "active" : ""}`}
-                  onClick={() => setRightActiveTab("detail")}
-                >
-                  Detail Tiket
-                </button>
-                <button
-                  type="button"
-                  className={`right-tab-btn ${rightActiveTab === "notes" ? "active" : ""}`}
-                  onClick={() => setRightActiveTab("notes")}
-                >
-                  Catatan
-                </button>
-              </div>
-
-              {rightActiveTab === "detail" ? (
-                <>
-                  {/* DATA PEMINTA */}
-                  <div className="right-section-title">Data Peminta</div>
-                  <div className="right-meta-list">
-                    <div className="right-meta-row">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                      <span>{selectedTicket.requester.email}</span>
-                    </div>
-                    <div className="right-meta-row">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                      <span>{selectedTicket.requester.phone}</span>
-                    </div>
-                    <div className="right-meta-row">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2" /></svg>
-                      <span>{selectedTicket.department}</span>
-                    </div>
-                    <div className="right-meta-row">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2.5 2.5 0 0 0 0 5v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2.5 2.5 0 0 0 0-5Z" /></svg>
-                      <span>{selectedTicket.id} &middot; {selectedTicket.subject}</span>
-                    </div>
-                  </div>
-
-                  {/* PENGATURAN TIKET */}
-                  <div className="right-section-title" style={{ marginTop: 10 }}>Pengaturan Tiket</div>
-                  <div className="right-form-group">
-                    <label className="right-form-label">Status</label>
-                    <select
-                      className="right-select"
-                      value={selectedTicket.status}
-                      onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value as any)}
-                    >
-                      <option value="Open">Open</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Resolved">Resolved</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-                  </div>
-
-                  <div className="right-form-group">
-                    <label className="right-form-label">Prioritas</label>
-                    <select
-                      className="right-select"
-                      value={selectedTicket.priority}
-                      onChange={(e) => {
-                        const val = e.target.value as any;
-                        setTickets((prev) =>
-                          prev.map((t) => (t.id === selectedTicket.id ? { ...t, priority: val } : t))
-                        );
-                      }}
-                    >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Urgent">Urgent</option>
-                    </select>
-                  </div>
-
-                  <div className="right-form-group">
-                    <label className="right-form-label">Kategori</label>
-                    <select
-                      className="right-select"
-                      value={selectedTicket.category}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setTickets((prev) =>
-                          prev.map((t) => (t.id === selectedTicket.id ? { ...t, category: val } : t))
-                        );
-                      }}
-                    >
-                      <option value="General">General</option>
-                      <option value="Technical Support">Technical Support</option>
-                      <option value="Hardware Issue">Hardware Issue</option>
-                      <option value="Account & Access">Account &amp; Access</option>
-                    </select>
-                  </div>
-
-                  <div className="right-form-group">
-                    <label className="right-form-label">Assign To</label>
-                    <select
-                      className="right-select"
-                      value={selectedTicket.handler}
-                      onChange={(e) => handleUpdateHandler(selectedTicket.id, e.target.value)}
-                    >
-                      <option value="Unassigned">Unassigned</option>
-                      <option value="Bendry">Bendry</option>
-                      <option value="Rudi Si'arudin">Rudi Si'arudin</option>
-                      <option value="Administrator">Administrator</option>
-                    </select>
-                  </div>
-
-                  {/* Tombol Aksi */}
-                  {selectedTicket.handler === "Unassigned" ? (
-                    <button
-                      type="button"
-                      className="btn-right-action-black"
-                      onClick={() => handleAssignToMe(selectedTicket.id)}
-                    >
-                      Ambil Tiket Ini
-                    </button>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    className="btn-right-action-white"
-                    onClick={() =>
-                      handleUpdateStatus(
-                        selectedTicket.id,
-                        selectedTicket.status === "Resolved" ? "Open" : "Resolved"
-                      )
-                    }
-                  >
-                    {selectedTicket.status === "Resolved" ? "Buka Kembali Tiket" : "Tandai Selesai"}
-                  </button>
-                </>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div className="right-section-title">Catatan Internal Petugas</div>
-                  <textarea
-                    rows={6}
-                    className="form-textarea"
-                    placeholder="Tulis catatan internal yang hanya terlihat oleh tim IT..."
-                    value={selectedTicket.notes || ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setTickets((prev) =>
-                        prev.map((t) => (t.id === selectedTicket.id ? { ...t, notes: val } : t))
-                      );
-                    }}
-                  />
+                <p style={{ fontSize: 13, color: "#667085", maxWidth: 380 }}>
+                  {viewMode === "requester"
+                    ? "Halaman ini khusus menampilkan tiket yang Anda ajukan sendiri. Silakan buat permintaan baru jika membutuhkan bantuan tim IT."
+                    : "Pilih salah satu tiket di panel sebelah kiri untuk melihat percakapan."}
+                </p>
+                {viewMode === "requester" && (
                   <button
                     type="button"
                     className="btn-right-action-black"
-                    onClick={async () => {
-                      if (selectedTicket.dbId) {
-                        try {
-                          await supabase
-                            .from("helpdesk_tickets")
-                            .update({ resolution: selectedTicket.notes || "" })
-                            .eq("id", selectedTicket.dbId);
-                        } catch (err) {
-                          console.error("Gagal simpan catatan internal:", err);
-                        }
-                      }
-                      alert("Catatan tersimpan!");
-                    }}
+                    style={{ width: "auto", padding: "10px 18px" }}
+                    onClick={() => setRequesterSubTab("create")}
                   >
-                    Simpan Catatan
+                    + Buat Request Baru
                   </button>
+                )}
+              </div>
+            ) : (
+              <div className="chat-center-panel">
+                {/* Header Percakapan */}
+                <div className="chat-center-head">
+                  <div className="chat-head-user">
+                    <span
+                      className="chat-item-av"
+                      style={{ background: selectedTicket.requester.avatarBg, width: 38, height: 38 }}
+                    >
+                      {selectedTicket.requester.initials}
+                    </span>
+                    <div>
+                      <div className="chat-head-name">
+                        {viewMode === "requester"
+                          ? selectedTicket.subject
+                          : selectedTicket.requester.name}
+                      </div>
+                      <div className="chat-head-sub">
+                        {selectedTicket.requester.email} &middot; {selectedTicket.id}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="chat-head-badges">
+                    <span
+                      className={`pill-status ${
+                        selectedTicket.status === "Open" ? "open" : "resolved"
+                      }`}
+                    >
+                      {selectedTicket.status.toUpperCase()}
+                    </span>
+                    <span className="pill-priority-outline">{selectedTicket.priority}</span>
+                  </div>
                 </div>
+
+                {/* Chat Canvas / Dotted Body */}
+                <div className="chat-body">
+                  <div className="chat-date-divider">
+                    <span className="chat-date-label">{selectedTicket.dateFull}</span>
+                    <span className="chat-date-sub">Tiket dibuat &middot; Subjek: {selectedTicket.subject}</span>
+                  </div>
+
+                  {/* Pesan-pesan */}
+                  {selectedTicket.messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`chat-msg-row ${m.isRequester ? "" : "out"}`}
+                    >
+                      {m.isRequester && (
+                        <span
+                          className="chat-item-av"
+                          style={{ background: m.avatarBg, width: 32, height: 32, fontSize: 11 }}
+                        >
+                          {m.initials}
+                        </span>
+                      )}
+                      <div className="chat-msg-content">
+                        <div className="chat-msg-meta">
+                          <span className="chat-msg-sender">{m.sender}</span>
+                          <span className="chat-msg-time">{m.time}</span>
+                        </div>
+                        <div className="chat-bubble">{m.text}</div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Alert Box jika belum di-assign */}
+                  {selectedTicket.handler === "Unassigned" && (
+                    <div className="chat-system-box">
+                      Belum di-assign dan belum ada balasan sejak {selectedTicket.dateFull}.
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Bar */}
+                <form className="chat-input-bar" onSubmit={handleSendMessage}>
+                  <div className="chat-input-pill">
+                    <input
+                      type="text"
+                      className="chat-text-input"
+                      placeholder="Tulis pesan..."
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                    />
+                    <button type="button" className="chat-ic-btn" title="Lampirkan file">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                    </button>
+                    <button type="button" className="chat-ic-btn" title="Emoji">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
+                    </button>
+                    <button type="submit" className="chat-send-btn" title="Kirim">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Right Rail: Detail Tiket & Catatan */}
+            <div className="chat-right-rail">
+              {!selectedTicket ? (
+                <div className="chat-empty-hint" style={{ padding: 20 }}>
+                  Tidak ada detail tiket untuk ditampilkan.
+                </div>
+              ) : (
+                <>
+                  <div className="chat-right-tabs">
+                    <button
+                      type="button"
+                      className={`right-tab-btn ${rightActiveTab === "detail" || viewMode === "requester" ? "active" : ""}`}
+                      onClick={() => setRightActiveTab("detail")}
+                    >
+                      Detail Tiket
+                    </button>
+                    {viewMode === "management" && isITSupport && (
+                      <button
+                        type="button"
+                        className={`right-tab-btn ${rightActiveTab === "notes" ? "active" : ""}`}
+                        onClick={() => setRightActiveTab("notes")}
+                      >
+                        Catatan
+                      </button>
+                    )}
+                  </div>
+
+                  {rightActiveTab === "detail" || viewMode === "requester" ? (
+                    <>
+                      {/* DATA PEMINTA */}
+                      <div className="right-section-title">Data Peminta</div>
+                      <div className="right-meta-list">
+                        <div className="right-meta-row">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                          <span>{selectedTicket.requester.email}</span>
+                        </div>
+                        <div className="right-meta-row">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                          <span>{selectedTicket.requester.phone}</span>
+                        </div>
+                        <div className="right-meta-row">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2" /></svg>
+                          <span>{selectedTicket.department}</span>
+                        </div>
+                        <div className="right-meta-row">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2.5 2.5 0 0 0 0 5v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2.5 2.5 0 0 0 0-5Z" /></svg>
+                          <span>{selectedTicket.id} &middot; {selectedTicket.subject}</span>
+                        </div>
+                      </div>
+
+                      {viewMode === "requester" ? (
+                        <>
+                          <div className="right-section-title" style={{ marginTop: 10 }}>
+                            Informasi Status Tiket
+                          </div>
+                          <div className="right-meta-list">
+                            <div className="right-meta-row">
+                              <b>Status:</b>&nbsp;<span>{selectedTicket.status}</span>
+                            </div>
+                            <div className="right-meta-row">
+                              <b>Prioritas:</b>&nbsp;<span>{selectedTicket.priority}</span>
+                            </div>
+                            <div className="right-meta-row">
+                              <b>Kategori:</b>&nbsp;<span>{selectedTicket.category}</span>
+                            </div>
+                            <div className="right-meta-row">
+                              <b>Ditangani Oleh:</b>&nbsp;
+                              <span>
+                                {selectedTicket.handler === "Unassigned"
+                                  ? "Menunggu Petugas IT"
+                                  : selectedTicket.handler}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* PENGATURAN TIKET (KHUSUS ADMIN IT) */}
+                          <div className="right-section-title" style={{ marginTop: 10 }}>Pengaturan Tiket</div>
+                          <div className="right-form-group">
+                            <label className="right-form-label">Status</label>
+                            <select
+                              className="right-select"
+                              value={selectedTicket.status}
+                              onChange={(e) => handleUpdateStatus(selectedTicket.id, e.target.value as any)}
+                            >
+                              <option value="Open">Open</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Resolved">Resolved</option>
+                              <option value="Pending">Pending</option>
+                            </select>
+                          </div>
+
+                          <div className="right-form-group">
+                            <label className="right-form-label">Prioritas</label>
+                            <select
+                              className="right-select"
+                              value={selectedTicket.priority}
+                              onChange={async (e) => {
+                                const val = e.target.value as any;
+                                setTickets((prev) =>
+                                  prev.map((t) => (t.id === selectedTicket.id ? { ...t, priority: val } : t))
+                                );
+                                if (selectedTicket.dbId) {
+                                  try {
+                                    await supabase
+                                      .from("helpdesk_tickets")
+                                      .update({ priority: val })
+                                      .eq("id", selectedTicket.dbId);
+                                  } catch (err) {
+                                    console.error("Gagal update prioritas ke Supabase:", err);
+                                  }
+                                }
+                              }}
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Medium</option>
+                              <option value="High">High</option>
+                              <option value="Urgent">Urgent</option>
+                            </select>
+                          </div>
+
+                          <div className="right-form-group">
+                            <label className="right-form-label">Kategori</label>
+                            <select
+                              className="right-select"
+                              value={selectedTicket.category}
+                              onChange={async (e) => {
+                                const val = e.target.value;
+                                setTickets((prev) =>
+                                  prev.map((t) => (t.id === selectedTicket.id ? { ...t, category: val } : t))
+                                );
+                                if (selectedTicket.dbId) {
+                                  try {
+                                    await supabase
+                                      .from("helpdesk_tickets")
+                                      .update({ category: val })
+                                      .eq("id", selectedTicket.dbId);
+                                  } catch (err) {
+                                    console.error("Gagal update kategori ke Supabase:", err);
+                                  }
+                                }
+                              }}
+                            >
+                              <option value="General">General</option>
+                              <option value="General Support">General Support</option>
+                              <option value="Technical Support">Technical Support</option>
+                              <option value="Hardware Issue">Hardware Issue</option>
+                              <option value="Software & Aplikasi">Software &amp; Aplikasi</option>
+                              <option value="Network & Internet">Network &amp; Internet</option>
+                              <option value="Account & Access">Account &amp; Access</option>
+                            </select>
+                          </div>
+
+                          <div className="right-form-group">
+                            <label className="right-form-label">Assign To</label>
+                            <select
+                              className="right-select"
+                              value={selectedTicket.handler}
+                              onChange={(e) => handleUpdateHandler(selectedTicket.id, e.target.value)}
+                            >
+                              <option value="Unassigned">Unassigned</option>
+                              <option value="Bendry">Bendry</option>
+                              <option value="Rudi Si'arudin">Rudi Si'arudin</option>
+                              <option value="Administrator">Administrator</option>
+                            </select>
+                          </div>
+
+                          {/* Tombol Aksi */}
+                          {selectedTicket.handler === "Unassigned" ? (
+                            <button
+                              type="button"
+                              className="btn-right-action-black"
+                              onClick={() => handleAssignToMe(selectedTicket.id)}
+                            >
+                              Ambil Tiket Ini
+                            </button>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            className="btn-right-action-white"
+                            onClick={() =>
+                              handleUpdateStatus(
+                                selectedTicket.id,
+                                selectedTicket.status === "Resolved" ? "Open" : "Resolved"
+                              )
+                            }
+                          >
+                            {selectedTicket.status === "Resolved" ? "Buka Kembali Tiket" : "Tandai Selesai"}
+                          </button>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div className="right-section-title">Catatan Internal Petugas</div>
+                      <textarea
+                        rows={6}
+                        className="form-textarea"
+                        placeholder="Tulis catatan internal yang hanya terlihat oleh tim IT..."
+                        value={selectedTicket.notes || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setTickets((prev) =>
+                            prev.map((t) => (t.id === selectedTicket.id ? { ...t, notes: val } : t))
+                          );
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-right-action-black"
+                        onClick={async () => {
+                          if (selectedTicket.dbId) {
+                            try {
+                              await supabase
+                                .from("helpdesk_tickets")
+                                .update({ resolution: selectedTicket.notes || "" })
+                                .eq("id", selectedTicket.dbId);
+                            } catch (err) {
+                              console.error("Gagal simpan catatan internal:", err);
+                            }
+                          }
+                          alert("Catatan tersimpan!");
+                        }}
+                      >
+                        Simpan Catatan
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         )}
 
-        {/* ================= TAB 2: VIEW TABEL (SCREENSHOT 2) ================= */}
-        {activeTab === "Tabel" && (
+        {/* ================= TAB 2: VIEW TABEL (KHUSUS MODE MANAGEMENT IT) ================= */}
+        {viewMode === "management" && isITSupport && activeTab === "Tabel" && (() => {
+          const unassignedList = visibleTickets.filter((t) => t.handler === "Unassigned" && t.status !== "Resolved");
+          const inProgressCount = visibleTickets.filter((t) => t.status === "In Progress" || t.status === "Pending" || (t.status === "Open" && t.handler !== "Unassigned")).length;
+          const resolvedCount = visibleTickets.filter((t) => t.status === "Resolved").length;
+          const oldestOpenTicket = visibleTickets.filter((t) => t.status !== "Resolved").slice(-1)[0] || null;
+
+          return (
           <div>
-            {/* 4 Kartu KPI */}
+            {/* 4 Kartu KPI (Dinamis dari data nyata) */}
             <div className="kpis">
               {/* Card 1: Belum Di-assign */}
               <div className="kpi">
@@ -1174,10 +1644,12 @@ export function TicketingManager({
                   Belum Di-assign
                 </div>
                 <div className="num">
-                  1 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
+                  {unassignedList.length} <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
                 </div>
                 <div className="delta">
-                  <span style={{ color: "#dc2626", fontWeight: 800 }}>Perlu handler sekarang</span>
+                  <span style={{ color: unassignedList.length > 0 ? "#dc2626" : "#12805c", fontWeight: 800 }}>
+                    {unassignedList.length > 0 ? "Perlu handler sekarang" : "Semua tiket sudah ter-assign"}
+                  </span>
                 </div>
               </div>
 
@@ -1187,13 +1659,20 @@ export function TicketingManager({
                   <span className="ic" style={{ background: "#eef4ff" }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2f6bff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                   </span>
-                  Tiket Tertua
+                  Tiket Terbuka Tertua
                 </div>
                 <div className="num">
-                  44 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>hari</span>
+                  {oldestOpenTicket ? oldestOpenTicket.date : "0"}{" "}
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>
+                    {oldestOpenTicket ? "" : "tiket"}
+                  </span>
                 </div>
                 <div className="delta">
-                  <span>#TKT-4584 &middot; Desi Rahmuni</span>
+                  <span>
+                    {oldestOpenTicket
+                      ? `${oldestOpenTicket.id} · ${oldestOpenTicket.requester.name}`
+                      : "Tidak ada antrean tertunda"}
+                  </span>
                 </div>
               </div>
 
@@ -1206,10 +1685,10 @@ export function TicketingManager({
                   Sedang Diproses
                 </div>
                 <div className="num">
-                  0 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
+                  {inProgressCount} <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
                 </div>
                 <div className="delta">
-                  <span>In progress &amp; pending</span>
+                  <span>In progress &amp; active handler</span>
                 </div>
               </div>
 
@@ -1222,29 +1701,31 @@ export function TicketingManager({
                   Selesai
                 </div>
                 <div className="num">
-                  2 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
+                  {resolvedCount} <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>tiket</span>
                 </div>
                 <div className="delta">
-                  <span style={{ color: "#12805c", fontWeight: 800 }}>Rata-rata resolusi 0,3 jam &middot; target 24 jam</span>
+                  <span style={{ color: "#12805c", fontWeight: 800 }}>Target SLA 24 jam</span>
                 </div>
               </div>
             </div>
 
-            {/* Alert Strip Kuning */}
-            <div
-              className="alert-strip"
-              title="Buka tiket ini di Chat"
-              onClick={() => {
-                setSelectedTicketId("#TKT-4584");
-                setActiveTab("Chat");
-              }}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-              <div>
-                <b>#TKT-4584</b> belum di-assign sejak 12 Sep 2026 — satu-satunya tiket terbuka saat ini.{" "}
-                <span style={{ textDecoration: "underline", fontWeight: 800, marginLeft: 4 }}>Buka Tiket &rarr;</span>
+            {/* Alert Strip Kuning (Hanya tampil jika ada tiket belum di-assign) */}
+            {unassignedList.length > 0 && (
+              <div
+                className="alert-strip"
+                title="Buka tiket ini di Chat"
+                onClick={() => {
+                  setSelectedTicketId(unassignedList[0].id);
+                  setActiveTab("Chat");
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                <div>
+                  <b>{unassignedList[0].id}</b> ({unassignedList[0].requester.name}) belum di-assign sejak {unassignedList[0].dateFull}.{" "}
+                  <span style={{ textDecoration: "underline", fontWeight: 800, marginLeft: 4 }}>Buka Tiket &rarr;</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Sub-Filter Pills */}
             <div className="sub-filters-row">
@@ -1260,7 +1741,7 @@ export function TicketingManager({
                 className={`pill-subfilter ${subFilter === "Belum Di-assign" ? "active" : ""}`}
                 onClick={() => setSubFilter("Belum Di-assign")}
               >
-                Belum Di-assign <span className="subfilter-badge">1</span>
+                Belum Di-assign <span className="subfilter-badge">{unassignedList.length}</span>
               </button>
               <button
                 type="button"
@@ -1451,10 +1932,68 @@ export function TicketingManager({
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
-        {/* ================= TAB 3: VIEW ANALYTICS (SCREENSHOT 3) ================= */}
-        {activeTab === "Analytics" && (
+        {/* ================= TAB 3: VIEW ANALYTICS (KHUSUS MODE MANAGEMENT IT) ================= */}
+        {viewMode === "management" && isITSupport && activeTab === "Analytics" && (() => {
+          const totalCount = visibleTickets.length;
+          const resolvedNum = visibleTickets.filter((t) => t.status === "Resolved").length;
+          const openNum = visibleTickets.filter((t) => t.status === "Open").length;
+          const inProgressNum = visibleTickets.filter((t) => t.status === "In Progress").length;
+          const pendingNum = visibleTickets.filter((t) => t.status === "Pending").length;
+          const unassignedNum = visibleTickets.filter((t) => t.handler === "Unassigned" && t.status !== "Resolved").length;
+          const overdueNum = visibleTickets.filter((t) => t.ageSla.includes("LEWAT")).length;
+          const slaPct = totalCount > 0 ? Math.round(((totalCount - overdueNum) / totalCount) * 100) : 100;
+
+          const resolvedPct = totalCount > 0 ? Math.round((resolvedNum / totalCount) * 100) : 0;
+          const openPct = totalCount > 0 ? Math.round((openNum / totalCount) * 100) : 0;
+          const inProgressPct = totalCount > 0 ? Math.round((inProgressNum / totalCount) * 100) : 0;
+          const pendingPct = totalCount > 0 ? Math.max(0, 100 - resolvedPct - openPct - inProgressPct) : 0;
+
+          // Statistik per Handler secara dinamis
+          const handlerNames = Array.from(
+            new Set([
+              "Bendry",
+              "Rudi Si'arudin",
+              "Administrator",
+              ...visibleTickets.map((t) => t.handler).filter((h) => h && h !== "Unassigned"),
+            ])
+          );
+          const handlerStats = handlerNames.map((name) => ({
+            name,
+            resolved: visibleTickets.filter((t) => t.handler === name && t.status === "Resolved").length,
+            open: visibleTickets.filter((t) => t.handler === name && t.status !== "Resolved").length,
+          }));
+
+          // Statistik per Kategori secara dinamis
+          const catNames = Array.from(
+            new Set([
+              "General",
+              "General Support",
+              "Technical Support",
+              "Hardware Issue",
+              "Account & Access",
+              ...visibleTickets.map((t) => t.category || "General"),
+            ])
+          );
+          const catStats = catNames.map((cat) => {
+            const count = visibleTickets.filter((t) => (t.category || "General") === cat).length;
+            const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+            return { cat, count, pct };
+          });
+
+          // Statistik Bulanan berdasarkan tanggal tiket
+          const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+          const monthCounts = monthLabels.map((m) => {
+            const count = visibleTickets.filter((t) =>
+              t.dateFull.toLowerCase().includes(m.toLowerCase().slice(0, 3))
+            ).length;
+            return { m, v: count };
+          });
+          const maxMonthVal = Math.max(1, ...monthCounts.map((x) => x.v));
+
+          return (
           <div>
             {/* 4 KPI Cards Analytics */}
             <div className="kpis">
@@ -1483,10 +2022,12 @@ export function TicketingManager({
                   Kepatuhan SLA
                 </div>
                 <div className="num">
-                  100 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>%</span>
+                  {slaPct} <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>%</span>
                 </div>
                 <div className="delta">
-                  <span style={{ color: "#12805c", fontWeight: 800 }}>Target 90% &middot; terpenuhi</span>
+                  <span style={{ color: slaPct >= 90 ? "#12805c" : "#dc2626", fontWeight: 800 }}>
+                    Target 90% &middot; {slaPct >= 90 ? "terpenuhi" : "perlu perhatian"}
+                  </span>
                 </div>
               </div>
 
@@ -1499,10 +2040,12 @@ export function TicketingManager({
                   Tiket Selesai
                 </div>
                 <div className="num">
-                  2 <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>dari 3</span>
+                  {resolvedNum} <span style={{ fontSize: 15, fontWeight: 700, color: "#667085" }}>dari {totalCount}</span>
                 </div>
                 <div className="delta">
-                  <span>1 masih terbuka &middot; belum di-assign</span>
+                  <span>
+                    {totalCount - resolvedNum} masih terbuka &middot; {unassignedNum} belum di-assign
+                  </span>
                 </div>
               </div>
 
@@ -1535,31 +2078,33 @@ export function TicketingManager({
                   <div className="donut-chart-svg">
                     <svg width="150" height="150" viewBox="0 0 42 42">
                       <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="var(--donut-track, #f2f4f7)" strokeWidth="5" />
-                      {/* Resolved: 67% (2 tickets) */}
-                      <circle
-                        cx="21"
-                        cy="21"
-                        r="15.91549430918954"
-                        fill="transparent"
-                        stroke="#2f6bff"
-                        strokeWidth="5"
-                        strokeDasharray="67 33"
-                        strokeDashoffset="25"
-                      />
-                      {/* Open: 33% (1 ticket) */}
-                      <circle
-                        cx="21"
-                        cy="21"
-                        r="15.91549430918954"
-                        fill="transparent"
-                        stroke="var(--donut-dark, #0a2540)"
-                        strokeWidth="5"
-                        strokeDasharray="33 67"
-                        strokeDashoffset="58"
-                      />
+                      {resolvedPct > 0 && (
+                        <circle
+                          cx="21"
+                          cy="21"
+                          r="15.91549430918954"
+                          fill="transparent"
+                          stroke="#2f6bff"
+                          strokeWidth="5"
+                          strokeDasharray={`${resolvedPct} ${100 - resolvedPct}`}
+                          strokeDashoffset="25"
+                        />
+                      )}
+                      {openPct > 0 && (
+                        <circle
+                          cx="21"
+                          cy="21"
+                          r="15.91549430918954"
+                          fill="transparent"
+                          stroke="var(--donut-dark, #0a2540)"
+                          strokeWidth="5"
+                          strokeDasharray={`${openPct} ${100 - openPct}`}
+                          strokeDashoffset={String(25 - resolvedPct + 100)}
+                        />
+                      )}
                     </svg>
                     <div className="donut-center-text">
-                      <span className="donut-center-num">3</span>
+                      <span className="donut-center-num">{totalCount}</span>
                       <span className="donut-center-sub">Total Tiket</span>
                     </div>
                   </div>
@@ -1570,28 +2115,28 @@ export function TicketingManager({
                         <span className="donut-dot" style={{ background: "#2f6bff" }} />
                         Resolved
                       </span>
-                      <span className="donut-legend-val">2 &middot; 67%</span>
+                      <span className="donut-legend-val">{resolvedNum} &middot; {resolvedPct}%</span>
                     </div>
                     <div className="donut-legend-row">
                       <span className="donut-legend-label">
                         <span className="donut-dot" style={{ background: "var(--donut-dark, #0a2540)" }} />
                         Open
                       </span>
-                      <span className="donut-legend-val">1 &middot; 33%</span>
+                      <span className="donut-legend-val">{openNum} &middot; {openPct}%</span>
                     </div>
                     <div className="donut-legend-row">
                       <span className="donut-legend-label">
                         <span className="donut-dot" style={{ background: "#06aed4" }} />
                         In Progress
                       </span>
-                      <span className="donut-legend-val">0</span>
+                      <span className="donut-legend-val">{inProgressNum} &middot; {inProgressPct}%</span>
                     </div>
                     <div className="donut-legend-row">
                       <span className="donut-legend-label">
                         <span className="donut-dot" style={{ background: "#cbd5e1" }} />
                         Pending
                       </span>
-                      <span className="donut-legend-val">0</span>
+                      <span className="donut-legend-val">{pendingNum} &middot; {pendingPct}%</span>
                     </div>
                   </div>
                 </div>
@@ -1601,28 +2146,15 @@ export function TicketingManager({
               <div className="analytics-card">
                 <div className="analytics-card-head">
                   <h4>Tiket Masuk per Bulan</h4>
-                  <div className="sub">Tahun 2026 &middot; berdasarkan 3 tiket tercatat</div>
+                  <div className="sub">Berdasarkan {totalCount} tiket tercatat</div>
                 </div>
                 <div className="monthly-bars-wrap">
-                  {[
-                    { m: "Jan", v: 0 },
-                    { m: "Feb", v: 0 },
-                    { m: "Mar", v: 0 },
-                    { m: "Apr", v: 2 },
-                    { m: "Mei", v: 0 },
-                    { m: "Jun", v: 0 },
-                    { m: "Jul", v: 0 },
-                    { m: "Agu", v: 0 },
-                    { m: "Sep", v: 1 },
-                    { m: "Okt", v: 0 },
-                    { m: "Nov", v: 0 },
-                    { m: "Des", v: 0 },
-                  ].map((item) => (
+                  {monthCounts.map((item) => (
                     <div className="month-col" key={item.m}>
                       <div
                         className="month-bar"
                         style={{
-                          height: item.v === 0 ? "4px" : item.v === 2 ? "110px" : "60px",
+                          height: item.v === 0 ? "4px" : `${Math.max(24, Math.round((item.v / maxMonthVal) * 110))}px`,
                           background: item.v === 0 ? "var(--month-bar-empty, #eaecf0)" : "#2f6bff",
                         }}
                       >
@@ -1649,25 +2181,17 @@ export function TicketingManager({
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td><b>Bendry</b></td>
-                      <td>1</td>
-                      <td>0</td>
-                    </tr>
-                    <tr>
-                      <td><b>Rudi Si'arudin</b></td>
-                      <td>1</td>
-                      <td>0</td>
-                    </tr>
-                    <tr>
-                      <td><b>Administrator</b></td>
-                      <td>0</td>
-                      <td>0</td>
-                    </tr>
+                    {handlerStats.map((h) => (
+                      <tr key={h.name}>
+                        <td><b>{h.name}</b></td>
+                        <td>{h.resolved}</td>
+                        <td>{h.open}</td>
+                      </tr>
+                    ))}
                     <tr>
                       <td style={{ color: "#dc2626", fontWeight: 800 }}>Belum di-assign</td>
                       <td>0</td>
-                      <td style={{ color: "#dc2626", fontWeight: 800 }}>1</td>
+                      <td style={{ color: "#dc2626", fontWeight: 800 }}>{unassignedNum}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1677,49 +2201,24 @@ export function TicketingManager({
               <div className="analytics-card">
                 <div className="analytics-card-head">
                   <h4>Per Kategori</h4>
-                  <div className="sub">Semua tiket saat ini berkategori General</div>
+                  <div className="sub">Distribusi berdasarkan kategori tiket</div>
                 </div>
                 <div className="cat-list">
-                  <div className="cat-item">
-                    <span className="cat-label">General</span>
-                    <div className="cat-bar-bg">
-                      <div className="cat-bar-fill" style={{ width: "100%" }} />
+                  {catStats.map((c) => (
+                    <div className="cat-item" key={c.cat}>
+                      <span className="cat-label">{c.cat}</span>
+                      <div className="cat-bar-bg">
+                        <div className="cat-bar-fill" style={{ width: `${c.pct}%` }} />
+                      </div>
+                      <span className="cat-count">{c.count}</span>
                     </div>
-                    <span className="cat-count">3</span>
-                  </div>
-                  <div className="cat-item">
-                    <span className="cat-label">General Inquiry</span>
-                    <div className="cat-bar-bg">
-                      <div className="cat-bar-fill" style={{ width: "0%" }} />
-                    </div>
-                    <span className="cat-count">0</span>
-                  </div>
-                  <div className="cat-item">
-                    <span className="cat-label">Technical Support</span>
-                    <div className="cat-bar-bg">
-                      <div className="cat-bar-fill" style={{ width: "0%" }} />
-                    </div>
-                    <span className="cat-count">0</span>
-                  </div>
-                  <div className="cat-item">
-                    <span className="cat-label">Hardware Issue</span>
-                    <div className="cat-bar-bg">
-                      <div className="cat-bar-fill" style={{ width: "0%" }} />
-                    </div>
-                    <span className="cat-count">0</span>
-                  </div>
-                  <div className="cat-item">
-                    <span className="cat-label">Account &amp; Access</span>
-                    <div className="cat-bar-bg">
-                      <div className="cat-bar-fill" style={{ width: "0%" }} />
-                    </div>
-                    <span className="cat-count">0</span>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ================= FOOTER HALAMAN ================= */}
         {showTopbar && (

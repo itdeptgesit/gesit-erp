@@ -844,13 +844,14 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
 
     const filteredTickets = useMemo(() => {
         return tickets.filter(t => {
-            // High-Security Filter (Defense in Depth)
-            if (!isSupport && t.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
+            // High-Security Filter: In User Request mode (!isManagementMode) or for non-support users (!isSupport),
+            // strictly show ONLY tickets requested by the current logged-in user.
+            if ((!isSupport || !isManagementMode) && t.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
                 return false;
             }
 
             // Support Filter: All vs Assigned vs Mine (reported)
-            if (isSupport) {
+            if (isSupport && isManagementMode) {
                 if (supportFilter === 'assigned') {
                     if (t.assignedToEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
                         return false;
@@ -871,7 +872,7 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                 : t.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
-    }, [tickets, searchTerm, statusFilter, isSupport, supportFilter, currentUser?.email]);
+    }, [tickets, searchTerm, statusFilter, isSupport, isManagementMode, supportFilter, currentUser?.email]);
 
     const handleExportExcel = () => {
         if (filteredTickets.length === 0) return;
@@ -1596,7 +1597,13 @@ export const HelpdeskManager: React.FC<HelpdeskManagerProps> = ({ currentUser, o
                         variant={isManagementMode ? "outline" : "default"}
                         size="sm"
                         className="text-xs font-bold"
-                        onClick={() => setIsManagementMode(!isManagementMode)}
+                        onClick={() => {
+                            const nextMode = !isManagementMode;
+                            setIsManagementMode(nextMode);
+                            if (!nextMode && selectedTicket?.requesterEmail?.toLowerCase() !== currentUser?.email?.toLowerCase()) {
+                                setSelectedTicket(null);
+                            }
+                        }}
                     >
                         {isManagementMode ? (
                             <><User className="mr-2 h-3.5 w-3.5" /> {t('centerView')}</>

@@ -56,16 +56,22 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
   const [handoverAsset, setHandoverAsset] = useState<ITAsset | null>(null);
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
 
-  // RBAC Logic
+  // RBAC Logic: Hanya Admin / IT Staff yang diizinkan mengakses Asset Manager
   const isAdmin = isUserAdmin(currentUser);
-  const isStaff = isUserStaff(currentUser);
+  const isStaff = isUserStaff(currentUser) || Boolean(currentUser?.isHelpdeskSupport);
   const canManage = canUserManage(currentUser);
   const canDelete = canUserDelete(currentUser);
+  const canAccessAssetManager = isAdmin || isStaff;
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const fetchAssets = async () => {
+    if (!canAccessAssetManager) {
+      setAssets([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const { data: assetData } = await supabase.from('it_assets').select('*').order('id', { ascending: true });
@@ -86,7 +92,7 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
     } catch (error) { console.error('Error fetching assets:', error); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchAssets(); }, []);
+  useEffect(() => { fetchAssets(); }, [canAccessAssetManager]);
 
   const filteredAssets = useMemo(() => assets.filter(asset => {
     const searchLower = searchTerm.toLowerCase();
@@ -316,6 +322,25 @@ export const AssetManager: React.FC<AssetManagerProps> = ({ currentUser }) => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+
+  if (!canAccessAssetManager) {
+    return (
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
+          <AlertCircle size={28} />
+        </div>
+        <h2 className="text-xl font-bold text-foreground mb-2">
+          Akses Terbatas — Khusus Tim IT &amp; Administrator
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-md mb-6">
+          Halaman <b>Asset Manager</b> hanya dapat diakses oleh petugas IT dan Administrator. Sebagai pengguna biasa, silakan gunakan menu <b>Helpdesk</b> atau <b>Asset Loan</b>.
+        </p>
+        <Button onClick={() => (window.location.href = '/helpdesk')} size="sm">
+          Kembali ke Helpdesk
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-transparent py-4 sm:py-6 px-0 sm:px-4 space-y-6 animate-in fade-in duration-500">

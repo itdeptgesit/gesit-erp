@@ -64,6 +64,13 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
     const fetchLoans = async () => {
         setIsLoading(true);
         try {
+            // Jika user bukan Admin/Staff dan data currentUser belum siap, jangan ambil semua pinjaman orang lain
+            if (!canManage && !currentUser) {
+                setLoans([]);
+                setIsLoading(false);
+                return;
+            }
+
             let query = supabase
                 .from('it_asset_loans')
                 .select(`
@@ -80,7 +87,17 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
 
             // If not admin/staff, only show own requests
             if (!canManage && currentUser) {
-                query = query.eq('borrower_name', currentUser.fullName);
+                if (currentUser.email && currentUser.fullName) {
+                    query = query.or(`borrower_email.ilike.${currentUser.email.trim()},borrower_name.ilike.${currentUser.fullName.trim()}`);
+                } else if (currentUser.email) {
+                    query = query.ilike('borrower_email', currentUser.email.trim());
+                } else if (currentUser.fullName) {
+                    query = query.ilike('borrower_name', currentUser.fullName.trim());
+                } else {
+                    setLoans([]);
+                    setIsLoading(false);
+                    return;
+                }
             }
 
             const { data, error } = await query;
@@ -138,17 +155,26 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
     useEffect(() => {
         fetchLoans();
         fetchAssets();
-    }, []);
+    }, [currentUser?.email, currentUser?.fullName, canManage]);
 
     const filteredLoans = useMemo(() => loans.filter(loan => {
+        // Isolasi ganda di sisi client untuk user biasa
+        if (!canManage) {
+            const myEmail = (currentUser?.email || '').trim().toLowerCase();
+            const myName = (currentUser?.fullName || '').trim().toLowerCase();
+            const bEmail = (loan.borrowerEmail || '').trim().toLowerCase();
+            const bName = (loan.borrowerName || '').trim().toLowerCase();
+            const isMine = (myEmail && bEmail && bEmail === myEmail) || (myName && bName && bName === myName);
+            if (!isMine) return false;
+        }
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch =
-            loan.borrowerName.toLowerCase().includes(searchLower) ||
-            loan.assetName.toLowerCase().includes(searchLower) ||
-            loan.loanId.toLowerCase().includes(searchLower);
+            (loan.borrowerName || '').toLowerCase().includes(searchLower) ||
+            (loan.assetName || '').toLowerCase().includes(searchLower) ||
+            (loan.loanId || '').toLowerCase().includes(searchLower);
         const matchesStatus = statusFilter === 'All' ? true : loan.status === statusFilter;
         return matchesSearch && matchesStatus;
-    }), [loans, searchTerm, statusFilter]);
+    }), [loans, searchTerm, statusFilter, canManage, currentUser?.email, currentUser?.fullName]);
 
     const totalPages = Math.ceil(filteredLoans.length / itemsPerPage);
     const paginatedLoans = useMemo(() => {

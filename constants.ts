@@ -7,7 +7,7 @@ export const CURRENT_USER_GROUPS = ['admin'];
 export const MOCK_GROUPS = [
     { id: 'admin', name: 'Administrators', description: 'Full Access', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'activity', 'weekly', 'network', 'procurement', 'purchase', 'purchase-record', 'asset-management', 'assets', 'asset-loan', 'asset-handover', 'office-directory', 'office-layout', 'extension-directory', 'admin', 'users', 'system-settings', 'tracking-log', 'announcements', 'master-company', 'master-department', 'master-group', 'master-category', 'maintenance', 'credential'] },
     { id: 'staff', name: 'IT Staff', description: 'Operational Access', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'activity', 'weekly', 'network', 'procurement', 'purchase', 'purchase-record', 'asset-management', 'assets', 'asset-loan', 'asset-handover', 'office-directory', 'office-layout', 'extension-directory'] },
-    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['dashboard', 'operations', 'helpdesk', 'asset-management', 'asset-loan', 'office-directory', 'office-layout', 'extension-directory'] }
+    { id: 'user', name: 'Users', description: 'View Only', allowedMenus: ['operations', 'helpdesk', 'asset-management', 'asset-loan', 'office-directory', 'office-layout', 'extension-directory'] }
 ];
 
 export const APP_MENU_STRUCTURE = [

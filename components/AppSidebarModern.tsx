@@ -113,6 +113,24 @@ export function AppSidebarModern({
     const allowed = new Set<string>()
     const role = currentUser?.role?.toLowerCase() || ""
     const userGroups = currentUser?.groups || []
+    const isITOrAdmin =
+      role.includes("admin") ||
+      role.includes("owner") ||
+      role.includes("staff") ||
+      role.includes("it") ||
+      Boolean(currentUser?.isHelpdeskSupport) ||
+      userGroups.some((g) => {
+        const gl = (g || "").toLowerCase().trim()
+        return (
+          gl === "admin" ||
+          gl === "super admin" ||
+          gl === "staff" ||
+          gl === "it" ||
+          gl === "it_staff" ||
+          gl === "it-operations" ||
+          gl === "support"
+        )
+      })
 
     if (role.includes("admin") || role.includes("owner")) {
       APP_MENU_STRUCTURE.forEach((m) => allowed.add(m.id))
@@ -123,19 +141,45 @@ export function AppSidebarModern({
       ;["helpdesk", "asset-loan", "extension-directory", "profile"].forEach((id) =>
         allowed.add(id)
       )
-      return allowed
+    } else {
+      userGroups.forEach((groupId) => {
+        const groupConfig = groupDefinitions?.find((g) => g.id === groupId)
+        if (groupConfig && Array.isArray(groupConfig.allowedMenus)) {
+          groupConfig.allowedMenus.forEach((menuId) => allowed.add(menuId))
+        }
+      })
     }
 
-    userGroups.forEach((groupId) => {
-      const groupConfig = groupDefinitions?.find((g) => g.id === groupId)
-      if (groupConfig && Array.isArray(groupConfig.allowedMenus)) {
-        groupConfig.allowedMenus.forEach((menuId) => allowed.add(menuId))
-      }
-    })
+    // KEAMANAN: Akun user biasa hanya boleh melihat menu layanan pengguna (whitelist ketat)
+    if (!isITOrAdmin) {
+      const regularUserWhitelist = new Set([
+        "operations",
+        "helpdesk",
+        "asset-management",
+        "asset-loan",
+        "office-directory",
+        "office-layout",
+        "extension-directory",
+        "profile",
+      ])
+      Array.from(allowed).forEach((menuId) => {
+        if (!regularUserWhitelist.has(menuId)) {
+          allowed.delete(menuId)
+        }
+      })
+    }
 
     APP_MENU_STRUCTURE.forEach((menu) => {
       if (menu.parentId && allowed.has(menu.id)) allowed.add(menu.parentId)
     })
+
+    // Jika tidak ada sub-menu di bawah 'asset-management' yang diizinkan, hapus parent-nya
+    const hasAllowedAssetChild = APP_MENU_STRUCTURE.some(
+      (menu) => menu.parentId === "asset-management" && allowed.has(menu.id)
+    )
+    if (!hasAllowedAssetChild) {
+      allowed.delete("asset-management")
+    }
 
     return allowed
   }, [currentUser, groupDefinitions])

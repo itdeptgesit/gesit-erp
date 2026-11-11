@@ -319,7 +319,10 @@ const drawMarkersOnCtx = (
   });
 };
 
+import { isUserAdmin, isUserStaff } from '../lib/rbac';
+
 const OfficeLayoutManager: React.FC<{ currentUser?: any }> = ({ currentUser }) => {
+  const canEditLayout = isUserAdmin(currentUser) || isUserStaff(currentUser) || Boolean(currentUser?.isHelpdeskSupport);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1066,20 +1069,22 @@ const OfficeLayoutManager: React.FC<{ currentUser?: any }> = ({ currentUser }) =
 
         {/* Header Action Buttons */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setEditMode(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 16px', borderRadius: 10, border: 'none',
-              background: editMode ? 'linear-gradient(135deg, #2563eb, #4f46e5)' : '#f1f5f9',
-              color: editMode ? '#ffffff' : '#334155',
-              fontWeight: 700, fontSize: 13, cursor: 'pointer',
-              boxShadow: editMode ? '0 4px 14px rgba(37, 99, 235, 0.3)' : 'none',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {editMode ? <><Move size={15} /> Edit Mode ON</> : <><Eye size={15} /> View Mode</>}
-          </button>
+          {canEditLayout && (
+            <button
+              onClick={() => setEditMode(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 16px', borderRadius: 10, border: 'none',
+                background: editMode ? 'linear-gradient(135deg, #2563eb, #4f46e5)' : '#f1f5f9',
+                color: editMode ? '#ffffff' : '#334155',
+                fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                boxShadow: editMode ? '0 4px 14px rgba(37, 99, 235, 0.3)' : 'none',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              {editMode ? <><Move size={15} /> Edit Mode ON</> : <><Eye size={15} /> View Mode</>}
+            </button>
+          )}
 
           <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 10, padding: 3 }}>
             <button
@@ -1108,33 +1113,37 @@ const OfficeLayoutManager: React.FC<{ currentUser?: any }> = ({ currentUser }) =
             </button>
           </div>
 
-          <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
+          {canEditLayout && (
+            <>
+              <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
 
-          <button
-            onClick={exportJSON}
-            title="Backup data ke file JSON"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 10,
-              border: '1px solid #cbd5e1', background: '#ffffff',
-              color: '#334155', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-            }}
-          >
-            <Save size={14} /> Backup
-          </button>
+              <button
+                onClick={exportJSON}
+                title="Backup data ke file JSON"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 10,
+                  border: '1px solid #cbd5e1', background: '#ffffff',
+                  color: '#334155', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                <Save size={14} /> Backup
+              </button>
 
-          <label
-            title="Load data dari file JSON"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 10,
-              border: '1px solid #cbd5e1', background: '#ffffff',
-              color: '#334155', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-            }}
-          >
-            <Plus size={14} /> Load JSON
-            <input type="file" accept=".json" onChange={importJSON} style={{ display: 'none' }} />
-          </label>
+              <label
+                title="Load data dari file JSON"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 10,
+                  border: '1px solid #cbd5e1', background: '#ffffff',
+                  color: '#334155', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                <Plus size={14} /> Load JSON
+                <input type="file" accept=".json" onChange={importJSON} style={{ display: 'none' }} />
+              </label>
+            </>
+          )}
         </div>
       </div>
 

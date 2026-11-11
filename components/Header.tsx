@@ -202,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <div className="z-50 h-16 header-fixed peer/header w-full bg-transparent transition-all duration-300">
-      <GlobalSearch open={searchOpen} setOpen={setSearchOpen} />
+      <GlobalSearch open={searchOpen} setOpen={setSearchOpen} userRole={userRole || user?.role} userGroups={userGroups} />
       <div className="relative flex h-full items-center gap-2 py-4 px-0">
 
         {/* Search \u2014 takes remaining space */}

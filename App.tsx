@@ -817,7 +817,16 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
   const role = currentUser?.role?.toLowerCase() || '';
   const groups = currentUser?.groups || [];
   const currentView = location.pathname.substring(1) || 'dashboard';
-  const isITStaff = role.includes('admin') || groups.some(g => g.toLowerCase() === 'it' || g.toLowerCase().includes('support')) || currentUser?.isHelpdeskSupport === true;
+  const isITStaff =
+    role.includes('admin') ||
+    role.includes('owner') ||
+    role.includes('staff') ||
+    role.includes('it') ||
+    groups.some(g => {
+      const gl = (g || '').toLowerCase().trim();
+      return gl === 'admin' || gl === 'super admin' || gl === 'staff' || gl === 'it' || gl === 'it_staff' || gl.includes('support');
+    }) ||
+    currentUser?.isHelpdeskSupport === true;
 
   // Strict Access Control Logic
   const allowedMenuIds = React.useMemo(() => {
@@ -825,7 +834,7 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
     const role = currentUser?.role?.toLowerCase() || '';
 
     // Admin/Super Admin bypass
-    if (role.includes('admin')) {
+    if (role.includes('admin') || role.includes('owner')) {
       return null; // Null means all access
     }
 
@@ -836,15 +845,33 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
       allowed.add('asset-loan');
       allowed.add('extension-directory');
       allowed.add('profile');
-      return allowed;
+    } else {
+      userGroups.forEach(groupId => {
+        const groupConfig = groupDefinitions?.find(g => g.id === groupId);
+        if (groupConfig && Array.isArray(groupConfig.allowedMenus)) {
+          groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
+        }
+      });
     }
 
-    userGroups.forEach(groupId => {
-      const groupConfig = groupDefinitions?.find(g => g.id === groupId);
-      if (groupConfig && Array.isArray(groupConfig.allowedMenus)) {
-        groupConfig.allowedMenus.forEach(menuId => allowed.add(menuId));
-      }
-    });
+    // KEAMANAN: Akun user biasa hanya diizinkan mengakses menu layanan pengguna (whitelist ketat)
+    if (!isITStaff) {
+      const regularUserWhitelist = new Set([
+        'operations',
+        'helpdesk',
+        'asset-management',
+        'asset-loan',
+        'office-directory',
+        'office-layout',
+        'extension-directory',
+        'profile',
+      ]);
+      Array.from(allowed).forEach(menuId => {
+        if (!regularUserWhitelist.has(menuId)) {
+          allowed.delete(menuId);
+        }
+      });
+    }
 
     // Ensure parents are allowed if children are
     const allMenus = APP_MENU_STRUCTURE || [];
@@ -855,12 +882,12 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
     });
 
     return allowed;
-  }, [currentUser, groupDefinitions]);
+  }, [currentUser, groupDefinitions, isITStaff]);
 
   // Effect to handle redirection for unauthorized access
   React.useEffect(() => {
-    // Redirect regular users from home to helpdesk
-    if (currentView === 'dashboard' && !isITStaff) {
+    // Redirect regular users from home or assets to helpdesk
+    if ((currentView === 'dashboard' || currentView === 'csl-dashboard' || currentView === 'assets' || currentView === 'asset-handover') && !isITStaff) {
       navigate('/helpdesk', { replace: true });
       return;
     }
@@ -894,12 +921,16 @@ const DashboardLayout: React.FC<any & { children?: React.ReactNode }> = ({
             <div className="h-4 w-[1px] bg-border/40 mx-1.5 hidden md:block" />
             <Breadcrumb className="hidden md:block">
               <BreadcrumbList className="gap-1.5">
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/" className="text-[13px] font-medium text-muted-foreground/60 hover:text-foreground">Home</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="text-muted-foreground/30">
-                  <ChevronRight size={13} />
-                </BreadcrumbSeparator>
+                {isITStaff && (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink href="/" className="text-[13px] font-medium text-muted-foreground/60 hover:text-foreground">Home</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="text-muted-foreground/30">
+                      <ChevronRight size={13} />
+                    </BreadcrumbSeparator>
+                  </>
+                )}
                 <BreadcrumbItem>
                   <BreadcrumbPage className="text-[13px] font-medium capitalize text-foreground/80">{currentView.replace(/-/g, ' ')}</BreadcrumbPage>
                 </BreadcrumbItem>
