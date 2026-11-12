@@ -138,7 +138,7 @@ export const AssetLoanManager: React.FC<AssetLoanManagerProps> = ({ currentUser 
             .from('it_assets')
             .select('*')
             .eq('status', 'Idle')
-            .in('category', ['IT Asset', 'Laptop', 'Other', 'Storage', 'Peripherals', 'Printer', 'Monitor']);
+            .in('category', ['IT Asset', 'Laptop', 'Computer', 'PC', 'Desktop', 'Other', 'Storage', 'Peripherals', 'Printer', 'Monitor']);
         if (data) {
             setAssets(data.map((item: any) => ({
                 id: item.id,

@@ -207,7 +207,13 @@ export const AssetFormModal: React.FC<AssetFormModalProps> = ({ isOpen, onClose,
     const inputClass = "w-full border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1 bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 transition-all";
     const labelClass = "block text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1 ml-1";
 
-    const needsSpecs = formData.category === 'Laptop' || formData.category === 'PC' || formData.category === 'Server' || formData.category === 'Workstation';
+    const selectedCategory = categoryList.find(c => c.name === formData.category || c.code === formData.category);
+    const categoryCode = selectedCategory?.code?.toUpperCase();
+    const categoryName = (formData.category || '').toLowerCase();
+
+    const needsSpecs = 
+        ['laptop', 'pc', 'computer', 'komputer', 'desktop', 'server', 'workstation'].includes(categoryName) ||
+        ['LP', 'PC', 'SRV', 'WS'].includes(categoryCode || '');
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} disablePointerDismissal={true}>

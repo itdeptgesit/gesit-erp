@@ -959,7 +959,7 @@ export const TaskplusDashboard: React.FC<TaskplusDashboardProps> = ({ onNavigate
             });
 
             // Asset Breakdown - Real Categorization
-            const itCategoryList = ['Laptop', 'PC', 'Server', 'Network', 'Monitor', 'Printer', 'Hardware'];
+            const itCategoryList = ['Laptop', 'PC', 'Computer', 'Desktop', 'Server', 'Network', 'Monitor', 'Printer', 'Hardware'];
             let itCount = 0;
             let gaCount = 0;
             const assetCats: any = {};

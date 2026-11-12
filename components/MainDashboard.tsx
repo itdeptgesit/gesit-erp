@@ -255,7 +255,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ onNavigate, userNa
                 .slice(0, 4);
 
             const itUnitsCount = assets?.filter((a: any) => 
-                ['laptop', 'desktop', 'server', 'network', 'switch', 'hardware', 'printer', 'ups', 'monitor', 'accessories'].some(cat => 
+                ['laptop', 'pc', 'computer', 'desktop', 'server', 'network', 'switch', 'hardware', 'printer', 'ups', 'monitor', 'accessories'].some(cat => 
                     (a.category || '').toLowerCase().includes(cat)
                 )
             ).length || 0;
